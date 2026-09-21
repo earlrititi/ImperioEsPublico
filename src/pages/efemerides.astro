@@ -14,6 +14,7 @@ const list = sortEntriesByDateDesc(await getCollection("articles")).filter(
   description="Efemerides semanales: memoria viva sin ruido."
   eyebrow="Efemerides"
   heading="Memoria activa"
+  noindex={!list.some(entry => entry.data.indexable)}
   summary="Textos breves para situar el presente desde el archivo."
 >
   <section class="section">

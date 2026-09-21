@@ -14,11 +14,13 @@ const preloaderSessionKey = PRELOADER_SESSION_KEY;
 >
   <img
     class="global-home-mark__image"
-    src={withBase("/images/logo-redv2.png")}
+    src={withBase("/images/logo-redv2-96.webp")}
     alt=""
     aria-hidden="true"
-    width="602"
-    height="477"
+    width="96"
+    height="74"
+    loading="eager"
+    decoding="async"
   />
 </a>
 
@@ -38,6 +40,64 @@ const preloaderSessionKey = PRELOADER_SESSION_KEY;
         // El enlace sigue funcionando si el navegador bloquea el storage.
       }
     });
+  }
+</script>
+
+<script>
+  const homeMark = document.querySelector(".global-home-mark");
+
+  if (homeMark instanceof HTMLElement) {
+    let markFrame = 0;
+
+    const colorProbe = document.createElement("span");
+    colorProbe.hidden = true;
+    colorProbe.style.position = "fixed";
+    colorProbe.style.pointerEvents = "none";
+    document.body.append(colorProbe);
+
+    const resolveColor = (value: string) => {
+      colorProbe.style.color = value;
+      return window.getComputedStyle(colorProbe).color;
+    };
+
+    const redSurfaceColor = resolveColor("var(--color-red-accent)");
+    const blackSurfaceColor = resolveColor("var(--color-black-papers)");
+    colorProbe.remove();
+
+    const updateMarkSurface = () => {
+      markFrame = 0;
+      const markRect = homeMark.getBoundingClientRect();
+      const markX = markRect.left + markRect.width / 2;
+      const markY = markRect.top + markRect.height / 2;
+      const surfaces = document
+        .elementsFromPoint(markX, markY)
+        .filter((element) => element !== homeMark && !homeMark.contains(element));
+      const isOverRed = surfaces.some(
+        (surface) =>
+          surface.getAttribute("data-home-mark-surface") === "red" ||
+          window.getComputedStyle(surface).backgroundColor === redSurfaceColor,
+      );
+      const isOverBlack =
+        !isOverRed &&
+        surfaces.some(
+          (surface) =>
+            surface.getAttribute("data-home-mark-surface") === "black" ||
+            window.getComputedStyle(surface).backgroundColor === blackSurfaceColor,
+        );
+
+      homeMark.classList.toggle("global-home-mark--on-red", isOverRed);
+      homeMark.classList.toggle("global-home-mark--on-black", isOverBlack);
+    };
+
+    const queueMarkSurfaceUpdate = () => {
+      if (markFrame) return;
+      markFrame = window.requestAnimationFrame(updateMarkSurface);
+    };
+
+    queueMarkSurfaceUpdate();
+    window.addEventListener("scroll", queueMarkSurfaceUpdate, { passive: true });
+    window.addEventListener("resize", queueMarkSurfaceUpdate);
+    homeMark.addEventListener("pointerenter", queueMarkSurfaceUpdate);
   }
 </script>
 
@@ -63,7 +123,8 @@ const preloaderSessionKey = PRELOADER_SESSION_KEY;
   }
 
   .global-home-mark:hover,
-  .global-home-mark:focus-visible {
+  .global-home-mark:focus-visible,
+  .global-home-mark:active {
     opacity: 0.76;
     transform: translateY(-2px);
   }
@@ -77,6 +138,8 @@ const preloaderSessionKey = PRELOADER_SESSION_KEY;
     width: 100%;
     height: 100%;
     object-fit: contain;
+    filter: none;
+    transition: filter 160ms ease;
   }
 
   :global(body:has(#main-nav) .global-home-mark) {
@@ -84,13 +147,31 @@ const preloaderSessionKey = PRELOADER_SESSION_KEY;
   }
 
   :global(body:has(.in-work-page) .global-home-mark),
-  :global(body:has(.storefront) .global-home-mark) {
+  :global(body:has(.storefront) .global-home-mark),
+  :global(body:has(.papers-page) .global-home-mark),
+  :global(body:has(.article-page) .global-home-mark),
+  .global-home-mark--on-black {
     filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.88));
   }
 
   :global(body:has(.in-work-page) .global-home-mark__image),
-  :global(body:has(.storefront) .global-home-mark__image) {
+  :global(body:has(.storefront) .global-home-mark__image),
+  :global(body:has(.papers-page) .global-home-mark__image),
+  :global(body:has(.article-page) .global-home-mark__image),
+  .global-home-mark--on-black .global-home-mark__image {
     filter: brightness(0) invert(1);
+  }
+
+  .global-home-mark:hover .global-home-mark__image,
+  .global-home-mark:focus-visible .global-home-mark__image,
+  .global-home-mark:active .global-home-mark__image {
+    filter: none;
+  }
+
+  .global-home-mark--on-red:hover .global-home-mark__image,
+  .global-home-mark--on-red:focus-visible .global-home-mark__image,
+  .global-home-mark--on-red:active .global-home-mark__image {
+    filter: brightness(0);
   }
 
   @media (max-width: 767px) {

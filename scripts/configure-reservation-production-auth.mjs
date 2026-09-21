@@ -1,0 +1,12 @@
+import { readFileSync } from 'node:fs';
+import { parseEnv } from 'node:util';
+import { spawnSync } from 'node:child_process';
+import { join } from 'node:path';
+import assert from 'node:assert/strict';
+const env=parseEnv(readFileSync('.env.reservation-production.local','utf8'));
+assert.equal(env.PUBLIC_SUPABASE_URL,'https://pjrqozlyrjgugdraoght.supabase.co');
+assert.match(env.RESEND_API_KEY,/^re_/);
+const cli=join(process.env.LOCALAPPDATA,'npm-cache/_npx/aa8e5c70f9d8d161/node_modules/supabase/dist/supabase.js');
+const r=spawnSync(process.execPath,[cli,'config',process.argv.includes('--apply')?'push':'diff','--project-ref','pjrqozlyrjgugdraoght','--workdir','production-environment'],{env:{...process.env,RESERVATION_SMTP_PASSWORD:env.RESEND_API_KEY},encoding:'utf8',windowsHide:true,timeout:90000});
+const safe=(r.stdout+r.stderr).replaceAll(env.RESEND_API_KEY,'[REDACTED]').replace(/^.*(?:smtp_pass|pass\s*=).*$/gmi,'[SMTP credential redacted]');
+console.log(safe);process.exitCode=r.status??1;

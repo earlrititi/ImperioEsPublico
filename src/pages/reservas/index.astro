@@ -1,0 +1,14 @@
+---
+import PageShell from "../../layouts/PageShell.astro";
+import ReservationForm from "../../components/commerce/ReservationForm";
+import { PRODUCTS } from "../../config/products";
+import "../../styles/commerce.css";
+export const prerender=false;
+const shirt=PRODUCTS['camiseta-imperial'];
+const size=Astro.url.searchParams.get('size')??'M';
+Astro.response.headers.set('Cache-Control','no-store');
+Astro.response.headers.set('Referrer-Policy','no-referrer');
+---
+<PageShell title="Reserva tu Camiseta Imperial | Imperio Español" heading="Camiseta Imperial" noindex showCookieConsent={false}>
+  <div class="commerce-layout"><aside class="commerce-product"><img src="/images/museo-camiseta-front.webp" alt="Camiseta Imperial, vista delantera" width="1400" height="1150"/><h2>VALENTO BRICKPLUS</h2><p>100 % poliéster · Bird-Eye · 145 g/m²</p><p>{shirt.shippingInformation}</p><a href="/checkout/camiseta-imperial">Ficha tecnica y medidas</a></aside><ReservationForm client:load initialSize={shirt.variants.some(v=>v===size)?size:'M'}/></div>
+</PageShell>

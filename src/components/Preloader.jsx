@@ -1,7 +1,10 @@
 import { useEffect } from "preact/hooks";
 import {
+  HERO_IMAGE_AVIF_SRC_SET,
   HERO_IMAGE_DEFAULT_SRC,
+  HERO_IMAGE_MOBILE_AVIF_SRC,
   HERO_IMAGE_MOBILE_SRC,
+  HERO_IMAGE_WEBP_SRC_SET,
   HERO_VIEW_TRANSITION_NAME,
   PRELOADER_SESSION_KEY,
   PRELOADER_SEQUENCE_IMAGES,
@@ -222,12 +225,29 @@ export default function Preloader() {
         class="fixed inset-0 z-[9999] bg-white flex items-center justify-center"
       >
         <div class="preloader-images relative">
-          {PRELOADER_SEQUENCE_IMAGES.map((image) => (
+          {PRELOADER_SEQUENCE_IMAGES.map((image, index) => (
             <picture key={image.src}>
+              <source
+                type="image/avif"
+                media="(max-width: 768px)"
+                srcSet={image.mobileAvifSrc}
+              />
               <source media="(max-width: 768px)" srcSet={image.mobileSrc} />
+              <source
+                type="image/avif"
+                srcSet={image.avifSrcSet || image.avifSrc}
+                sizes="100vw"
+              />
               <img
                 src={image.src}
+                srcSet={image.webpSrcSet}
+                sizes="100vw"
                 alt={image.alt}
+                width={image.width ?? 2496}
+                height={image.height ?? 1664}
+                loading={index === 0 ? "eager" : "lazy"}
+                decoding="async"
+                fetchpriority={index === 0 ? "high" : "low"}
                 class={[
                   "preloader-img",
                   "preloader-sequence-img",
@@ -245,10 +265,23 @@ export default function Preloader() {
 
         <div class="preloader-final-layer" aria-hidden="true">
           <picture>
+            <source
+              type="image/avif"
+              media="(max-width: 768px)"
+              srcSet={HERO_IMAGE_MOBILE_AVIF_SRC}
+            />
             <source media="(max-width: 768px)" srcSet={HERO_IMAGE_MOBILE_SRC} />
+            <source type="image/avif" srcSet={HERO_IMAGE_AVIF_SRC_SET} sizes="100vw" />
             <img
               src={HERO_IMAGE_DEFAULT_SRC}
+              srcSet={HERO_IMAGE_WEBP_SRC_SET}
+              sizes="100vw"
               alt="Cargando 3"
+              width="2496"
+              height="1664"
+              loading="eager"
+              decoding="async"
+              fetchpriority="high"
               class="preloader-img preloader-img--final absolute opacity-0"
             />
           </picture>

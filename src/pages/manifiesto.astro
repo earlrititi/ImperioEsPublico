@@ -87,6 +87,13 @@ import PageShell from "../layouts/PageShell.astro";
         tabindex="-1"
         aria-hidden="true"
       />
+      <label class="manifesto-modal__privacy">
+        <input id="manifesto-privacy" type="checkbox" name="privacyAcknowledged" required />
+        <span>
+          He leido la <a href="/legal/privacidad" target="_self">politica de privacidad</a>.
+          El envio del manifiesto no te suscribe a marketing.
+        </span>
+      </label>
       <p class="manifesto-modal__error" id="manifesto-error" role="alert" hidden></p>
       <p class="manifesto-modal__message" id="manifesto-message" role="status" hidden></p>
       <button class="btn btn-primary manifesto-modal__submit" id="manifesto-submit" type="submit" disabled>
@@ -106,18 +113,29 @@ import PageShell from "../layouts/PageShell.astro";
   const manifestoLastNameInput = document.getElementById("manifesto-last-name");
   const manifestoEmailInput = document.getElementById("manifesto-email");
   const manifestoCompanyInput = document.getElementById("manifesto-company");
+  const manifestoPrivacyInput = document.getElementById("manifesto-privacy");
   const manifestoSubmit = document.getElementById("manifesto-submit");
   const manifestoClose = document.getElementById("manifesto-close");
   const manifestoError = document.getElementById("manifesto-error");
   const manifestoMessage = document.getElementById("manifesto-message");
   let manifestoIsSubmitting = false;
 
+  const getManifestoAnonymousId = () => {
+    const key = "imperio_anonymous_id";
+    const existing = window.localStorage.getItem(key);
+    if (existing) return existing;
+    const created = window.crypto.randomUUID();
+    window.localStorage.setItem(key, created);
+    return created;
+  };
+
   const isManifestoFormReady = () =>
     Boolean(
       manifestoFirstNameInput?.value.trim() &&
         manifestoLastNameInput?.value.trim() &&
         manifestoEmailInput?.value.trim() &&
-        manifestoEmailInput?.validity.valid
+        manifestoEmailInput?.validity.valid &&
+        manifestoPrivacyInput?.checked
     );
 
   const updateManifestoSubmitState = () => {
@@ -159,7 +177,7 @@ import PageShell from "../layouts/PageShell.astro";
 
   manifestoClose?.addEventListener("click", closeManifestoModal);
 
-  [manifestoFirstNameInput, manifestoLastNameInput, manifestoEmailInput].forEach((field) => {
+  [manifestoFirstNameInput, manifestoLastNameInput, manifestoEmailInput, manifestoPrivacyInput].forEach((field) => {
     field?.addEventListener("input", () => {
       setManifestoError("");
       setManifestoMessage("");
@@ -193,6 +211,8 @@ import PageShell from "../layouts/PageShell.astro";
           lastName: manifestoLastNameInput?.value || "",
           email: manifestoEmailInput?.value || "",
           company: manifestoCompanyInput?.value || "",
+          privacyAcknowledged: Boolean(manifestoPrivacyInput?.checked),
+          anonymousId: getManifestoAnonymousId(),
           source: "manifiesto",
         }),
       });
@@ -214,6 +234,9 @@ import PageShell from "../layouts/PageShell.astro";
       }
       if (manifestoCompanyInput) {
         manifestoCompanyInput.value = "";
+      }
+      if (manifestoPrivacyInput) {
+        manifestoPrivacyInput.checked = false;
       }
       if (manifestoOpenButton) {
         manifestoOpenButton.textContent = "Manifiesto solicitado";
@@ -259,7 +282,7 @@ import PageShell from "../layouts/PageShell.astro";
   .manifesto-modal::backdrop {
     background:
       radial-gradient(circle at 50% 44%, rgba(255, 191, 140, 0.18), transparent 32rem),
-      rgba(0, 0, 0, 0.78);
+      rgb(11 12 12 / 78%);
     backdrop-filter: blur(8px);
   }
 
@@ -269,9 +292,11 @@ import PageShell from "../layouts/PageShell.astro";
     width: 100%;
     border: 1px solid rgba(255, 235, 210, 0.28);
     border-radius: 24px;
-    background:
-      linear-gradient(145deg, rgba(21, 10, 7, 0.96), rgba(46, 16, 13, 0.94)),
-      #160b08;
+    background-color: var(--color-black-papers);
+    background-image:
+      var(--imperio-dot-pattern),
+      linear-gradient(145deg, rgb(11 12 12 / 96%), rgba(64, 10, 15, 0.94));
+    background-size: var(--imperio-dot-pattern-size), auto;
     box-shadow:
       0 28px 80px rgba(0, 0, 0, 0.52),
       0 0 0 6px rgba(255, 191, 140, 0.08),
@@ -334,6 +359,28 @@ import PageShell from "../layouts/PageShell.astro";
     clip-path: inset(50%);
     overflow: hidden;
     white-space: nowrap;
+  }
+
+  .manifesto-modal__privacy {
+    display: grid;
+    grid-template-columns: 22px minmax(0, 1fr);
+    gap: 0.65rem;
+    align-items: start;
+    color: rgba(255, 235, 210, 0.9);
+    font-size: 0.88rem;
+    line-height: 1.4;
+  }
+
+  .manifesto-modal__privacy input {
+    width: 20px;
+    height: 20px;
+    margin: 0.1rem 0 0;
+    accent-color: var(--accent);
+  }
+
+  .manifesto-modal__privacy a {
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
   }
 
   .manifesto-modal__error {

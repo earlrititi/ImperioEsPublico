@@ -1,0 +1,35 @@
+<script>
+  function setupStoreStock() {
+    const form = document.querySelector<HTMLFormElement>(".product-purchase");
+    if (!form || form.dataset.stockBound) return;
+    form.dataset.stockBound = "true";
+    const select = form.querySelector<HTMLSelectElement>("[data-shirt-size]");
+    const button = form.querySelector<HTMLButtonElement>("[data-reservation-cta]");
+    const status = form.querySelector<HTMLElement>("[data-reservation-stock]");
+    const waiting = form.querySelector<HTMLAnchorElement>("[data-waitlist-link]");
+    if (!select || !button || !status || !waiting) return;
+    let stopped = false;
+    const refresh = async () => {
+      try {
+        const response = await fetch("/api/reservations/inventory", { cache: "no-store" });
+        if (!response.ok) throw new Error();
+        const data = await response.json();
+        if (stopped) return;
+        const variant = data.variants.find((v: { name: string }) => v.name === select.value);
+        if (!variant) throw new Error();
+        const exhausted = variant.available_stock === 0;
+        button.textContent = exhausted ? "AGOTADO" : "RESERVAR \u2014 0 \u20ac";
+        button.disabled = exhausted || !data.reservationMode;
+        waiting.hidden = !exhausted;
+        waiting.href = `/reservas?size=${encodeURIComponent(select.value)}`;
+        status.textContent = exhausted ? "Todas las unidades de esta talla estan reservadas o vendidas." : `Quedan ${variant.available_stock} en talla ${select.value}`;
+      } catch { if (!stopped) { button.disabled = true; status.textContent = "No se pudo consultar el stock."; } }
+    };
+    select.addEventListener("change", refresh);
+    void refresh();
+    const timer = setInterval(() => { if (!document.hidden) void refresh(); }, 10000);
+    document.addEventListener("astro:before-swap", () => { stopped = true; clearInterval(timer); select.removeEventListener("change", refresh); }, { once: true });
+  }
+  setupStoreStock();
+  document.addEventListener("astro:page-load", setupStoreStock);
+</script>

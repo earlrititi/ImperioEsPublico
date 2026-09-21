@@ -9,8 +9,12 @@ const categoryParam = Astro.url.searchParams.get("category");
 const tierParam = Astro.url.searchParams.get("tier");
 const categories = Array.from(new Set(sorted.map((entry) => entry.data.category)));
 const tiers = Array.from(new Set(sorted.map((entry) => entry.data.tier)));
-const categoryFilter = categories.includes(categoryParam ?? "") ? categoryParam : "";
-const tierFilter = tiers.includes(tierParam ?? "") ? tierParam : "";
+const categoryFilter = categoryParam && categories.some((category) => category === categoryParam)
+  ? categoryParam
+  : "";
+const tierFilter = tierParam && tiers.some((tier) => tier === tierParam)
+  ? tierParam
+  : "";
 const filtered = sorted.filter((entry) => {
   if (categoryFilter && entry.data.category !== categoryFilter) return false;
   if (tierFilter && entry.data.tier !== tierFilter) return false;
@@ -23,6 +27,7 @@ const filtered = sorted.filter((entry) => {
   description="Biblioteca viva de ensayos, efemerides y piezas conectadas al presente."
   eyebrow="Biblioteca"
   heading="Archivo consultable"
+  noindex={!sorted.some(entry => entry.data.indexable)}
   summary="Ruta por categorias y niveles. El archivo completo se abre a partir de Piquero."
 >
   <Fragment slot="header">

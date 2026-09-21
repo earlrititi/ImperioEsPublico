@@ -3,19 +3,29 @@
 
 :root {
   color-scheme: light;
-  --color-black-pure: #000000;
-  --color-black-rich: #0a0a0a;
+  --color-black-papers: #0b0c0c;
+  --color-black-pure: var(--color-black-papers);
+  --color-black-rich: var(--color-black-papers);
   --color-white-pure: #ffffff;
   --color-white-off: #fafafa;
   --color-red-spanish: #c1121f;
-  --color-red-accent: #e63946;
+  --color-red-accent: #f2381e;
   --color-red-deep: #8b0000;
   --color-gold: #d4af37;
   --color-gold-rich: #b8860b;
+  --imperio-dot-pattern-source:
+    radial-gradient(circle at 18% 28%, rgb(255 255 255 / 28%) 0 1px, transparent 1px),
+    radial-gradient(circle at 65% 14%, rgb(255 255 255 / 16%) 0 1px, transparent 1px),
+    radial-gradient(circle at 42% 78%, rgb(255 255 255 / 18%) 0 1px, transparent 1px);
+  --imperio-dot-pattern:
+    radial-gradient(circle at 18% 28%, rgb(255 255 255 / 11.76%) 0 1px, transparent 1px),
+    radial-gradient(circle at 65% 14%, rgb(255 255 255 / 6.72%) 0 1px, transparent 1px),
+    radial-gradient(circle at 42% 78%, rgb(255 255 255 / 7.56%) 0 1px, transparent 1px);
+  --imperio-dot-pattern-size: 17px 19px, 23px 29px, 31px 37px;
   --white-70: rgba(255, 255, 255, 0.7);
   --white-40: rgba(255, 255, 255, 0.4);
   --white-10: rgba(255, 255, 255, 0.1);
-  --black-90: rgba(0, 0, 0, 0.9);
+  --black-90: rgb(11 12 12 / 90%);
   --ink: var(--color-black-pure);
   --ink-soft: var(--black-90);
   --parchment: var(--color-white-off);
@@ -52,7 +62,7 @@
   --custom-scrollbar-track-bottom: #bcc7d2;
   --custom-scrollbar-track-edge: #f3f7fb;
   --custom-scrollbar-thumb-top: #ff7575;
-  --custom-scrollbar-thumb-mid: #f03c3c;
+  --custom-scrollbar-thumb-mid: var(--color-red-accent);
   --custom-scrollbar-thumb-bottom: #b80f0f;
   --custom-scrollbar-thumb-glow: rgba(255, 43, 43, 0.52);
   --nav-links-band-height: calc(var(--space-unit) * 9);
@@ -145,14 +155,14 @@ body::-webkit-scrollbar {
 #imperio-scrollbar-thumb:hover {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.46) 0%, rgba(255, 255, 255, 0) 40%),
-    linear-gradient(180deg, #ff8080 0%, #f64c4c 56%, #ca1515 100%);
+    linear-gradient(180deg, #ff8080 0%, var(--color-red-accent) 56%, #ca1515 100%);
 }
 
 #imperio-scrollbar-thumb:active,
 #imperio-scrollbar.is-dragging #imperio-scrollbar-thumb {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.24) 0%, rgba(255, 255, 255, 0) 36%),
-    linear-gradient(180deg, #f05555 0%, #d52424 52%, #a40d0d 100%);
+    linear-gradient(180deg, #f05555 0%, var(--color-red-accent) 52%, #a40d0d 100%);
 }
 
 #imperio-scrollbar.hidden {
@@ -176,6 +186,34 @@ body::before {
 
 main {
   padding: var(--space-10) calc(var(--space-unit) * 2.5) var(--space-12);
+}
+
+.skip-link {
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 20000;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.65rem 0.9rem;
+  color: #fff;
+  background: var(--color-black-papers);
+  transform: translateY(-160%);
+  transition: transform 160ms ease;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+#main-content:focus {
+  outline: none;
+}
+
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid var(--color-red-accent);
+  outline-offset: 3px;
 }
 
 body.preloader-session-skip #preloader {
@@ -232,13 +270,6 @@ a {
 }
 
 @media (min-width: 768px) and (max-width: 980px) {
-  .main-nav__floating-links-layer,
-  .main-nav__links-wrap {
-    display: none !important;
-    visibility: hidden;
-    pointer-events: none;
-  }
-
   .hero-nav__shell {
     min-height: calc(var(--space-unit) * 9);
   }
@@ -723,7 +754,7 @@ html.has-islands .section.is-visible {
   width: 90px;
   height: 20px;
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgb(11 12 12 / 60%);
 }
 
 .hero-stack {
@@ -873,7 +904,7 @@ html.has-islands .section.is-visible {
 .text-hover-effect {
   --text-hover-duration: 0.75s;
   --text-hover-ease: cubic-bezier(0.175, 0.885, 0.32, 1.18);
-  --text-hover-gradient: linear-gradient(90deg, #050505 0%, #c1121f 46%, #d4af37 78%, #ffffff 100%);
+  --text-hover-gradient: linear-gradient(90deg, var(--color-black-papers) 0%, var(--color-red-accent) 46%, #d4af37 78%, #ffffff 100%);
   position: relative;
   display: inline-block;
   max-width: 100%;
@@ -913,9 +944,9 @@ html.has-islands .section.is-visible {
 .text-hover-effect__outline {
   z-index: 2;
   color: transparent;
-  -webkit-text-stroke: 1px rgba(193, 18, 31, 0.76);
+  -webkit-text-stroke: 1px rgb(242 56 30 / 76%);
   text-shadow:
-    0 0 9px rgba(193, 18, 31, 0.2),
+    0 0 9px rgb(242 56 30 / 20%),
     0 0 16px rgba(212, 175, 55, 0.14);
 }
 
@@ -928,9 +959,7 @@ html.has-islands .section.is-visible {
 .service-cta-card:hover .text-hover-effect__gradient,
 .service-cta-card:hover .text-hover-effect__outline,
 .service-item:hover .text-hover-effect__gradient,
-.service-item:hover .text-hover-effect__outline,
-.project-card:hover .text-hover-effect__gradient,
-.project-card:hover .text-hover-effect__outline {
+.service-item:hover .text-hover-effect__outline {
   opacity: 1;
   clip-path: inset(-0.08em -0.08em -0.18em -0.08em);
 }
@@ -939,8 +968,7 @@ html.has-islands .section.is-visible {
 .is-text-hovered .text-hover-effect__base,
 .services-foundation-card:hover .text-hover-effect__base,
 .service-cta-card:hover .text-hover-effect__base,
-.service-item:hover .text-hover-effect__base,
-.project-card:hover .text-hover-effect__base {
+.service-item:hover .text-hover-effect__base {
   color: rgba(0, 0, 0, 0.74);
 }
 

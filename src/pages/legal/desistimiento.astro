@@ -1,0 +1,92 @@
+---
+import LegalDocument from "../../components/LegalDocument.astro";
+import { LEGAL_BUSINESS } from "../../config/legal";
+
+const sent = Astro.url.searchParams.get("sent") === "1";
+const error = Astro.url.searchParams.get("error") === "1";
+---
+
+<LegalDocument
+  title="Formulario de desistimiento | Imperio Español"
+  description="Modelo para comunicar el desistimiento de una compra cuando corresponda."
+  heading="Desistimiento"
+  version="2026-08-25"
+>
+  <section>
+    <h2>Como ejercerlo</h2>
+    <p>
+      Puedes enviar este formulario o cualquier otra declaracion inequivoca antes
+      de que termine el plazo aplicable. Conserva justificante del envio.
+    </p>
+  </section>
+
+  <form class="withdrawal-form" action="/api/contact" method="post">
+    {sent && <p class="notice" role="status">Solicitud enviada. Recibiras un acuse por correo.</p>}
+    {error && <p class="notice" role="alert">No se pudo enviar. Revisa los datos o intentalo mas tarde.</p>}
+    <input type="hidden" name="requestType" value="withdrawal" />
+    <label>
+      Nombre y apellidos
+      <input type="text" name="fullName" autocomplete="name" required maxlength="160" />
+    </label>
+    <label>
+      Correo electronico
+      <input type="email" name="email" autocomplete="email" required maxlength="254" />
+    </label>
+    <label>
+      Numero de pedido o suscripcion
+      <input type="text" name="orderReference" required maxlength="100" />
+    </label>
+    <label>
+      Producto o servicio
+      <input type="text" name="subject" required maxlength="160" />
+    </label>
+    <label>
+      Fecha de contratacion o recepcion
+      <input type="date" name="contractDate" required />
+    </label>
+    <label>
+      Declaracion
+      <textarea name="message" rows="5" required maxlength="3000">Por la presente comunico que desisto del contrato indicado.</textarea>
+    </label>
+    <label class="withdrawal-form__trap" aria-hidden="true">
+      Empresa
+      <input type="text" name="company" tabindex="-1" autocomplete="off" />
+    </label>
+    <button class="btn btn-primary" type="submit">Enviar desistimiento</button>
+    <p class="muted">
+      Destinatario: {LEGAL_BUSINESS.ownerName}, {LEGAL_BUSINESS.returnsAddress},
+      {" "}<a href={`mailto:${LEGAL_BUSINESS.legalEmail}`}>{LEGAL_BUSINESS.legalEmail}</a>.
+    </p>
+  </form>
+</LegalDocument>
+
+<style>
+  .withdrawal-form {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .withdrawal-form label {
+    display: grid;
+    gap: 0.4rem;
+    font-weight: 700;
+  }
+
+  .withdrawal-form input,
+  .withdrawal-form textarea {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 0.8rem;
+    font: inherit;
+    font-weight: 400;
+  }
+
+  .withdrawal-form__trap {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+</style>

@@ -1,0 +1,9 @@
+project_id = "imperioe-test"
+
+[auth]
+site_url = "http://127.0.0.1:4323"
+additional_redirect_urls = ["http://127.0.0.1:4323/api/auth/callback**", "http://localhost:4323/api/auth/callback**", "http://127.0.0.1:4325/api/auth/callback**"]
+minimum_password_length = 12
+
+[auth.email]
+enable_confirmations = true

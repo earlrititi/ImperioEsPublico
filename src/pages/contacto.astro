@@ -1,11 +1,12 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import Navigation from "../components/Navigation.jsx";
 import { SITE } from "../config/site";
 import { withBase } from "../utils/basePath";
 
 const backgroundImage = withBase("/images/ejercito-blanco_upscaled_2x.webp");
 const email = SITE.contactEmail;
+const sent = Astro.url.searchParams.get("sent") === "1";
+const error = Astro.url.searchParams.get("error") === "1";
 ---
 
 <Layout
@@ -13,7 +14,6 @@ const email = SITE.contactEmail;
   title="Contacto, prensa y colaboraciones | Imperio Español"
   description="Audiencia de Imperio Espanol para colaboraciones, archivo, prensa y soporte editorial."
 >
-  <Navigation />
   <script is:inline>
     document.body.classList.add("preloader-done", "contact-nav-ready");
   </script>
@@ -40,33 +40,46 @@ const email = SITE.contactEmail;
 
       <form
         class="contact-form"
-        action={`mailto:${email}`}
+        action="/api/contact"
         method="post"
-        enctype="text/plain"
       >
+        {sent && <p class="contact-feedback" role="status">Solicitud enviada correctamente.</p>}
+        {error && <p class="contact-feedback" role="alert">No se pudo enviar. Revisa los campos o intentalo mas tarde.</p>}
         <div class="contact-fields-row">
           <label>
             <span>Nombre</span>
-            <input type="text" name="nombre" placeholder="Nombre" autocomplete="given-name" />
+            <input type="text" name="firstName" placeholder="Nombre" autocomplete="given-name" required maxlength="80" />
           </label>
           <label>
             <span>Apellidos</span>
-            <input type="text" name="apellidos" placeholder="Apellidos" autocomplete="family-name" />
+            <input type="text" name="lastName" placeholder="Apellidos" autocomplete="family-name" required maxlength="80" />
           </label>
           <label class="contact-field-wide">
             <span>Correo</span>
-            <input type="email" name="correo" placeholder="Correo" autocomplete="email" required />
+            <input type="email" name="email" placeholder="Correo" autocomplete="email" required maxlength="254" />
           </label>
         </div>
 
         <label>
           <span>Tema</span>
-          <input type="text" name="tema" placeholder="Tema del mensaje" required />
+          <input type="text" name="subject" placeholder="Tema del mensaje" required maxlength="160" />
         </label>
 
         <label>
           <span>Mensaje</span>
-          <textarea name="mensaje" placeholder="Escribe tu mensaje" rows="8" required></textarea>
+          <textarea name="message" placeholder="Escribe tu mensaje" rows="8" required maxlength="5000"></textarea>
+        </label>
+
+        <label class="contact-consent">
+          <input type="checkbox" name="privacyAcknowledged" required />
+          <span>
+            He leido la <a href="/legal/privacidad" target="_self">politica de privacidad</a>.
+          </span>
+        </label>
+
+        <label class="contact-trap" aria-hidden="true">
+          <span>Empresa</span>
+          <input type="text" name="company" tabindex="-1" autocomplete="off" />
         </label>
 
         <button type="submit">ENVIAR SOLICITUD</button>
@@ -98,45 +111,9 @@ const email = SITE.contactEmail;
 
 <style define:vars={{ backgroundImage }}>
   :global(body.contact-nav-ready) {
-    background: #050505;
+    background: var(--color-black-papers);
   }
 
-  :global(body.contact-nav-ready #main-nav) {
-    --nav-gradient-top-alpha: 0;
-    --nav-gradient-bottom-alpha: 0;
-    --nav-glass-line-alpha: 0;
-    --nav-glass-shadow-alpha: 0;
-    background: transparent;
-    border-bottom-color: transparent;
-    box-shadow: none;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
-
-  :global(body.contact-nav-ready #main-nav .main-nav__fx),
-  :global(body.contact-nav-ready #main-nav .main-nav__links-wrap),
-  :global(body.contact-nav-ready #main-nav .main-nav__floating-links-layer) {
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-  }
-
-  :global(body.contact-nav-ready #main-nav .menu-button) {
-    color: #ff341f;
-    mix-blend-mode: normal;
-  }
-
-  :global(body.contact-nav-ready #main-nav .main-nav__logo) {
-    filter: brightness(0) invert(1);
-  }
-
-  :global(body.contact-nav-ready #main-nav.main-nav--menu-revealed .menu-button) {
-    color: #000;
-  }
-
-  :global(body.contact-nav-ready #main-nav .menu-button:focus-visible) {
-    outline-color: rgba(255, 52, 31, 0.75);
-  }
 
   .contact-page {
     position: relative;
@@ -146,8 +123,8 @@ const email = SITE.contactEmail;
       clamp(2.5rem, 5vw, 5.5rem);
     background:
       radial-gradient(circle at 74% 44%, rgba(255, 255, 255, 0.1), transparent 34rem),
-      linear-gradient(90deg, rgba(5, 5, 5, 0.96) 0%, rgba(5, 5, 5, 0.88) 52%, rgba(5, 5, 5, 0.96) 100%),
-      #050505;
+      linear-gradient(90deg, rgb(11 12 12 / 96%) 0%, rgb(11 12 12 / 88%) 52%, rgb(11 12 12 / 96%) 100%),
+      var(--color-black-papers);
     color: #fff;
   }
 
@@ -157,11 +134,8 @@ const email = SITE.contactEmail;
     z-index: 1;
     opacity: 0.42;
     pointer-events: none;
-    background-image:
-      radial-gradient(circle at 18% 28%, rgba(255, 255, 255, 0.28) 0 1px, transparent 1px),
-      radial-gradient(circle at 65% 14%, rgba(255, 255, 255, 0.16) 0 1px, transparent 1px),
-      radial-gradient(circle at 42% 78%, rgba(255, 255, 255, 0.18) 0 1px, transparent 1px);
-    background-size: 17px 19px, 23px 29px, 31px 37px;
+    background-image: var(--imperio-dot-pattern-source);
+    background-size: var(--imperio-dot-pattern-size);
   }
 
   .contact-illustration {
@@ -270,6 +244,51 @@ const email = SITE.contactEmail;
     white-space: nowrap;
   }
 
+  .contact-form .contact-consent {
+    grid-template-columns: 22px minmax(0, 1fr);
+    align-items: start;
+    gap: 0.7rem;
+    color: rgba(255, 255, 255, 0.88);
+    font-family: var(--font-display);
+    font-size: 0.9rem;
+  }
+
+  .contact-form .contact-consent span {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+  }
+
+  .contact-form .contact-consent input {
+    width: 20px;
+    min-height: 20px;
+    margin: 0;
+    padding: 0;
+    accent-color: var(--color-red-accent);
+  }
+
+  .contact-consent a {
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
+  }
+
+  .contact-trap {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .contact-feedback {
+    margin: 0;
+    color: #fff;
+    font-weight: 800;
+  }
+
   .contact-form input,
   .contact-form textarea {
     width: 100%;
@@ -302,9 +321,9 @@ const email = SITE.contactEmail;
 
   .contact-form input:focus,
   .contact-form textarea:focus {
-    border-color: rgba(255, 52, 31, 0.82);
+    border-color: rgb(242 56 30 / 82%);
     background: rgba(34, 34, 34, 0.96);
-    box-shadow: 0 0 0 2px rgba(255, 52, 31, 0.18);
+    box-shadow: 0 0 0 2px rgb(242 56 30 / 18%);
   }
 
   .contact-form button {
@@ -327,8 +346,8 @@ const email = SITE.contactEmail;
 
   .contact-form button:hover,
   .contact-form button:focus-visible {
-    border-color: #ff341f;
-    background: #ff341f;
+    border-color: var(--color-red-accent);
+    background: var(--color-red-accent);
     color: #fff;
   }
 
@@ -372,13 +391,13 @@ const email = SITE.contactEmail;
   .contact-info p::selection,
   .contact-intro p::selection,
   .contact-title-wrap h1::selection {
-    background: #ff341f;
+    background: var(--color-red-accent);
     color: #fff;
   }
 
   .contact-info a:hover,
   .contact-info a:focus-visible {
-    color: #ff341f;
+    color: var(--color-red-accent);
   }
 
   @media (max-width: 980px) {

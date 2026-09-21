@@ -1,8 +1,94 @@
 ---
 import PageShell from "../layouts/PageShell.astro";
+import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
+import { recordLegalConsents } from "../lib/legal-consents";
+import PasswordField from "../components/PasswordField.astro";
+import { authError, privateAuthHeaders, readAuthForm, validNewPassword } from "../lib/auth-forms";
+import { safeInternalPath } from "../lib/redirects";
 
-const query = Astro.url.searchParams.toString();
-const loginHref = query ? `/login?${query}` : "/login";
+privateAuthHeaders(Astro.response.headers);
+const error = Astro.url.searchParams.get("error");
+const sent = Astro.url.searchParams.get("sent") === "1";
+const next = safeInternalPath(Astro.url.searchParams.get("next"), "/cuenta");
+const loginHref = `/login?next=${encodeURIComponent(next)}`;
+const siteUrl = (import.meta.env.PUBLIC_SITE_URL || Astro.url.origin).replace(/\/$/, "");
+
+if (Astro.request.method === "POST") {
+  let formData: URLSearchParams;
+  try { formData = await readAuthForm(Astro.request, "auth_registration"); }
+  catch (e) { return Astro.redirect(`/registro?error=${authError(e)}&next=${encodeURIComponent(next)}`, 303); }
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const acceptedTerms = formData.get("terms") === "on";
+  const acknowledgedPrivacy = formData.get("privacy") === "on";
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const password = formData.get("password") ?? "";
+  if (!validNewPassword(password) || password !== formData.get("password_confirmation")) {
+    return Astro.redirect(`/registro?error=password&next=${encodeURIComponent(next)}`, 303);
+  }
+
+  if (!emailPattern.test(email) || email.length > 254 || !acceptedTerms || !acknowledgedPrivacy) {
+    return Astro.redirect(`/registro?error=validation&next=${encodeURIComponent(next)}`);
+  }
+
+  const anonymousId = crypto.randomUUID();
+  const { createSupabaseServerClient } = await import("../lib/supabase/server");
+  const supabase = createSupabaseServerClient({
+    cookies: Astro.cookies,
+    request: Astro.request,
+  });
+  const redirectTo = `${siteUrl}/api/auth/callback?next=${encodeURIComponent(next)}`;
+
+  try {
+    await recordLegalConsents([
+      {
+        anonymousId,
+        consentType: "terms",
+        documentVersion: LEGAL_DOCUMENT_VERSIONS.terms,
+        accepted: true,
+        source: "registration",
+      },
+      {
+        anonymousId,
+        consentType: "privacy_acknowledgement",
+        documentVersion: LEGAL_DOCUMENT_VERSIONS.privacy,
+        accepted: true,
+        source: "registration",
+      },
+    ]);
+  } catch {
+    return Astro.redirect(`/registro?error=consent&next=${encodeURIComponent(next)}`);
+  }
+
+  Astro.cookies.set("imperio_registration_consent", anonymousId, {
+    httpOnly: true,
+    secure: siteUrl.startsWith("https://"),
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60,
+  });
+
+  const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: redirectTo,
+    },
+  });
+
+  if (signUpError) {
+    Astro.cookies.delete("imperio_registration_consent", { path: "/" });
+    return Astro.redirect(`/registro?error=otp&next=${encodeURIComponent(next)}`);
+  }
+
+  if (signUpData.session && signUpData.user) {
+    const { linkAnonymousConsents } = await import("../lib/legal-consents");
+    await linkAnonymousConsents({ anonymousId, userId: signUpData.user.id });
+    Astro.cookies.delete("imperio_registration_consent", { path: "/" });
+    return Astro.redirect(next, 303);
+  }
+
+  return Astro.redirect(`/registro?sent=1&next=${encodeURIComponent(next)}`);
+}
 ---
 
 <PageShell
@@ -10,16 +96,96 @@ const loginHref = query ? `/login?${query}` : "/login";
   description="Registro para Imperio Espanol."
   eyebrow="Registro"
   heading="Crear cuenta"
-  summary="Completa tu email para recibir acceso."
+  noindex
   narrow
 >
   <Fragment slot="header">
-    <div class="card">
-      <p>
-        El acceso gratuito PIQUERO se crea con enlace magico. Si el correo no existe todavia,
-        Supabase creara tu perfil al confirmar el enlace.
-      </p>
-      <a class="btn btn-primary" href={loginHref}>Crear cuenta PIQUERO</a>
-    </div>
+    {sent && (
+      <div class="notice" role="status">
+        <strong>Revisa tu correo.</strong>
+        <p>Si el registro es válido, recibirás un enlace para confirmar tu correo. Si ya tienes cuenta, inicia sesión o recupera tu contraseña.</p>
+        <a href="/confirmar-correo">Reenviar confirmación</a>
+      </div>
+    )}
+    {error && (
+      <div class="notice" role="alert">
+        <strong>No se pudo completar el registro.</strong>
+        <p>
+          {error === "password" ? "Las contraseñas deben coincidir y tener al menos 12 caracteres, hasta 72 bytes."
+            : error === "validation"
+            ? "Revisa el correo y acepta los dos documentos obligatorios."
+            : error === "rate"
+              ? "Has realizado demasiadas solicitudes. Espera unos minutos."
+            : "Intentalo de nuevo dentro de unos minutos."}
+        </p>
+      </div>
+    )}
+    {!sent && (
+      <form class="registration-form" method="post">
+        <label>
+          Correo electronico
+          <input type="email" name="email" autocomplete="email" required maxlength="254" />
+        </label>
+        <PasswordField isNew autocomplete="new-password" />
+        <PasswordField name="password_confirmation" label="Repetir contraseña" isNew autocomplete="new-password" />
+        <label class="registration-check">
+          <input type="checkbox" name="terms" required />
+          <span>
+            Acepto los <a href="/legal/terminos" target="_self">terminos y condiciones</a>
+            {" "}(version {LEGAL_DOCUMENT_VERSIONS.terms}).
+          </span>
+        </label>
+        <label class="registration-check">
+          <input type="checkbox" name="privacy" required />
+          <span>
+            He leido la <a href="/legal/privacidad" target="_self">politica de privacidad</a>
+            {" "}(version {LEGAL_DOCUMENT_VERSIONS.privacy}).
+          </span>
+        </label>
+        <button class="btn btn-primary" type="submit">Crear cuenta PIQUERO</button>
+      </form>
+    )}
+    <p class="muted">¿Ya tienes cuenta? <a href={loginHref}>Inicia sesion</a>.</p>
   </Fragment>
 </PageShell>
+
+<style>
+  .registration-form {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .registration-form > label:not(.registration-check) {
+    display: grid;
+    gap: 0.4rem;
+    font-weight: 700;
+  }
+
+  .registration-form input[type="email"] {
+    min-height: 44px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 0.75rem;
+    font: inherit;
+  }
+
+  .registration-check {
+    display: grid;
+    grid-template-columns: 22px minmax(0, 1fr);
+    gap: 0.65rem;
+    align-items: start;
+  }
+
+  .registration-check input {
+    width: 20px;
+    height: 20px;
+    margin: 0.1rem 0 0;
+    accent-color: var(--color-red-accent);
+  }
+
+  .registration-form a,
+  .muted a {
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
+  }
+</style>

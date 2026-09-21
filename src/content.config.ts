@@ -1,5 +1,7 @@
-import { defineCollection, z } from "astro:content";
+import { defineCollection } from "astro:content";
 import { glob } from "astro/loaders";
+import { z } from "astro/zod";
+import { editorialDate } from "./config/editorial";
 
 const articles = defineCollection({
   loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/articles" }),
@@ -7,11 +9,14 @@ const articles = defineCollection({
     title: z.string(),
     seoTitle: z.string().min(50).max(70),
     summary: z.string(),
-    date: z.string(),
+    date: editorialDate,
     category: z.enum(["efemeride", "ensayo", "presente"]),
     tier: z.enum(["piquero", "arcabucero", "maestre-de-campo"]),
     seoDescription: z.string().optional(),
     ogImage: z.string().optional(),
+    indexable: z.boolean().default(false),
+    author: z.string().optional(),
+    modifiedAt: editorialDate.optional(),
   }),
 });
 
@@ -27,6 +32,7 @@ const lanzamientos = defineCollection({
     paymentLink: z.string().optional(),
     seoDescription: z.string().optional(),
     ogImage: z.string().optional(),
+    indexable: z.boolean().default(false),
   }),
 });
 
@@ -47,6 +53,7 @@ const rutas = defineCollection({
       .optional(),
     seoDescription: z.string().optional(),
     ogImage: z.string().optional(),
+    indexable: z.boolean().default(false),
   }),
 });
 

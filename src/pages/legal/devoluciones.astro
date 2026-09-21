@@ -1,0 +1,76 @@
+---
+import LegalDocument from "../../components/LegalDocument.astro";
+import { LEGAL_BUSINESS, LEGAL_DOCUMENT_VERSIONS } from "../../config/legal";
+import { PRODUCTS } from "../../config/products";
+
+const shirt = PRODUCTS["camiseta-imperial"];
+---
+
+<LegalDocument
+  title="Envios, devoluciones y reembolsos | Imperio Español"
+  description="Procedimiento de devolucion y reembolso para productos fisicos."
+  heading="Devoluciones y reembolsos"
+  version={LEGAL_DOCUMENT_VERSIONS.returns}
+>
+  <section>
+    <h2>Envios de la Camiseta Imperial</h2>
+    <p>La reserva anticipada no supone un pago. Las condiciones y plazos de envio siguientes se aplicaran a la compra confirmada posteriormente. El envio estandar a Peninsula esta incluido en el precio unitario final.</p>
+    <p>{shirt.shippingInformation}</p>
+    <p>
+      No realizamos envios a Baleares, Canarias, Ceuta, Melilla ni a otros paises.
+      {" "}{shirt.taxInformation}
+    </p>
+  </section>
+  <section>
+    <h2>1. Plazo</h2>
+    <p>
+      Salvo excepcion legal aplicable, el consumidor dispone de catorce dias
+      naturales desde la recepcion del bien para comunicar el desistimiento.
+    </p>
+  </section>
+
+  <section>
+    <h2>2. Comunicacion</h2>
+    <p>
+      Puede utilizar el <a href="/legal/desistimiento">formulario de desistimiento</a>
+      o cualquier declaracion inequivoca enviada a
+      <a href={`mailto:${LEGAL_BUSINESS.legalEmail}`}> {LEGAL_BUSINESS.legalEmail}</a>.
+    </p>
+  </section>
+
+  <section>
+    <h2>3. Devolucion del producto</h2>
+    <p><strong>Direccion:</strong> {LEGAL_BUSINESS.returnsAddress}</p>
+    <p>
+      El bien debe enviarse dentro del plazo legal tras comunicar la decision. El
+      consumidor responde de la disminucion de valor derivada de una manipulacion
+      distinta de la necesaria para comprobar su naturaleza, caracteristicas y funcionamiento.
+    </p>
+  </section>
+
+  <section>
+    <h2>4. Costes y reembolso</h2>
+    <p>
+      Los costes directos de devolucion corresponden al consumidor cuando se haya
+      informado de ello, salvo defecto, error o supuesto legal distinto. El reembolso
+      se efectuara por el mismo medio de pago dentro del plazo legal y puede retenerse
+      hasta recibir el bien o prueba de su envio, segun proceda.
+    </p>
+  </section>
+
+  <section>
+    <h2>5. Defectos y falta de conformidad</h2>
+    <p>
+      Los productos defectuosos o no conformes se atienden conforme a la garantia
+      legal, sin cargos que correspondan al consumidor por ejercer esos derechos.
+    </p>
+  </section>
+
+  <section>
+    <h2>6. Excepciones</h2>
+    <p>
+      Solo se aplicaran excepciones previstas legalmente y explicadas antes de la
+      compra. Una etiqueta comercial como "venta final" no elimina derechos imperativos.
+    </p>
+  </section>
+</LegalDocument>

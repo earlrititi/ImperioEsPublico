@@ -1,0 +1,37 @@
+---
+import LegalDocument from "../../components/LegalDocument.astro";
+import { LEGAL_BUSINESS } from "../../config/legal";
+---
+
+<LegalDocument
+  title="Declaracion de accesibilidad | Imperio Español"
+  description="Compromiso, alcance y canal de contacto sobre accesibilidad."
+  heading="Accesibilidad"
+  version="2026-08-25"
+>
+  <section>
+    <h2>Compromiso</h2>
+    <p>
+      Imperio Español trabaja con WCAG 2.2 nivel AA como objetivo practico para
+      navegacion por teclado, foco visible, estructura, contraste, formularios,
+      dialogos y reduccion de movimiento.
+    </p>
+  </section>
+
+  <section>
+    <h2>Estado</h2>
+    <p>
+      La auditoria tecnica esta en curso. Esta declaracion no afirma conformidad
+      completa hasta finalizar pruebas automatizadas y manuales sobre los flujos de
+      autenticacion, compra, cookies y contenido.
+    </p>
+  </section>
+
+  <section>
+    <h2>Comunicar una barrera</h2>
+    <p>
+      Indica la URL, el problema, el dispositivo y la tecnologia de apoyo utilizada
+      escribiendo a <a href={`mailto:${LEGAL_BUSINESS.legalEmail}`}>{LEGAL_BUSINESS.legalEmail}</a>.
+    </p>
+  </section>
+</LegalDocument>

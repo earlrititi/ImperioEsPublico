@@ -1,5 +1,6 @@
 ---
 import PageShell from "../layouts/PageShell.astro";
+import { ES_VAT } from "../config/tax";
 ---
 
 <PageShell
@@ -10,84 +11,48 @@ import PageShell from "../layouts/PageShell.astro";
   summary="Accede al archivo, las cronicas completas y las rutas de lectura. El pago se procesa de forma segura en Stripe Checkout."
 >
   <section class="section">
+    <p class="muted">{ES_VAT.description} Aplicable a los planes mensuales y anuales.</p>
     <div class="grid subscribe-grid">
       <article class="card subscribe-card">
         <span class="badge">Gratis</span>
         <h2>PIQUERO</h2>
         <p class="muted">Entrada gratuita al circulo de lectores.</p>
-        <p>Manifiesto, contenido gratuito ampliado y newsletter basica.</p>
+        <p>Manifiesto y contenido gratuito publicado en el archivo.</p>
         <a class="btn btn-ghost" href="/registro">Crear cuenta gratis</a>
       </article>
 
-      <article class="card subscribe-card">
-        <span class="badge">3 EUR / mes</span>
+      <article class="card subscribe-card" id="arcabucero">
+        <span class="badge">Desde 1,99 EUR / mes</span>
         <h2>ARCABUCERO</h2>
-        <p class="muted">Archivo completo, cronicas premium y rutas de lectura.</p>
-        <p>El primer nivel de pago para sostener el proyecto y abrir el archivo.</p>
-        <button class="btn btn-primary" type="button" data-plan="arcabucero-monthly">
-          Suscribirme
-        </button>
+        <p class="muted">Acceso a los articulos para suscriptores.</p>
+        <p>Incluye los mismos articulos que Maestre de Campo. Los seis articulos originales siguen siendo gratuitos.</p>
+        <div class="billing-options" role="group" aria-label="Facturacion de Arcabucero">
+          <a class="btn btn-primary" href="/checkout/arcabucero-monthly">
+            Mensual · 1,99 EUR
+          </a>
+          <a class="btn btn-primary" href="/checkout/arcabucero-annual">
+            Anual · 17,99 EUR
+          </a>
+        </div>
       </article>
 
-      <article class="card subscribe-card">
-        <span class="badge">6 EUR / mes</span>
+      <article class="card subscribe-card" id="maestre-de-campo">
+        <span class="badge">Desde 3,99 EUR / mes</span>
         <h2>MAESTRE DE CAMPO</h2>
-        <p class="muted">Acceso superior, ventajas reservadas y prioridad futura.</p>
-        <p>La capa completa para quienes quieren implicarse con mas profundidad.</p>
-        <button class="btn btn-primary" type="button" data-plan="maestre-campo-monthly">
-          Suscribirme
-        </button>
+        <p class="muted">Acceso a los articulos para suscriptores.</p>
+        <p>Incluye los mismos articulos que Arcabucero. Los seis articulos originales siguen siendo gratuitos.</p>
+        <div class="billing-options" role="group" aria-label="Facturacion de Maestre de Campo">
+          <a class="btn btn-primary" href="/checkout/maestre-campo-monthly">
+            Mensual · 3,99 EUR
+          </a>
+          <a class="btn btn-primary" href="/checkout/maestre-campo-annual">
+            Anual · 37,99 EUR
+          </a>
+        </div>
       </article>
     </div>
-    <p class="muted subscribe-status" id="checkout-status" role="status" aria-live="polite"></p>
   </section>
 </PageShell>
-
-<script>
-  const buttons = document.querySelectorAll("button[data-plan]");
-  const status = document.getElementById("checkout-status");
-
-  const setStatus = (message) => {
-    if (status) {
-      status.textContent = message;
-    }
-  };
-
-  buttons.forEach((button) => {
-    button.addEventListener("click", async () => {
-      const plan = button.getAttribute("data-plan");
-      const originalText = button.textContent || "Suscribirme";
-
-      button.setAttribute("disabled", "true");
-      button.textContent = "Abriendo Stripe...";
-      setStatus("");
-
-      try {
-        const response = await fetch("/api/create-checkout-session", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ plan }),
-        });
-        const data = await response.json().catch(() => ({}));
-
-        if (data.url) {
-          window.location.href = data.url;
-          return;
-        }
-
-        setStatus(data.error || "No se pudo iniciar el pago.");
-      } catch (error) {
-        console.error(error);
-        setStatus("No se pudo iniciar el pago.");
-      } finally {
-        button.removeAttribute("disabled");
-        button.textContent = originalText;
-      }
-    });
-  });
-</script>
 
 <style>
   .subscribe-grid {
@@ -98,19 +63,23 @@ import PageShell from "../layouts/PageShell.astro";
     display: grid;
     gap: var(--space-2);
     align-content: start;
+    scroll-margin-top: 7rem;
+  }
+
+  .subscribe-card:target {
+    border-color: var(--color-red-accent);
+    box-shadow: 0 0 0 3px rgb(242 56 30 / 20%);
   }
 
   .subscribe-card .btn {
+    width: 100%;
+  }
+
+  .billing-options {
+    display: grid;
+    gap: 0.45rem;
     align-self: end;
     margin-top: var(--space-2);
   }
 
-  .subscribe-card button:disabled {
-    cursor: wait;
-    opacity: 0.62;
-  }
-
-  .subscribe-status {
-    margin-top: var(--space-3);
-  }
 </style>

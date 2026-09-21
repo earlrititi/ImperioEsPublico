@@ -1,0 +1,11 @@
+---
+import PageShell from "../layouts/PageShell.astro";
+import AuthEmailForm from "../components/AuthEmailForm.astro";
+import { requestAuthEmail } from "../lib/auth-email-request";
+import { privateAuthHeaders } from "../lib/auth-forms";
+privateAuthHeaders(Astro.response.headers);
+if (Astro.request.method === "POST") return requestAuthEmail(Astro, "recovery");
+---
+<PageShell title="Recuperar contraseña | Imperio Español" description="Recupera el acceso a tu cuenta." heading="Definir o recuperar contraseña" noindex narrow>
+  <Fragment slot="header"><AuthEmailForm purpose="recovery" sent={Astro.url.searchParams.get('sent') === '1'} error={Astro.url.searchParams.get('error')} /></Fragment>
+</PageShell>

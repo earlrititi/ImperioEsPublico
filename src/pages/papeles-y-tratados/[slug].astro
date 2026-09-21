@@ -1,0 +1,495 @@
+---
+import ArticleBody from "../../components/ArticleBody.jsx";
+import { ARTICLES_ITEMS } from "../../config/home";
+import { getArticleTier } from "../../config/article-access";
+import { loadArticleSource } from "../../lib/article-content";
+import { hasEditorialAccess } from "../../lib/editorial-access";
+import { canAccessContentTier, getSubscriptionByUserId } from "../../lib/subscriptions";
+import { createSupabaseServerClient } from "../../lib/supabase/server";
+import { getArticleEditorial, getAuthors, getEntities } from "../../config/editorial";
+import { articleSchema, relatedArticles as resolveRelatedArticles } from "../../lib/article-seo";
+import { breadcrumbs, formatEditorialDate } from "../../lib/seo";
+import HistoricalBlocks from "../../components/editorial/HistoricalBlocks.astro";
+import Layout from "../../layouts/Layout.astro";
+import { withBase } from "../../utils/basePath";
+
+export const prerender = false;
+
+type Article = (typeof ARTICLES_ITEMS)[number] & {
+  lead?: string;
+  publishedAt?: string;
+  imageCaption?: string;
+  imageCredit?: string;
+  imageSource?: string;
+  imageSourceUrl?: string;
+  imageLicense?: string;
+  relatedSlugs?: string[];
+};
+
+const article = ARTICLES_ITEMS.find((item) => item.slug === Astro.params.slug) as Article | undefined;
+if (!article) return new Response("Articulo no encontrado", { status: 404 });
+
+const tier = getArticleTier(article.slug);
+let hasAccess = tier === "piquero";
+let accessUnavailable = false;
+if (!hasAccess) {
+  Astro.response.headers.set("Cache-Control", "private, no-store");
+  Astro.response.headers.set("CDN-Cache-Control", "no-store");
+  Astro.response.headers.set("Vercel-CDN-Cache-Control", "no-store");
+  Astro.response.headers.set("Vary", "Cookie");
+  try {
+    const supabase = createSupabaseServerClient({ cookies: Astro.cookies, request: Astro.request });
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error && error.name !== "AuthSessionMissingError") throw error;
+    const editorialAccess = hasEditorialAccess(user);
+    const subscription = user && !editorialAccess ? await getSubscriptionByUserId(user.id) : null;
+    hasAccess = editorialAccess || canAccessContentTier(tier, {
+      plan: subscription?.plan,
+      status: subscription?.status,
+    });
+  } catch {
+    accessUnavailable = true;
+    Astro.response.status = 503;
+  }
+}
+const articlePath = `/papeles-y-tratados/${article.slug}`;
+const articleSource = hasAccess ? await loadArticleSource(article.sourceFile) : null;
+const editorial = getArticleEditorial(article.slug);
+const authors = getAuthors(editorial.authorIds);
+const entities = getEntities(editorial.entityIds);
+const relatedArticles = resolveRelatedArticles(article.slug);
+const structuredData = [articleSchema(article), breadcrumbs([
+  { name: "Inicio", path: "/" },
+  { name: "Papeles y Tratados", path: "/papeles-y-tratados" },
+  { name: article.title, path: articlePath },
+])];
+---
+
+<Layout
+  title={article.seoTitle}
+  description={article.description}
+  ogImage={article.imageSrc}
+  footerVariant="dark"
+  structuredData={structuredData}
+  ogType="article"
+  publishedAt={article.publishedAt}
+  modifiedAt={editorial.modifiedAt}
+>
+  <main class="article-page" data-home-mark-surface="black">
+    <div class="article-page__dots" aria-hidden="true"></div>
+    <article class="article-page__content">
+      <nav class="article-page__breadcrumbs" aria-label="Migas de pan">
+        <a href={withBase("/")}>Inicio</a>
+        <span aria-hidden="true">/</span>
+        <a href={withBase("/papeles-y-tratados")}>Papeles y Tratados</a>
+        <span aria-hidden="true">/</span>
+        <span aria-current="page">{article.title}</span>
+      </nav>
+
+      <header class="article-page__header">
+        <p class="article-page__category">{article.category}</p>
+        <h1>{article.title}</h1>
+        {article.lead && <p class="article-page__lead">{article.lead}</p>}
+        <div class="article-page__metadata">
+          {authors.map(author => <a rel="author" href={withBase(`/autores/${author.id}`)}>{author.name}</a>)}
+          {article.publishedAt && <span>Publicado: <time datetime={article.publishedAt}>{formatEditorialDate(article.publishedAt)}</time></span>}
+          {editorial.modifiedAt && <span>Revisado: <time datetime={editorial.modifiedAt}>{formatEditorialDate(editorial.modifiedAt)}</time></span>}
+        </div>
+      </header>
+
+      <figure class="article-page__figure">
+        {
+          "wordmarkSrc" in article ? (
+          <div
+            class="article-page__media article-page__media--brand"
+            role="img"
+            aria-label={article.imageAlt}
+          >
+            <img
+              class="article-page__brand-symbol"
+              src={article.imageSrc}
+              alt=""
+              width={article.imageWidth}
+              height={article.imageHeight}
+              decoding="async"
+              fetchpriority="high"
+            />
+            <img
+              class="article-page__brand-wordmark"
+              src={article.wordmarkSrc}
+              alt=""
+              width="633"
+              height="162"
+              decoding="async"
+            />
+          </div>
+          ) : (
+          <picture class="article-page__media">
+            <source
+              type="image/avif"
+              srcset={article.imageAvifSrcSet}
+              sizes="(max-width: 1100px) 100vw, 1100px"
+            />
+            <source
+              type="image/webp"
+              srcset={article.imageWebpSrcSet}
+              sizes="(max-width: 1100px) 100vw, 1100px"
+            />
+            <img
+              src={article.imageSrc}
+              alt={article.imageAlt}
+              width={article.imageWidth}
+              height={article.imageHeight}
+              decoding="async"
+              fetchpriority="high"
+            />
+          </picture>
+          )
+        }
+        {
+          (article.imageCaption || article.imageCredit || article.imageSource) && (
+            <figcaption>
+              {article.imageCaption && <span>{article.imageCaption}</span>}
+              {article.imageCredit && <span>{article.imageCredit}</span>}
+              {article.imageSourceUrl ? (
+                <a href={article.imageSourceUrl} target="_self" rel="noopener noreferrer">
+                  {article.imageSource || "Fuente de la imagen"}
+                </a>
+              ) : (
+                article.imageSource && <span>{article.imageSource}</span>
+              )}
+              {article.imageLicense && <span>{article.imageLicense}</span>}
+            </figcaption>
+          )
+        }
+      </figure>
+
+      <div class="article-page__copy">
+        <HistoricalBlocks data={{ ...editorial, contents: hasAccess ? editorial.contents : [] }} position="intro" />
+        {articleSource !== null ? (
+          <div class:list={{ "article-premium-body": tier !== "piquero" }} data-nosnippet={tier !== "piquero" || undefined}>
+            <ArticleBody source={articleSource} noteIds={editorial.notes.map(note => note.id)} />
+          </div>
+        ) : (
+          <section class="article-page__paywall" aria-label="Acceso al articulo">
+            <h2>{accessUnavailable ? "Acceso temporalmente no disponible" : "Articulo para suscriptores"}</h2>
+            <p>{accessUnavailable
+              ? "No hemos podido comprobar tu suscripcion. Intentalo de nuevo en unos minutos."
+              : "Incluido en Arcabucero y Maestre de Campo, con suscripcion mensual o anual."}</p>
+            <div class="article-page__paywall-actions">
+              <a class="btn btn-primary" href={withBase(`/login?next=${encodeURIComponent(articlePath)}`)}>Iniciar sesion</a>
+              <a class="btn btn-ghost" href={withBase("/suscribirse")}>Ver suscripciones</a>
+            </div>
+          </section>
+        )}
+        <HistoricalBlocks data={editorial} position="end" />
+        {entities.length > 0 && <aside aria-labelledby="related-entities"><h2 id="related-entities">Contexto y entidades relacionadas</h2><ul>{entities.map(entity => <li><a href={withBase(`/${entity.id}`)}>{entity.title}</a></li>)}</ul></aside>}
+      </div>
+
+      {
+        relatedArticles.length > 0 && (
+          <aside class="article-page__related" aria-labelledby="related-title">
+            <h2 id="related-title">Articulos relacionados</h2>
+            <ul>
+              {relatedArticles.map((related) => (
+                <li><a href={related.href}>{related.title}</a></li>
+              ))}
+            </ul>
+          </aside>
+        )
+      }
+    </article>
+  </main>
+</Layout>
+
+<style>
+  .article-page__metadata { display: flex; flex-wrap: wrap; gap: .5rem 1rem; margin-top: 1rem; font-size: .875rem; }
+  .article-page__metadata a { color: inherit; }
+  .article-page__paywall {
+    padding: 2rem 0;
+    border-block: 1px solid rgb(255 255 255 / 25%);
+  }
+
+  .article-page__paywall h2 {
+    font-size: 1.5rem;
+    letter-spacing: 0;
+  }
+
+  .article-page__paywall-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+  }
+
+  .article-page__paywall-actions .btn { color:#fff; background:#a92317; border:1px solid #a92317; min-height:48px; text-align:center; }
+  .article-page__paywall-actions .btn-ghost { color:#111; background:#fff; border-color:#fff; }
+  .article-page__paywall-actions .btn:hover { color:#111; background:#fff; }
+  .article-page__paywall-actions .btn-ghost:hover { color:#fff; background:#a92317; border-color:#fff; }
+  .article-page__paywall-actions .btn:focus-visible { outline:3px solid #fff; outline-offset:4px; }
+  .article-page__paywall-actions .btn:active { transform:translateY(1px); }
+
+  :global(body:has(.article-page)) {
+    color: #fff;
+    background: var(--color-black-papers);
+  }
+
+  .article-page {
+    position: relative;
+    min-height: 100svh;
+    padding: 8rem 0 clamp(4rem, 9vw, 8rem);
+    color: #fff;
+    background-color: var(--color-black-papers);
+    isolation: isolate;
+  }
+
+  .article-page__dots {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    opacity: 0.42;
+    pointer-events: none;
+    background-image: var(--imperio-dot-pattern-source);
+    background-size: var(--imperio-dot-pattern-size);
+  }
+
+  .article-page__content {
+    position: relative;
+    z-index: 1;
+    width: min(100%, 1100px);
+    margin: 0 auto;
+  }
+
+  .article-page__media {
+    display: block;
+    width: 100%;
+    background: var(--color-black-papers);
+  }
+
+  .article-page__figure {
+    margin: 0;
+  }
+
+  .article-page__figure figcaption {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.75rem;
+    width: min(100% - 2rem, 780px);
+    margin: 0.9rem auto 0;
+    color: rgb(255 255 255 / 0.7);
+    font-size: 0.78rem;
+    line-height: 1.45;
+  }
+
+  .article-page__figure figcaption span + span::before,
+  .article-page__figure figcaption span + a::before,
+  .article-page__figure figcaption a + span::before {
+    content: "·";
+    margin-right: 0.75rem;
+  }
+
+  .article-page__figure figcaption a {
+    color: inherit;
+    text-underline-offset: 0.18em;
+  }
+
+  .article-page__media img:not(.article-page__brand-symbol):not(.article-page__brand-wordmark) {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .article-page__media--brand {
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
+    place-items: center;
+    gap: clamp(1.25rem, 3vw, 2.5rem);
+    min-height: clamp(22rem, 55vw, 38rem);
+    padding: clamp(3rem, 8vw, 6.5rem) 1.5rem;
+  }
+
+  .article-page__brand-symbol {
+    width: min(32vw, 15rem);
+    height: auto;
+    min-height: 0;
+    object-fit: contain;
+  }
+
+  .article-page__brand-wordmark {
+    width: min(72vw, 34rem);
+    height: auto;
+    filter: brightness(0) invert(1);
+  }
+
+  .article-page__header {
+    width: min(100% - 2rem, 780px);
+    margin: 0 auto clamp(2.5rem, 6vw, 4.5rem);
+  }
+
+  .article-page__breadcrumbs {
+    display: flex;
+    gap: 0.55rem;
+    align-items: baseline;
+    width: min(100% - 2rem, 780px);
+    margin: 0 auto 2rem;
+    color: rgb(255 255 255 / 0.65);
+    font-size: 0.75rem;
+    line-height: 1.5;
+  }
+
+  .article-page__breadcrumbs a {
+    color: inherit;
+  }
+
+  .article-page__breadcrumbs span[aria-current="page"] {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .article-page__category {
+    margin: 0 0 0.85rem;
+    color: var(--color-red-accent);
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1.3;
+    text-transform: uppercase;
+  }
+
+  .article-page__header h1 {
+    margin: 0;
+    color: #fff;
+    font-size: clamp(2.5rem, 7vw, 5.8rem);
+    font-weight: 700;
+    line-height: 0.96;
+    letter-spacing: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .article-page__lead {
+    max-width: 44rem;
+    margin: 1.5rem 0 0;
+    color: rgb(255 255 255 / 0.82);
+    font-size: clamp(1.08rem, 2vw, 1.35rem);
+    line-height: 1.55;
+  }
+
+  .article-page__copy {
+    width: min(100% - 2rem, 780px);
+    margin: 0 auto;
+    padding-top: clamp(2.5rem, 7vw, 5.5rem);
+  }
+
+  :global(.article-body) {
+    color: #fff;
+    font-size: clamp(1.08rem, 1.8vw, 1.3rem);
+    line-height: 1.72;
+  }
+
+  :global(.article-body p) {
+    margin: 0 0 1.5em;
+    color: #fff;
+  }
+
+  :global(.article-body h2) {
+    margin: 2.4em 0 0.8em;
+    color: #fff;
+    font-size: clamp(1.75rem, 4vw, 2.7rem);
+    line-height: 1.08;
+    letter-spacing: 0;
+  }
+
+  :global(.article-body h3),
+  :global(.article-body .article-body__legacy-heading) {
+    margin: 2em 0 0.7em;
+    color: #fff;
+    font-size: clamp(1.3rem, 2.8vw, 1.8rem);
+    line-height: 1.18;
+  }
+
+  :global(.article-body ul),
+  :global(.article-body ol) {
+    margin: 0 0 1.5em;
+    padding-left: 1.25em;
+  }
+
+  :global(.article-body li) {
+    color: #fff;
+  }
+
+  :global(.article-body li + li) {
+    margin-top: 0.75em;
+  }
+
+  :global(.article-body a) {
+    color: #fff;
+    text-decoration: underline;
+    text-decoration-color: var(--color-red-accent);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.2em;
+  }
+
+  :global(.article-body a:hover),
+  :global(.article-body a:focus-visible) {
+    color: var(--color-red-accent);
+  }
+
+  :global(.article-body blockquote) {
+    margin: 2rem 0;
+    padding: 1.25rem 1.4rem;
+    border-left: 4px solid var(--color-red-accent);
+    background: rgb(255 255 255 / 0.06);
+  }
+
+  :global(.article-body blockquote p:last-child) {
+    margin-bottom: 0;
+  }
+
+  .article-page__related {
+    width: min(100% - 2rem, 780px);
+    margin: clamp(4rem, 8vw, 7rem) auto 0;
+    padding-top: 2rem;
+    border-top: 1px solid rgb(255 255 255 / 0.2);
+  }
+
+  .article-page__related h2 {
+    margin: 0 0 1.25rem;
+    font-size: clamp(1.4rem, 3vw, 2rem);
+  }
+
+  .article-page__related ul {
+    display: grid;
+    gap: 0.8rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .article-page__related a {
+    color: #fff;
+    text-decoration-color: var(--color-red-accent);
+    text-underline-offset: 0.25em;
+  }
+
+  @media (max-width: 980px) {
+    .article-page {
+      padding-top: 3rem;
+    }
+    .article-page__header h1 { font-size:3rem; line-height:1.08; }
+    .article-page__figure { width:calc(100% - 2rem); max-width:640px; margin-inline:auto; }
+    .article-page__media img:not(.article-page__brand-symbol):not(.article-page__brand-wordmark) { max-height:360px; object-fit:contain; }
+    .article-page__paywall-actions .btn { flex:1 1 12rem; }
+  }
+
+  @media (max-width: 767px) {
+    .article-page__media--brand {
+      min-height: 14rem;
+      padding-block:2rem;
+    }
+
+    .article-page__brand-symbol {
+      width: min(44vw, 12rem);
+    }
+  }
+</style>

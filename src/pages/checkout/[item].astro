@@ -1,0 +1,361 @@
+---
+import PageShell from "../../layouts/PageShell.astro";
+import { getCollection } from "astro:content";
+import { LEGAL_DOCUMENT_VERSIONS } from "../../config/legal";
+import { getProduct } from "../../config/products";
+import { hasPublishedPaidContent, isCheckoutModeEnabled } from "../../lib/commercial-readiness";
+import { getPublishedArticleTiers } from "../../lib/article-content";
+import { getCheckoutPlan, isCheckoutPriceValid } from "../../lib/stripe-prices";
+import { getEsVatRate } from "../../lib/stripe-tax";
+import { ES_VAT } from "../../config/tax";
+import { SHIRT_PRICE_COPY } from "../../config/commerce";
+
+export const prerender = false;
+
+Astro.response.headers.set("Cache-Control", "private, no-store");
+
+const item = Astro.params.item ?? "";
+const product = getProduct(item);
+const requestedSize = Astro.url.searchParams.get("size");
+const productVariant = product?.variantDetails.find((variant) => variant.size === requestedSize);
+const formatProductAmount = (cents: number) => new Intl.NumberFormat("es-ES", {
+  style: "currency", currency: product?.currency.toUpperCase() ?? "EUR",
+}).format(cents / 100);
+let selectedPlan = null;
+let stripePrice = null;
+let taxReady = false;
+let configurationError = "";
+
+if (!product) {
+  try {
+    selectedPlan = getCheckoutPlan(item);
+
+    if (selectedPlan) {
+      const { stripe } = await import("../../lib/stripe");
+      stripePrice = await stripe.prices.retrieve(selectedPlan.priceId);
+      taxReady = Boolean(await getEsVatRate(stripe, stripePrice.livemode));
+    }
+  } catch (error) {
+    console.error("Checkout contract page configuration error:", error);
+    configurationError = "El plan no esta disponible temporalmente.";
+  }
+}
+
+if (!product && !selectedPlan && !configurationError) {
+  Astro.response.status = 404;
+}
+
+const isSubscription = Boolean(selectedPlan);
+const intervalLabel = selectedPlan?.billingInterval === "year" ? "año" : "mes";
+const amount = stripePrice?.unit_amount ?? null;
+const currency = stripePrice?.currency ?? "eur";
+const formattedAmount = amount === null
+  ? "Precio no disponible"
+  : new Intl.NumberFormat("es-ES", {
+      style: "currency",
+      currency: currency.toUpperCase(),
+    }).format(amount / 100);
+const priceMatchesPlan = Boolean(stripePrice && selectedPlan && isCheckoutPriceValid(stripePrice, selectedPlan));
+const publishedTiers = [
+  ...(await getCollection("articles")).map((entry) => entry.data.tier),
+  ...getPublishedArticleTiers(),
+];
+const hasPlanContent = selectedPlan
+  ? hasPublishedPaidContent(publishedTiers, selectedPlan.plan)
+  : false;
+const checkoutModeEnabled = isCheckoutModeEnabled(
+  stripePrice?.livemode,
+  import.meta.env.STRIPE_LIVE_CHECKOUT_ENABLED
+);
+const canStartSubscription = isSubscription && priceMatchesPlan && hasPlanContent && checkoutModeEnabled && taxReady;
+const productReady = product?.legalStatus !== "LEGAL_PRODUCT_DATA_INCOMPLETE";
+const currentBenefits = "Acceso a todos los articulos para suscriptores, compartidos por Arcabucero y Maestre de Campo.";
+const pageTitle = selectedPlan
+  ? `Contratar ${selectedPlan.displayName}`
+  : product
+    ? `Comprar ${product.name}`
+    : "Checkout no disponible";
+---
+
+<PageShell
+  title={`${pageTitle} | Imperio Español`}
+  description="Informacion contractual inmediatamente anterior al pago."
+  eyebrow="Resumen contractual"
+  heading={pageTitle}
+  summary="Revisa la informacion y confirma tus elecciones antes de acceder a Stripe."
+  narrow
+  noindex
+>
+  <section class="section checkout-contract">
+    {configurationError && <div class="notice" role="alert">{configurationError}</div>}
+
+    {!product && !selectedPlan && !configurationError && (
+      <div class="notice" role="alert">
+        <strong>Checkout no encontrado.</strong>
+        <p><a href="/suscribirse">Volver a los planes</a>.</p>
+      </div>
+    )}
+
+    {selectedPlan && (
+      <>
+        <dl class="checkout-summary">
+          <div><dt>Plan</dt><dd>{selectedPlan.displayName}</dd></div>
+          <div><dt>Precio</dt><dd>{formattedAmount} / {intervalLabel}</dd></div>
+          <div><dt>Periodicidad</dt><dd>{selectedPlan.billingInterval === "year" ? "Anual" : "Mensual"}</dd></div>
+          <div><dt>Renovacion</dt><dd>Automatica hasta cancelacion</dd></div>
+          <div><dt>Cancelacion</dt><dd>Desde el portal de facturacion antes de la siguiente renovacion</dd></div>
+          <div>
+            <dt>Impuestos</dt>
+            <dd>{ES_VAT.description}</dd>
+          </div>
+          <div><dt>Acceso</dt><dd>Tras confirmacion del pago por webhook verificado</dd></div>
+          <div><dt>Prestaciones actuales</dt><dd>{currentBenefits}</dd></div>
+        </dl>
+
+        {!priceMatchesPlan && (
+          <div class="notice" role="alert">
+            La configuracion del precio de Stripe no coincide con este plan. El pago permanece bloqueado.
+          </div>
+        )}
+
+        {!hasPlanContent && (
+          <div class="notice" role="alert">
+            <strong>SUBSCRIPTION_CONTENT_NOT_READY</strong>
+            <p>
+              La contratacion se abrira cuando exista contenido premium publicado
+              para este nivel. No se creara ninguna sesion de pago mientras tanto.
+            </p>
+          </div>
+        )}
+
+        {!checkoutModeEnabled && priceMatchesPlan && (
+          <div class="notice" role="status">La contratacion todavia no esta abierta.</div>
+        )}
+        {!taxReady && priceMatchesPlan && (
+          <div class="notice" role="status">El pago permanece cerrado hasta verificar la configuracion fiscal en Stripe.</div>
+        )}
+
+        <form
+          class="checkout-consents"
+          data-checkout-contract
+          data-plan={item}
+          data-amount={formattedAmount}
+          data-interval={intervalLabel}
+        >
+          <label>
+            <input type="checkbox" name="terms" required />
+            <span>
+              Acepto los <a href="/legal/terminos" target="_self">terminos y condiciones</a>
+              {" "}(version {LEGAL_DOCUMENT_VERSIONS.terms}).
+            </span>
+          </label>
+          <label>
+            <input type="checkbox" name="privacy" required />
+            <span>
+              He leido la <a href="/legal/privacidad" target="_self">politica de privacidad</a>
+              {" "}(version {LEGAL_DOCUMENT_VERSIONS.privacy}).
+            </span>
+          </label>
+          <label>
+            <input type="checkbox" name="immediateAccess" required />
+            <span>Solicito que el servicio digital comience inmediatamente tras confirmarse el pago.</span>
+          </label>
+          <label>
+            <input type="checkbox" name="withdrawalAcknowledgement" required />
+            <span>
+              Reconozco las consecuencias que el inicio inmediato puede tener sobre
+              mi derecho de desistimiento conforme a las condiciones aplicables.
+            </span>
+          </label>
+          <button class="btn btn-primary" type="submit" disabled={!canStartSubscription}>
+            Suscribirme y pagar {formattedAmount} / {intervalLabel}
+          </button>
+          <p class="muted" data-checkout-status role="status" aria-live="polite"></p>
+        </form>
+      </>
+    )}
+
+    {product && (
+      <>
+        <dl class="checkout-summary">
+          <div><dt>Producto</dt><dd>{product.name}</dd></div>
+          <div><dt>SKU</dt><dd>{product.sku}</dd></div>
+          <div><dt>Referencia del fabricante</dt><dd>{product.manufacturerReference}</dd></div>
+          <div><dt>Fabricante de la prenda base</dt><dd>{product.manufacturer}</dd></div>
+          <div><dt>Direccion del fabricante</dt><dd>{product.manufacturerAddress}</dd></div>
+          <div><dt>Contacto del fabricante</dt><dd><a href={`mailto:${product.manufacturerEmail}`}>{product.manufacturerEmail}</a></dd></div>
+          <div><dt>Telefono del fabricante</dt><dd><a href={`tel:${product.manufacturerPhone.replaceAll(" ", "")}`}>{product.manufacturerPhone}</a></dd></div>
+          <div><dt>Caracteristicas de la prenda base</dt><dd>{product.baseGarmentFeatures.map((feature) => <p>{feature}</p>)}</dd></div>
+          <div><dt>Tecnicas de personalizacion compatibles con la prenda base</dt><dd>{product.baseGarmentDecorationMethods.join(", ")}.</dd></div>
+          <div><dt>Composicion</dt><dd>{product.composition.map(({ fibre, percentage }) => `${percentage} % ${fibre}`).join(", ")}</dd></div>
+          <div><dt>Tejido</dt><dd>{product.fabric}. {product.fabricWeightGsm} g/m².</dd></div>
+          <div><dt>Cuidado de la prenda base</dt><dd>{product.careInstructions}</dd></div>
+          <div><dt>Talla elegida</dt><dd>{productVariant?.size ?? "Sin seleccionar"}</dd></div>
+          <div><dt>Precio camiseta</dt><dd>{formatProductAmount(product.expectedUnitAmount)}</dd></div>
+          <div><dt>Envio estandar a Peninsula</dt><dd>Incluido</dd></div>
+          <div><dt>Total por una camiseta con envio</dt><dd>{formatProductAmount(product.expectedUnitAmount + product.shipping.amount)}</dd></div>
+          <div><dt>Envio</dt><dd>{product.shippingInformation}</dd></div>
+          <div><dt>Impuestos</dt><dd>{product.taxInformation}</dd></div>
+          <div><dt>Envase de transporte</dt><dd>{product.packagingType}</dd></div>
+          <div><dt>Proveedor del envase de transporte</dt><dd>{product.packagingProvider}</dd></div>
+        </dl>
+        <table class="product-sizes">
+          <caption>Tallas y medidas aproximadas de la prenda base (cm)</caption>
+          <thead><tr><th scope="col">Talla</th><th scope="col">Largo</th><th scope="col">Ancho</th></tr></thead>
+          <tbody>
+            {product.variantDetails.map((variant) => (
+              <tr><th scope="row">{variant.size}</th><td>{variant.lengthCm}</td><td>{variant.widthCm}</td></tr>
+            ))}
+          </tbody>
+        </table>
+        <p>{SHIRT_PRICE_COPY}</p>
+        <a class="btn btn-primary" href={`/reservas${productVariant ? `?size=${productVariant.size}` : ''}`}>Reservar sin pago</a>
+        <p>Reserva ahora. No se realizara ningun cobro en este momento.</p>
+        {!productReady && (
+          <div class="notice" role="alert">
+            <strong>LEGAL_PRODUCT_DATA_INCOMPLETE</strong>
+            <p>
+              La venta todavia no esta abierta. Queda pendiente cerrar la revision
+              del producto final y las pruebas del proceso de compra.
+            </p>
+          </div>
+        )}
+        <a class="btn btn-ghost" href="/tienda#camiseta">Volver a la tienda</a>
+        <a href="/legal/devoluciones">Envios, devoluciones y reembolsos</a>
+      </>
+    )}
+  </section>
+</PageShell>
+
+<script>
+  const form = document.querySelector("[data-checkout-contract]");
+
+  if (form instanceof HTMLFormElement) {
+    const button = form.querySelector("button[type='submit']");
+    const status = form.querySelector("[data-checkout-status]");
+    const requestId = window.crypto.randomUUID();
+    const anonymousId = window.localStorage.getItem("imperio_anonymous_id") || window.crypto.randomUUID();
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!form.reportValidity() || !(button instanceof HTMLButtonElement)) return;
+
+      const formData = new FormData(form);
+      const originalText = button.textContent || "Suscribirme y pagar";
+      button.disabled = true;
+      button.textContent = "Abriendo Stripe...";
+      if (status) status.textContent = "";
+
+      try {
+        const response = await fetch("/api/create-checkout-session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            plan: form.dataset.plan,
+            requestId,
+            anonymousId,
+            consents: {
+              terms: formData.get("terms") === "on",
+              privacy: formData.get("privacy") === "on",
+              immediateAccess: formData.get("immediateAccess") === "on",
+              withdrawalAcknowledgement: formData.get("withdrawalAcknowledgement") === "on",
+            },
+          }),
+        });
+        const result = await response.json().catch(() => ({}));
+
+        if (!response.ok || !result.url) {
+          throw new Error(result.error || "No se pudo iniciar el pago.");
+        }
+
+        window.location.assign(result.url);
+      } catch (error) {
+        if (status) {
+          status.textContent = error instanceof Error ? error.message : "No se pudo iniciar el pago.";
+        }
+        button.disabled = false;
+        button.textContent = originalText;
+      }
+    });
+  }
+</script>
+
+<style>
+  .checkout-contract,
+  .checkout-consents {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .checkout-summary {
+    display: grid;
+    gap: 0;
+    margin: 0;
+    border: 1px solid var(--line);
+  }
+
+  .checkout-summary div {
+    display: grid;
+    grid-template-columns: minmax(8rem, 0.35fr) minmax(0, 1fr);
+    gap: 1rem;
+    border-bottom: 1px solid var(--line);
+    padding: 0.85rem 1rem;
+  }
+
+  .checkout-summary div:last-child {
+    border-bottom: 0;
+  }
+
+  .checkout-summary dt {
+    font-weight: 700;
+  }
+
+  .checkout-summary dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .product-sizes {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+  }
+
+  .product-sizes caption {
+    text-align: left;
+    margin-bottom: 0.75rem;
+  }
+
+  .product-sizes th,
+  .product-sizes td {
+    padding: 0.6rem;
+    text-align: left;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .checkout-consents label {
+    display: grid;
+    grid-template-columns: 22px minmax(0, 1fr);
+    gap: 0.7rem;
+    align-items: start;
+  }
+
+  .checkout-consents input {
+    width: 20px;
+    height: 20px;
+    margin-top: 0.1rem;
+    accent-color: var(--color-red-accent);
+  }
+
+  .checkout-consents a {
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
+  }
+
+  @media (max-width: 560px) {
+    .checkout-summary div {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.25rem;
+    }
+  }
+</style>

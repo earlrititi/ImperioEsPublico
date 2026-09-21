@@ -1,7 +1,7 @@
 export type FreePlanName = "piquero";
 export type PaidPlanName = "arcabucero" | "maestre_campo";
 export type ContentPaidTierName = "arcabucero" | "maestre-de-campo";
-export type BillingInterval = "month";
+export type BillingInterval = "month" | "year";
 
 export type SubscriptionRecord = {
   id: string;
@@ -244,31 +244,4 @@ export async function getSubscriptionByUserId(userId: string) {
   }
 
   return concurrentlyLinked;
-}
-
-export async function getSubscriptionByEmail(email: string) {
-  const supabaseAdmin = await getSupabaseAdmin();
-  const { data, error } = await supabaseAdmin
-    .from("subscriptions")
-    .select("*")
-    .eq("email", email.toLowerCase())
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle<SubscriptionRecord>();
-
-  if (error) {
-    console.error("getSubscriptionByEmail error:", error);
-    throw error;
-  }
-
-  return data;
-}
-
-export async function hasActivePaidSubscriptionByUserId(userId: string) {
-  const subscription = await getSubscriptionByUserId(userId);
-
-  return isActivePaidSubscription({
-    plan: subscription?.plan,
-    status: subscription?.status,
-  });
 }

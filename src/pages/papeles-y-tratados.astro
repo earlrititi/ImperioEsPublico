@@ -1,8 +1,546 @@
 ---
-import InWorkPage from "../components/InWorkPage.astro";
+import Layout from "../layouts/Layout.astro";
+import { ARTICLES_ITEMS } from "../config/home";
+import { articleSearchText } from "../lib/article-seo";
+
+const articles = ARTICLES_ITEMS;
+const categories = [...new Set(articles.map((article) => article.category))];
+const imageSizes = "(max-width: 720px) calc(100vw - 32px), (max-width: 1100px) 45vw, 23vw";
 ---
 
-<InWorkPage
-  title="Papeles y Tratados"
-  seoTitle="Papeles, documentos y tratados históricos | Imperio Español"
-/>
+<Layout
+  title="Papeles y artículos de historia | Imperio Español"
+  description="Archivo de artículos sobre la historia, la memoria y el legado de la Monarquía Hispánica."
+  footerVariant="dark"
+>
+  <main class="papers-page">
+    <div class="papers-page__texture" aria-hidden="true"></div>
+    <div class="papers-page__dots" aria-hidden="true"></div>
+
+    <header class="papers-head">
+      <h1>Papeles y<br />tratados</h1>
+
+      <div class="papers-tools" id="papers-filters">
+        <div class="papers-filters" role="group" aria-label="Filtrar artículos por categoría">
+          <button class="papers-filter is-active" type="button" data-papers-filter="all" aria-pressed="true">
+            Todos <sup>{articles.length}</sup>
+          </button>
+          {categories.map((category) => (
+            <button
+              class="papers-filter"
+              type="button"
+              data-papers-filter={category.toLowerCase()}
+              aria-pressed="false"
+            >
+              {category}
+            </button>
+          ))}
+        </div>
+
+        <label class="papers-search">
+          <span class="papers-search__icon" aria-hidden="true"></span>
+          <span class="sr-only">Buscar en papeles y tratados</span>
+          <input
+            type="search"
+            placeholder="Buscar por título, tema o personaje"
+            autocomplete="off"
+            data-papers-search
+          />
+        </label>
+      </div>
+    </header>
+
+    <section class="papers-results" aria-label="Artículos históricos">
+      <p class="papers-count" aria-live="polite" data-papers-count>{articles.length} artículos</p>
+
+      <div class="papers-grid" data-papers-grid>
+        {articles.map((article) => (
+          <article
+            class="paper-card"
+            data-paper-card
+            data-category={article.category.toLowerCase()}
+            data-search={articleSearchText(article)}
+          >
+            <a
+              class="paper-card__link"
+              href={article.href}
+              target="_self"
+              rel="noopener noreferrer"
+              aria-label={`Abrir ${article.title}`}
+            >
+              <div class="paper-card__heading">
+                <p>{article.category}<span aria-hidden="true"></span>Artículo</p>
+                <h2>{article.title}</h2>
+              </div>
+
+              <div
+                class:list={[
+                  "paper-card__media",
+                  { "paper-card__media--brand": "wordmarkSrc" in article },
+                ]}
+              >
+                {
+                  "imageAvifSrcSet" in article ? (
+                    <picture>
+                      <source type="image/avif" srcset={article.imageAvifSrcSet} sizes={imageSizes} />
+                      <source type="image/webp" srcset={article.imageWebpSrcSet} sizes={imageSizes} />
+                      <img
+                        src={article.imageSrc}
+                        alt={article.imageAlt}
+                        width={article.imageWidth}
+                        height={article.imageHeight}
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    </picture>
+                  ) : (
+                    <>
+                      <img
+                        class="paper-card__brand-symbol"
+                        src={article.imageSrc}
+                        alt={article.imageAlt}
+                        width={article.imageWidth}
+                        height={article.imageHeight}
+                        loading="lazy"
+                        decoding="async"
+                      />
+                      <img
+                        class="paper-card__brand-wordmark"
+                        src={article.wordmarkSrc}
+                        alt="Imperio Español"
+                        width="633"
+                        height="162"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    </>
+                  )
+                }
+              </div>
+            </a>
+          </article>
+        ))}
+      </div>
+
+      <p class="papers-empty" data-papers-empty hidden>
+        No hay artículos que coincidan con la búsqueda.
+      </p>
+    </section>
+  </main>
+
+  <script is:inline>
+    (() => {
+      const search = document.querySelector("[data-papers-search]");
+      const cards = [...document.querySelectorAll("[data-paper-card]")];
+      const filters = [...document.querySelectorAll("[data-papers-filter]")];
+      const count = document.querySelector("[data-papers-count]");
+      const empty = document.querySelector("[data-papers-empty]");
+      let activeFilter = "all";
+
+      const normalize = (value) =>
+        value
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toLowerCase()
+          .trim();
+
+      const updateResults = () => {
+        const query = search instanceof HTMLInputElement ? normalize(search.value) : "";
+        let visible = 0;
+
+        cards.forEach((card) => {
+          if (!(card instanceof HTMLElement)) return;
+          const matchesFilter = activeFilter === "all" || card.dataset.category === activeFilter;
+          const matchesSearch = normalize(card.dataset.search || "").includes(query);
+          const matches = matchesFilter && matchesSearch;
+          card.hidden = !matches;
+          if (matches) visible += 1;
+        });
+
+        if (count) count.textContent = `${visible} ${visible === 1 ? "artículo" : "artículos"}`;
+        if (empty instanceof HTMLElement) empty.hidden = visible !== 0;
+      };
+
+      filters.forEach((filter) => {
+        filter.addEventListener("click", () => {
+          if (!(filter instanceof HTMLButtonElement)) return;
+          activeFilter = filter.dataset.papersFilter || "all";
+          filters.forEach((item) => {
+            const isActive = item === filter;
+            item.classList.toggle("is-active", isActive);
+            item.setAttribute("aria-pressed", String(isActive));
+          });
+          updateResults();
+        });
+      });
+
+      search?.addEventListener("input", updateResults);
+    })();
+  </script>
+</Layout>
+
+<style>
+  :global(body:has(.papers-page)) {
+    color: #f5f5f3;
+    background: var(--color-black-papers);
+  }
+
+  .papers-page {
+    position: relative;
+    min-height: 100svh;
+    overflow: hidden;
+    padding: clamp(8.5rem, 12vw, 11.5rem) clamp(1.25rem, 4.3vw, 5rem)
+      clamp(6rem, 10vw, 10rem);
+    color: #f5f5f3;
+    background: var(--color-black-papers);
+    isolation: isolate;
+  }
+
+  .papers-page__texture {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-image: url("/images/card-1.webp");
+    background-size: cover;
+    background-position: center top;
+    opacity: 0.075;
+    filter: contrast(145%) brightness(55%);
+    mix-blend-mode: screen;
+    pointer-events: none;
+  }
+
+  .papers-page__texture::after {
+    position: absolute;
+    inset: 0;
+    background: rgb(11 12 12 / 48%);
+    content: "";
+  }
+
+  .papers-page__dots {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    opacity: 0.42;
+    pointer-events: none;
+    background-image: var(--imperio-dot-pattern-source);
+    background-size: var(--imperio-dot-pattern-size);
+  }
+
+  .papers-head,
+  .papers-results {
+    position: relative;
+    z-index: 1;
+  }
+
+  .papers-head {
+    display: grid;
+    grid-template-columns: minmax(220px, 0.75fr) minmax(0, 2.25fr);
+    gap: clamp(3rem, 8vw, 10rem);
+    width: min(100%, 1760px);
+    margin-inline: auto;
+  }
+
+  .papers-head h1 {
+    margin: 0;
+    color: #fff;
+    font: 600 clamp(2.45rem, 4vw, 4.1rem) / 0.94 var(--font-body);
+    letter-spacing: 0;
+    text-transform: uppercase;
+  }
+
+  .papers-tools {
+    display: grid;
+    gap: clamp(3rem, 6vw, 5.25rem);
+  }
+
+  .papers-filters {
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: clamp(2rem, 4vw, 5rem);
+    row-gap: 1.65rem;
+    align-items: center;
+  }
+
+  .papers-filter {
+    border: 0;
+    padding: 0;
+    color: #6f706f;
+    background: transparent;
+    cursor: pointer;
+    font: 500 clamp(0.94rem, 1.25vw, 1.18rem) / 1.2 var(--font-body);
+    transition: color 180ms ease;
+  }
+
+  .papers-filter:hover,
+  .papers-filter:focus-visible,
+  .papers-filter.is-active {
+    color: #f2381e;
+  }
+
+  .papers-filter:focus-visible {
+    outline: 1px solid #f2381e;
+    outline-offset: 7px;
+  }
+
+  .papers-filter sup {
+    position: relative;
+    top: -0.25em;
+    margin-left: 0.2rem;
+    color: #f2381e;
+    font-size: 0.78em;
+  }
+
+  .papers-search {
+    display: grid;
+    grid-template-columns: 22px minmax(0, 1fr);
+    gap: 1rem;
+    align-items: center;
+    min-height: 72px;
+    border-radius: 8px;
+    padding: 0 1.4rem;
+    background: #1a1b1b;
+  }
+
+  .papers-search__icon {
+    position: relative;
+    display: block;
+    width: 17px;
+    height: 17px;
+    border: 2px solid #696c6d;
+    border-radius: 50%;
+  }
+
+  .papers-search__icon::after {
+    position: absolute;
+    right: -6px;
+    bottom: -4px;
+    width: 8px;
+    height: 2px;
+    background: #696c6d;
+    content: "";
+    transform: rotate(48deg);
+    transform-origin: left center;
+  }
+
+  .papers-search input {
+    width: 100%;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    color: #e4e4e2;
+    background: transparent;
+    font: 400 clamp(0.9rem, 1.15vw, 1.05rem) / 1.2 var(--font-body);
+  }
+
+  .papers-search input::placeholder {
+    color: #6d7072;
+    opacity: 1;
+  }
+
+  .papers-search:focus-within {
+    box-shadow: inset 0 0 0 1px #4c4e4f;
+  }
+
+  .papers-results {
+    width: min(100%, 1760px);
+    margin: clamp(6rem, 10vw, 10rem) auto 0;
+  }
+
+  .papers-count {
+    margin: 0 0 1.5rem;
+    color: #676968;
+    font: 500 0.78rem/1.2 var(--font-body);
+    text-transform: uppercase;
+  }
+
+  .papers-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: clamp(2rem, 3.2vw, 4rem) clamp(1.5rem, 1.7vw, 2rem);
+  }
+
+  .paper-card[hidden] {
+    display: none;
+  }
+
+  .paper-card__link {
+    display: block;
+    height: 100%;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .paper-card__heading {
+    display: grid;
+    align-content: end;
+    min-height: 78px;
+    padding-bottom: 1.35rem;
+  }
+
+  .paper-card__heading p,
+  .paper-card__heading h2 {
+    margin: 0;
+  }
+
+  .paper-card__heading p {
+    display: flex;
+    gap: 0.65rem;
+    align-items: center;
+    color: #6c6e6d;
+    font: 400 clamp(0.78rem, 1vw, 0.94rem) / 1.25 var(--font-body);
+  }
+
+  .paper-card__heading p span {
+    width: 1px;
+    height: 1.15em;
+    background: #494b4a;
+  }
+
+  .paper-card__heading h2 {
+    margin-top: 0.45rem;
+    color: #f3f3f1;
+    font: 600 clamp(0.98rem, 1.25vw, 1.2rem) / 1.15 var(--font-body);
+  }
+
+  .paper-card__media {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    border-radius: 8px;
+    background: #1d1e1e;
+  }
+
+  .paper-card__media picture,
+  .paper-card__media picture img {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .paper-card__media picture img {
+    object-fit: cover;
+    filter: grayscale(1) contrast(1.08);
+    transition: filter 260ms ease, transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .paper-card__media--brand {
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
+    place-items: center;
+    gap: 0.7rem;
+    padding: clamp(1rem, 2vw, 1.75rem);
+    background: var(--color-black-papers);
+  }
+
+  .paper-card__brand-symbol {
+    width: auto;
+    height: min(70%, 8rem);
+    min-height: 0;
+    object-fit: contain;
+    transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .paper-card__brand-wordmark {
+    width: min(85%, 15rem);
+    height: auto;
+    filter: brightness(0) invert(1);
+  }
+
+  .paper-card:hover .paper-card__media picture img,
+  .paper-card:hover .paper-card__brand-symbol {
+    filter: grayscale(0.18) contrast(1.04);
+    transform: scale(1.025);
+  }
+
+  .papers-empty {
+    margin: 4rem 0 0;
+    color: #8a8c8b;
+    font: 400 1rem/1.5 var(--font-body);
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  @media (max-width: 1100px) {
+    .papers-head {
+      grid-template-columns: minmax(180px, 0.65fr) minmax(0, 1.8fr);
+      gap: 3rem;
+    }
+
+    .papers-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 720px) {
+    .papers-page {
+      padding: 7rem 1rem 5rem;
+    }
+
+    .papers-head {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 2.8rem;
+    }
+
+    .papers-head h1 br {
+      display: none;
+    }
+
+    .papers-tools {
+      gap: 2rem;
+    }
+
+    .papers-filters {
+      flex-wrap: nowrap;
+      gap: 1.7rem;
+      margin-inline: -1rem;
+      padding: 0.4rem 1rem;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .papers-filters::-webkit-scrollbar {
+      display: none;
+    }
+
+    .papers-filter {
+      flex: 0 0 auto;
+    }
+
+    .papers-search {
+      min-height: 60px;
+      padding-inline: 1rem;
+    }
+
+    .papers-results {
+      margin-top: 4.5rem;
+    }
+
+    .papers-grid {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 2.8rem;
+    }
+
+    .paper-card__heading {
+      min-height: 0;
+    }
+    .paper-card__heading h2 { font-size:1.5rem; line-height:1.25; }
+    .paper-card__media { max-height:260px; overflow:hidden; }
+    .paper-card__media picture img { max-height:240px; object-fit:contain; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .papers-filter,
+    .paper-card__media picture img,
+    .paper-card__brand-symbol {
+      transition: none;
+    }
+  }
+</style>

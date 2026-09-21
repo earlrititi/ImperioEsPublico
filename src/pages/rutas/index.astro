@@ -11,6 +11,7 @@ const rutas = await getCollection("rutas");
   description="Rutas tematicas para navegar el archivo."
   eyebrow="Rutas"
   heading="Rutas tematicas"
+  noindex={!rutas.some(entry => entry.data.indexable)}
   summary="Lecturas guiadas para recorrer el archivo sin perder el hilo."
   narrow
 >
@@ -19,7 +20,7 @@ const rutas = await getCollection("rutas");
       <CollectionCard
         title={ruta.data.title}
         summary={ruta.data.summary}
-        href={`/rutas/${ruta.slug}`}
+        href={`/rutas/${ruta.id}`}
         ctaLabel="Ver ruta"
       />
     ))}

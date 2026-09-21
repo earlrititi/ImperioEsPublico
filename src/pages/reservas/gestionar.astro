@@ -1,0 +1,9 @@
+---
+import PageShell from "../../layouts/PageShell.astro";
+import ReservationManager from "../../components/commerce/ReservationManager";
+import "../../styles/commerce.css";
+export const prerender=false;
+Astro.response.headers.set('Cache-Control','private, no-store');
+Astro.response.headers.set('Referrer-Policy','no-referrer');
+---
+<PageShell heading="Tu reserva" title="Tu reserva | Imperio Español" noindex showCookieConsent={false}><ReservationManager client:load/></PageShell>

@@ -6,5 +6,5 @@ if (!import.meta.env.SSR) {
 }
 
 export const stripe = new Stripe(getRequiredEnv("STRIPE_SECRET_KEY"), {
-  apiVersion: "2026-05-27.dahlia",
+  apiVersion: "2026-07-29.dahlia",
 });

@@ -1,0 +1,11 @@
+---
+import PageShell from "../../layouts/PageShell.astro";
+import CommerceAdmin from "../../components/commerce/CommerceAdmin";
+import { requireAdmin } from "../../lib/reservations";
+import "../../styles/commerce.css";
+export const prerender=false;
+Astro.response.headers.set('Cache-Control','private, no-store');
+Astro.response.headers.set('Referrer-Policy','no-referrer');
+try { await requireAdmin(Astro); } catch { return Astro.redirect('/login?next=/admin/comercio'); }
+---
+<PageShell heading="Comercio" title="Administracion de comercio | Imperio Español" noindex showCookieConsent={false}><CommerceAdmin client:load/></PageShell>

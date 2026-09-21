@@ -1,0 +1,16 @@
+.astro
+.codex-*
+.git
+.vercel
+.vscode
+dist
+documentos
+node_modules
+private
+public/Manifiesto IE.pdf
+public/images/**/*.png
+!public/images/logo-redv2.png
+!public/images/subscription-x-brush.png
+skills
+tmp
+tools

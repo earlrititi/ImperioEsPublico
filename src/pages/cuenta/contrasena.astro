@@ -1,0 +1,38 @@
+---
+import PageShell from "../../layouts/PageShell.astro";
+import PasswordField from "../../components/PasswordField.astro";
+import { authError, privateAuthHeaders, readAuthForm, validNewPassword } from "../../lib/auth-forms";
+import { createSupabaseServerClient } from "../../lib/supabase/server";
+privateAuthHeaders(Astro.response.headers);
+const supabase = createSupabaseServerClient({ cookies: Astro.cookies, request: Astro.request });
+const { data: { user }, error: userError } = await supabase.auth.getUser();
+if (userError || !user?.email_confirmed_at) return Astro.redirect('/login?next=%2Fcuenta%2Fcontrasena', 303);
+let error = '';
+if (Astro.request.method === 'POST') {
+  try {
+    const form = await readAuthForm(Astro.request, 'auth_password_update');
+    const password = form.get('password') ?? '';
+    if (!validNewPassword(password) || password !== form.get('password_confirmation')) error = 'password';
+    else {
+      const { error: updateError } = await supabase.auth.updateUser({ password });
+      if (updateError) error = 'update';
+      else {
+        await supabase.auth.signOut({ scope: 'global' });
+        return Astro.redirect('/login?updated=1', 303);
+      }
+    }
+  } catch (e) { error = authError(e); }
+}
+---
+<PageShell title="Cambiar contraseña | Imperio Español" description="Define la contraseña de tu cuenta." heading="Definir contraseña" noindex narrow>
+  <Fragment slot="header">
+    {error && <p role="alert">{error === 'password' ? 'Las contraseñas deben coincidir y tener al menos 12 caracteres, hasta 72 bytes.' : error === 'rate' ? 'Demasiados intentos. Espera unos minutos.' : 'No se pudo cambiar la contraseña. Solicita un nuevo enlace de recuperación y utiliza una contraseña diferente.'}</p>}
+    <form method="post">
+      <PasswordField isNew autocomplete="new-password" label="Nueva contraseña" />
+      <PasswordField isNew autocomplete="new-password" name="password_confirmation" label="Repetir contraseña" />
+      <button class="btn btn-primary" type="submit">Guardar contraseña</button>
+    </form>
+    <p><a href="/cuenta">Volver a mi cuenta</a></p>
+  </Fragment>
+</PageShell>
+<style>form { display:grid; gap:0.8rem; } a { text-decoration:underline; }</style>

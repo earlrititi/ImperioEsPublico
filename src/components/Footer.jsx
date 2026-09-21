@@ -1,4 +1,6 @@
 import { SITE } from "../config/site";
+import { LEGAL_LINKS } from "../config/legal";
+import { withBase } from "../utils/basePath";
 
 const SOCIAL_LINKS = [
   {
@@ -27,7 +29,7 @@ const SOCIAL_LINKS = [
   },
   {
     className: "image-footer__hotspot--x",
-    href: "https://x.com/imperioespa%C3%B1ol",
+    href: "https://x.com/Imperio_e",
     label: "X",
     iconClassName: "image-footer__social-mark--x",
     x: 1615,
@@ -39,25 +41,81 @@ const SOCIAL_LINKS = [
   },
 ];
 
+const FOOTER_LEGAL_HREFS = new Set([
+  "/legal/aviso-legal",
+  "/legal/privacidad",
+  "/legal/cookies",
+  "/legal/terminos",
+]);
+
+const FOOTER_LEGAL_LINKS = LEGAL_LINKS.filter((link) =>
+  FOOTER_LEGAL_HREFS.has(link.href)
+).map((link) =>
+  link.href === "/legal/terminos"
+    ? { ...link, label: "Condiciones de contrataci\u00f3n" }
+    : link
+);
+
 export default function Footer({ variant = "light" }) {
   const isDark = variant === "dark";
 
   return (
     <footer class={`image-footer image-footer--${variant}`} aria-label="Pie de pagina">
+      <nav class="image-footer__legal" aria-label="Informacion legal">
+        <span class="image-footer__legal-primary">
+          {FOOTER_LEGAL_LINKS.map((link) => (
+            <a href={withBase(link.href)} key={link.href}>{link.label}</a>
+          ))}
+        </span>
+        <span class="image-footer__legal-utilities">
+          <span class="image-footer__cookie-control">
+            <span class="image-footer__cookie-label">Cookies opcionales</span>
+            <label class="image-footer__cookie-switch">
+              <span class="image-footer__sr-only">Permitir cookies opcionales</span>
+              <input
+                type="checkbox"
+                role="switch"
+                data-cookie-consent-switch
+                aria-label="Permitir cookies opcionales"
+              />
+              <span class="image-footer__cookie-switch-track" aria-hidden="true" />
+            </label>
+            <button
+              class="image-footer__cookie-settings"
+              type="button"
+              data-cookie-settings-trigger
+            >
+              Modificar
+            </button>
+          </span>
+        </span>
+      </nav>
+
       <div class="image-footer__frame">
-        <img
-          class="image-footer__art"
-          src={
-            isDark
-              ? "/images/dark-footer-interactive.webp"
-              : "/images/imperio-espanol-footer-interactive.webp"
-          }
-          alt="Imperio Espanol. Mapa historico, contacto y redes sociales."
-          width="1920"
-          height="1080"
-          loading="lazy"
-          decoding="async"
-        />
+        <picture class="image-footer__art-wrap">
+          <source
+            type="image/avif"
+            srcSet={
+              isDark
+                ? "/images/dark-footer-interactive.avif"
+                : "/images/imperio-espanol-footer-interactive.avif"
+            }
+          />
+          <img
+            class="image-footer__art"
+            src={
+              isDark
+                ? "/images/dark-footer-interactive.webp"
+                : "/images/imperio-espanol-footer-interactive.webp"
+            }
+            alt="Imperio Espanol. Mapa historico, contacto y redes sociales."
+            width="1920"
+            height="1080"
+            loading="lazy"
+            decoding="async"
+            fetchpriority="low"
+          />
+        </picture>
 
         <svg
           class="image-footer__labels"
@@ -79,7 +137,7 @@ export default function Footer({ variant = "light" }) {
           <a
             class="image-footer__label-link"
             href="https://www.instagram.com/imperio_e/"
-            target="_blank"
+            target="_self"
             rel="noopener noreferrer"
             aria-label="Siguenos en redes sociales"
           >
@@ -122,7 +180,7 @@ export default function Footer({ variant = "light" }) {
             <a
               class={`image-footer__hotspot ${link.className}`}
               href={link.href}
-              target="_blank"
+              target="_self"
               rel="noopener noreferrer"
               aria-label={link.label}
               key={link.label}
@@ -133,13 +191,228 @@ export default function Footer({ variant = "light" }) {
 
       <style>{`
         .image-footer {
+          position: relative;
           width: 100%;
           overflow: hidden;
           background: #f7f5f1;
         }
 
         .image-footer--dark {
-          background: #000;
+          background: var(--color-black-papers);
+        }
+
+        .image-footer__legal {
+          position: absolute;
+          inset: 0;
+          z-index: 4;
+          color: #fff;
+          font-family: "Inter", "Segoe UI", sans-serif;
+          font-size: 0.66rem;
+          font-weight: 700;
+          line-height: 1;
+          pointer-events: none;
+          white-space: nowrap;
+        }
+
+        .image-footer__legal-primary,
+        .image-footer__legal-utilities {
+          position: absolute;
+          bottom: 0.7%;
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: center;
+          align-items: center;
+          gap: 0.45rem;
+        }
+
+        .image-footer__legal-primary {
+          left: 50%;
+          transform: translateX(-50%);
+        }
+
+        .image-footer__legal-utilities {
+          right: 1.5%;
+          justify-content: flex-end;
+        }
+
+        .image-footer--dark .image-footer__legal {
+          color: #ead7c1;
+        }
+
+        .image-footer__legal a,
+        .image-footer__legal button {
+          display: inline-flex;
+          align-items: center;
+          width: fit-content;
+          min-height: 28px;
+          border: 0;
+          border-radius: 3px;
+          padding: 0.3rem 0.48rem;
+          color: inherit;
+          background: rgb(11 12 12 / 68%);
+          cursor: pointer;
+          font: inherit;
+          pointer-events: auto;
+          text-decoration: none;
+        }
+
+        .image-footer__cookie-control {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.38rem;
+          width: fit-content;
+          min-height: 28px;
+          border-radius: 3px;
+          padding: 0.18rem 0.24rem 0.18rem 0.48rem;
+          background: rgb(11 12 12 / 68%);
+          pointer-events: auto;
+        }
+
+        .image-footer__cookie-switch {
+          position: relative;
+          display: inline-flex;
+          flex: 0 0 auto;
+          cursor: pointer;
+        }
+
+        .image-footer__cookie-switch input {
+          position: absolute;
+          width: 1px;
+          height: 1px;
+          margin: -1px;
+          overflow: hidden;
+          clip: rect(0, 0, 0, 0);
+          white-space: nowrap;
+        }
+
+        .image-footer__cookie-switch-track {
+          position: relative;
+          display: block;
+          width: 30px;
+          height: 17px;
+          border: 1px solid rgb(255 255 255 / 76%);
+          border-radius: 999px;
+          background: rgb(255 255 255 / 18%);
+          transition: background 180ms ease, border-color 180ms ease;
+        }
+
+        .image-footer__cookie-switch-track::after {
+          content: "";
+          position: absolute;
+          top: 2px;
+          left: 2px;
+          width: 11px;
+          height: 11px;
+          border-radius: 50%;
+          background: #fff;
+          transition: transform 180ms ease;
+        }
+
+        .image-footer__cookie-switch input:checked + .image-footer__cookie-switch-track {
+          border-color: var(--color-red-accent);
+          background: var(--color-red-accent);
+        }
+
+        .image-footer__cookie-switch input:checked + .image-footer__cookie-switch-track::after {
+          transform: translateX(13px);
+        }
+
+        .image-footer__cookie-switch input:focus-visible + .image-footer__cookie-switch-track {
+          outline: 2px solid #fff;
+          outline-offset: 2px;
+        }
+
+        .image-footer__legal .image-footer__cookie-settings {
+          min-height: 22px;
+          padding: 0.2rem 0.32rem;
+          background: transparent;
+        }
+
+        .image-footer__legal a:hover,
+        .image-footer__legal a:focus-visible,
+        .image-footer__legal button:hover,
+        .image-footer__legal button:focus-visible {
+          color: #fff;
+          background: var(--color-red-accent);
+          text-decoration: none;
+        }
+
+        @media (max-width: 980px) {
+          .image-footer__legal {
+            position: absolute;
+            top: 22%;
+            right: 0;
+            bottom: 1.5%;
+            left: auto;
+            z-index: 4;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            grid-template-rows: repeat(3, minmax(0, 1fr));
+            align-items: center;
+            justify-items: center;
+            column-gap: 0.18rem;
+            width: 33.333%;
+            padding: 0 0.24rem;
+            color: #fff;
+            background: transparent;
+            font-size: clamp(0.34rem, 1.5vw, 0.68rem);
+            line-height: 1;
+            pointer-events: none;
+            white-space: normal;
+          }
+
+          .image-footer__legal-primary,
+          .image-footer__legal-utilities {
+            display: contents;
+          }
+
+          .image-footer--dark .image-footer__legal {
+            color: #ead7c1;
+            background: transparent;
+          }
+
+          .image-footer__legal a,
+          .image-footer__legal button {
+            justify-content: center;
+            max-width: 100%;
+            min-height: 0;
+            padding: 0.06rem 0.2rem;
+            color: #fff;
+            line-height: 1;
+            text-align: center;
+          }
+
+          .image-footer__cookie-control {
+            grid-column: 1 / -1;
+            align-self: center;
+            justify-self: center;
+            justify-content: center;
+            gap: 0.3rem;
+            max-width: 100%;
+            min-height: 0;
+            padding: 0.12rem 0.2rem;
+            text-align: center;
+          }
+
+          .image-footer__cookie-label {
+            flex: 0 1 auto;
+          }
+
+          .image-footer__cookie-switch-track {
+            width: 26px;
+            height: 15px;
+          }
+
+          .image-footer__cookie-switch-track::after {
+            top: 2px;
+            left: 2px;
+            width: 9px;
+            height: 9px;
+          }
+
+          .image-footer__cookie-switch input:checked + .image-footer__cookie-switch-track::after {
+            transform: translateX(11px);
+          }
         }
 
         .image-footer__frame {
@@ -149,6 +422,14 @@ export default function Footer({ variant = "light" }) {
           overflow: hidden;
         }
 
+        .image-footer--dark .image-footer__frame {
+          background: var(--color-black-papers);
+        }
+
+        .image-footer__art-wrap {
+          display: contents;
+        }
+
         .image-footer--dark .image-footer__frame::after {
           content: "";
           position: absolute;
@@ -156,11 +437,8 @@ export default function Footer({ variant = "light" }) {
           z-index: 1;
           opacity: 0.42;
           pointer-events: none;
-          background-image:
-            radial-gradient(circle at 18% 28%, rgb(255 255 255 / 28%) 0 1px, transparent 1px),
-            radial-gradient(circle at 65% 14%, rgb(255 255 255 / 16%) 0 1px, transparent 1px),
-            radial-gradient(circle at 42% 78%, rgb(255 255 255 / 18%) 0 1px, transparent 1px);
-          background-size: 17px 19px, 23px 29px, 31px 37px;
+          background-image: var(--imperio-dot-pattern-source);
+          background-size: var(--imperio-dot-pattern-size);
         }
 
         .image-footer__art {
@@ -171,6 +449,10 @@ export default function Footer({ variant = "light" }) {
           height: 100%;
           object-fit: cover;
           object-position: center;
+        }
+
+        .image-footer--dark .image-footer__art {
+          mix-blend-mode: lighten;
         }
 
         .image-footer__links {
@@ -197,7 +479,7 @@ export default function Footer({ variant = "light" }) {
         }
 
         .image-footer__label-text {
-          fill: #ff1018;
+          fill: var(--color-red-accent);
           font-family: "Inter", "Segoe UI", sans-serif;
           font-size: 42px;
           font-weight: 800;
@@ -253,7 +535,7 @@ export default function Footer({ variant = "light" }) {
         .image-footer__frame:has(.image-footer__hotspot--facebook:focus-visible) .image-footer__social-mark--facebook,
         .image-footer__frame:has(.image-footer__hotspot--x:hover) .image-footer__social-mark--x,
         .image-footer__frame:has(.image-footer__hotspot--x:focus-visible) .image-footer__social-mark--x {
-          fill: #ff1018;
+          fill: var(--color-red-accent);
         }
 
         .image-footer__hotspot {
@@ -264,7 +546,7 @@ export default function Footer({ variant = "light" }) {
         }
 
         .image-footer__hotspot:focus-visible {
-          outline: 3px solid #c1121f;
+          outline: 3px solid var(--color-red-accent);
           outline-offset: 3px;
           background: rgb(255 255 255 / 18%);
         }

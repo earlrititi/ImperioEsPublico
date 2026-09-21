@@ -1,48 +1,35 @@
 import type { APIRoute } from "astro";
 import { getCollection } from "astro:content";
-import { SITE } from "../config/site";
-
-const staticRoutes = [
-  "/",
-  "/manifiesto",
-  "/precios",
-  "/suscribirse",
-  "/biblioteca",
-  "/efemerides",
-  "/ensayos",
-  "/presente",
-  "/rutas",
-  "/tienda",
-  "/comunidad",
-  "/cuenta",
-  "/login",
-  "/registro",
-  "/perfil",
-  "/premium",
-  "/suscripcion",
-  "/contacto",
-  "/legal",
-  "/privacidad",
-  "/cookies",
-];
-
-const toUrl = (path: string) => new URL(path, SITE.url).toString();
+import { ARTICLES_ITEMS } from "../config/home";
+import { AUTHORS, REFERENCE_PAGES, getArticleEditorial } from "../config/editorial";
+import { INDEXABLE_STATIC_ROUTES, canonicalUrl, escapeXml } from "../lib/seo";
 
 export const GET: APIRoute = async () => {
-  const articles = await getCollection("articles");
-  const lanzamientos = await getCollection("lanzamientos");
-  const rutas = await getCollection("rutas");
-
-  const urls = [
-    ...staticRoutes.map(toUrl),
-    ...articles.map((entry) => toUrl(`/biblioteca/${entry.id}`)),
-    ...lanzamientos.map((entry) => toUrl(`/tienda/${entry.id}`)),
-    ...rutas.map((entry) => toUrl(`/rutas/${entry.id}`)),
+  const entries: { path: string; modified?: string }[] = [
+    ...INDEXABLE_STATIC_ROUTES.map(path => ({ path })),
+    ...ARTICLES_ITEMS.map(article => ({
+      path: `/papeles-y-tratados/${article.slug}`,
+      modified: getArticleEditorial(article.slug).modifiedAt ?? article.publishedAt,
+    })),
+    ...Object.entries(AUTHORS).filter(([, author]) => author.published).map(([id]) => ({ path: `/autores/${id}` })),
+    ...Object.entries(REFERENCE_PAGES).filter(([, page]) => page.published).map(([id, page]) => ({ path: `/${id}`, modified: page.modifiedAt })),
   ];
-
+  for (const [collection, prefix] of [["articles", "biblioteca"], ["lanzamientos", "tienda"], ["rutas", "rutas"]] as const) {
+    const items = (await getCollection(collection)).filter(entry => entry.data.indexable);
+    if (items.length && prefix !== "tienda") entries.push({ path: `/${prefix}` });
+    entries.push(...items.map(entry => ({ path: `/${prefix}/${entry.id}` })));
+    if (collection === "articles") {
+      for (const category of ["efemeride", "ensayo", "presente"]) {
+        if (items.some(entry => "category" in entry.data && entry.data.category === category)) {
+          entries.push({ path: `/${category === "efemeride" ? "efemerides" : category === "ensayo" ? "ensayos" : "presente"}` });
+        }
+      }
+    }
+  }
+  const urls = new Map(entries.map(entry => [canonicalUrl(entry.path), entry.modified]));
   const body = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls.map((url) => `  <url><loc>${url}</loc></url>`).join("\n")}
+${[...urls].map(([url, modified]) => `  <url><loc>${escapeXml(url)}</loc>${modified ? `<lastmod>${escapeXml(modified)}</lastmod>` : ""}</url>`).join("\n")}
 </urlset>`;
 
   return new Response(body, {

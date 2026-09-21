@@ -1,0 +1,8 @@
+---
+export const prerender = false;
+const credential = Astro.params.token ?? '';
+Astro.response.headers.set('Cache-Control', 'private, no-store');
+Astro.response.headers.set('Referrer-Policy', 'no-referrer');
+if (!/^[0-9a-f-]{36}\.[0-9a-f]{64}$/.test(credential)) return new Response('Enlace no valido', { status: 404 });
+return Astro.redirect(`/reservas/gestionar#${credential}`, 303);
+---

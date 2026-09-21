@@ -4,7 +4,7 @@ export const NAV_ITEMS = [
   {
     href: withBase("/sobre-nosotros"),
     label: "Memorial",
-    target: "_blank",
+    target: "_self",
     rel: "noopener noreferrer",
   },
   { href: withBase("/papeles-y-tratados"), label: "Papeles y Tratados" },

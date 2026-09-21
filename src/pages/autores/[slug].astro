@@ -1,0 +1,25 @@
+---
+import { AUTHORS, getArticleEditorial } from "../../config/editorial";
+import { ARTICLES_ITEMS } from "../../config/home";
+import { breadcrumbs, canonicalUrl } from "../../lib/seo";
+import PageShell from "../../layouts/PageShell.astro";
+const id = Astro.params.slug ?? "";
+const author = AUTHORS[id];
+if (!author?.published) return new Response("Autor no publicado", { status: 404, headers: { "X-Robots-Tag": "noindex" } });
+const articles = ARTICLES_ITEMS.filter(article => getArticleEditorial(article.slug).authorIds.includes(id));
+const schemaId = author.type === "Organization" ? "organization" : "person";
+const schema = {
+  "@type": author.type, "@id": `${canonicalUrl(`/autores/${id}`)}#${schemaId}`,
+  name: author.name, description: author.biography, url: canonicalUrl(`/autores/${id}`),
+  ...(author.sameAs.length ? { sameAs: author.sameAs } : {}),
+};
+---
+<PageShell title={`${author.name} | Autores`} heading={author.name} description={author.biography}
+  structuredData={[schema, breadcrumbs([{ name: "Inicio", path: "/" }, { name: author.name, path: `/autores/${id}` }])]} narrow>
+  <section class="section content">
+    <p>{author.biography}</p>
+    {author.specialization && <p>{author.specialization}</p>}
+    {author.sameAs.length > 0 && <ul>{author.sameAs.map(url => <li><a href={url}>{new URL(url).hostname}</a></li>)}</ul>}
+    {articles.length > 0 && <><h2>Artículos publicados</h2><ul>{articles.map(article => <li><a href={article.href}>{article.title}</a></li>)}</ul></>}
+  </section>
+</PageShell>

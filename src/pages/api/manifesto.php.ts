@@ -1,7 +1,13 @@
 import type { APIRoute } from "astro";
+import { SITE } from "../../config/site";
+import { LEGAL_DOCUMENT_VERSIONS } from "../../config/legal";
 import { getRequiredEnv } from "../../lib/env";
+import { recordLegalConsents } from "../../lib/legal-consents";
+import { consumeRateLimit } from "../../lib/rate-limit";
+import { isAllowedRequestOrigin } from "../../lib/request-security";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export const prerender = false;
 
@@ -14,16 +20,6 @@ function jsonResponse(body: Record<string, unknown>, status = 200) {
 
 function siteUrl() {
   return getRequiredEnv("PUBLIC_SITE_URL").replace(/\/$/, "");
-}
-
-function isSameOrigin(request: Request, publicSiteUrl: string) {
-  const origin = request.headers.get("origin");
-
-  if (!origin) {
-    return true;
-  }
-
-  return origin === publicSiteUrl;
 }
 
 function safeName(input: unknown) {
@@ -55,8 +51,28 @@ export const POST: APIRoute = async ({ request }) => {
   try {
     const publicSiteUrl = siteUrl();
 
-    if (!isSameOrigin(request, publicSiteUrl)) {
+    if (!isAllowedRequestOrigin(request, publicSiteUrl)) {
       return jsonResponse({ ok: false, error: "Origen no permitido." }, 403);
+    }
+
+    const contentLength = Number(request.headers.get("content-length") || 0);
+
+    if (contentLength > 8192) {
+      return jsonResponse({ ok: false, error: "Solicitud demasiado grande." }, 413);
+    }
+
+    const allowed = await consumeRateLimit({
+      request,
+      endpoint: "manifesto",
+      limit: 4,
+      windowSeconds: 15 * 60,
+    });
+
+    if (!allowed) {
+      return jsonResponse(
+        { ok: false, error: "Demasiadas solicitudes. Intentalo mas tarde." },
+        429
+      );
     }
 
     const body = await request.json().catch(() => null);
@@ -83,19 +99,37 @@ export const POST: APIRoute = async ({ request }) => {
 
     const firstName = safeName(payload.firstName);
     const lastName = safeName(payload.lastName);
+    const anonymousId = safeName(payload.anonymousId);
+    const privacyAcknowledged = payload.privacyAcknowledged === true;
 
-    if (!firstName || !lastName) {
+    if (
+      !firstName ||
+      !lastName ||
+      !UUID_PATTERN.test(anonymousId) ||
+      !privacyAcknowledged
+    ) {
       return jsonResponse(
-        { ok: false, error: "Introduce tu nombre y apellidos." },
+        { ok: false, error: "Completa los datos y revisa la informacion de privacidad." },
         400
       );
     }
 
+    await recordLegalConsents([
+      {
+        anonymousId,
+        consentType: "privacy_acknowledgement",
+        documentVersion: LEGAL_DOCUMENT_VERSIONS.privacy,
+        accepted: true,
+        source: "manifesto",
+        contextType: "resource_request",
+        contextId: anonymousId,
+        metadata: { resource: "manifesto" },
+      },
+    ]);
+
     const greetingName = `${firstName} ${lastName}`;
     const source = safeSource(payload.source);
-    const from =
-      import.meta.env.MANIFESTO_FROM_EMAIL?.trim() ||
-      getRequiredEnv("RESEND_FROM_EMAIL");
+    const from = `Imperio Espanol <${SITE.contactEmail}>`;
     const attachmentPath =
       import.meta.env.MANIFESTO_ATTACHMENT_URL?.trim() ||
       import.meta.env.MANIFESTO_PDF_URL?.trim() ||
@@ -110,6 +144,7 @@ export const POST: APIRoute = async ({ request }) => {
     const { resend } = await import("../../lib/resend");
     const result = await resend.emails.send({
       from,
+      replyTo: SITE.contactEmail,
       to: email,
       subject,
       html: `

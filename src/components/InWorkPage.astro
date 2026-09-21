@@ -17,15 +17,23 @@ const homeUrl = withBase("/");
   title={seoTitle ?? title}
   description={`${title}, seccion en preparacion de Imperio Espanol.`}
   noindex
+  showFooter={false}
+  showCookieConsent={false}
 >
   <main class="in-work-page">
-    <img
-      class="in-work-page__background"
-      src={withBase("/images/in-work.webp")}
-      alt="Esta seccion de la web esta a la espera de finalizar su publicacion. Por favor, se paciente; el Imperio no se construyo en un dia."
-      fetchpriority="high"
-      decoding="async"
-    />
+    <picture class="in-work-page__background-wrap">
+      <source type="image/avif" srcset={withBase("/images/in-work.avif")} />
+      <img
+        class="in-work-page__background"
+        src={withBase("/images/in-work.webp")}
+        alt="Esta seccion de la web esta a la espera de finalizar su publicacion. Por favor, se paciente; el Imperio no se construyo en un dia."
+        width="1920"
+        height="1080"
+        loading="eager"
+        fetchpriority="high"
+        decoding="async"
+      />
+    </picture>
 
     <a
       class="in-work-page__control in-work-page__control--back"
@@ -80,6 +88,10 @@ const homeUrl = withBase("/");
     max-width: none;
     object-fit: fill;
     object-position: center;
+  }
+
+  .in-work-page__background-wrap {
+    display: contents;
   }
 
   .in-work-page__control {

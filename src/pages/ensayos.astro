@@ -14,6 +14,7 @@ const list = sortEntriesByDateDesc(await getCollection("articles")).filter(
   description="Ensayos sobrios para comprender sin ideologia."
   eyebrow="Ensayos"
   heading="Lecturas largas"
+  noindex={!list.some(entry => entry.data.indexable)}
   summary="Analisis en profundidad con ritmo semanal."
 >
   <section class="section">

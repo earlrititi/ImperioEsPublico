@@ -1,0 +1,86 @@
+---
+import LegalDocument from "../../components/LegalDocument.astro";
+import { LEGAL_BUSINESS, LEGAL_DOCUMENT_VERSIONS } from "../../config/legal";
+---
+
+<LegalDocument
+  title="Terminos y condiciones | Imperio Español"
+  description="Condiciones de cuentas, suscripciones, recursos digitales y compras."
+  heading="Terminos y condiciones"
+  version={LEGAL_DOCUMENT_VERSIONS.terms}
+>
+  <section>
+    <h2>1. Prestador</h2>
+    <p>{LEGAL_BUSINESS.ownerName}, {LEGAL_BUSINESS.taxId}, {LEGAL_BUSINESS.registeredAddress}.</p>
+  </section>
+
+  <section>
+    <h2>2. Informacion precontractual</h2>
+    <p>
+      Antes de pagar se mostraran el producto o plan, precio total, impuestos
+      aplicables, periodicidad, renovacion, costes adicionales, condiciones de
+      cancelacion y, para bienes, informacion de envio y devolucion.
+    </p>
+  </section>
+
+  <section>
+    <h2>3. Cuentas</h2>
+    <p>
+      El acceso mediante enlace enviado al email es personal. El usuario debe
+      proteger su correo y comunicar usos no autorizados. La cuenta gratuita no
+      implica la aceptacion de comunicaciones comerciales.
+    </p>
+  </section>
+
+  <section>
+    <h2>4. Suscripciones</h2>
+    <p>
+      Los planes de pago se renuevan por el periodo elegido hasta su cancelacion.
+      La cancelacion puede gestionarse desde el portal de facturacion y evita la
+      siguiente renovacion, sin perjuicio del acceso ya abonado y de los derechos
+      legales aplicables. Cualquier cambio de precio se comunicara antes de aplicarse.
+    </p>
+  </section>
+
+  <section>
+    <h2>5. Pago</h2>
+    <p>
+      Stripe procesa el pago. La activacion del acceso depende de la confirmacion
+      segura del webhook, no de la mera visita a una pagina de exito.
+    </p>
+  </section>
+
+  <section>
+    <h2>6. Contenido digital</h2>
+    <p>
+      Cuando se solicite acceso inmediato durante el plazo de desistimiento se
+      recabara una peticion expresa y el reconocimiento separado de sus consecuencias,
+      cuando resulte legalmente necesario.
+    </p>
+  </section>
+
+  <section>
+    <h2>7. Productos fisicos</h2>
+    <p>
+      Tallas, composicion, fabricante, seguridad, disponibilidad, entrega y
+      devoluciones deben figurar en la oferta antes de habilitar la compra. Si falta
+      informacion obligatoria, el producto no se considera listo para comercializar.
+    </p>
+  </section>
+
+  <section>
+    <h2>8. Uso y propiedad intelectual</h2>
+    <p>
+      No se permite compartir accesos, eludir controles, extraer masivamente contenido
+      ni explotar materiales fuera de los limites legales o de una autorizacion expresa.
+    </p>
+  </section>
+
+  <section>
+    <h2>9. Legislacion y reclamaciones</h2>
+    <p>
+      Rige la legislacion española sin limitar derechos imperativos del consumidor.
+      Puedes escribir a <a href={`mailto:${LEGAL_BUSINESS.legalEmail}`}>{LEGAL_BUSINESS.legalEmail}</a>.
+    </p>
+  </section>
+</LegalDocument>

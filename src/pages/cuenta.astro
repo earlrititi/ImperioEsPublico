@@ -1,7 +1,12 @@
 ---
 import PageShell from "../layouts/PageShell.astro";
+import MyReservations from "../components/commerce/MyReservations";
+import "../styles/commerce.css";
 import { getSubscriptionByUserId, isActivePaidSubscription } from "../lib/subscriptions";
 import { createSupabaseServerClient } from "../lib/supabase/server";
+import { hasEditorialAccess } from "../lib/editorial-access";
+import { privateAuthHeaders } from "../lib/auth-forms";
+privateAuthHeaders(Astro.response.headers);
 
 const supabase = createSupabaseServerClient({
   cookies: Astro.cookies,
@@ -20,7 +25,8 @@ const hasPaidAccess = isActivePaidSubscription({
   plan: subscription?.plan,
   status: subscription?.status,
 });
-const accessLabel = hasPaidAccess
+const editorialAccess = hasEditorialAccess(user);
+const accessLabel = editorialAccess ? "ADMINISTRADOR EDITORIAL" : hasPaidAccess
   ? subscription?.plan === "maestre_campo"
     ? "MAESTRE DE CAMPO"
     : "ARCABUCERO"
@@ -33,6 +39,7 @@ const accessLabel = hasPaidAccess
   eyebrow="Cuenta"
   heading="Tu acceso"
   summary="Gestiona tu acceso, suscripcion y perfil."
+  noindex
 >
   <Fragment slot="header">
     <div class="grid">
@@ -46,13 +53,14 @@ const accessLabel = hasPaidAccess
         {hasPaidAccess ? (
           <p>Tu suscripcion esta activa.</p>
         ) : (
-          <p>Tu cuenta gratuita PIQUERO esta activa.</p>
+          <p>{editorialAccess ? "Tienes acceso completo a los articulos, sin suscripcion de pago." : "Tu cuenta gratuita PIQUERO esta activa."}</p>
         )}
       </div>
     </div>
     <div class="meta">
       <a class="btn btn-primary" href="/premium">Entrar a premium</a>
       <a class="btn btn-ghost" href="/suscribirse">Ver planes</a>
+      <a class="btn btn-ghost" href="/cuenta/contrasena">Definir o cambiar contraseña</a>
       {subscription?.stripe_customer_id && (
         <button class="btn btn-ghost" id="billing-portal-button" type="button">
           Gestionar facturacion
@@ -64,6 +72,8 @@ const accessLabel = hasPaidAccess
     </div>
     <p class="muted" id="billing-portal-status" role="status" aria-live="polite"></p>
   </Fragment>
+  <MyReservations client:load />
+  {user.app_metadata?.commerce_admin === true && <p><a href="/admin/comercio">Administrar comercio</a></p>}
 </PageShell>
 
 <script>

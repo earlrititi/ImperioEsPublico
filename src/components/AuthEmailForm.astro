@@ -1,0 +1,17 @@
+---
+interface Props { sent: boolean; error: string | null; purpose: "recovery" | "confirmation"; }
+const { sent, error, purpose } = Astro.props;
+---
+{sent && <p role="status">Si la cuenta permite esta operación, recibirás un enlace por correo. Revisa también spam y ábrelo en este navegador.</p>}
+{error && <p role="alert">{error === 'rate' ? 'Demasiadas solicitudes. Espera unos minutos.' : 'No se pudo completar la solicitud. Revisa el correo e inténtalo de nuevo.'}</p>}
+<form method="post" class="email-form">
+  <label for="email">Correo electrónico</label>
+  <input id="email" name="email" type="email" autocomplete="email" maxlength="254" required />
+  <button type="submit" class="btn btn-primary">{purpose === 'recovery' ? 'Enviar enlace para definir contraseña' : 'Reenviar confirmación'}</button>
+</form>
+<p><a href="/login">Volver al inicio de sesión</a></p>
+<style>
+  .email-form { display:grid; gap:1rem; }
+  input { min-height:44px; width:100%; min-width:0; padding:0.75rem; border:1px solid var(--line); border-radius:4px; font:inherit; }
+  a { text-decoration:underline; }
+</style>

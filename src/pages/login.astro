@@ -1,88 +1,58 @@
 ---
 import PageShell from "../layouts/PageShell.astro";
-
+import PasswordField from "../components/PasswordField.astro";
+import { authError, privateAuthHeaders, readAuthForm, validEmail } from "../lib/auth-forms";
+import { safeInternalPath } from "../lib/redirects";
+import { createSupabaseServerClient } from "../lib/supabase/server";
+privateAuthHeaders(Astro.response.headers);
 const error = Astro.url.searchParams.get("error");
-const sent = Astro.url.searchParams.get("sent") === "1";
-const next = Astro.url.searchParams.get("next") || "/cuenta";
-const siteUrl = (import.meta.env.PUBLIC_SITE_URL || Astro.url.origin).replace(/\/$/, "");
-
+const updated = Astro.url.searchParams.get("updated") === "1";
+const next = safeInternalPath(Astro.url.searchParams.get("next"), "/cuenta");
+const fail = (code: string) => Astro.redirect(`/login?error=${code}&next=${encodeURIComponent(next)}`, 303);
 if (Astro.request.method === "POST") {
-  const formData = await Astro.request.formData();
-  const email = String(formData.get("email") ?? "").trim().toLowerCase();
-  const redirectTo = `${siteUrl}/api/auth/callback?next=${encodeURIComponent(next)}`;
-  const { createSupabaseServerClient } = await import("../lib/supabase/server");
-  const supabase = createSupabaseServerClient({
-    cookies: Astro.cookies,
-    request: Astro.request,
-  });
-  const { error: signInError } = await supabase.auth.signInWithOtp({
-    email,
-    options: {
-      emailRedirectTo: redirectTo,
-      shouldCreateUser: true,
-    },
-  });
-
-  if (signInError) {
-    return Astro.redirect(`/login?error=otp&next=${encodeURIComponent(next)}`);
-  }
-
-  return Astro.redirect(`/login?sent=1&next=${encodeURIComponent(next)}`);
+  try {
+    const form = await readAuthForm(Astro.request, "auth_login");
+    const email = String(form.get("email") ?? "").trim().toLowerCase();
+    if (!validEmail(email)) return fail("validation");
+    const supabase = createSupabaseServerClient({ cookies: Astro.cookies, request: Astro.request });
+    if (form.get("method") === "magic") {
+      const site = (import.meta.env.PUBLIC_SITE_URL || Astro.url.origin).replace(/\/$/, "");
+      await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: false,
+        emailRedirectTo: `${site}/api/auth/callback?next=${encodeURIComponent(next)}` } });
+      return Astro.redirect(`/login?sent=1&next=${encodeURIComponent(next)}`, 303);
+    }
+    const password = form.get("password") ?? "";
+    if (!password || password.length > 256) return fail("credentials");
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+    if (signInError || !data.user) return fail("credentials");
+    return Astro.redirect(next, 303);
+  } catch (e) { return fail(authError(e)); }
 }
 ---
-
-<PageShell
-  title="Iniciar sesión y acceder a tu cuenta | Imperio Español"
-  description="Accede a tu cuenta de Imperio Espanol."
-  eyebrow="Acceso"
-  heading="Iniciar sesion"
-  summary="Introduce tu email para recibir enlace magico."
-  narrow
->
+<PageShell title="Iniciar sesión | Imperio Español" description="Accede a tu cuenta." eyebrow="Acceso" heading="Iniciar sesión" noindex narrow>
   <Fragment slot="header">
-    {sent && (
-      <div class="notice">
-        <strong>Revisa tu correo.</strong>
-        <p class="muted">Te hemos enviado un enlace de acceso. Puede tardar unos minutos.</p>
-      </div>
-    )}
-    {error && (
-      <div class="notice">
-        <strong>No se pudo completar el acceso.</strong>
-        <p class="muted">Solicita un nuevo enlace e intentalo otra vez.</p>
-      </div>
-    )}
-    <form class="card auth-form" method="post">
-      <label class="auth-form__label" for="email">Correo electronico</label>
-      <input
-        class="auth-form__field"
-        id="email"
-        name="email"
-        type="email"
-        autocomplete="email"
-        required
-      />
-      <button class="btn btn-primary" type="submit">Enviar enlace magico</button>
+    {updated && <p role="status">Contraseña guardada. Ya puedes iniciar sesión.</p>}
+    {error && <p role="alert">{error === "rate" ? "Demasiados intentos. Espera unos minutos." : error === "credentials" ? "No se pudo iniciar sesión. Revisa el correo, la contraseña y la confirmación de tu cuenta." : "No se pudo completar la solicitud. Inténtalo de nuevo."}</p>}
+    <form class="auth-form" method="post">
+      <label for="email">Correo electrónico</label>
+      <input id="email" name="email" type="email" autocomplete="username" maxlength="254" required />
+      <PasswordField />
+      <button class="btn btn-primary" type="submit">Iniciar sesión</button>
     </form>
-    <p class="muted">Si no tienes cuenta, se creara automaticamente como PIQUERO.</p>
+    <p><a href="/recuperar-contrasena">¿Has olvidado tu contraseña o todavía no tienes una?</a></p>
+    <div class="auth-register">
+      <h2>¿Todavía no tienes cuenta?</h2>
+      <a class="btn btn-primary auth-register__link" href={`/registro?next=${encodeURIComponent(next)}`}>Crear cuenta gratis</a>
+    </div>
+    <p><a href="/confirmar-correo">Reenviar confirmación</a></p>
   </Fragment>
 </PageShell>
-
 <style>
-  .auth-form {
-    display: grid;
-    gap: var(--space-2);
-  }
-
-  .auth-form__label {
-    font-weight: 700;
-  }
-
-  .auth-form__field {
-    min-height: 44px;
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    padding: 0.75rem 0.9rem;
-    font: inherit;
-  }
+  .auth-form { display:grid; gap:0.8rem; margin-block:1rem; }
+  .auth-form > input { min-height:44px; border:1px solid var(--line); border-radius:4px; padding:0.75rem; font:inherit; width:100%; min-width:0; }
+  a { text-decoration:underline; }
+  .auth-register { margin-block:2rem 1rem; padding-top:1.5rem; border-top:1px solid var(--line); }
+  .auth-register h2 { font-size:1.5rem; line-height:1.25; margin:0 0 1rem; }
+  .auth-register__link { width:100%; min-height:52px; font-size:1.125rem; text-decoration:none; text-align:center; }
+  a:focus-visible { outline:2px solid currentColor; outline-offset:4px; }
 </style>

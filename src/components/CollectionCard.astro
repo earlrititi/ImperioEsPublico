@@ -7,6 +7,7 @@ interface Props {
   href: string;
   ctaLabel?: string;
   ctaVariant?: "ghost" | "primary";
+  headingLevel?: 2 | 3;
 }
 
 const {
@@ -16,13 +17,15 @@ const {
   href,
   ctaLabel = "Ver",
   ctaVariant = "ghost",
+  headingLevel = 2,
 } = Astro.props as Props;
+const Heading = headingLevel === 2 ? "h2" : "h3";
 ---
 
 <article class="card collection-card">
   {meta && <p class="muted">{meta}</p>}
-  <h3>{title}</h3>
+  <Heading>{title}</Heading>
   <p>{summary}</p>
   <slot />
-  <a class={`btn btn-${ctaVariant}`} href={href}>{ctaLabel}</a>
+  <a class={`btn btn-${ctaVariant}`} href={href} aria-label={`${ctaLabel}: ${title}`}>{ctaLabel}</a>
 </article>

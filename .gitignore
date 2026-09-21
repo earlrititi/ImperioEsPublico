@@ -35,3 +35,9 @@ public/*.pdf
 .idea/
 .vercel
 .env*
+
+# Local tool state and generated inspection artifacts
+tmp/
+supabase/.temp/
+production-environment/supabase/.temp/
+test-environment/supabase/.temp/

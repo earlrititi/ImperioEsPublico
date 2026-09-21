@@ -14,6 +14,7 @@ const list = sortEntriesByDateDesc(await getCollection("articles")).filter(
   description="Conectado al presente sin ruido."
   eyebrow="Presente"
   heading="Conectar memoria y ahora"
+  noindex={!list.some(entry => entry.data.indexable)}
   summary="Analisis del presente con contexto historico."
 >
   <section class="section">

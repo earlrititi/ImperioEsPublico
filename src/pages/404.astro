@@ -1,0 +1,19 @@
+---
+import PageShell from "../layouts/PageShell.astro";
+
+Astro.response.status = 404;
+---
+
+<PageShell
+  title="Pagina no encontrada | Imperio Español"
+  description="La pagina solicitada no existe o ha cambiado de ubicacion."
+  eyebrow="Error 404"
+  heading="Pagina no encontrada"
+  summary="La ruta solicitada no existe o ha cambiado de ubicacion."
+  narrow
+  noindex
+>
+  <section class="section content">
+    <a class="btn btn-primary" href="/">Volver al inicio</a>
+  </section>
+</PageShell>

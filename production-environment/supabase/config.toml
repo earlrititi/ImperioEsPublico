@@ -1,0 +1,26 @@
+project_id = "imperioe-production"
+
+[auth]
+site_url = "https://imperioes.com"
+additional_redirect_urls = ["http://localhost:4321/api/auth/callback", "https://imperioes.com/api/auth/callback", "https://imperioes.com/api/auth/callback?next=**"]
+minimum_password_length = 12
+
+[auth.email]
+enable_confirmations = true
+
+[auth.email.template.confirmation]
+subject = "Confirma tu correo en Imperio E"
+content_path = "./supabase/templates/confirmation.html"
+
+[auth.email.template.recovery]
+subject = "Define o recupera tu contraseña de Imperio E"
+content_path = "./supabase/templates/recovery.html"
+
+[auth.email.smtp]
+enabled = true
+host = "smtp.resend.com"
+port = 465
+user = "resend"
+pass = "env(RESERVATION_SMTP_PASSWORD)"
+admin_email = "contacto@imperioes.com"
+sender_name = "Imperio Espanol"

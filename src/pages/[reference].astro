@@ -1,0 +1,26 @@
+---
+import { REFERENCE_PAGES, getEntities } from "../config/editorial";
+import { ARTICLES_ITEMS } from "../config/home";
+import { breadcrumbs, formatEditorialDate } from "../lib/seo";
+import HistoricalBlocks from "../components/editorial/HistoricalBlocks.astro";
+import PageShell from "../layouts/PageShell.astro";
+const id = Astro.params.reference ?? "";
+const page = REFERENCE_PAGES[id];
+if (!page?.published) return new Response("Pagina no publicada", { status: 404, headers: { "X-Robots-Tag": "noindex" } });
+const articles = page.articleSlugs.flatMap(slug => {
+  const article = ARTICLES_ITEMS.find(item => item.slug === slug);
+  return article ? [article] : [];
+});
+const entities = getEntities(page.entityIds);
+---
+<PageShell title={page.title} heading={page.title} description={page.description} summary={page.introduction}
+  structuredData={breadcrumbs([{ name: "Inicio", path: "/" }, { name: page.title, path: `/${id}` }])} narrow>
+  <article class="section content">
+    {page.modifiedAt && <p>Revisado: <time datetime={page.modifiedAt}>{formatEditorialDate(page.modifiedAt)}</time></p>}
+    <HistoricalBlocks data={page} position="intro" />
+    {page.sections.map((section, index) => <section aria-labelledby={`reference-section-${index}`}><h2 id={`reference-section-${index}`}>{section.title}</h2><p>{section.text}</p></section>)}
+    <HistoricalBlocks data={page} position="end" />
+    {articles.length > 0 && <section><h2>Artículos relacionados</h2><ul>{articles.map(article => <li><a href={article.href}>{article.title}</a></li>)}</ul></section>}
+    {entities.length > 0 && <section><h2>Contexto relacionado</h2><ul>{entities.map(entity => <li><a href={`/${entity.id}`}>{entity.title}</a></li>)}</ul></section>}
+  </article>
+</PageShell>

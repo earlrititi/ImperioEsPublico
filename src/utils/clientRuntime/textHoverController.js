@@ -2,7 +2,6 @@ const TEXT_HOVER_CARD_SELECTOR = [
   ".services-foundation-card",
   ".service-cta-card",
   ".service-item",
-  ".project-card",
 ].join(",");
 
 export const createTextHoverController = () => {
@@ -40,4 +39,3 @@ export const createTextHoverController = () => {
     },
   };
 };
-

@@ -1,0 +1,121 @@
+<script>
+  // @ts-nocheck
+  const startClientRuntime = async () => {
+    if (document.documentElement.dataset.clientRuntime === "ready") return;
+    document.documentElement.dataset.clientRuntime = "ready";
+    document.documentElement.classList.add("has-islands");
+
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reducedMotion) document.documentElement.classList.add("reduced-motion");
+
+    const hasNavigation = Boolean(document.getElementById("main-nav"));
+    const hasRevealItems = Boolean(document.querySelector(".fade-in-up, .section"));
+    const hasStatCounters = Boolean(document.querySelector("[data-stat-counter]"));
+    const hasTextHover = Boolean(document.querySelector("[data-text-hover]"));
+
+    const [scrollbarModule, revealModule, statModule, textHoverModule] = await Promise.all([
+      import("../utils/clientRuntime/scrollbarController"),
+      hasRevealItems
+        ? import("../utils/clientRuntime/revealController")
+        : Promise.resolve(null),
+      hasStatCounters
+        ? import("../utils/clientRuntime/statCounterController")
+        : Promise.resolve(null),
+      hasTextHover
+        ? import("../utils/clientRuntime/textHoverController")
+        : Promise.resolve(null),
+    ]);
+
+    let elements = {
+      customScrollbar: document.getElementById("imperio-scrollbar"),
+      customScrollbarTrack: document.getElementById("imperio-scrollbar-track"),
+      customScrollbarThumb: document.getElementById("imperio-scrollbar-thumb"),
+    };
+    let nav = null;
+    let navSurface = null;
+    let menu = null;
+    let scrollbar = null;
+
+    if (hasNavigation) {
+      const [domModule, navModule, menuModule] = await Promise.all([
+        import("../utils/clientRuntime/dom"),
+        import("../utils/clientRuntime/navController"),
+        import("../utils/clientRuntime/menuController"),
+      ]);
+
+      elements = domModule.getClientRuntimeElements();
+      if (!elements.nav?.hasAttribute("data-persistent")) {
+        nav = navModule.createNavController({ ...elements, reducedMotion });
+      } else {
+        const { createNavSurfaceController } = await import("../utils/clientRuntime/navSurfaceController");
+        navSurface = createNavSurfaceController(elements.nav);
+      }
+      menu = menuModule.createMenuController({
+        ...elements,
+        onMenuStateChange(isOpen) {
+          document.body.style.overflow = isOpen ? "hidden" : "auto";
+          document.body.classList.toggle("side-menu-open", isOpen);
+          if (!isOpen) scrollbar?.update();
+          if (!isOpen) window.requestAnimationFrame(() => navSurface?.update());
+        },
+      });
+    }
+
+    scrollbar = scrollbarModule.createScrollbarController(elements);
+    const reveal = revealModule?.createRevealController();
+    const statCounter = statModule?.createStatCounterController({ reducedMotion });
+    const textHover = textHoverModule?.createTextHoverController();
+    let ticking = false;
+
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(() => {
+        nav?.update();
+        navSurface?.update();
+        scrollbar.update();
+        ticking = false;
+      });
+    };
+
+    const syncLayout = () => {
+      nav?.syncLayout();
+      navSurface?.update();
+      scrollbar.update();
+    };
+
+    const onResizeChange = (event) => {
+      if (event.matches) menu?.closeMenu({ animate: false });
+      syncLayout();
+    };
+
+    menu?.initialize();
+    syncLayout();
+    nav?.start();
+    reveal?.observeAll();
+    statCounter?.initialize();
+    textHover?.initialize();
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    elements.mainNavLinksWrap?.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("load", syncLayout, { once: true });
+    window.addEventListener("resize", syncLayout, { passive: true });
+    window.addEventListener("keydown", menu?.onKeyDown ?? (() => {}));
+    window.addEventListener("pointermove", scrollbar.onPointerMove, { passive: false });
+    window.addEventListener("pointerup", scrollbar.onPointerEnd);
+    window.addEventListener("pointercancel", scrollbar.onPointerEnd);
+    elements.mobileMenuBtn?.addEventListener("click", menu?.toggleMenu);
+    elements.mobileMenuBtn?.addEventListener("pointerenter", menu?.prepareMedia, {
+      once: true,
+    });
+    elements.mobileMenuBtn?.addEventListener("focus", menu?.prepareMedia, { once: true });
+    elements.closeMenuBtn?.addEventListener("click", menu?.closeMenu);
+    elements.mobileBreakpoint?.addEventListener("change", onResizeChange);
+    elements.customScrollbarThumb?.addEventListener(
+      "pointerdown",
+      scrollbar.onThumbPointerDown
+    );
+  };
+
+  void startClientRuntime();
+</script>

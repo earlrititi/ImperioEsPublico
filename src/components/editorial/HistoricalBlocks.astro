@@ -1,0 +1,52 @@
+---
+import type { EditorialBlocks } from "../../config/editorial";
+import { ARTICLES_ITEMS } from "../../config/home";
+import References from "./References.astro";
+interface Props { data: EditorialBlocks; position: "intro" | "end"; }
+const { data, position } = Astro.props;
+---
+<div class="historical-blocks article-body">
+{position === "intro" ? <>
+  {data.contents.length > 0 && <nav aria-label="Contenido del artículo"><ul>{data.contents.map(item => <li><a href={`#${item.sectionId}`}>{item.title}</a></li>)}</ul></nav>}
+  {data.summary && <section aria-labelledby="historical-summary">
+    <h2 id="historical-summary">{data.summary.question}</h2>
+    <p>{data.summary.answer}</p>
+    {data.summary.sectionId && <a href={`#${data.summary.sectionId}`}>Desarrollo: {data.summary.question}</a>}
+  </section>}
+  {data.facts.length > 0 && <section aria-labelledby="quick-facts">
+    <h2 id="quick-facts">Ficha rápida</h2>
+    <dl>{data.facts.map(fact => <div><dt>{fact.label}</dt><dd>{fact.datetime ? <time datetime={fact.datetime}>{fact.value}</time> : fact.value}</dd></div>)}</dl>
+  </section>}
+  {data.context && <section aria-labelledby="historical-context"><h2 id="historical-context">Contexto histórico</h2><p>{data.context}</p></section>}
+</> : <>
+  {data.interpretation && <section><h2>Interpretación historiográfica</h2><p>{data.interpretation}</p></section>}
+  {data.debate && <section><h2>Debate historiográfico</h2><p>{data.debate}</p></section>}
+  {data.timeline.length > 0 && <section aria-labelledby="historical-timeline">
+    <h2 id="historical-timeline">Cronología</h2>
+    <ol>{data.timeline.map(event => {
+      const article = ARTICLES_ITEMS.find(item => item.slug === event.articleSlug);
+      return <li>{event.datetime ? <time datetime={event.datetime}>{event.label}</time> : <strong>{event.label}</strong>}: {event.text} {article && <a href={article.href}>{article.title}</a>}</li>;
+    })}</ol>
+  </section>}
+  <References title="Fuentes primarias" id="primary-sources" items={data.primarySources} />
+  <References title="Bibliografía" id="bibliography" items={data.bibliography} />
+  {data.notes.length > 0 && <section aria-labelledby="article-notes">
+    <h2 id="article-notes">Notas y referencias</h2>
+    <ol>{data.notes.map(note => <li id={`note-${note.id}`} tabindex="-1">
+      {note.text} {note.sourceUrl && <a href={note.sourceUrl}>Fuente de la nota {note.id}</a>}
+    </li>)}</ol>
+  </section>}
+  {data.faq.length > 0 && <section aria-labelledby="historical-faq">
+    <h2 id="historical-faq">Preguntas frecuentes</h2>
+    {data.faq.map(item => <section><h3>{item.question}</h3><p>{item.answer}</p></section>)}
+  </section>}
+</>}
+</div>
+<style>
+  .historical-blocks:empty { display: none; }
+  .historical-blocks { overflow-wrap: anywhere; }
+  dl > div { display: grid; grid-template-columns: minmax(6rem, 1fr) minmax(0, 3fr); gap: 1rem; padding-block: .5rem; }
+  dt { font-weight: 600; }
+  dd { margin: 0; }
+  :global([id^="note-"], [id^="section-"]) { scroll-margin-top: 8rem; }
+</style>

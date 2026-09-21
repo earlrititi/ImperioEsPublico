@@ -1,0 +1,22 @@
+---
+import PageShell from "../layouts/PageShell.astro";
+
+Astro.response.status = 500;
+---
+
+<PageShell
+  title="Error temporal | Imperio Español"
+  description="No se pudo completar la solicitud."
+  eyebrow="Error 500"
+  heading="No se pudo completar la solicitud"
+  summary="Intentalo de nuevo. Si el problema continua, contacta con nosotros."
+  narrow
+  noindex
+>
+  <section class="section content">
+    <div class="meta">
+      <a class="btn btn-primary" href="/">Volver al inicio</a>
+      <a class="btn btn-ghost" href="/contacto">Contacto</a>
+    </div>
+  </section>
+</PageShell>

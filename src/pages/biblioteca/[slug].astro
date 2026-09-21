@@ -1,51 +1,131 @@
 ---
+import { getEntry, render } from "astro:content";
 import PageShell from "../../layouts/PageShell.astro";
-import { getCollection, render } from "astro:content";
+import {
+  canAccessContentTier,
+  getSubscriptionByUserId,
+} from "../../lib/subscriptions";
+import { createSupabaseServerClient } from "../../lib/supabase/server";
 import { getTierLabel } from "../../utils/content";
+import { SITE } from "../../config/site";
+import { breadcrumbs, canonicalUrl, formatEditorialDate } from "../../lib/seo";
 
-export const prerender = true;
+export const prerender = false;
 
-export async function getStaticPaths() {
-  const entries = await getCollection("articles");
-  return entries.map((entry) => ({
-    params: { slug: entry.id },
-    props: { entry },
-  }));
+const slug = Astro.params.slug ?? "";
+const entry = await getEntry("articles", slug);
+
+if (!entry) {
+  Astro.response.status = 404;
 }
 
-const { entry } = Astro.props;
-const { Content } = await render(entry);
-const tierLabel = getTierLabel(entry.data.tier);
+let hasAccess = false;
+let Content = null;
+let accessUnavailable = false;
+
+if (entry) {
+  if (entry.data.tier === "piquero") {
+    hasAccess = true;
+  } else {
+    Astro.response.headers.set("Cache-Control", "private, no-store");
+    Astro.response.headers.set("CDN-Cache-Control", "no-store");
+    Astro.response.headers.set("Vercel-CDN-Cache-Control", "no-store");
+    Astro.response.headers.set("Vary", "Cookie");
+    try {
+    const supabase = createSupabaseServerClient({
+      cookies: Astro.cookies,
+      request: Astro.request,
+    });
+    const {
+      data: { user }, error,
+    } = await supabase.auth.getUser();
+    if (error && error.name !== "AuthSessionMissingError") throw error;
+    const subscription = user ? await getSubscriptionByUserId(user.id) : null;
+
+    hasAccess = canAccessContentTier(entry.data.tier, {
+      plan: subscription?.plan,
+      status: subscription?.status,
+    });
+    } catch {
+      accessUnavailable = true;
+      Astro.response.status = 503;
+    }
+  }
+
+  if (hasAccess) {
+    const rendered = await render(entry);
+    Content = rendered.Content;
+  }
+}
+
+const tierLabel = entry ? getTierLabel(entry.data.tier) : "";
+const articleSchema = entry
+  ? {
+      "@type": "Article",
+      headline: entry.data.title,
+      description: entry.data.seoDescription ?? entry.data.summary,
+      datePublished: entry.data.date,
+      ...(entry.data.modifiedAt ? { dateModified: entry.data.modifiedAt } : {}),
+      ...(entry.data.author ? { author: { "@type": "Person", name: entry.data.author } } : {}),
+      ...(entry.data.ogImage ? { image: new URL(entry.data.ogImage, SITE.url).href } : {}),
+      inLanguage: "es",
+      mainEntityOfPage: canonicalUrl(`/biblioteca/${entry.id}`),
+      publisher: { "@id": `${SITE.url}/#organization` },
+      isAccessibleForFree: entry.data.tier === "piquero",
+    }
+  : undefined;
 ---
 
-<PageShell
-  title={entry.data.seoTitle}
-  description={entry.data.seoDescription ?? entry.data.summary}
-  heading={entry.data.title}
-  summary={entry.data.summary}
-  summaryMuted
-  narrow
->
-  <div slot="meta" class="meta">
-    <span class="badge">{entry.data.category}</span>
-    <span class="badge">{tierLabel}</span>
-    <span>{entry.data.date}</span>
-  </div>
+{entry ? (
+  <PageShell
+    title={entry.data.seoTitle}
+    description={entry.data.seoDescription ?? entry.data.summary}
+    heading={entry.data.title}
+    summary={entry.data.summary}
+    summaryMuted
+    structuredData={[articleSchema!, breadcrumbs([{ name: "Inicio", path: "/" }, { name: "Biblioteca", path: "/biblioteca" }, { name: entry.data.title, path: `/biblioteca/${entry.id}` }])]}
+    noindex={!entry.data.indexable}
+    ogType="article"
+    ogImage={entry.data.ogImage}
+    publishedAt={entry.data.date}
+    modifiedAt={entry.data.modifiedAt}
+    narrow
+  >
+    <div slot="meta" class="meta">
+      <span class="badge">{entry.data.category}</span>
+      <span class="badge">{tierLabel}</span>
+      {entry.data.author && <span>{entry.data.author}</span>}
+      <time datetime={entry.data.date}>{formatEditorialDate(entry.data.date)}</time>
+      {entry.data.modifiedAt && <span>Revisado: <time datetime={entry.data.modifiedAt}>{formatEditorialDate(entry.data.modifiedAt)}</time></span>}
+    </div>
 
-  <section class="section content">
-    <Content />
-  </section>
-
-  {entry.data.tier !== "piquero" && (
+    {hasAccess && Content ? (
+      <section class="section content">
+        <Content />
+      </section>
+    ) : (
+      <section class="section content">
+        <div class="notice">
+          <strong>{accessUnavailable ? "Acceso temporalmente no disponible." : "Contenido para miembros."}</strong>
+          <p class="muted">
+            Este articulo requiere nivel {tierLabel}. Inicia sesion o sube de escalera.
+          </p>
+          <a class="btn btn-primary" href="/suscribirse">Ver planes</a>
+        </div>
+      </section>
+    )}
+  </PageShell>
+) : (
+  <PageShell
+    title="Contenido no encontrado | Imperio Español"
+    description="El contenido solicitado no existe."
+    heading="Contenido no encontrado"
+    summary="La entrada solicitada no existe o ha cambiado de ubicacion."
+    narrow
+    noindex
+  >
     <section class="section content">
-      <div class="notice">
-        <strong>Contenido para miembros.</strong>
-        <p class="muted">
-          Este articulo requiere nivel {tierLabel}. Inicia sesion o sube de
-          escalera.
-        </p>
-        <a class="btn btn-primary" href="/precios">Ver precios</a>
-      </div>
+      <a class="btn btn-primary" href="/biblioteca">Volver a la biblioteca</a>
     </section>
-  )}
-</PageShell>
+  </PageShell>
+)}

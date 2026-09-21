@@ -5,8 +5,11 @@ import NavLinksList from "./NavLinksList";
 import { withBase } from "../utils/basePath";
 import {
   HERO_ENTRANCE_SEQUENCE,
+  HERO_IMAGE_AVIF_SRC_SET,
   HERO_IMAGE_DEFAULT_SRC,
+  HERO_IMAGE_MOBILE_AVIF_SRC,
   HERO_IMAGE_MOBILE_SRC,
+  HERO_IMAGE_WEBP_SRC_SET,
   HERO_LAYER_VARS,
   HERO_VIEW_TRANSITION_NAME,
   LATIN_LAYER_ANIMATION,
@@ -120,10 +123,23 @@ export default function HeroImperio() {
       <section class="hero-imperio relative min-h-screen flex flex-col justify-between overflow-hidden bg-black">
         <div class="hero-background absolute inset-0" aria-hidden="true">
           <picture>
+            <source
+              type="image/avif"
+              media="(max-width: 768px)"
+              srcSet={HERO_IMAGE_MOBILE_AVIF_SRC}
+            />
             <source media="(max-width: 768px)" srcSet={HERO_IMAGE_MOBILE_SRC} />
+            <source type="image/avif" srcSet={HERO_IMAGE_AVIF_SRC_SET} sizes="100vw" />
             <img
               src={HERO_IMAGE_DEFAULT_SRC}
+              srcSet={HERO_IMAGE_WEBP_SRC_SET}
+              sizes="100vw"
               alt=""
+              width="2496"
+              height="1664"
+              loading="eager"
+              decoding="async"
+              fetchpriority="high"
               class="hero-background__img"
             />
           </picture>
@@ -315,9 +331,23 @@ export default function HeroImperio() {
           position: relative;
         }
 
+        .hero-imperio__latin-block::before,
+        .hero-imperio__latin-block::after {
+          display:block;
+          flex:0 0 auto;
+          color:#111;
+          font:700 2rem/1 Georgia, serif;
+          opacity:0;
+          transition:opacity 0.35s ease;
+        }
+        .hero-imperio__latin-block::before { content:'“'; }
+        .hero-imperio__latin-block::after { content:'”'; }
+        .hero-imperio--latin-ready .hero-imperio__latin-block::before,
+        .hero-imperio--latin-ready .hero-imperio__latin-block::after { opacity:1; }
+
         .hero-imperio__latin-layers {
           display: block;
-          width: 100%;
+          width: calc(100% - 3rem);
           opacity: 0;
           transition: opacity 0.35s ease;
         }
@@ -627,5 +657,3 @@ export default function HeroImperio() {
     </>
   );
 }
-
-

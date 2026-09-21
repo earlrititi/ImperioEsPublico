@@ -1,4 +1,4 @@
-import type { JSX } from "preact";
+import type { CSSProperties } from "preact";
 
 interface TextHoverEffectProps {
   text: string;
@@ -13,7 +13,7 @@ export function TextHoverEffect({
 }: TextHoverEffectProps) {
   const style = {
     "--text-hover-duration": `${duration}s`,
-  } as JSX.CSSProperties;
+  } as CSSProperties;
 
   return (
     <span className={`text-hover-effect ${className}`} style={style}>
@@ -27,4 +27,3 @@ export function TextHoverEffect({
     </span>
   );
 }
-

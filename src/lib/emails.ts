@@ -1,7 +1,8 @@
 import { getRequiredEnv } from "./env";
 import { resend } from "./resend";
+import { SITE } from "../config/site";
 
-const from = getRequiredEnv("RESEND_FROM_EMAIL");
+const from = `Imperio Espanol <${SITE.contactEmail}>`;
 
 function greeting(name?: string | null) {
   return name ? `Bienvenido, ${name}` : "Bienvenido";
@@ -15,6 +16,7 @@ export async function sendPiqueroWelcomeEmail(params: {
 
   return resend.emails.send({
     from,
+    replyTo: SITE.contactEmail,
     to,
     subject: "Tu cuenta PIQUERO esta activa",
     html: `
@@ -33,32 +35,37 @@ export async function sendPaidWelcomeEmail(params: {
   to: string;
   name?: string | null;
   planName: "ARCABUCERO" | "MAESTRE DE CAMPO";
+  priceSummary: string;
+  termsVersion: string;
 }) {
-  const { to, name, planName } = params;
-  const copy =
-    planName === "MAESTRE DE CAMPO"
-      ? "Ya tienes acceso superior al archivo, las cronicas premium y las ventajas reservadas de la comunidad."
-      : "Ya puedes acceder al archivo completo, las cronicas premium y las rutas de lectura.";
+  const { to, name, planName, priceSummary, termsVersion } = params;
+  const siteUrl = getRequiredEnv("PUBLIC_SITE_URL").replace(/\/$/, "");
+  const copy = "Ya puedes leer todos los articulos para suscriptores, compartidos por Arcabucero y Maestre de Campo.";
 
   return resend.emails.send({
     from,
+    replyTo: SITE.contactEmail,
     to,
     subject: `Tu suscripcion ${planName} esta activa`,
     html: `
       <div style="font-family: Georgia, serif; line-height: 1.6; color: #111;">
         <h1>${greeting(name)}</h1>
         <p>Tu suscripcion <strong>${planName}</strong> esta activa.</p>
+        <p><strong>Precio y periodicidad:</strong> ${priceSummary}.</p>
+        <p>La suscripcion se renueva automaticamente hasta que la canceles desde tu cuenta antes de la siguiente renovacion.</p>
+        <p>Terminos aceptados: version ${termsVersion}. Puedes consultarlos en <a href="${siteUrl}/legal/terminos">${siteUrl}/legal/terminos</a>.</p>
         <p>${copy}</p>
         <p><strong>Plus Ultra.</strong></p>
       </div>
     `,
-    text: `${greeting(name)}. Tu suscripcion ${planName} esta activa. ${copy} Plus Ultra.`,
+    text: `${greeting(name)}. Tu suscripcion ${planName} esta activa. Precio y periodicidad: ${priceSummary}. Se renueva automaticamente hasta que la canceles desde tu cuenta antes de la siguiente renovacion. Terminos aceptados: version ${termsVersion}, disponibles en ${siteUrl}/legal/terminos. ${copy} Plus Ultra.`,
   });
 }
 
 export async function sendPaymentFailedEmail(params: { to: string }) {
   return resend.emails.send({
     from,
+    replyTo: SITE.contactEmail,
     to: params.to,
     subject: "No hemos podido procesar tu pago",
     html: `
@@ -75,6 +82,7 @@ export async function sendPaymentFailedEmail(params: { to: string }) {
 export async function sendSubscriptionCancelledEmail(params: { to: string }) {
   return resend.emails.send({
     from,
+    replyTo: SITE.contactEmail,
     to: params.to,
     subject: "Tu suscripcion ha sido cancelada",
     html: `
@@ -98,6 +106,7 @@ export async function sendMerchPurchaseEmail(params: {
 
   return resend.emails.send({
     from,
+    replyTo: SITE.contactEmail,
     to,
     subject: "Hemos recibido tu pedido",
     html: `

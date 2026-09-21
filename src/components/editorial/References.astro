@@ -1,0 +1,15 @@
+---
+import type { EditorialBlocks } from "../../config/editorial";
+interface Props { title: string; id: string; items: EditorialBlocks["bibliography"]; }
+const { title, id, items } = Astro.props;
+---
+{items.length > 0 && <section aria-labelledby={id}>
+  <h2 id={id}>{title}</h2>
+  <ol>{items.map(item => <li id={`${id}-${item.id}`}>
+    {item.author && <span>{item.author}. </span>}
+    <cite>{item.url ? <a href={item.url}>{item.title}</a> : item.title}</cite>
+    {[item.publisher, item.year, item.archive, item.shelfmark].filter(Boolean).map(value => <span>. {value}</span>)}
+    {item.isbn && <span>. ISBN: {item.isbn}</span>}
+    {item.doi && <span>. DOI: {item.doi}</span>}
+  </li>)}</ol>
+</section>}

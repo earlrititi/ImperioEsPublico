@@ -18,6 +18,7 @@ const { Content } = await render(entry);
 
 <PageShell
   title={entry.data.seoTitle}
+  noindex={!entry.data.indexable}
   description={entry.data.seoDescription ?? entry.data.summary}
   heading={entry.data.title}
   summary={entry.data.summary}

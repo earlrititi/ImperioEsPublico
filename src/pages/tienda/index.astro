@@ -1,5 +1,14 @@
 ---
 import Layout from "../../layouts/Layout.astro";
+import StoreStock from "../../components/commerce/StoreStock.astro";
+import { PRODUCTS } from "../../config/products";
+import { SHIRT_PRICE_COPY } from "../../config/commerce";
+
+const shirt = PRODUCTS["camiseta-imperial"];
+const shirtPrice = new Intl.NumberFormat("es-ES", {
+  style: "currency",
+  currency: shirt.currency.toUpperCase(),
+}).format(shirt.expectedUnitAmount / 100);
 ---
 
 <Layout
@@ -8,6 +17,7 @@ import Layout from "../../layouts/Layout.astro";
   description="Lanzamiento 1: Camiseta Imperial de Imperio Español."
 >
   <main class="storefront">
+    <StoreStock />
     <section class="store-catalog" id="catalogo">
       <header class="store-header">
         <span class="store-mark-spacer" aria-hidden="true"></span>
@@ -43,7 +53,14 @@ import Layout from "../../layouts/Layout.astro";
             data-shirt-detail-open
           >
             <div class="product-shirt-placeholder" aria-hidden="true">
-              <img src="/images/logo-redv2.png" alt="" width="180" height="153" />
+              <img
+                src="/images/logo-redv2-480.webp"
+                alt=""
+                width="480"
+                height="371"
+                loading="eager"
+                decoding="async"
+              />
             </div>
             <div class="product-shirt-scene" aria-hidden="true">
               <div class="product-shirt-scene__frame">
@@ -53,6 +70,9 @@ import Layout from "../../layouts/Layout.astro";
                   alt=""
                   width="600"
                   height="800"
+                  loading="lazy"
+                  decoding="async"
+                  fetchpriority="low"
                 />
                 <img
                   class="product-shirt-scene__gate"
@@ -60,6 +80,9 @@ import Layout from "../../layouts/Layout.astro";
                   alt=""
                   width="600"
                   height="800"
+                  loading="lazy"
+                  decoding="async"
+                  fetchpriority="low"
                 />
                 <img
                   class="product-shirt-scene__facade"
@@ -67,6 +90,9 @@ import Layout from "../../layouts/Layout.astro";
                   alt=""
                   width="600"
                   height="800"
+                  loading="lazy"
+                  decoding="async"
+                  fetchpriority="low"
                 />
               </div>
               <div class="product-shirt-final" data-shirt-gallery>
@@ -76,6 +102,9 @@ import Layout from "../../layouts/Layout.astro";
                   alt="Camiseta Imperial vista por delante"
                   width="1400"
                   height="1150"
+                  loading="lazy"
+                  decoding="async"
+                  fetchpriority="low"
                 />
                 <img
                   class="product-shirt-final__image product-shirt-final__image--back"
@@ -83,6 +112,9 @@ import Layout from "../../layouts/Layout.astro";
                   alt="Camiseta Imperial vista por detras"
                   width="1400"
                   height="1150"
+                  loading="lazy"
+                  decoding="async"
+                  fetchpriority="low"
                 />
                 <button
                   class="product-shirt-gallery-next"
@@ -96,29 +128,153 @@ import Layout from "../../layouts/Layout.astro";
               </div>
             </div>
           </div>
-          <div class="product-purchase">
-            <p class="product-price">27,99 EUR</p>
+          <form class="product-purchase" action="/reservas" method="get">
+            <p class="product-price">{shirtPrice}</p>
             <label class="size-field">
               <span>Talla</span>
-              <select data-shirt-size>
-                <option value="S">S</option>
-                <option value="M" selected>M</option>
-                <option value="L">L</option>
-                <option value="XL">XL</option>
+              <select data-shirt-size name="size">
+                {shirt.variantDetails.map((variant) => (
+                  <option value={variant.size} selected={variant.size === "M"}>
+                    {variant.size}
+                  </option>
+                ))}
               </select>
             </label>
             <button
               class="store-button store-button--light"
-              type="button"
-              data-product="camiseta-imperial"
+              data-reservation-cta
+              type="submit"
             >
-              Comprar
+              {"RESERVAR \u2014 0 \u20ac"}
             </button>
-          </div>
+            <p class="product-legal-status">{SHIRT_PRICE_COPY}</p>
+            <p class="product-legal-status" data-reservation-stock role="status" aria-live="polite">Consultando disponibilidad...</p>
+            <a href="/reservas" data-waitlist-link hidden>APUNTARME A LA LISTA DE ESPERA</a>
+            <p class="product-legal-status">100 % poliéster. {shirt.fabricWeightGsm} g/m².</p>
+            <p class="product-legal-status">Reserva ahora · No pagaras nada todavia.</p>
+          </form>
         </article>
       </div>
 
-      <p class="checkout-status" data-checkout-status role="status" aria-live="polite"></p>
+    </section>
+
+    <section
+      class="shirt-story"
+      aria-labelledby="shirt-story-title"
+      data-home-mark-surface="red"
+    >
+      <h2 id="shirt-story-title">DETRÁS DEL DISEÑO</h2>
+
+      <div class="shirt-story__copy">
+        <p>
+          La Camiseta Imperial convierte una prenda cotidiana en una pieza de
+          divulgación. Cada símbolo abre una puerta a los territorios, personajes
+          y expediciones que dieron forma a nuestra historia.
+        </p>
+        <p>
+          La cruz de Borgoña, la estrella, el escudo y el lema Non Sufficit Orbis
+          conviven con la nave como un relato visual. El diseño une identidad,
+          memoria y vocación de descubrimiento.
+        </p>
+        <p>
+          Esta composición muestra el origen y el significado de cada elemento.
+          Una lectura pensada para entender la camiseta antes de vestirla y para
+          reconocer los detalles que la hacen única.
+        </p>
+      </div>
+
+      <figure class="shirt-story__image">
+        <div class="shirt-story__canvas">
+          <picture class="shirt-story__base-picture">
+            <source type="image/avif" srcset="/images/explicacion-camiseta.avif" />
+            <img
+              class="shirt-story__base-image"
+              src="/images/explicacion-camiseta.webp"
+              alt="Explicación visual de los símbolos y elementos históricos de la Camiseta Imperial"
+              width="1920"
+              height="1080"
+              loading="lazy"
+              decoding="async"
+              fetchpriority="low"
+            />
+          </picture>
+
+          <div
+            class="shirt-story__annotations"
+            role="group"
+            aria-label="Detalles ampliables de la camiseta"
+          >
+            <button
+              class="shirt-story__annotation shirt-story__annotation--wide"
+              type="button"
+              aria-label="Ampliar explicación del barco"
+              style="--annotation-left:30.625%;--annotation-top:9.074%;--annotation-width:35.313%;--annotation-height:28.241%;"
+              data-story-annotation
+            >
+              <span class="shirt-story__annotation-inner" aria-hidden="true">
+                <strong class="shirt-story__annotation-title" data-type-copy data-type-speed="34" data-type-source="BARCO"></strong>
+                <span class="shirt-story__annotation-rule"></span>
+                <span class="shirt-story__annotation-columns">
+                  <span data-type-copy data-type-source="La expedición de Cristóbal Colón partió de Palos de la Frontera en 1492 con la nao Santa María y las carabelas Pinta y Niña.&#10;&#10;La Santa María fue la nave capitana. Encalló en La Española el 25 de diciembre de 1492 y con sus restos se levantó el Fuerte de la Navidad. La Pinta destacó por su velocidad y desde ella Rodrigo de Triana avistó tierra. La Niña, más pequeña y maniobrable, se convirtió después en la nave de regreso de Colón."></span>
+                  <span data-type-copy data-type-source="La bandera pintada en las velas era la de la Orden de Cristo, la institución militar y religiosa en la que se transformó la Orden del Temple en Portugal tras su disolución en el siglo XIV.&#10;&#10;Su uso en el viaje de 1492 legitimaba la expedición bajo el espíritu de expansión de la fe católica, autorizado por los Reyes Católicos. Los barcos portaban también banderas blancas con las letras coronadas «F» de Fernando e «Y» de Isabel, con una cruz entre ambas como símbolo de los Reyes Católicos."></span>
+                </span>
+              </span>
+            </button>
+            <button
+              class="shirt-story__annotation shirt-story__annotation--long-title"
+              type="button"
+              aria-label="Ampliar explicación de la Cruz de Borgoña"
+              style="--annotation-left:15.26%;--annotation-top:41.296%;--annotation-width:10.99%;--annotation-height:38.333%;"
+              data-story-annotation
+            >
+              <span class="shirt-story__annotation-inner" aria-hidden="true">
+                <strong class="shirt-story__annotation-title" data-type-copy data-type-speed="30" data-type-source="CRUZ O ASPA DE BORGOÑA"></strong>
+                <span class="shirt-story__annotation-rule"></span>
+                <span data-type-copy data-type-source="En la parte superior izquierda se encuentra nuestro logo con la cruz de Borgoña roja, o aspa de Borgoña, que representa la cruz de San Andrés donde los troncos que forman dicha cruz aparecen con sus nudos en los lugares donde se cortaron las ramas.&#10;&#10;Originada como enseña del ducado de Borgoña, la Casa de Habsburgo la adoptó posteriormente como un emblema personal. Con la llegada de esta dinastía a la Corona de Castilla en 1506, el aspa de Borgoña se transformó en uno de los estandartes más emblemáticos del Imperio Español. Pese a perder protagonismo con los siglos, jamás fue abolida oficialmente.&#10;&#10;Hoy en día, su legado perdura en la heráldica de múltiples organismos e instituciones de Europa y América."></span>
+              </span>
+            </button>
+            <button
+              class="shirt-story__annotation"
+              type="button"
+              aria-label="Ampliar explicación de la estrella"
+              style="--annotation-left:29.583%;--annotation-top:59.444%;--annotation-width:10.104%;--annotation-height:28.056%;"
+              data-story-annotation
+            >
+              <span class="shirt-story__annotation-inner" aria-hidden="true">
+                <strong class="shirt-story__annotation-title" data-type-copy data-type-speed="32" data-type-source="ESTRELLA"></strong>
+                <span class="shirt-story__annotation-rule"></span>
+                <span data-type-copy data-type-source="En la zona superior central de la camiseta encontramos una estrella con el número doce, representando los mundiales conseguidos por territorios pertenecientes al territorio hispánico en dicho momento. Al ser el escudo de Felipe II y su rey fue conocido en latín Ibérica durante su reinado, tenemos que contar con la actual Brasil, por lo que el recuento quedaría de la siguiente forma: España 2, Uruguay 2, Argentina 3 y Brasil 5."></span>
+              </span>
+            </button>
+            <button
+              class="shirt-story__annotation"
+              type="button"
+              aria-label="Ampliar explicación de la frase Non Sufficit Orbis"
+              style="--annotation-left:57.083%;--annotation-top:59.444%;--annotation-width:9.323%;--annotation-height:28.426%;"
+              data-story-annotation
+            >
+              <span class="shirt-story__annotation-inner" aria-hidden="true">
+                <strong class="shirt-story__annotation-title" data-type-copy data-type-speed="32" data-type-source="FRASE"></strong>
+                <span class="shirt-story__annotation-rule"></span>
+                <span data-type-copy data-type-source="El famoso lema del monarca hispano Non Sufficit Orbis, cuyo significado es «El mundo no es suficiente». Al parecer, esta frase surge cuando Felipe II se convierte en Rey de Portugal en el año 1580.&#10;&#10;Con Felipe II, el Imperio Español llegó a ser la primera potencia de Europa y alcanzó su gran apogeo, logrando por primera vez en la historia integrar territorios de todos los continentes habitados para aquella época."></span>
+              </span>
+            </button>
+            <button
+              class="shirt-story__annotation"
+              type="button"
+              aria-label="Ampliar explicación del escudo"
+              style="--annotation-left:70.677%;--annotation-top:38.519%;--annotation-width:10.573%;--annotation-height:36.481%;"
+              data-story-annotation
+            >
+              <span class="shirt-story__annotation-inner" aria-hidden="true">
+                <strong class="shirt-story__annotation-title" data-type-copy data-type-speed="32" data-type-source="ESCUDO"></strong>
+                <span class="shirt-story__annotation-rule"></span>
+                <span data-type-copy data-type-source="El escudo pertenece al Rey de España, Felipe II, por lo que dentro del mismo se encuentran representados los territorios que pertenecían al Imperio Español cuando gobernaba este monarca: Austria, Borgoña, Aragón, Borgoña moderno, Brabante, Baviera, Tirol, Anjou, Flandes, Habsburgo, Cerdeña, Con, Cerdeña-Habsburgo, Cerdeña el de armas de Portugal, ya que fue proclamado Rey de Portugal el 12 de septiembre de 1580 con el nombre de Felipe I de Portugal. Esta unión dinástica duraría sesenta años.&#10;&#10;Alrededor del escudo se encuentra el Collar de la Orden del Toisón de Oro, una de las órdenes de caballería más prestigiosas y antiguas de Europa. Esta muy ligada a la dinastía de los Habsburgo, y a las coronas de Austria y España."></span>
+              </span>
+            </button>
+          </div>
+        </div>
+      </figure>
     </section>
   </main>
 
@@ -183,6 +339,7 @@ import Layout from "../../layouts/Layout.astro";
             alt="Camiseta Imperial vista por delante"
             width="944"
             height="1181"
+            loading="lazy"
             decoding="async"
           />
           <img
@@ -191,6 +348,7 @@ import Layout from "../../layouts/Layout.astro";
             alt="Camiseta Imperial vista por detras"
             width="1077"
             height="1211"
+            loading="lazy"
             decoding="async"
           />
         </div>
@@ -234,53 +392,134 @@ import Layout from "../../layouts/Layout.astro";
     },
   });
 
-  const status = document.querySelector("[data-checkout-status]");
+  type AnnotationTypingState = {
+    run: number;
+    status: "idle" | "typing" | "complete";
+  };
 
-  function setStatus(message) {
-    if (status) status.textContent = message;
+  const annotationStates = new WeakMap<HTMLElement, AnnotationTypingState>();
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+  const waitForCharacter = (delay: number) =>
+    new Promise<void>((resolve) => window.setTimeout(resolve, delay));
+
+  function annotationTextOverflows(annotation: HTMLElement) {
+    const inner = annotation.querySelector<HTMLElement>(".shirt-story__annotation-inner");
+    const textTargets = annotation.querySelectorAll<HTMLElement>("[data-type-copy]");
+    if (!inner) return false;
+
+    if (inner.scrollHeight > inner.clientHeight + 1) return true;
+
+    return [...textTargets].some(
+      (target) =>
+        target.scrollHeight > target.clientHeight + 1 ||
+        target.scrollWidth > target.clientWidth + 1
+    );
   }
 
-  async function openCheckout(button, payload) {
-    if (!(button instanceof HTMLButtonElement)) return;
+  function fitAnnotationText(annotation: HTMLElement) {
+    const targets = [...annotation.querySelectorAll<HTMLElement>("[data-type-copy]")];
+    const currentText = targets.map((target) => target.textContent ?? "");
 
-    const originalText = button.textContent || "Continuar";
-    button.disabled = true;
-    button.textContent = "Abriendo Stripe...";
-    setStatus("");
+    annotation.classList.add("is-measuring");
+    targets.forEach((target) => {
+      target.textContent = target.dataset.typeSource ?? "";
+    });
 
-    try {
-      const response = await fetch("/api/create-checkout-session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+    let scale = 0.96;
+    annotation.style.setProperty("--annotation-copy-scale", String(scale));
+
+    while (annotationTextOverflows(annotation) && scale > 0.55) {
+      scale = Math.max(0.55, scale - 0.025);
+      annotation.style.setProperty("--annotation-copy-scale", String(scale));
+    }
+
+    targets.forEach((target, index) => {
+      target.textContent = currentText[index];
+    });
+    annotation.classList.remove("is-measuring");
+  }
+
+  function resetAnnotation(annotation: HTMLElement) {
+    const state = annotationStates.get(annotation);
+    if (!state) return;
+
+    state.run += 1;
+    state.status = "idle";
+    annotation.classList.remove("is-typing", "is-typed");
+    annotation.querySelectorAll<HTMLElement>("[data-type-copy]").forEach((target) => {
+      target.textContent = "";
+      target.classList.remove("is-typing-target");
+    });
+  }
+
+  function typeAnnotation(annotation: HTMLElement) {
+    const state = annotationStates.get(annotation);
+    if (!state || state.status !== "idle") return;
+
+    state.status = "typing";
+    const run = ++state.run;
+    const targets = [...annotation.querySelectorAll<HTMLElement>("[data-type-copy]")];
+    annotation.classList.add("is-typing");
+
+    if (reducedMotion.matches) {
+      targets.forEach((target) => {
+        target.textContent = target.dataset.typeSource ?? "";
       });
-      const data = await response.json().catch(() => ({}));
+      state.status = "complete";
+      annotation.classList.replace("is-typing", "is-typed");
+      return;
+    }
 
-      if (response.ok && data.url) {
-        window.location.href = data.url;
-        return;
+    void (async () => {
+      for (const target of targets) {
+        const source = target.dataset.typeSource ?? "";
+        const speed = Number(target.dataset.typeSpeed ?? 4);
+        target.classList.add("is-typing-target");
+
+        for (const character of source) {
+          if (state.run !== run) return;
+          target.textContent += character;
+          await waitForCharacter(character === " " ? Math.max(1, speed / 2) : speed);
+        }
+
+        target.classList.remove("is-typing-target");
       }
 
-      setStatus(data.error || "No se pudo iniciar el pago.");
-    } catch (error) {
-      console.error(error);
-      setStatus("No se pudo iniciar el pago.");
-    } finally {
-      button.disabled = false;
-      button.textContent = originalText;
-    }
+      if (state.run !== run) return;
+      state.status = "complete";
+      annotation.classList.replace("is-typing", "is-typed");
+    })();
   }
 
-  document.querySelectorAll("button[data-product]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const card = button.closest(".product-card");
-      const sizeField = card?.querySelector("[data-shirt-size]");
-      const size = sizeField instanceof HTMLSelectElement ? sizeField.value : "";
+  const annotationObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting && entry.target instanceof HTMLElement) {
+        resetAnnotation(entry.target);
+      }
+    });
+  });
 
-      openCheckout(button, {
-        product: button.getAttribute("data-product"),
-        size,
-      });
+  const storyAnnotations = [
+    ...document.querySelectorAll<HTMLElement>("[data-story-annotation]"),
+  ];
+
+  storyAnnotations.forEach((annotation) => {
+    annotationStates.set(annotation, { run: 0, status: "idle" });
+    annotation.addEventListener("pointerenter", () => typeAnnotation(annotation));
+    annotation.addEventListener("focus", () => typeAnnotation(annotation));
+    annotationObserver.observe(annotation);
+  });
+
+  requestAnimationFrame(() => {
+    storyAnnotations.forEach(fitAnnotationText);
+  });
+
+  let annotationFitFrame = 0;
+  window.addEventListener("resize", () => {
+    cancelAnimationFrame(annotationFitFrame);
+    annotationFitFrame = requestAnimationFrame(() => {
+      storyAnnotations.forEach(fitAnnotationText);
     });
   });
 
@@ -318,21 +557,21 @@ import Layout from "../../layouts/Layout.astro";
   const shirtMaxZoom = 3;
   const shirtButtonZoomStep = 0.5;
   const shirtWheelZoomStep = 0.25;
-  const shirtPointers = new Map();
+  const shirtPointers = new Map<number, { x: number; y: number }>();
   let shirtZoom = shirtMinZoom;
   let shirtPanX = 0;
   let shirtPanY = 0;
   let shirtDetailShowingBack = false;
-  let shirtDragPointerId = null;
+  let shirtDragPointerId: number | null = null;
   let shirtDragX = 0;
   let shirtDragY = 0;
   let shirtPinchDistance = 0;
 
-  function clamp(value, min, max) {
+  function clamp(value: number, min: number, max: number) {
     return Math.min(max, Math.max(min, value));
   }
 
-  function getShirtPanBounds(zoom = shirtZoom) {
+  function getShirtPanBounds(zoom: number = shirtZoom) {
     if (!(shirtDetailStage instanceof HTMLElement)) return { x: 0, y: 0 };
     const stageRect = shirtDetailStage.getBoundingClientRect();
     return {
@@ -391,7 +630,11 @@ import Layout from "../../layouts/Layout.astro";
     }
   }
 
-  function setShirtZoom(nextZoom, focalClientX, focalClientY) {
+  function setShirtZoom(
+    nextZoom: number,
+    focalClientX?: number,
+    focalClientY?: number
+  ) {
     const previousZoom = shirtZoom;
     const normalizedZoom = clamp(nextZoom, shirtMinZoom, shirtMaxZoom);
     if (Math.abs(normalizedZoom - previousZoom) < 0.001) return;
@@ -438,16 +681,19 @@ import Layout from "../../layouts/Layout.astro";
     };
   }
 
-  function stopShirtDragging(pointerId) {
+  function stopShirtDragging(pointerId: number) {
     if (shirtDragPointerId === pointerId) shirtDragPointerId = null;
     shirtPointers.delete(pointerId);
     if (shirtPointers.size < 2) shirtPinchDistance = 0;
 
     if (shirtPointers.size === 1 && shirtZoom > shirtMinZoom) {
-      const [remainingId, remainingPoint] = shirtPointers.entries().next().value;
-      shirtDragPointerId = remainingId;
-      shirtDragX = remainingPoint.x;
-      shirtDragY = remainingPoint.y;
+      const remaining = shirtPointers.entries().next().value;
+      if (remaining) {
+        const [remainingId, remainingPoint] = remaining;
+        shirtDragPointerId = remainingId;
+        shirtDragX = remainingPoint.x;
+        shirtDragY = remainingPoint.y;
+      }
     }
 
     if (shirtDragPointerId === null && shirtPointers.size < 2) {
@@ -468,7 +714,11 @@ import Layout from "../../layouts/Layout.astro";
     updateShirtDetail();
     shirtDetail.showModal();
     document.documentElement.classList.add("has-shirt-detail-open");
-    requestAnimationFrame(() => shirtDetailStage?.focus({ preventScroll: true }));
+    requestAnimationFrame(() => {
+      if (shirtDetailStage instanceof HTMLElement) {
+        shirtDetailStage.focus({ preventScroll: true });
+      }
+    });
   }
 
   function closeShirtDetail() {
@@ -654,7 +904,7 @@ import Layout from "../../layouts/Layout.astro";
 
 <style>
   :global(body) {
-    background: #0a0a0a;
+    background: var(--color-black-papers);
   }
 
   :global(html.has-shirt-detail-open) {
@@ -668,13 +918,223 @@ import Layout from "../../layouts/Layout.astro";
   .storefront {
     padding: 0;
     color: #f7f7f4;
-    background: #0a0a0a;
+    background: var(--color-black-papers);
   }
 
   .store-catalog {
     min-height: 94svh;
     padding: 0 clamp(1.25rem, 4.2vw, 5rem) clamp(5rem, 8vw, 9rem);
-    background: #0a0a0a;
+    background-color: var(--color-black-papers);
+    background-image: var(--imperio-dot-pattern);
+    background-size: var(--imperio-dot-pattern-size);
+  }
+
+  .shirt-story {
+    overflow-x: clip;
+    overflow-y: visible;
+    padding: 5.5rem clamp(1.25rem, 4.2vw, 5rem) 4.5rem;
+    color: #fff;
+    background: var(--color-red-accent);
+  }
+
+  .shirt-story h2 {
+    margin: 0;
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 7.5rem;
+    font-weight: 500;
+    line-height: 0.88;
+    letter-spacing: 0;
+  }
+
+  .shirt-story__copy {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(2rem, 5vw, 6rem);
+    margin-top: 5rem;
+  }
+
+  .shirt-story__copy p {
+    max-width: 34rem;
+    margin: 0;
+    color: #fff;
+    font: 600 1rem/1.48 var(--font-body);
+  }
+
+  .shirt-story__image {
+    display: grid;
+    place-items: center;
+    max-width: 1920px;
+    margin: 5.5rem auto 0;
+    overflow: visible;
+    border-radius: 6px;
+    isolation: isolate;
+  }
+
+  .shirt-story__canvas {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    flex: none;
+  }
+
+  .shirt-story__base-image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    border-radius: 6px;
+  }
+
+  .shirt-story__base-picture {
+    display: contents;
+  }
+
+  .shirt-story__annotations {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  .shirt-story__annotation {
+    position: absolute;
+    top: var(--annotation-top);
+    left: var(--annotation-left);
+    z-index: 1;
+    width: var(--annotation-width);
+    height: var(--annotation-height);
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid #211a14;
+    border-radius: 6px;
+    outline: 0;
+    background: #f2e7d3;
+    box-shadow:
+      inset 0 0 0 2px #f2e7d3,
+      inset 0 0 0 3px #33261b;
+    cursor: zoom-in;
+    pointer-events: auto;
+    container-type: inline-size;
+    transform: scale(1);
+    transform-origin: center;
+    transition:
+      transform 280ms cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 180ms ease;
+    will-change: transform;
+  }
+
+  .shirt-story__annotation-inner {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: 7.5cqw 7cqw;
+    overflow: hidden;
+    color: #17130f;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: calc(6.25cqw * var(--annotation-copy-scale, 1));
+    font-weight: 600;
+    line-height: 1.03;
+    text-align: left;
+    white-space: pre-line;
+  }
+
+  .shirt-story__annotation.is-measuring .shirt-story__annotation-inner {
+    visibility: hidden;
+  }
+
+  .shirt-story__annotation-inner [data-type-copy] {
+    overflow-wrap: anywhere;
+  }
+
+  .shirt-story__annotation-title {
+    display: block;
+    min-height: 1.08em;
+    color: #4b1013;
+    font-size: 11.5cqw;
+    line-height: 0.95;
+    text-align: center;
+  }
+
+  .shirt-story__annotation--long-title .shirt-story__annotation-title {
+    min-height: 2.04em;
+  }
+
+  .shirt-story__annotation-rule {
+    width: 74%;
+    height: max(1px, 0.55cqw);
+    flex: none;
+    margin: 2.4cqw auto 4.2cqw;
+    background: #4b1013;
+  }
+
+  .shirt-story__annotation-columns {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    flex: 1;
+    min-height: 0;
+  }
+
+  .shirt-story__annotation-columns > span {
+    min-width: 0;
+    padding-right: 3.2cqw;
+  }
+
+  .shirt-story__annotation-columns > span + span {
+    padding-right: 0;
+    padding-left: 3.2cqw;
+    border-left: max(1px, 0.3cqw) solid #33261b;
+  }
+
+  .shirt-story__annotation--wide .shirt-story__annotation-inner {
+    padding: 3.4cqw 3.6cqw;
+    font-size: calc(2.08cqw * var(--annotation-copy-scale, 1));
+    line-height: 1.04;
+  }
+
+  .shirt-story__annotation--wide .shirt-story__annotation-title {
+    min-height: 1em;
+    font-size: 4.5cqw;
+  }
+
+  .shirt-story__annotation--wide .shirt-story__annotation-rule {
+    width: 28%;
+    height: max(1px, 0.15cqw);
+    margin: 0.7cqw auto 1.4cqw;
+  }
+
+  [data-type-copy].is-typing-target::after {
+    display: inline-block;
+    width: 0.42em;
+    height: 0.88em;
+    margin-left: 0.12em;
+    background: currentColor;
+    content: "";
+    vertical-align: -0.08em;
+    animation: shirt-story-caret 620ms steps(1, end) infinite;
+  }
+
+  @keyframes shirt-story-caret {
+    50% {
+      opacity: 0;
+    }
+  }
+
+  .shirt-story__annotation:is(:hover, :focus-visible) {
+    z-index: 3;
+    transform: scale(1.75);
+    box-shadow:
+      inset 0 0 0 2px #f2e7d3,
+      inset 0 0 0 3px #33261b,
+      0 18px 42px rgb(0 0 0 / 34%);
+  }
+
+  .shirt-story__annotation:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 3px;
   }
 
   .store-header {
@@ -707,7 +1167,7 @@ import Layout from "../../layouts/Layout.astro";
 
   .store-nav a:hover,
   .store-account:hover {
-    color: #f23b20;
+    color: var(--color-red-accent);
   }
 
   .store-account {
@@ -959,7 +1419,7 @@ import Layout from "../../layouts/Layout.astro";
 
   .product-shirt-gallery-next:hover,
   .product-shirt-gallery-next:focus-visible {
-    color: #f23b20;
+    color: var(--color-red-accent);
   }
 
   .product-shirt-gallery-next:focus-visible {
@@ -1032,13 +1492,15 @@ import Layout from "../../layouts/Layout.astro";
     border: 1px solid #303030;
     border-radius: 6px;
     color: #f7f7f4;
-    background: #111;
+    background-color: var(--color-black-papers);
+    background-image: var(--imperio-dot-pattern);
+    background-size: var(--imperio-dot-pattern-size);
     overflow: hidden;
     transform: translate(-50%, -50%);
   }
 
   .shirt-detail::backdrop {
-    background: rgba(0, 0, 0, 0.84);
+    background: rgb(11 12 12 / 84%);
     backdrop-filter: blur(5px);
   }
 
@@ -1056,7 +1518,9 @@ import Layout from "../../layouts/Layout.astro";
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: #111;
+    background-color: var(--color-black-papers);
+    background-image: var(--imperio-dot-pattern);
+    background-size: var(--imperio-dot-pattern-size);
   }
 
   .shirt-detail__header {
@@ -1103,7 +1567,7 @@ import Layout from "../../layouts/Layout.astro";
   .shirt-detail__tools button:focus-visible,
   .shirt-detail__arrow:hover,
   .shirt-detail__arrow:focus-visible {
-    color: #f23b20;
+    color: var(--color-red-accent);
   }
 
   .shirt-detail__tools button:focus-visible,
@@ -1134,7 +1598,7 @@ import Layout from "../../layouts/Layout.astro";
   }
 
   .shirt-detail__stage:focus-visible {
-    box-shadow: inset 0 0 0 2px #f23b20;
+    box-shadow: inset 0 0 0 2px var(--color-red-accent);
   }
 
   .shirt-detail__media {
@@ -1266,14 +1730,24 @@ import Layout from "../../layouts/Layout.astro";
     border-radius: 4px;
     font: 600 0.82rem/1 var(--font-body);
     cursor: pointer;
+    text-decoration: none;
   }
 
   .store-button--light {
     grid-column: 2;
     grid-row: 1 / span 2;
-    color: #0a0a0a;
-    background: #f7f7f4;
+    color: #fff;
+    background: #a92317;
+    border-color: #ff634c;
+    min-height: 56px;
+    padding: 1rem 1.4rem;
+    font-size: 1rem;
+    line-height: 1.3;
+    transition: background 180ms ease, color 180ms ease;
   }
+  .store-button--light:hover { color:#111; background:#fff; border-color:#fff; }
+  .store-button--light:focus-visible { outline:3px solid #fff; outline-offset:4px; }
+  .store-button--light:active { transform:translateY(1px); }
 
   .store-button:disabled {
     cursor: wait;
@@ -1284,6 +1758,13 @@ import Layout from "../../layouts/Layout.astro";
     margin: 2rem 0 0;
     color: #a6a6a6;
     font-family: var(--font-body);
+  }
+
+  .product-legal-status {
+    grid-column: 1 / -1;
+    margin: 0.25rem 0 0;
+    color: #a6a6a6;
+    font: 500 0.76rem/1.4 var(--font-body);
   }
 
   @media (max-width: 700px) {
@@ -1317,6 +1798,34 @@ import Layout from "../../layouts/Layout.astro";
 
     .product-grid {
       grid-template-columns: minmax(0, 1fr);
+    }
+
+    .shirt-story {
+      padding: 3.75rem 1.25rem 3rem;
+    }
+
+    .shirt-story h2 {
+      font-size: 3.25rem;
+      line-height: 0.94;
+    }
+
+    .shirt-story__copy {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 1.4rem;
+      margin-top: 2.75rem;
+    }
+
+    .shirt-story__copy p {
+      max-width: none;
+      font-size: 0.94rem;
+    }
+
+    .shirt-story__image {
+      margin-top: 3rem;
+    }
+
+    .shirt-story__canvas {
+      width: 140%;
     }
 
     .product-meta {
@@ -1383,7 +1892,8 @@ import Layout from "../../layouts/Layout.astro";
     .product-shirt-gallery-next,
     .shirt-detail__media,
     .shirt-detail__image,
-    .shirt-detail__arrow svg {
+    .shirt-detail__arrow svg,
+    .shirt-story__annotation {
       transition: none;
     }
   }

@@ -1,0 +1,44 @@
+---
+import { READER_FAQ } from "../config/reader-faq";
+---
+<section class="reader-faq" aria-labelledby="reader-faq-title" id="dudas-del-lector">
+  <div class="reader-faq__inner">
+    <header>
+      <p class="reader-faq__eyebrow">FAQ</p>
+      <h2 id="reader-faq-title">Dudas del lector</h2>
+    </header>
+    <div>
+      {READER_FAQ.map(({question, answer}) => (
+        <details>
+          <summary>{question}<span aria-hidden="true">+</span></summary>
+          <p>{answer}</p>
+        </details>
+      ))}
+    </div>
+    <nav aria-label="Continuar explorando" class="reader-faq__links">
+      <a href="/papeles-y-tratados">Papeles y Tratados</a>
+      <a href="/registro">Crear cuenta gratuita</a>
+      <a href="/suscribirse">Consultar suscripciones</a>
+      <a href="/contacto">Contacto</a>
+    </nav>
+  </div>
+</section>
+<style>
+  .reader-faq { background:#fbfbfa; color:#171717; padding:4rem 1rem; }
+  .reader-faq__inner { max-width:960px; margin-inline:auto; }
+  header { margin-bottom:2rem; }
+  .reader-faq__eyebrow { color:#a92317; font:700 .875rem/1.4 var(--font-body); margin:0 0 .75rem; }
+  h2 { font-size:3rem; line-height:1.1; letter-spacing:0; margin:0; }
+  details { border-top:1px solid #ccc7c2; }
+  details:last-child { border-bottom:1px solid #ccc7c2; }
+  summary { display:flex; justify-content:space-between; align-items:center; gap:1rem; padding:1.25rem 0; min-height:48px; list-style:none; cursor:pointer; font:600 1.2rem/1.4 var(--font-serif); }
+  summary::-webkit-details-marker { display:none; }
+  summary span { flex:0 0 1.25rem; text-align:center; color:#a92317; font:400 1.5rem/1 var(--font-body); }
+  details[open] summary span { transform:rotate(45deg); }
+  details p { max-width:76ch; margin:0 0 1.5rem; font-size:1.0625rem; font-weight:400; line-height:1.65; color:#333; }
+  summary:hover { color:#a92317; }
+  summary:focus-visible,a:focus-visible { outline:2px solid #a92317; outline-offset:4px; }
+  .reader-faq__links { display:flex; flex-wrap:wrap; gap:.5rem 1.5rem; padding-top:2rem; }
+  a { color:#9b231b; text-decoration:underline; text-underline-offset:.2em; min-height:44px; display:inline-flex; align-items:center; }
+  @media(max-width:600px) { h2 { font-size:2.25rem; } summary { font-size:1.125rem; } }
+</style>

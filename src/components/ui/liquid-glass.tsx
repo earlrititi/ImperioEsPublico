@@ -1,11 +1,15 @@
 "use client";
 
-import type { ComponentChildren, JSX } from "preact";
+import type {
+  ComponentChildren,
+  CSSProperties,
+  MouseEventHandler,
+} from "preact";
 
 interface GlassEffectProps {
   children: ComponentChildren;
   className?: string;
-  style?: JSX.CSSProperties;
+  style?: CSSProperties;
   href?: string;
   target?: string;
 }
@@ -13,7 +17,7 @@ interface GlassEffectProps {
 interface DockIcon {
   src: string;
   alt: string;
-  onClick?: JSX.MouseEventHandler<HTMLImageElement>;
+  onClick?: MouseEventHandler<HTMLImageElement>;
 }
 
 export const GlassEffect = ({
@@ -21,9 +25,9 @@ export const GlassEffect = ({
   className = "",
   style = {},
   href,
-  target = "_blank",
+  target = "_self",
 }: GlassEffectProps) => {
-  const glassStyle: JSX.CSSProperties = {
+  const glassStyle: CSSProperties = {
     boxShadow: "0 6px 6px rgba(0, 0, 0, 0.2), 0 0 20px rgba(0, 0, 0, 0.1)",
     transitionTimingFunction: "cubic-bezier(0.175, 0.885, 0.32, 2.2)",
     ...style,

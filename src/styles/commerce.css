@@ -1,0 +1,33 @@
+.commerce-layout {display:grid;grid-template-columns:minmax(220px,0.7fr) minmax(0,1.3fr);gap:40px;align-items:start;padding-bottom:64px}
+.commerce-product img {width:100%;height:auto;aspect-ratio:14/11.5;object-fit:contain;background:#fafafa}
+.commerce-product h2,.reservation-form h2,.reservation-manager h2{font-size:26px;line-height:1.25;letter-spacing:0}
+.reservation-form,.reservation-manager {min-width:0;max-width:900px}
+.reservation-form fieldset,.reservation-manager fieldset {border:0;border-top:1px solid #ccc;padding:20px 0;margin:24px 0}
+.reservation-form legend,.reservation-manager legend {font-weight:700;font-size:18px;padding-right:12px}
+.reservation-form label,.reservation-manager label {display:grid;gap:6px;margin:12px 0;font-size:16px;min-width:0}
+.reservation-fields {display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.reservation-form input:not([type=checkbox]),.reservation-form select,.reservation-manager input:not([type=checkbox]),.reservation-manager select,.commerce-admin input {width:100%;min-width:0;border:1px solid #aaa;background:white;color:#171717;border-radius:4px;padding:10px 12px;font:inherit;box-sizing:border-box}
+.reservation-variants {display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.reservation-variants small{font-size:12px;min-height:32px}
+.reservation-consent {display:flex!important;align-items:start;gap:12px!important;line-height:1.5}
+.reservation-consent input{margin-top:5px;flex-shrink:0}
+.reservation-summary {border-top:1px solid #ccc;border-bottom:1px solid #ccc;padding:16px 0;margin:24px 0}
+.reservation-total {font-size:22px;font-weight:700}
+.commerce-table-wrap {width:100%;overflow-x:auto}
+.commerce-table-wrap table {width:100%;border-collapse:collapse;font-size:15px}
+.commerce-table-wrap th,.commerce-table-wrap td {padding:12px 10px;text-align:left;vertical-align:top;border-bottom:1px solid #ddd;overflow-wrap:anywhere;min-width:65px}
+.commerce-table-wrap th:first-child{min-width:150px}
+.commerce-table-wrap small{display:block;font-weight:400;font-size:12px}
+.commerce-table-wrap caption{text-align:left;font-size:18px;font-weight:700;margin-bottom:12px}
+.commerce-honeypot {position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden}
+.commerce-reference {overflow-wrap:anywhere;font-family:monospace;font-size:15px}
+.reservation-form .btn,.reservation-manager .btn,.commerce-admin .btn {white-space:normal;max-width:100%;margin:6px 8px 6px 0}
+.reservation-form button:disabled,.reservation-manager button:disabled,.commerce-admin button:disabled {opacity:.55;cursor:not-allowed}
+.reservation-manager address{font-style:normal;line-height:1.7}
+.commerce-admin {padding-bottom:64px;min-width:0}
+.commerce-admin-nav {display:flex;gap:12px;flex-wrap:wrap;margin:24px 0}
+.commerce-admin-nav [aria-pressed=true]{background:#171717;color:white}
+.commerce-stats {display:flex;gap:24px;flex-wrap:wrap;border-block:1px solid #ccc;padding:20px 0}
+.commerce-stats strong{display:block;font-size:24px}.commerce-stats span{font-size:14px}
+.commerce-admin details {min-width:220px}.commerce-admin summary{cursor:pointer}.commerce-admin .commerce-actions{display:flex;flex-wrap:wrap;gap:6px}
+@media(max-width:800px){.commerce-layout{grid-template-columns:minmax(0,1fr);gap:24px}.commerce-product img{max-height:320px}.reservation-fields{grid-template-columns:1fr}.reservation-variants{grid-template-columns:repeat(3,minmax(0,1fr))}.commerce-layout{padding-bottom:32px}}

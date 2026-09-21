@@ -11,6 +11,14 @@ interface Props {
   summaryMuted?: boolean;
   narrow?: boolean;
   mainClass?: string;
+  noindex?: boolean;
+  showCookieConsent?: boolean;
+  footerVariant?: "light" | "dark";
+  structuredData?: Record<string, unknown> | Record<string, unknown>[];
+  ogImage?: string;
+  ogType?: "website" | "article";
+  publishedAt?: string;
+  modifiedAt?: string;
 }
 
 const {
@@ -22,10 +30,29 @@ const {
   summaryMuted = false,
   narrow = false,
   mainClass = "",
+  noindex = false,
+  showCookieConsent = true,
+  footerVariant = "light",
+  structuredData,
+  ogImage,
+  ogType,
+  publishedAt,
+  modifiedAt,
 } = Astro.props as Props;
 ---
 
-<Layout title={title} description={description}>
+<Layout
+  title={title}
+  description={description}
+  noindex={noindex}
+  showCookieConsent={showCookieConsent}
+  footerVariant={footerVariant}
+  structuredData={structuredData}
+  ogImage={ogImage}
+  ogType={ogType}
+  publishedAt={publishedAt}
+  modifiedAt={modifiedAt}
+>
   <main class:list={["page-shell", mainClass]}>
     <div class="container">
       <section class:list={["section", "page-shell__intro", narrow && "content"]}>

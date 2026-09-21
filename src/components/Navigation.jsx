@@ -1,17 +1,19 @@
 import { NAV_ITEMS } from "../config/navigation";
 import { withBase } from "../utils/basePath";
+import { UserRound } from "lucide";
 
-export default function Navigation() {
+export default function Navigation({ persistent = false }) {
   return (
     <>
       <nav
         id="main-nav"
+        data-persistent={persistent ? "true" : undefined}
         aria-label="Navegacion principal"
         class="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
       >
         <div class="main-nav__fx" aria-hidden="true">
         </div>
-        <div class="main-nav__floating-links-layer hidden md:block" aria-hidden="true">
+        <div class="main-nav__floating-links-layer" aria-hidden="true">
           <div class="main-nav__floating-links-wrap">
             <ul class="main-nav__floating-links nav-links-cluster text-sm font-medium tracking-wide uppercase">
               {NAV_ITEMS.map((item) => (
@@ -33,13 +35,17 @@ export default function Navigation() {
             data-return-to-hero
           >
             <img
-              src={withBase("/images/logo-redv2.png")}
+              src={withBase("/images/logo-redv2-96.webp")}
               alt="Imperio Español"
+              width="96"
+              height="74"
+              loading="eager"
+              decoding="async"
               class="main-nav__logo"
             />
           </a>
 
-          <div class="main-nav__links-wrap hidden md:block">
+          <div class="main-nav__links-wrap">
             <ul class="main-nav__links nav-links-cluster text-sm font-medium tracking-wide uppercase">
               {NAV_ITEMS.map((item) => (
                 <li key={item.href}>
@@ -56,6 +62,12 @@ export default function Navigation() {
             </ul>
           </div>
 
+          <div class="main-nav__actions">
+          <a href={withBase("/cuenta")} class="menu-button account-button" aria-label="Mi cuenta / Iniciar sesion" title="Mi cuenta / Iniciar sesion">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              {UserRound.map(([Tag, attrs], index) => <Tag key={index} {...attrs} />)}
+            </svg>
+          </a>
           <button
             id="mobile-menu-btn"
             type="button"
@@ -70,6 +82,7 @@ export default function Navigation() {
               <span class="menu-icon__line menu-icon__line--bottom"></span>
             </span>
           </button>
+          </div>
         </div>
 
       </nav>
@@ -77,22 +90,35 @@ export default function Navigation() {
       <div
         id="mobile-menu"
         role="dialog"
+        aria-label="Menu de navegacion"
         aria-modal="true"
         aria-hidden="true"
         class="side-bar"
       >
         <div class="side-bar__media" aria-hidden="true">
-          <picture>
+          <picture data-menu-media>
+            <source
+              type="image/avif"
+              media="(max-width: 767px)"
+              data-srcset={withBase("/images/red_hamburguer_phone-768.avif")}
+            />
             <source
               media="(max-width: 767px)"
-              srcSet={withBase("/images/red_hamburguer_phone.png")}
+              data-srcset={withBase("/images/red_hamburguer_phone-768.webp")}
+            />
+            <source
+              type="image/avif"
+              data-srcset={withBase("/images/red_hamburguer_final-1600.avif")}
             />
             <img
-              src={withBase("/images/red_hamburguer_final.png")}
+              data-src={withBase("/images/red_hamburguer_final-1600.webp")}
               alt=""
+              width="1600"
+              height="890"
               class="side-bar__media-image"
               decoding="async"
-              loading="eager"
+              loading="lazy"
+              fetchpriority="low"
             />
           </picture>
         </div>
@@ -191,7 +217,7 @@ export default function Navigation() {
           width: auto;
           height: 2.7rem;
           opacity: var(--home-nav-logo-opacity, 1);
-          transition: opacity 0.3s ease, transform 0.3s ease;
+          transition: opacity 0.3s ease, transform 0.3s ease, filter 0.3s ease;
         }
 
         .main-nav__floating-links-layer {
@@ -229,7 +255,7 @@ export default function Navigation() {
 
         .main-nav__links {
           color: #111;
-          opacity: var(--nav-links-progress, 0);
+          opacity: 1;
           will-change: opacity;
           pointer-events: none;
         }
@@ -250,8 +276,18 @@ export default function Navigation() {
 
         .main-nav__brand:hover .main-nav__logo,
         .main-nav__brand:focus-visible .main-nav__logo {
-          opacity: 0.92;
+          filter: brightness(0);
+          opacity: 1;
           transform: translateY(-1px);
+        }
+
+        .main-nav__actions {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          flex-shrink: 0;
+          position: relative;
+          z-index: 8;
         }
 
         .menu-button {
@@ -458,7 +494,7 @@ export default function Navigation() {
           opacity: 0;
           transform: translate(0.3em, -50%) scale(0.82);
           transform-origin: center;
-          pointer-events: none;
+          pointer-events: auto;
           transition:
             opacity 180ms ease,
             transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
@@ -541,6 +577,7 @@ export default function Navigation() {
           transform: translateY(0);
           pointer-events: auto;
         }
+
 
         @media (min-width: 768px) {
           .main-nav__logo {

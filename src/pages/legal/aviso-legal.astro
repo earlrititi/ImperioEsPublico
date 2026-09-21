@@ -1,0 +1,69 @@
+---
+import LegalDocument from "../../components/LegalDocument.astro";
+import { LEGAL_BUSINESS } from "../../config/legal";
+---
+
+<LegalDocument
+  title="Aviso legal | Imperio Español"
+  description="Identificacion del titular y condiciones generales de uso de imperioes.com."
+  heading="Aviso legal"
+  version="2026-08-25"
+>
+  <section>
+    <h2>1. Titular del sitio</h2>
+    <p><strong>Titular:</strong> {LEGAL_BUSINESS.ownerName}</p>
+    <p><strong>Nombre comercial:</strong> {LEGAL_BUSINESS.tradeName}</p>
+    <p><strong>NIF/CIF:</strong> {LEGAL_BUSINESS.taxId}</p>
+    <p><strong>Domicilio:</strong> {LEGAL_BUSINESS.registeredAddress}</p>
+    <p><strong>Datos registrales:</strong> {LEGAL_BUSINESS.registryDetails}</p>
+    <p>
+      <strong>Contacto:</strong>{" "}
+      <a href={`mailto:${LEGAL_BUSINESS.legalEmail}`}>{LEGAL_BUSINESS.legalEmail}</a>
+    </p>
+  </section>
+
+  <section>
+    <h2>2. Objeto</h2>
+    <p>
+      Este sitio ofrece contenido editorial, cuentas de usuario, suscripciones,
+      recursos digitales y, cuando se habiliten, productos fisicos. El acceso y
+      uso implican respetar este aviso y las condiciones aplicables a cada servicio.
+    </p>
+  </section>
+
+  <section>
+    <h2>3. Uso del sitio</h2>
+    <p>
+      El usuario debe utilizar el sitio de forma licita, no interferir en su
+      seguridad y no intentar acceder a areas, datos o cuentas de terceros.
+    </p>
+  </section>
+
+  <section>
+    <h2>4. Propiedad intelectual</h2>
+    <p>
+      Salvo indicacion contraria, los textos, identidad visual, seleccion editorial
+      y materiales propios pertenecen al titular o se utilizan con autorizacion.
+      No se autoriza su explotacion comercial, reproduccion sistematica o
+      redistribucion sin permiso o cobertura legal suficiente.
+    </p>
+  </section>
+
+  <section>
+    <h2>5. Enlaces y disponibilidad</h2>
+    <p>
+      Los enlaces externos conducen a servicios sujetos a sus propias condiciones.
+      El titular puede realizar tareas de mantenimiento o corregir errores, sin
+      excluir los derechos que correspondan a consumidores y usuarios.
+    </p>
+  </section>
+
+  <section>
+    <h2>6. Legislacion aplicable</h2>
+    <p>
+      Se aplica la legislacion española, sin privar a consumidores residentes en
+      otros lugares de la proteccion imperativa que les corresponda. Cualquier
+      clausula de jurisdiccion se entendera sin perjuicio del fuero legal del consumidor.
+    </p>
+  </section>
+</LegalDocument>

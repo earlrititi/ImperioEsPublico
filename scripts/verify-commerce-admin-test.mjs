@@ -1,0 +1,34 @@
+import assert from 'node:assert/strict';
+import {readFileSync,writeFileSync} from 'node:fs';
+import {parseEnv} from 'node:util';
+import {randomBytes} from 'node:crypto';
+import {createClient} from '@supabase/supabase-js';
+const file='.env.reservation-test.local',env=parseEnv(readFileSync(file,'utf8'));
+assert.equal(env.PUBLIC_SUPABASE_URL,'https://joicpkgvggfxzrdazisx.supabase.co');
+const admin=createClient(env.PUBLIC_SUPABASE_URL,env.SUPABASE_SERVICE_ROLE_KEY,{auth:{persistSession:false}});
+const email='commerce-admin@example.invalid';
+const users=await admin.auth.admin.listUsers();assert.ifError(users.error);
+let user=users.data.users.find(u=>u.email===email);
+if(!user){env.COMMERCE_TEST_ADMIN_PASSWORD=randomBytes(32).toString('hex');const result=await admin.auth.admin.createUser({email,password:env.COMMERCE_TEST_ADMIN_PASSWORD,email_confirm:true,app_metadata:{commerce_admin:true}});assert.ifError(result.error);user=result.data.user;}
+env.COMMERCE_TEST_ADMIN_EMAIL=email;
+assert.ok(env.COMMERCE_TEST_ADMIN_PASSWORD,'Test password must remain available locally');
+const content=Object.entries(env).map(([k,v])=>`${k}=${JSON.stringify(v)}`).join('\n')+'\n';
+if(readFileSync(file,'utf8')!==content){writeFileSync(file,content,{mode:0o600});await new Promise(r=>setTimeout(r,7000));}
+const auth=createClient(env.PUBLIC_SUPABASE_URL,env.PUBLIC_SUPABASE_ANON_KEY,{auth:{persistSession:false}});
+const login=await auth.auth.signInWithPassword({email,password:env.COMMERCE_TEST_ADMIN_PASSWORD});assert.ifError(login.error);
+const cookie=`sb-joicpkgvggfxzrdazisx-auth-token=base64-${Buffer.from(JSON.stringify(login.data.session)).toString('base64url')}`;
+const base='http://127.0.0.1:4325';
+const response=await fetch(`${base}/api/commerce-admin`,{headers:{cookie}});assert.equal(response.status,200);
+const dashboard=await response.json();assert.equal(dashboard.inventory.length,5);assert.ok(dashboard.stats.collectedRevenue>=0);
+assert.equal(dashboard.campaign.max_reservation_quantity,2);
+assert.ok(Array.isArray(dashboard.legalPending));
+const waitlist=await fetch(`${base}/api/commerce-admin?view=waitlist`,{headers:{cookie}});assert.equal(waitlist.status,200);
+assert.equal((await waitlist.json()).view,'waitlist');
+const exported=await fetch(`${base}/api/commerce-export`,{headers:{cookie}});assert.equal(exported.status,200);
+assert.match(exported.headers.get('content-disposition'),/pedidos-pagados.csv/);
+const invalid=await fetch(`${base}/api/commerce-admin`,{method:'POST',headers:{cookie,'Content-Type':'application/json',Origin:base},body:JSON.stringify({action:'campaign-configure',config:{...dashboard.campaign,max_reservation_quantity:0}})});
+assert.equal(invalid.status,409);
+const mine=await fetch(`${base}/api/reservations/mine`,{headers:{cookie}});assert.equal(mine.status,200);
+const page=await fetch(`${base}/admin/comercio`,{headers:{cookie}});assert.equal(page.status,200);assert.ok((await page.text()).includes('Comercio'));
+await auth.auth.signOut();
+console.log('Authenticated admin, private account API and admin page passed on Supabase Test. Credentials stored only in ignored Test env.');

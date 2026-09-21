@@ -1,3 +1,5 @@
 User-agent: *
 Allow: /
+# Public pages and rendering assets stay crawlable. Private access is enforced
+# on the server, not here. No bot-specific training/retrieval policy is implied.
 Sitemap: https://imperioes.com/sitemap.xml

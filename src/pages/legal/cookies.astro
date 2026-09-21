@@ -1,0 +1,52 @@
+---
+import LegalDocument from "../../components/LegalDocument.astro";
+import { LEGAL_DOCUMENT_VERSIONS } from "../../config/legal";
+---
+
+<LegalDocument
+  title="Politica de cookies | Imperio Español"
+  description="Cookies tecnicas, preferencias y medicion utilizadas por imperioes.com."
+  heading="Politica de cookies"
+  version={LEGAL_DOCUMENT_VERSIONS.cookies}
+>
+  <section>
+    <h2>1. Que son</h2>
+    <p>
+      Las cookies y tecnologias equivalentes permiten recordar informacion en el
+      navegador. Las no esenciales permanecen bloqueadas hasta que el usuario decide.
+    </p>
+  </section>
+
+  <section>
+    <h2>2. Categorias</h2>
+    <ul>
+      <li><strong>Necesarias:</strong> sesion de Supabase, seguridad y almacenamiento de la preferencia de cookies.</li>
+      <li><strong>Preferencias:</strong> opciones funcionales no imprescindibles. Actualmente no hay proveedores activos en esta categoria.</li>
+      <li><strong>Analitica:</strong> Google Analytics o Google Tag Manager, solo si estan configurados y aceptados.</li>
+      <li><strong>Marketing:</strong> publicidad o seguimiento entre sitios. Actualmente no hay proveedores activos en esta categoria.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>3. Tecnologias identificadas</h2>
+    <p>
+      La autenticacion puede utilizar cookies tecnicas de Supabase. La eleccion del
+      banner se guarda localmente bajo la clave <code>imperio_cookie_consent</code>.
+      Si se acepta analitica, Google puede crear identificadores como <code>_ga</code>
+      y <code>_ga_*</code>. La configuracion del contenedor debe revisarse cada vez
+      que se incorporen etiquetas nuevas.
+    </p>
+  </section>
+
+  <section>
+    <h2>4. Cambiar o retirar el consentimiento</h2>
+    <p>
+      Rechazar es tan sencillo como aceptar. Puedes volver a abrir el panel en
+      cualquier momento; retirar el consentimiento impide futuras cargas, aunque
+      puede ser necesario eliminar desde el navegador cookies ya creadas por terceros.
+    </p>
+    <button class="btn btn-primary" type="button" data-cookie-settings-trigger>
+      Configurar cookies
+    </button>
+  </section>
+</LegalDocument>

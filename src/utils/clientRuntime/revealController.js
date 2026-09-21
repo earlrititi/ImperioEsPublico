@@ -26,7 +26,7 @@ export const createRevealController = () => {
 
   return {
     observeAll() {
-      document.querySelectorAll(".projects-section .fade-in-up").forEach((element, index) => {
+      document.querySelectorAll(".articles-section .fade-in-up").forEach((element, index) => {
         if (!element.style.transitionDelay) {
           element.style.transitionDelay = `${index * 100}ms`;
         }

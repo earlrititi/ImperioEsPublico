@@ -48,8 +48,6 @@ export default function Services() {
   const [manifestCompany, setManifestCompany] = useState("");
   const [manifestStatus, setManifestStatus] = useState("idle");
   const [manifestError, setManifestError] = useState("");
-  const [checkoutPlan, setCheckoutPlan] = useState("");
-  const [checkoutError, setCheckoutError] = useState("");
   const manifestModalRef = useRef(null);
   const manifestFirstNameInputRef = useRef(null);
   const isManifestFormReady = Boolean(
@@ -63,6 +61,8 @@ export default function Services() {
       document.querySelectorAll("[data-service-card-morph]")
     );
     const cleanups = [];
+    const morphRequests = new WeakMap();
+    const armySwap = document.querySelector(".services-army-swap");
     const resetCard = (card) => {
       card.classList.remove(
         "service-cta-card--locked-open",
@@ -75,16 +75,65 @@ export default function Services() {
         : new IntersectionObserver(
             (entries) => {
               entries.forEach((entry) => {
-                if (!entry.isIntersecting) resetCard(entry.target);
+                if (entry.isIntersecting) morphRequests.get(entry.target)?.("low");
               });
             },
-            { threshold: 0 }
+            { rootMargin: "320px 0px", threshold: 0 }
           );
+
+    const resetCardsWhenTabChanges = () => {
+      if (document.visibilityState === "hidden") cards.forEach(resetCard);
+    };
+
+    document.addEventListener("visibilitychange", resetCardsWhenTabChanges);
+
+    if (armySwap) {
+      armySwap.querySelectorAll("[data-army-base-srcset]").forEach((source) => {
+        source.setAttribute("srcset", source.getAttribute("data-army-base-srcset") || "");
+        source.removeAttribute("data-army-base-srcset");
+      });
+      const armyBaseImage = armySwap.querySelector("[data-army-base-src]");
+      const armyBaseSrc = armyBaseImage?.getAttribute("data-army-base-src");
+      if (armyBaseImage && armyBaseSrc) {
+        armyBaseImage.setAttribute("src", armyBaseSrc);
+        armyBaseImage.removeAttribute("data-army-base-src");
+      }
+
+      let armyHoverRequested = false;
+      const requestArmyHover = () => {
+        if (armyHoverRequested) return;
+        armyHoverRequested = true;
+
+        armySwap.querySelectorAll("[data-army-srcset]").forEach((source) => {
+          source.setAttribute("srcset", source.getAttribute("data-army-srcset") || "");
+          source.removeAttribute("data-army-srcset");
+        });
+
+        const image = armySwap.querySelector("[data-army-src]");
+        const src = image?.getAttribute("data-army-src");
+        if (!image || !src) return;
+        image.setAttribute("src", src);
+        image.removeAttribute("data-army-src");
+        image
+          .decode()
+          .catch(() => undefined)
+          .finally(() => armySwap.classList.add("services-army-swap--hover-ready"));
+      };
+
+      armySwap.addEventListener("pointerenter", requestArmyHover);
+      armySwap.addEventListener("pointerdown", requestArmyHover);
+      cleanups.push(() => {
+        armySwap.removeEventListener("pointerenter", requestArmyHover);
+        armySwap.removeEventListener("pointerdown", requestArmyHover);
+      });
+    }
 
     cards.forEach((card) => {
       let requested = false;
 
-      const requestMorph = () => {
+      const requestMorph = (priority = "low") => {
+        const image = card.querySelector("[data-morph-src]");
+        if (image && priority === "high") image.fetchPriority = "high";
         if (requested) return;
         requested = true;
 
@@ -94,11 +143,10 @@ export default function Services() {
           source.removeAttribute("data-morph-srcset");
         });
 
-        const image = card.querySelector("[data-morph-src]");
         const src = image?.getAttribute("data-morph-src");
         if (!image || !src) return;
 
-        image.fetchPriority = "high";
+        image.fetchPriority = priority;
         image.setAttribute("src", src);
         image.removeAttribute("data-morph-src");
         image
@@ -108,12 +156,14 @@ export default function Services() {
       };
 
       const lockCardOpen = () => {
-        requestMorph();
+        requestMorph("high");
         card.classList.add(
           "service-cta-card--locked-open",
           "service-cta-card--morph-active"
         );
       };
+
+      morphRequests.set(card, requestMorph);
 
       card.addEventListener("pointerenter", lockCardOpen);
       card.addEventListener("focusin", lockCardOpen);
@@ -136,6 +186,7 @@ export default function Services() {
     return () => {
       cleanups.forEach((cleanup) => cleanup());
       visibilityObserver?.disconnect();
+      document.removeEventListener("visibilitychange", resetCardsWhenTabChanges);
     };
   }, []);
 
@@ -187,44 +238,9 @@ export default function Services() {
     }
   };
 
-  const openSubscriptionCheckout = async (plan) => {
-    if (!plan || checkoutPlan) return;
-
-    setCheckoutPlan(plan);
-    setCheckoutError("");
-
-    try {
-      const response = await fetch(withBase("/api/create-checkout-session"), {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({ plan }),
-      });
-      const result = await response.json().catch(() => ({}));
-
-      if (!response.ok || !result.url) {
-        throw new Error(result.error || "No se pudo iniciar la suscripción.");
-      }
-
-      window.location.assign(result.url);
-    } catch (error) {
-      setCheckoutPlan("");
-      setCheckoutError(
-        error instanceof Error
-          ? error.message
-          : "No se pudo iniciar la suscripción."
-      );
-    }
-  };
-
   const activateService = (service) => {
-    if (service.actionHref) {
-      window.location.assign(service.actionHref);
-      return;
-    }
-
-    openSubscriptionCheckout(service.checkoutPlan);
+    const destination = service.actionHref || service.subscriptionHref;
+    if (destination) window.location.assign(destination);
   };
 
   return (
@@ -238,21 +254,41 @@ export default function Services() {
             </h2>
             <div class="services-army-swap">
               <div class="services-army-hitbox" aria-hidden="true"></div>
-              <img
-                src={withBase("/images/ejercito-blanco_upscaled_2x.webp")}
-                alt="Formacion historica del ejercito español"
-                class="services-army-image services-army-image--default"
-                loading="lazy"
-                decoding="async"
-              />
-              <img
-                src={withBase("/images/ejercito-rojo.webp")}
-                alt=""
-                aria-hidden="true"
-                class="services-army-image services-army-image--hover"
-                loading="lazy"
-                decoding="async"
-              />
+              <picture class="services-army-picture services-army-picture--default">
+                <source
+                  type="image/avif"
+                  data-army-base-srcset={`${withBase("/images/ejercito-blanco_upscaled_2x-960.avif")} 960w, ${withBase("/images/ejercito-blanco_upscaled_2x-1440.avif")} 1440w`}
+                  sizes="(max-width: 767px) calc(100vw - 32px), min(72vw, 1440px)"
+                />
+                <img
+                  data-army-base-src={withBase("/images/ejercito-blanco_upscaled_2x.webp")}
+                  alt="Formacion historica del ejercito español"
+                  width="1960"
+                  height="1424"
+                  class="services-army-image"
+                  loading="lazy"
+                  decoding="async"
+                  fetchpriority="low"
+                />
+              </picture>
+              <picture class="services-army-picture services-army-picture--hover">
+                <source
+                  type="image/avif"
+                  data-army-srcset={`${withBase("/images/ejercito-rojo-960.avif")} 960w, ${withBase("/images/ejercito-rojo-1440.avif")} 1440w`}
+                  sizes="(max-width: 767px) calc(100vw - 32px), min(72vw, 1440px)"
+                />
+                <img
+                  data-army-src={withBase("/images/ejercito-rojo.webp")}
+                  alt=""
+                  aria-hidden="true"
+                  width="1960"
+                  height="1424"
+                  class="services-army-image"
+                  loading="lazy"
+                  decoding="async"
+                  fetchpriority="low"
+                />
+              </picture>
             </div>
             <div class="services-foundation-grid services-foundation-grid--before-button fade-in-up">
             {FOUNDATION_CARDS.slice(0, 1).map((card) => (
@@ -454,13 +490,23 @@ export default function Services() {
                   <span class="services-plan-index__intro-sizer" aria-hidden="true">
                     {PLAN_COMPARISON_INTRO}
                   </span>
-                  <img
-                    class="services-plan-index__intro-image"
-                    src={withBase("/images/Imagen Planes.png")}
-                    alt="Desembarco historico con la bandera espanola"
-                    loading="lazy"
-                    decoding="async"
-                  />
+                  <picture class="services-plan-index__intro-picture">
+                    <source
+                      type="image/avif"
+                      srcSet={`${withBase("/images/imagen-planes-640.avif")} 640w, ${withBase("/images/imagen-planes-1024.avif")} 1024w`}
+                      sizes="(max-width: 767px) 92vw, 34vw"
+                    />
+                    <img
+                      class="services-plan-index__intro-image"
+                      src={withBase("/images/imagen-planes.webp")}
+                      alt="Desembarco historico con la bandera espanola"
+                      width="1254"
+                      height="1254"
+                      loading="lazy"
+                      decoding="async"
+                      fetchpriority="low"
+                    />
+                  </picture>
                 </li>
                 {PLAN_COMPARISON_LABELS.map((label) => (
                   <li class="services-plan-index__item" key={label}>
@@ -578,37 +624,55 @@ export default function Services() {
                           <span class="service-cta-card__button-arrow" aria-hidden="true">-&gt;</span>
                         </a>
                       ) : (
-                        <button
+                        <a
                           class="service-cta-card__button"
-                          type="button"
-                          disabled={Boolean(checkoutPlan)}
-                          onClick={() => openSubscriptionCheckout(service.checkoutPlan)}
+                          href={service.subscriptionHref}
                         >
-                          <span>
-                            {checkoutPlan === service.checkoutPlan
-                              ? "Abriendo Stripe..."
-                              : "Suscribirme"}
-                          </span>
+                          <span>{service.subscriptionLabel || "Suscribirme"}</span>
                           <span class="service-cta-card__button-arrow" aria-hidden="true">-&gt;</span>
-                        </button>
+                        </a>
                       )}
                     </div>
                     <ul class="service-cta-card__list" aria-label={`Puntos clave de ${service.title}`}>
                       {comparisonHighlights.map((highlight, index) => {
                         const isEmpty = !highlight;
+                        const isUnavailable = highlight === "-";
+                        const comparisonLabel = PLAN_COMPARISON_LABELS[index];
 
                         return (
                           <li
                             class={`service-cta-card__list-item${isEmpty ? " service-cta-card__list-item--empty" : ""}`}
-                            aria-hidden={isEmpty || undefined}
                             key={`${service.id}-highlight-${index}`}
                           >
-                            {!isEmpty && (
-                              <>
-                                <span class="service-cta-card__check" aria-hidden="true">&#10003;</span>
-                                <span>{highlight}</span>
-                              </>
-                            )}
+                            <span class="service-cta-card__value">
+                              {!isEmpty && (
+                                <>
+                                  <span
+                                    class={`service-cta-card__check${isUnavailable ? " service-cta-card__check--unavailable" : ""}`}
+                                    aria-hidden="true"
+                                  >
+                                    {isUnavailable ? (
+                                      <img
+                                        src={withBase("/images/subscription-x-brush.png")}
+                                        alt=""
+                                        width="128"
+                                        height="128"
+                                        loading="lazy"
+                                        decoding="async"
+                                      />
+                                    ) : (
+                                      "\u2713"
+                                    )}
+                                  </span>
+                                  {!isUnavailable && (
+                                    <span class="service-cta-card__value-text">{highlight}</span>
+                                  )}
+                                </>
+                              )}
+                            </span>
+                            <span class="service-cta-card__plan-label">
+                              {comparisonLabel}
+                            </span>
                           </li>
                         );
                       })}
@@ -651,11 +715,6 @@ export default function Services() {
               );
             })}
           </div>
-          {checkoutError && (
-            <p class="services-checkout-status" role="alert">
-              {checkoutError}
-            </p>
-          )}
         </div>
       </section>
 
@@ -722,13 +781,6 @@ export default function Services() {
           display: none;
         }
 
-        .services-checkout-status {
-          margin: var(--space-3) 0 0;
-          color: #8e1117;
-          font-weight: 700;
-          text-align: center;
-        }
-
         .service-cta-card {
           --service-glow-hsl: 356 78% 49%;
           --service-card-bg-start: rgba(255, 255, 255, 0.78);
@@ -769,10 +821,9 @@ export default function Services() {
           contain-intrinsic-size: auto 220px;
           cursor: pointer;
           transition:
-            transform 0.7s cubic-bezier(0.175, 0.885, 0.32, 2.2),
-            min-height 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.2),
-            border-color 0.3s ease,
-            box-shadow 0.7s cubic-bezier(0.175, 0.885, 0.32, 2.2);
+            transform 0.38s cubic-bezier(0.22, 1, 0.36, 1),
+            border-color 0.2s ease;
+          will-change: transform;
         }
 
         .service-cta-card::before {
@@ -810,8 +861,9 @@ export default function Services() {
           pointer-events: none;
           transform: scale(1.018);
           transition:
-            opacity 0.28s ease,
-            transform 0.72s cubic-bezier(0.175, 0.885, 0.32, 1.08);
+            opacity 0.22s ease,
+            transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+          will-change: opacity, transform;
         }
 
         .service-cta-card__media::after {
@@ -866,7 +918,8 @@ export default function Services() {
             0 0 34px color-mix(in srgb, var(--service-stat-rail-color) 22%, transparent);
           transform: scaleY(0);
           transform-origin: center;
-          transition: transform 0.32s ease;
+          transition: transform 0.26s ease;
+          will-change: transform;
         }
 
         .service-cta-card__event-bg {
@@ -882,7 +935,8 @@ export default function Services() {
             linear-gradient(135deg, hsl(var(--service-glow-hsl) / 0.2) 0%, rgba(255, 255, 255, 0.06) 52%, hsl(var(--service-glow-hsl) / 0.1) 100%);
           transform: scale(1);
           transform-origin: center;
-          transition: transform 0.5s ease, opacity 0.3s ease;
+          transition: transform 0.34s ease, opacity 0.22s ease;
+          will-change: transform, opacity;
         }
 
         .service-cta-card__grid-pattern {
@@ -894,7 +948,8 @@ export default function Services() {
             linear-gradient(90deg, hsl(var(--service-glow-hsl) / 0.08) 1px, transparent 1px);
           background-size: 30px 30px;
           opacity: 0;
-          transition: opacity 0.3s ease;
+          transition: opacity 0.22s ease;
+          will-change: opacity;
         }
 
         .service-cta-card__bg {
@@ -911,7 +966,7 @@ export default function Services() {
           filter: none;
           box-shadow: none;
           transform: none;
-          transition: opacity 0.16s ease, transform 0.16s ease, border-radius 0.16s ease, background 0.16s ease;
+          transition: opacity 0.16s ease;
         }
 
         .service-cta-card:is(
@@ -920,18 +975,16 @@ export default function Services() {
           .service-cta-card--locked-open
         ) {
           min-height: clamp(236px, 21vw, 300px);
-          transform: translateY(-6px);
+          transform: translateY(-4px);
           border-color: hsl(var(--service-glow-hsl) / 0.42);
           background:
             linear-gradient(163deg, rgba(255, 255, 255, 0.38) 0%, rgba(255, 255, 255, 0.18) 42%, hsl(var(--service-glow-hsl) / 0.16) 100%),
             hsl(var(--service-glow-hsl) / 0.06),
             rgba(255, 255, 255, 0.2);
           box-shadow:
-            0 0 18px 1px hsl(var(--service-glow-hsl) / 0.14),
-            0 0 48px hsl(var(--service-glow-hsl) / 0.1),
-            0 22px 42px -26px rgba(0, 0, 0, 0.42),
-            10px 10px 32px rgba(190, 190, 190, 0.18),
-            -10px -10px 32px rgba(255, 255, 255, 0.58);
+            0 0 24px hsl(var(--service-glow-hsl) / 0.12),
+            0 18px 36px -26px rgba(0, 0, 0, 0.42),
+            inset 1px 1px 0 rgba(255, 255, 255, 0.5);
         }
 
         .service-cta-card:is(
@@ -1006,9 +1059,9 @@ export default function Services() {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          min-width: clamp(5.2rem, 10vw, 7.2rem);
+          width: clamp(3.47rem, 6.67vw, 4.8rem);
           min-height: clamp(3.1rem, 5.6vw, 4.25rem);
-          padding: 0.55rem 0.78rem 0.92rem;
+          padding: 0.55rem 0.52rem 0.92rem;
           clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 78%, 0 100%);
           background:
             linear-gradient(135deg, rgba(255, 255, 255, 0.36), transparent 34%),
@@ -1044,17 +1097,22 @@ export default function Services() {
 
         .service-cta-card__copy {
           margin: 0;
+          padding: 0 0.8rem;
+          border-radius: 4px;
           color: var(--service-card-copy-color);
+          background: rgba(18, 18, 18, 0.06);
           font-size: clamp(0.96rem, 1.12vw, 1.16rem);
           line-height: 1.48;
           max-height: 0;
           opacity: 0;
           overflow: hidden;
+          box-sizing: border-box;
           transform: translateY(-0.35rem);
           transition:
-            max-height 0.48s ease,
-            opacity 0.28s ease,
-            transform 0.48s ease;
+            max-height 0.34s ease,
+            padding 0.34s ease,
+            opacity 0.2s ease,
+            transform 0.34s ease;
         }
 
         .service-cta-card:is(
@@ -1064,6 +1122,7 @@ export default function Services() {
           )
           .service-cta-card__copy {
           max-height: 32rem;
+          padding: 0.7rem 0.8rem;
           opacity: 1;
           transform: translateY(0);
         }
@@ -1097,9 +1156,7 @@ export default function Services() {
             0 0 0 hsl(var(--service-glow-hsl) / 0);
           transition:
             transform 0.18s ease,
-            border-color 0.22s ease,
-            background 0.22s ease,
-            box-shadow 0.22s ease;
+            border-color 0.18s ease;
         }
 
         .service-cta-card:is(
@@ -1162,8 +1219,9 @@ export default function Services() {
 
         .service-cta-card__list {
           display: grid;
-          gap: 1.05rem;
+          gap: 0;
           justify-self: start;
+          width: 100%;
           margin: 0;
           padding: 0;
           list-style: none;
@@ -1177,9 +1235,9 @@ export default function Services() {
           overflow: hidden;
           transform: translateX(-0.75rem);
           transition:
-            max-height 0.56s ease,
-            opacity 0.32s ease,
-            transform 0.56s ease;
+            max-height 0.38s ease,
+            opacity 0.22s ease,
+            transform 0.38s ease;
         }
 
         .service-cta-card:is(
@@ -1195,13 +1253,50 @@ export default function Services() {
 
         .service-cta-card__list-item {
           display: grid;
-          grid-template-columns: 1.3rem minmax(0, 1fr);
-          align-items: center;
-          gap: 1rem;
+          grid-template-columns: minmax(0, 1fr) minmax(7rem, 38%);
+          align-items: stretch;
+          min-width: 0;
+          min-height: 4.25rem;
+          border-top: 1px solid hsl(var(--service-glow-hsl) / 0.24);
         }
 
         .service-cta-card__list-item--empty {
-          display: none;
+          display: grid;
+        }
+
+        .service-cta-card__value {
+          display: grid;
+          grid-template-columns: 1.3rem minmax(0, 1fr);
+          align-items: center;
+          gap: 0.7rem;
+          min-width: 0;
+          padding: 0.72rem 0.8rem 0.72rem 0;
+        }
+
+        .service-cta-card__value-text {
+          min-width: 0;
+          line-height: 1.18;
+          overflow-wrap: anywhere;
+          text-wrap: pretty;
+        }
+
+        .service-cta-card__plan-label {
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+          min-width: 0;
+          padding: 0.72rem 0.68rem;
+          border-left: 1px solid rgba(255, 255, 255, 0.24);
+          background: rgba(18, 18, 18, 0.06);
+          color: var(--color-white-pure);
+          font-family: var(--font-serif);
+          font-size: clamp(0.72rem, 1vw, 0.9rem);
+          font-weight: 800;
+          line-height: 1.12;
+          text-align: right;
+          text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+          text-transform: uppercase;
+          overflow-wrap: anywhere;
         }
 
         .service-cta-card__check {
@@ -1212,6 +1307,24 @@ export default function Services() {
           font-size: 1.05rem;
           font-weight: 800;
           line-height: 1;
+        }
+
+        .service-cta-card__check.service-cta-card__check--unavailable {
+          color: #c62828;
+          font-size: 1em;
+        }
+
+        .service-cta-card__check--unavailable {
+          width: 1em;
+          height: 1em;
+        }
+
+        .service-cta-card__check--unavailable img {
+          display: block;
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          filter: drop-shadow(0 2px 2px #fff);
         }
 
         .services-next-button-wrap {
@@ -1250,8 +1363,8 @@ export default function Services() {
 
         .services-manifest-modal::backdrop {
           background:
-            radial-gradient(circle at 50% 44%, rgba(193, 18, 31, 0.2), transparent 32rem),
-            rgba(0, 0, 0, 0.78);
+            radial-gradient(circle at 50% 44%, rgb(242 56 30 / 20%), transparent 32rem),
+            rgb(11 12 12 / 78%);
           backdrop-filter: blur(8px);
         }
 
@@ -1261,12 +1374,14 @@ export default function Services() {
           width: 100%;
           border: 1px solid rgba(255, 255, 255, 0.26);
           border-radius: 24px;
-          background:
-            linear-gradient(145deg, rgba(18, 18, 18, 0.96), rgba(64, 10, 15, 0.94)),
-            #111;
+          background-color: var(--color-black-papers);
+          background-image:
+            var(--imperio-dot-pattern),
+            linear-gradient(145deg, rgb(11 12 12 / 96%), rgba(64, 10, 15, 0.94));
+          background-size: var(--imperio-dot-pattern-size), auto;
           box-shadow:
             0 28px 80px rgba(0, 0, 0, 0.52),
-            0 0 0 6px rgba(193, 18, 31, 0.12),
+            0 0 0 6px rgb(242 56 30 / 12%),
             inset 1px 1px 0 rgba(255, 255, 255, 0.12);
           max-height: calc(100dvh - 2rem);
           overflow-y: auto;
@@ -1285,7 +1400,7 @@ export default function Services() {
         .services-manifest-modal__field {
           width: 100%;
           min-height: clamp(3.45rem, 6vw, 4.1rem);
-          border: 2px solid rgba(193, 18, 31, 0.82);
+          border: 2px solid rgb(242 56 30 / 82%);
           border-radius: 18px;
           background: rgba(255, 249, 241, 0.98);
           color: #1a0f0c;
@@ -1310,7 +1425,7 @@ export default function Services() {
         .services-manifest-modal__field:focus {
           border-color: var(--color-red-accent);
           box-shadow:
-            0 0 0 7px rgba(193, 18, 31, 0.24),
+            0 0 0 7px rgb(242 56 30 / 24%),
             0 18px 42px rgba(0, 0, 0, 0.34),
             inset 1px 1px 0 rgba(255, 255, 255, 0.9);
         }
@@ -1351,7 +1466,7 @@ export default function Services() {
           margin-top: 0.2rem;
           border: 0;
           border-radius: 999px;
-          background: var(--color-red-spanish);
+          background: var(--color-red-accent);
           color: var(--color-white-pure);
           cursor: pointer;
           font: inherit;
@@ -1431,7 +1546,9 @@ export default function Services() {
           --service-card-check-color: var(--color-white-pure);
           --service-button-text-color: hsl(var(--service-glow-hsl));
           color: var(--color-white-pure);
-          background: #161616;
+          background-color: var(--color-black-papers);
+          background-image: var(--imperio-dot-pattern);
+          background-size: var(--imperio-dot-pattern-size);
         }
 
         .service-cta-card--image-bg .service-cta-card__grid-pattern {
@@ -1465,7 +1582,7 @@ export default function Services() {
 
         .service-cta-card--image-bg.service-cta-card--morph-ready.service-cta-card--morph-active
           .service-cta-card__media-picture--morph {
-          animation: service-card-morph-cycle 1.72s ease forwards;
+          animation: service-card-morph-cycle 1.08s ease forwards;
         }
 
         .service-cta-card--image-bg:is(
@@ -1519,7 +1636,6 @@ export default function Services() {
           )
           .text-hover-effect__outline {
           opacity: 0;
-          clip-path: inset(0 100% 0 0);
         }
 
         .service-cta-card--image-bg:is(
@@ -1571,9 +1687,9 @@ export default function Services() {
         .services-next-button {
           --main-size: clamp(0.98rem, 1.45vw, 1.34rem);
           --border-width: 0;
-          --color-background: var(--color-red-spanish);
+          --color-background: var(--color-red-accent);
           --color-text: rgba(255, 255, 255, 0.94);
-          --color-outline: rgba(193, 18, 31, 0.28);
+          --color-outline: rgb(242 56 30 / 28%);
           --color-shadow: rgba(0, 0, 0, 0.36);
           --color-star: var(--color-red-accent);
           --glass-edge: transparent;
@@ -1611,7 +1727,7 @@ export default function Services() {
           outline-offset: 0.22em;
           box-shadow:
             inset 0 0 0 1px rgba(255, 255, 255, 0.3),
-            0 0 0 4px rgba(193, 18, 31, 0.32),
+            0 0 0 4px rgb(242 56 30 / 32%),
             0 12px 28px rgba(0, 0, 0, 0.12);
         }
 
@@ -1632,8 +1748,8 @@ export default function Services() {
           border-radius: 999px;
           background:
             radial-gradient(ellipse at 50% 26%, rgba(255, 255, 255, 0.42), transparent 26%),
-            radial-gradient(ellipse at 50% 46%, rgba(193, 18, 31, 0.22), rgba(193, 18, 31, 0.06) 64%, transparent 78%),
-            linear-gradient(90deg, rgba(193, 18, 31, 0), rgba(193, 18, 31, 0.12), rgba(193, 18, 31, 0));
+            radial-gradient(ellipse at 50% 46%, rgb(242 56 30 / 22%), rgb(242 56 30 / 6%) 64%, transparent 78%),
+            linear-gradient(90deg, rgb(242 56 30 / 0%), rgb(242 56 30 / 12%), rgb(242 56 30 / 0%));
           filter: blur(9px);
           opacity: 0.58;
           pointer-events: none;
@@ -1820,11 +1936,11 @@ export default function Services() {
           border-radius: 999px;
           background: linear-gradient(
             90deg,
-            rgba(193, 18, 31, 0) 0%,
-            rgba(193, 18, 31, 0.08) 18%,
-            rgba(230, 57, 70, 0.42) 48%,
-            rgba(193, 18, 31, 0.08) 82%,
-            rgba(193, 18, 31, 0) 100%
+            rgb(242 56 30 / 0%) 0%,
+            rgb(242 56 30 / 8%) 18%,
+            rgb(242 56 30 / 42%) 48%,
+            rgb(242 56 30 / 8%) 82%,
+            rgb(242 56 30 / 0%) 100%
           );
           filter: blur(3px);
           opacity: 0;
@@ -1856,11 +1972,11 @@ export default function Services() {
           border-color: transparent;
           background-color: rgba(0, 0, 0, 0);
           box-shadow:
-            inset 0 0.125em 0.125em rgba(193, 18, 31, 0.08),
+            inset 0 0.125em 0.125em rgb(242 56 30 / 8%),
             inset 0 -0.125em 0.125em rgba(255, 255, 255, 0.5),
-            0 0.125em 0.125em -0.125em rgba(193, 18, 31, 0.2),
+            0 0.125em 0.125em -0.125em rgb(242 56 30 / 20%),
             0 0 0.1em 0.25em inset rgba(255, 255, 255, 0.2),
-            0 0.225em 0.05em rgba(193, 18, 31, 0.05),
+            0 0.225em 0.05em rgb(242 56 30 / 5%),
             0 0.25em 0 rgba(255, 255, 255, 0.65);
         }
 
@@ -1877,7 +1993,7 @@ export default function Services() {
           border-radius: 2rem;
           box-shadow:
             0 7px 8px rgba(0, 0, 0, 0.18),
-            0 0 24px rgba(193, 18, 31, 0.14);
+            0 0 24px rgb(242 56 30 / 14%);
           animation:
             services-next-ripple 1s linear infinite;
           transform: scale(1.03);
@@ -1922,7 +2038,7 @@ export default function Services() {
           text-shadow:
             0 2px 2px rgba(255, 255, 255, 0.82),
             0 5px 8px rgba(255, 255, 255, 0.48),
-            0 0 8px rgba(193, 18, 31, 0.32);
+            0 0 8px rgb(242 56 30 / 32%);
           transition: 0.5s;
         }
 
@@ -1997,7 +2113,7 @@ export default function Services() {
           animation-duration: 1.2s;
           filter:
             drop-shadow(0 0 3px rgba(255, 255, 255, 0.85))
-            drop-shadow(0 0 7px rgba(193, 18, 31, 0.58));
+            drop-shadow(0 0 7px rgb(242 56 30 / 58%));
         }
 
         .services-next-button:hover .services-next-arrow {
@@ -2015,7 +2131,7 @@ export default function Services() {
         @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
           .services-next-liquid-lens {
             background:
-              linear-gradient(145deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.16) 44%, rgba(193, 18, 31, 0.18)),
+              linear-gradient(145deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.16) 44%, rgb(242 56 30 / 18%)),
               rgba(255, 255, 255, 0.18);
           }
 
@@ -2241,20 +2357,20 @@ export default function Services() {
           margin-bottom: var(--space-3);
         }
 
-        .services-army-image {
+        .services-army-picture {
           display: block;
           width: 100%;
-          height: auto;
+          aspect-ratio: 1960 / 1424;
           position: relative;
           z-index: 1;
         }
 
-        .services-army-image--default,
-        .services-army-image--hover {
+        .services-army-picture--default,
+        .services-army-picture--hover {
           transition: opacity 0.3s ease;
         }
 
-        .services-army-image--hover {
+        .services-army-picture--hover {
           position: absolute;
           inset: 0;
           opacity: 0;
@@ -2262,16 +2378,22 @@ export default function Services() {
           z-index: 2;
         }
 
-        .services-army-hitbox:hover ~ .services-army-image--default {
+        .services-army-swap--hover-ready .services-army-hitbox:hover ~ .services-army-picture--default {
           opacity: 0;
         }
 
-        .services-army-hitbox:hover ~ .services-army-image--hover {
+        .services-army-swap--hover-ready .services-army-hitbox:hover ~ .services-army-picture--hover {
           opacity: 1;
         }
 
+        .services-army-image {
+          display: block;
+          width: 100%;
+          height: auto;
+        }
+
         .services-title:hover {
-          color: var(--color-red-spanish);
+          color: var(--color-red-accent);
         }
 
         @media (min-width: 960px) {
@@ -2342,9 +2464,16 @@ export default function Services() {
           }
 
           .service-cta-card__list-item {
-            min-height: 3.25rem;
-            padding-top: 1rem;
-            border-top: 1px solid hsl(var(--service-glow-hsl) / 0.2);
+            grid-template-columns: minmax(0, 1fr);
+            min-height: 4.5rem;
+          }
+
+          .service-cta-card__list-item--empty {
+            display: none;
+          }
+
+          .service-cta-card__plan-label {
+            display: none;
           }
 
           .service-item {
@@ -2447,6 +2576,10 @@ export default function Services() {
             visibility: hidden;
           }
 
+          .services-plan-index__intro-picture {
+            display: contents;
+          }
+
           .services-plan-index__intro-image {
             position: absolute;
             inset: 0;
@@ -2486,8 +2619,7 @@ export default function Services() {
           .service-cta-card__list-item,
           .service-cta-card__list-item--empty {
             display: grid;
-            grid-template-columns: 0.8rem minmax(0, 1fr);
-            gap: 0.35rem;
+            grid-template-columns: minmax(0, 1fr);
             min-height: var(--services-comparison-row-height);
             height: var(--services-comparison-row-height);
             padding-block: 0;
@@ -2498,10 +2630,23 @@ export default function Services() {
             font-size: 0.82rem;
           }
 
-          .service-cta-card__list-item > span:last-child {
-            min-width: 0;
-            overflow-wrap: anywhere;
+          .service-cta-card__value {
+            grid-template-columns: 0.8rem minmax(0, 1fr);
+            gap: 0.35rem;
+            padding: 0;
           }
+
+          .service-cta-card__value-text {
+            font-size: clamp(0.78rem, 0.88vw, 0.98rem);
+            line-height: 1.12;
+          }
+
+        }
+
+        @media (max-width: 959px) {
+          .services-army-swap { width:100%; margin:1rem auto; overflow:hidden; }
+          .services-army-picture { aspect-ratio:1960 / 1200; overflow:hidden; }
+          .services-army-image { width:125%; max-width:none; margin-left:-12.5%; margin-top:-7%; }
         }
 
         @media (max-width: 767px) {
@@ -2526,7 +2671,7 @@ export default function Services() {
           }
 
           .services-army-swap {
-            width: min(100%, 520px);
+            width: 100%;
             margin: var(--space-2) auto;
           }
 
@@ -2569,7 +2714,8 @@ export default function Services() {
 
           .service-cta-card__price-flag {
             right: calc(var(--space-unit) * 2);
-            min-width: 4.9rem;
+            width: 3.47rem;
+            min-width: 0;
             min-height: 3rem;
             font-size: 0.72rem;
           }
@@ -2579,8 +2725,11 @@ export default function Services() {
           }
 
           .service-cta-card__list {
-            gap: 0.86rem;
             width: 100%;
+          }
+
+          .service-cta-card__list-item {
+            grid-template-columns: minmax(0, 1fr) minmax(7.1rem, 38%);
           }
 
           .services-next-button-wrap {
@@ -2658,7 +2807,7 @@ export default function Services() {
           50% {
             color: var(--color-red-accent);
             text-shadow:
-              0 0 4px rgba(193, 18, 31, 0.72),
+              0 0 4px rgb(242 56 30 / 72%),
               0 2px 2px rgba(255, 255, 255, 0.78),
               0 5px 8px rgba(255, 255, 255, 0.44);
           }
@@ -2671,7 +2820,7 @@ export default function Services() {
           }
 
           50% {
-            filter: blur(8px) brightness(150%) drop-shadow(-28px 10px 10px rgba(193, 18, 31, 0.72));
+            filter: blur(8px) brightness(150%) drop-shadow(-28px 10px 10px rgb(242 56 30 / 72%));
             transform: scale(1.65);
           }
         }

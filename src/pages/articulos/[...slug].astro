@@ -1,0 +1,4 @@
+---
+export const prerender = false;
+return Astro.redirect(`/papeles-y-tratados/${Astro.params.slug ?? ""}${Astro.url.search}`, 301);
+---

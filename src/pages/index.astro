@@ -2,19 +2,24 @@
 import HeroImperio from "../components/HeroImperio.jsx";
 import Navigation from "../components/Navigation.jsx";
 import Preloader from "../components/Preloader.jsx";
-import ProjectsGrid from "../components/ProjectsGrid.jsx";
+import ArticlesGrid from "../components/ArticlesGrid.jsx";
 import Services from "../components/Services.jsx";
+import ReaderFaq from "../components/ReaderFaq.astro";
+import { readerFaqSchema } from "../config/reader-faq";
 import { PRELOADER_SESSION_KEY } from "../config/hero";
 import Layout from "../layouts/Layout.astro";
+import { SITE } from "../config/site";
 
 const preloaderSessionKey = PRELOADER_SESSION_KEY;
 ---
 
 <Layout
+  navigation="home"
+  structuredData={readerFaqSchema}
   title="Imperio Español | Historia, cultura, memoria y patrimonio"
-  description="Archivo vivo de ideas y memoria sobre el Imperio Español."
+  description={SITE.defaultDescription}
 >
-  <div class="home-page">
+  <main class="home-page">
     <script is:inline define:vars={{ preloaderSessionKey }}>
       try {
         if (window.sessionStorage.getItem(preloaderSessionKey) === "1") {
@@ -27,7 +32,21 @@ const preloaderSessionKey = PRELOADER_SESSION_KEY;
     <Preloader client:load />
     <Navigation />
     <HeroImperio client:load />
-    <Services client:load />
-    <ProjectsGrid />
-  </div>
+    <Services client:visible={{ rootMargin: "-20% 0px" }} />
+    <ArticlesGrid />
+    <ReaderFaq />
+  </main>
+  <noscript>
+    <style is:global>
+      #preloader { display: none !important; }
+      body { overflow: auto !important; }
+      .hero-background, .hero-imperio__wordmark, .hero-imperio__imperio-part,
+      .hero-imperio__espanol-part, .hero-imperio__latin-layers, .hero-imperio__nav,
+      .reveal { opacity: 1 !important; transform: none !important; visibility: visible !important; }
+    </style>
+  </noscript>
 </Layout>
+
+<style>
+  main.home-page { padding: 0; }
+</style>

@@ -15,10 +15,11 @@ Sin --apply solo consulta el estado. Credenciales exclusivamente en el archivo
 local excluido de Git. Para retirar acceso, un operador autorizado debe cambiar
 app_metadata.editorial_admin a false, conservando el resto de metadatos.
 
-La cuenta nueva debe confirmar su correo mediante un enlace enviado a su buzon.
-Las cuentas sin contrasena pueden definirla desde /recuperar-contrasena o,
-una vez autenticadas, desde /cuenta/contrasena.
-La asignacion no confirma correos automaticamente ni genera una contrasena.
+Las cuentas operativas quedan confirmadas al aplicar el script autorizado, pero
+el script no genera ni modifica contrasenas. Las cuentas sin contrasena pueden
+definirla desde /recuperar-contrasena o, una vez autenticadas, desde
+/cuenta/contrasena. Los enlaces nuevos se verifican mediante token hash en el
+servidor y pueden abrirse desde otro navegador.
 
 El icono UserRound de Lucide lleva a /cuenta; sin sesion redirige a
 /login?next=/cuenta. Comprobado a 1440 y 390 px, a la izquierda del menu.

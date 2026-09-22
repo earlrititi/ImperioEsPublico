@@ -28,6 +28,10 @@ globalThis.fetch = async (input, options = {}) => {
     if ((url.searchParams.get('grant_type')==='password' && denyPassword) || denyCode) return json({msg:'Invalid credentials',error_code:'invalid_credentials'},400);
     return json(session);
   }
+  if (url.pathname === '/auth/v1/verify') {
+    if (body.token_hash === 'expired') return json({msg:'Token has expired',error_code:'otp_expired'},403);
+    return json(session);
+  }
   if (url.pathname === '/auth/v1/signup') return json({user:{...user,email_confirmed_at:null},session:null});
   if (url.pathname === '/auth/v1/user') return updateFail && method==='PUT' ? json({msg:'Invalid password'},422) : json(user);
   if (['/auth/v1/recover','/auth/v1/resend','/auth/v1/otp','/auth/v1/logout'].includes(url.pathname)) return json({});
@@ -39,7 +43,7 @@ async function request(path, body, cookies='', origin=base) {
   return app.fetch(new Request(base+path,{method:body?'POST':'GET',headers:{...(body?{'content-type':'application/x-www-form-urlencoded',origin}:{}),...(cookies?{cookie:cookies}:{})},body:body?new URLSearchParams(body):undefined}));
 }
 let checks=0;
-for(const path of ['/login','/registro','/recuperar-contrasena','/confirmar-correo']) {
+for(const path of ['/login','/registro','/recuperar-contrasena','/confirmar-correo','/auth/confirmar?token_hash=fixture-hash&type=recovery&next=%2Fcuenta%2Fcontrasena']) {
   const r=await request(path);assert.equal(r.status,200);assert.equal(r.headers.get('cache-control'),'private, no-store');checks++;
 }
 const credentials={email:user.email,password:'Test-Only-Password-123!'};
@@ -61,6 +65,9 @@ r=await request('/cuenta/contrasena',{password:credentials.password,password_con
 r=await request('/api/auth/callback');assert.match(r.headers.get('location'),/missing_code/);checks++;
 denyCode=true;r=await request('/api/auth/callback?code=expired');assert.match(r.headers.get('location'),/auth_callback/);denyCode=false;checks++;
 r=await request('/api/auth/callback?code=valid&next=%2Fcuenta%2Fcontrasena',undefined,`sb-${project}-auth-token-code-verifier=base64-${encode('fixture-verifier')}`);assert.equal(r.headers.get('location'),'/cuenta/contrasena');checks++;
+r=await request('/auth/confirmar',{token_hash:'fixture-hash',type:'recovery',next:'/cuenta/contrasena'});assert.equal(r.status,303);assert.equal(r.headers.get('location'),'/cuenta/contrasena');assert.ok(r.headers.get('set-cookie'));checks++;
+r=await request('/auth/confirmar',{token_hash:'expired',type:'recovery',next:'/cuenta/contrasena'});assert.equal(r.status,200);assert.match(await r.text(),/caducado/);checks++;
+r=await request('/auth/confirmar',{token_hash:'fixture-hash',type:'invalid',next:'https://evil.invalid'});assert.equal(r.status,200);assert.match(await r.text(),/caducado/);checks++;
 r=await request('/api/auth/logout',{logout:'1'},cookie,'https://evil.invalid');assert.equal(r.status,403);checks++;
 r=await request('/api/auth/logout',{logout:'1'},cookie);assert.equal(r.status,303);checks++;
 console.log(`${checks} compiled password authentication scenarios passed. No network or real emails.`);

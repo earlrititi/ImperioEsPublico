@@ -1,0 +1,71 @@
+---
+import type { EmailOtpType } from "@supabase/supabase-js";
+import PageShell from "../../layouts/PageShell.astro";
+import { authError, privateAuthHeaders, readAuthForm } from "../../lib/auth-forms";
+import { safeInternalPath } from "../../lib/redirects";
+import { createSupabaseServerClient } from "../../lib/supabase/server";
+
+privateAuthHeaders(Astro.response.headers);
+
+const allowedTypes = new Set<EmailOtpType>(["email", "signup", "invite", "magiclink", "recovery"]);
+const isAllowedType = (value: string | null): value is EmailOtpType => Boolean(value && allowedTypes.has(value as EmailOtpType));
+const defaultNext = Astro.url.searchParams.get("type") === "recovery" ? "/cuenta/contrasena" : "/cuenta";
+let tokenHash = Astro.url.searchParams.get("token_hash") ?? "";
+let type = Astro.url.searchParams.get("type");
+let next = safeInternalPath(Astro.url.searchParams.get("next"), defaultNext);
+let error = "";
+
+if (Astro.request.method === "POST") {
+  try {
+    const form = await readAuthForm(Astro.request, "auth_email_confirm");
+    tokenHash = form.get("token_hash") ?? "";
+    type = form.get("type");
+    next = safeInternalPath(form.get("next"), type === "recovery" ? "/cuenta/contrasena" : "/cuenta");
+
+    if (!tokenHash || !isAllowedType(type)) throw new Error("validation");
+
+    const supabase = createSupabaseServerClient({ cookies: Astro.cookies, request: Astro.request });
+    const result = await supabase.auth.verifyOtp({ token_hash: tokenHash, type });
+    if (result.error) throw new Error("invalid_token");
+
+    return Astro.redirect(next, 303);
+  } catch (confirmationError) {
+    const code = authError(confirmationError);
+    error = code === "rate" ? "rate" : "invalid";
+  }
+}
+
+const ready = Boolean(tokenHash && isAllowedType(type));
+const recovery = type === "recovery";
+---
+
+<PageShell
+  title={`${recovery ? "Recuperar acceso" : "Confirmar correo"} | Imperio Español`}
+  description="Verifica de forma segura tu correo electrónico."
+  heading={recovery ? "Recuperar acceso" : "Confirmar correo"}
+  noindex
+  narrow
+>
+  <Fragment slot="header">
+    {error === "rate" && <p role="alert">Demasiados intentos. Espera unos minutos y vuelve a intentarlo.</p>}
+    {error === "invalid" && <p role="alert">El enlace ha caducado o ya se ha utilizado. Solicita uno nuevo.</p>}
+    {!error && ready && (
+      <>
+        <p>{recovery ? "Confirma que quieres definir una nueva contraseña." : "Confirma tu dirección de correo para acceder a tu cuenta."}</p>
+        <form method="post">
+          <input type="hidden" name="token_hash" value={tokenHash} />
+          <input type="hidden" name="type" value={type} />
+          <input type="hidden" name="next" value={next} />
+          <button class="btn btn-primary" type="submit">{recovery ? "Continuar y definir contraseña" : "Confirmar correo"}</button>
+        </form>
+      </>
+    )}
+    {!ready && !error && <p role="alert">El enlace no es válido. Solicita uno nuevo.</p>}
+    <p><a href={recovery ? "/recuperar-contrasena" : "/confirmar-correo"}>Solicitar un nuevo enlace</a></p>
+  </Fragment>
+</PageShell>
+
+<style>
+  form { display: grid; gap: 0.8rem; }
+  a { text-decoration: underline; }
+</style>

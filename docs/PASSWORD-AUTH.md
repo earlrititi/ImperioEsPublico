@@ -11,7 +11,9 @@ compartida ni se asignan contrasenas a los propietarios desde administracion.
 
 Las nuevas contrasenas requieren 12 caracteres y un maximo de 72 bytes UTF-8.
 Las contrasenas anteriores mas cortas siguen siendo validas para iniciar sesion.
-El callback usa PKCE: abrir el enlace en el mismo navegador que inicio la solicitud.
+Los correos de confirmacion y recuperacion usan un token hash que se verifica
+en el servidor al pulsar el boton intermedio. El enlace puede abrirse en otro
+navegador y los escaneres automaticos de correo no consumen el token.
 Los formularios comprueban origen, limitan intentos y no registran contrasenas.
 Las respuestas de cuenta y formularios son privadas y no se almacenan en cache.
 

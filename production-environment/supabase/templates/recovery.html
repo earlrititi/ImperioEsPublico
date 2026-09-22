@@ -1,8 +1,8 @@
 <!doctype html><html lang="es"><body style="font-family:Arial,sans-serif;color:#171717;line-height:1.6;max-width:600px;margin:32px auto;padding:20px">
 <h1>Define tu contraseña</h1>
 <p>Has solicitado definir o recuperar la contraseña de tu cuenta de Imperio E.</p>
-<p><a href="{{ .ConfirmationURL }}">Definir una nueva contraseña</a></p>
-<p>Abre el enlace en el navegador donde lo solicitaste. Si ha caducado, solicita uno nuevo desde la web.</p>
+<p><a href="{{ .SiteURL }}/auth/confirmar?token_hash={{ .TokenHash }}&amp;type=recovery&amp;next=%2Fcuenta%2Fcontrasena">Definir una nueva contraseña</a></p>
+<p>Puedes abrir el enlace desde cualquier navegador. Si ha caducado, solicita uno nuevo desde la web.</p>
 <p>Si no has solicitado este cambio, ignora el mensaje. Tu contraseña no se modifica hasta que completes el proceso.</p>
 <p>Soporte: <a href="mailto:contacto@imperioes.com">contacto@imperioes.com</a></p>
 </body></html>

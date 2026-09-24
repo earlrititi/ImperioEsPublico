@@ -28,6 +28,10 @@ Despues del esquema inicial, ejecuta tambien:
 10. `supabase/migrations/011_commerce_summary.sql`.
 11. `supabase/migrations/012_commerce_retries_and_audit.sql`.
 12. `supabase/migrations/013_reservation_validation.sql`.
+13. `supabase/migrations/014_prereservation_campaign.sql`.
+14. `supabase/migrations/015_purchase_reconfirmation.sql`.
+15. `supabase/migrations/016_reservation_address.sql`.
+16. `supabase/migrations/017_tshirt_leads.sql`.
 
 Las migraciones 009-013 estan aplicadas SOLO a ImperioE Test
 (`joicpkgvggfxzrdazisx`). No ejecutar contra el enlace de la raiz: sigue siendo

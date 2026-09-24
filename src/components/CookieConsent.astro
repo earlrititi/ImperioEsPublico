@@ -91,11 +91,12 @@ import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
 
 <script>
   // @ts-nocheck
+  import { CONSENT_KEY, readSavedConsent, saveConsent } from "../lib/cookie-consent";
   (() => {
     const root = document.querySelector("[data-cookie-consent]");
     if (!(root instanceof HTMLElement)) return;
 
-    const storageKey = "imperio_cookie_consent";
+    const storageKey = CONSENT_KEY;
     const anonymousKey = "imperio_anonymous_id";
     const version = root.dataset.version || "";
     const gtmId = root.dataset.gtmId || "";
@@ -167,25 +168,7 @@ import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
       return id;
     };
 
-    const readConsent = () => {
-      const raw = readStorage(storageKey);
-      if (!raw) return null;
-
-      try {
-        const parsed = JSON.parse(raw);
-        if (
-          parsed?.version !== version ||
-          typeof parsed?.preferences !== "boolean" ||
-          typeof parsed?.analytics !== "boolean" ||
-          typeof parsed?.marketing !== "boolean"
-        ) {
-          return null;
-        }
-        return parsed;
-      } catch {
-        return null;
-      }
-    };
+    const readConsent = () => readSavedConsent(version);
 
     const setGoogleConsent = (granted) => {
       window.dataLayer = window.dataLayer || [];
@@ -273,6 +256,7 @@ import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
 
     const applyConsent = (consent) => {
       if (consent.analytics) {
+        setGoogleConsent(true);
         loadAnalytics();
       } else {
         setGoogleConsent(false);
@@ -296,7 +280,7 @@ import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
       bannerPending = false;
       preloaderObserver?.disconnect();
       preloaderObserver = null;
-      writeStorage(storageKey, JSON.stringify(consent));
+      saveConsent(consent);
       recordConsent(consent, source);
       banner?.setAttribute("hidden", "");
       if (settings instanceof HTMLDialogElement && settings.open) settings.close();
@@ -379,9 +363,39 @@ import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
     });
     window.addEventListener("imperio:open-cookie-settings", () => openSettings());
 
+    const refreshConsent = () => {
+      const saved = readConsent();
+      if (JSON.stringify(saved) === JSON.stringify(currentConsent)) return;
+      const revokedAnalytics = currentConsent?.analytics && !saved?.analytics;
+      currentConsent = saved;
+      setSettingsValues(saved);
+      syncConsentSwitches();
+      if (saved) {
+        bannerPending = false;
+        preloaderObserver?.disconnect();
+        banner?.setAttribute("hidden", "");
+        applyConsent(saved);
+      } else {
+        setGoogleConsent(false);
+        revealBannerWhenReady();
+      }
+      if (revokedAnalytics) {
+        deleteAnalyticsCookies();
+        window.location.reload();
+      }
+    };
+    window.addEventListener("storage", (event) => {
+      if (event.key === storageKey || event.key === null) refreshConsent();
+    });
+    window.addEventListener("pageshow", refreshConsent);
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") refreshConsent();
+    });
+
     currentConsent = readConsent();
     syncConsentSwitches();
     if (currentConsent) {
+      saveConsent(currentConsent);
       applyConsent(currentConsent);
     } else {
       revealBannerWhenReady();

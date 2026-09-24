@@ -6,7 +6,7 @@
     "node": ">=22.19.0"
   },
   "scripts": {
-    "lint": "eslint src/config/commerce.ts src/lib/reservation*.ts src/lib/commerce-mail.ts src/components/commerce src/pages/api/reservations src/pages/api/commerce-*.ts tests/reservations.test.ts src/lib/auth-*.ts src/pages/api/auth tests/auth-forms.test.ts src/config/editorial.ts src/lib/seo.ts src/lib/article-seo.ts src/pages/feed.xml.ts src/pages/sitemap.xml.ts tests/seo.test.ts scripts/verify-seo.mjs",
+    "lint": "eslint src/config/commerce.ts src/lib/reservation*.ts src/lib/commerce-mail.ts src/lib/tshirt-promotion.ts src/lib/emails.ts src/components/commerce src/pages/api/reservations src/pages/api/commerce-*.ts src/pages/api/tshirt-lead.ts tests/reservations.test.ts src/lib/auth-*.ts src/pages/api/auth tests/auth-forms.test.ts src/config/editorial.ts src/lib/seo.ts src/lib/article-seo.ts src/pages/feed.xml.ts src/pages/sitemap.xml.ts tests/seo.test.ts scripts/verify-seo.mjs",
     "test:seo": "node scripts/verify-seo.mjs",
     "dev": "astro dev",
     "build": "astro build",

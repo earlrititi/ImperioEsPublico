@@ -73,7 +73,7 @@ test("Reservation parser ignores forged amounts and strips unneeded customer dat
   assert.equal("total" in parsed, false);
   assert.equal("card" in parsed.customer, false);
   assert.equal("phone" in parsed.customer, false);
-  assert.equal("address" in parsed, false);
+  assert.deepEqual(parsed.address, address);
 });
 test("Reservation parser rejects invalid quantities, duplicate SKUs, malformed data and missing terms", () => {
   for (const quantity of [-1, 0, 1.1, "2", Infinity, NaN, 2147483647])
@@ -90,7 +90,7 @@ test("Reservation parser rejects invalid quantities, duplicate SKUs, malformed d
     }),
   );
   assert.throws(() => parseReservationInput({ ...input(), accepted: false }));
-  assert.doesNotThrow(() => parseReservationInput({ ...input(), address: undefined }));
+  assert.throws(() => parseReservationInput({ ...input(), address: undefined }), /INVALID_ADDRESS/);
   assert.throws(() =>
     parseReservationInput({
       ...input(),
@@ -99,12 +99,18 @@ test("Reservation parser rejects invalid quantities, duplicate SKUs, malformed d
   );
 });
 
-test("Pre-reservation needs no phone, address or marketing consent", () => {
-  const b = { ...input(), customer: { name: "Cliente Prueba", email: " TEST@Example.com " }, address: undefined };
+test("Pre-reservation needs an address but no phone or marketing consent", () => {
+  const b = { ...input(), customer: { name: "Cliente Prueba", email: " TEST@Example.com " } };
   assert.equal(parseReservationInput(b).customer.email, "test@example.com");
   assert.equal(parseReservationInput(b).marketing, false);
   assert.equal(parseReservationInput({ ...b, marketing: true }).marketing, true);
   assert.throws(() => parseReservationInput({ ...b, marketing: "true" }));
+});
+
+test("Address is validated and stripped of unrelated fields; waitlist needs none", () => {
+  assert.throws(() => parseReservationInput({ ...input(), address: { ...address, postalCode: "11005" } }), /INVALID_ADDRESS/);
+  assert.deepEqual(parseReservationInput({ ...input(), address: { ...address, extra: "unused" } }).address, address);
+  assert.equal(parseReservationInput({ ...input(), waitlist: true, address: undefined }).address, null);
 });
 
 test("Reservation maximum is configurable and applies to all lines combined", () => {

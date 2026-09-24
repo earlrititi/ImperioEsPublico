@@ -377,7 +377,7 @@ export default function HeroImperio() {
 
         .hero-nav__links-wrap {
           position: absolute;
-          left: 50%;
+          left: var(--hero-source-left, calc(50% - 18px));
           top: calc(50% + var(--nav-letters-offset-y, 0px));
           transform: translate(-50%, -50%);
         }
@@ -520,7 +520,7 @@ export default function HeroImperio() {
           }
         }
 
-        @media (min-width: 769px) and (max-width: 980px) {
+        @media (min-width: 769px) and (max-width: 1279px) {
           .hero-nav__shell {
             min-height: calc(var(--space-unit) * 9);
             padding: var(--space-1) var(--space-2);
@@ -549,10 +549,10 @@ export default function HeroImperio() {
           .hero-nav__links-list .nav-link {
             --nav-link-inline-padding: 0.12rem;
             width: 100%;
-            min-height: 30px;
-            font-size: clamp(0.62rem, 1.2vw, 0.74rem);
-            letter-spacing: 0.02em;
-            line-height: 1.06;
+            min-height: 44px;
+            font-size: 14px;
+            letter-spacing: 0;
+            line-height: 1.2;
             text-align: center;
             white-space: normal;
           }
@@ -620,6 +620,7 @@ export default function HeroImperio() {
           }
 
           .hero-nav__links-list {
+            display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
             grid-auto-rows: minmax(34px, auto);
             gap: 3px var(--space-1);
@@ -632,11 +633,12 @@ export default function HeroImperio() {
           }
 
           .nav-link {
-            min-height: 32px;
+            min-height: 44px;
             width: 100%;
             padding-inline: var(--space-1);
-            font-size: clamp(0.62rem, 2.55vw, 0.78rem);
-            line-height: 1.1;
+            font-size: 13px;
+            letter-spacing: 0;
+            line-height: 1.2;
             white-space: normal;
             text-align: center;
           }

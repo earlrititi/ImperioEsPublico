@@ -288,11 +288,12 @@ export default function Footer({ variant = "light" }) {
         .image-footer__cookie-switch-track {
           position: relative;
           display: block;
-          width: 30px;
-          height: 17px;
+          width: 38px;
+          height: 22px;
+          box-sizing: border-box;
           border: 1px solid rgb(255 255 255 / 76%);
           border-radius: 999px;
-          background: rgb(255 255 255 / 18%);
+          background: #555;
           transition: background 180ms ease, border-color 180ms ease;
         }
 
@@ -301,11 +302,32 @@ export default function Footer({ variant = "light" }) {
           position: absolute;
           top: 2px;
           left: 2px;
-          width: 11px;
-          height: 11px;
+          width: 16px;
+          height: 16px;
           border-radius: 50%;
           background: #fff;
-          transition: transform 180ms ease;
+          transition: left 180ms ease;
+        }
+
+        .image-footer__cookie-switch-track::before {
+          content: "";
+          position: absolute;
+          top: 6px;
+          right: 5px;
+          width: 8px;
+          height: 8px;
+          box-sizing: border-box;
+          border: 2px solid #fff;
+          border-radius: 50%;
+        }
+
+        .image-footer__cookie-switch input:checked + .image-footer__cookie-switch-track::before {
+          left: 7px;
+          right: auto;
+          width: 2px;
+          border: 0;
+          border-radius: 0;
+          background: #fff;
         }
 
         .image-footer__cookie-switch input:checked + .image-footer__cookie-switch-track {
@@ -314,7 +336,7 @@ export default function Footer({ variant = "light" }) {
         }
 
         .image-footer__cookie-switch input:checked + .image-footer__cookie-switch-track::after {
-          transform: translateX(13px);
+          left: 18px;
         }
 
         .image-footer__cookie-switch input:focus-visible + .image-footer__cookie-switch-track {
@@ -398,21 +420,11 @@ export default function Footer({ variant = "light" }) {
             flex: 0 1 auto;
           }
 
-          .image-footer__cookie-switch-track {
-            width: 26px;
-            height: 15px;
-          }
+        }
 
-          .image-footer__cookie-switch-track::after {
-            top: 2px;
-            left: 2px;
-            width: 9px;
-            height: 9px;
-          }
-
-          .image-footer__cookie-switch input:checked + .image-footer__cookie-switch-track::after {
-            transform: translateX(11px);
-          }
+        @media (prefers-reduced-motion: reduce) {
+          .image-footer__cookie-switch-track,
+          .image-footer__cookie-switch-track::after { transition: none; }
         }
 
         .image-footer__frame {

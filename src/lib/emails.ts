@@ -8,6 +8,24 @@ function greeting(name?: string | null) {
   return name ? `Bienvenido, ${name}` : "Bienvenido";
 }
 
+function escapeHtml(value: string) {
+  return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+}
+
+export async function sendTshirtDiscountEmail(params: { to: string; name: string; code: string }) {
+  const siteUrl = getRequiredEnv("PUBLIC_SITE_URL").replace(/\/$/, "");
+  const name = escapeHtml(params.name);
+  const code = escapeHtml(params.code);
+  return resend.emails.send({
+    from,
+    replyTo: SITE.contactEmail,
+    to: params.to,
+    subject: "Tu 20% para la Camiseta Imperial",
+    html: `<div style="font-family:Georgia,serif;line-height:1.6;color:#111"><h1>Una pieza de nuestra historia</h1><p>Hola ${name},</p><p>Tu descuento del 20% para la Camiseta Imperial está preparado.</p><p><strong>Código: ${code}</strong></p><p>Se aplicará automáticamente cuando completes la compra con este mismo correo. Es personal y de un solo uso.</p><p><a href="${siteUrl}/tienda">Ver la Camiseta Imperial</a></p><p><strong>Plus Ultra.</strong></p></div>`,
+    text: `Hola ${params.name}. Tu descuento del 20% para la Camiseta Imperial está preparado. Código: ${params.code}. Se aplicará automáticamente cuando completes la compra con este mismo correo. Es personal y de un solo uso. ${siteUrl}/tienda`,
+  });
+}
+
 export async function sendPiqueroWelcomeEmail(params: {
   to: string;
   name?: string | null;

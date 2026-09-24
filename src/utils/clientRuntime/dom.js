@@ -7,7 +7,7 @@ export const getClientRuntimeElements = () => {
     mobileMenuBtn,
     mobileMenu: document.getElementById("mobile-menu"),
     closeMenuBtn: document.getElementById("close-menu"),
-    mobileBreakpoint: window.matchMedia("(min-width: 981px)"),
+    mobileBreakpoint: window.matchMedia("(min-width: 1280px)"),
     heroSection: document.querySelector(".hero-imperio"),
     heroNav: document.querySelector(".hero-imperio__nav"),
     heroNavSurface: document.querySelector(".hero-imperio__nav .hero-nav__surface"),

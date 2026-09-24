@@ -17,6 +17,7 @@ import {
   recordPaymentSession,
   shirtPaymentConfiguration,
 } from "../../../../lib/reservation-payment";
+import { findActiveTshirtPromotion } from "../../../../lib/tshirt-promotion";
 export const prerender = false;
 export const POST: APIRoute = async (context) => {
   try {
@@ -70,6 +71,7 @@ export const POST: APIRoute = async (context) => {
       size: r.reservation_items.map((i: any) => i.size).join(","),
       quantity: String(r.total_quantity),
     };
+    const promotion = a.stripe_session_id ? null : await findActiveTshirtPromotion(customer.email.trim().toLowerCase());
     const session = a.stripe_session_id
       ? await stripe.checkout.sessions.retrieve(a.stripe_session_id)
       : await stripe.checkout.sessions.create(
@@ -86,8 +88,8 @@ export const POST: APIRoute = async (context) => {
             })),
             automatic_tax: { enabled: false },
             adaptive_pricing: { enabled: false },
-            allow_promotion_codes: false,
-            metadata,
+            discounts: promotion ? [{ promotion_code: promotion.promotionCodeId }] : undefined,
+            metadata: { ...metadata, promotionLeadId: promotion?.leadId ?? "" },
             payment_intent_data: {
               metadata,
             },
@@ -103,7 +105,13 @@ export const POST: APIRoute = async (context) => {
           },
           { idempotencyKey: `reservation-payment-${attemptId}` },
         );
-    await recordPaymentSession(attemptId, session.id);
+    const discountAmount = session.total_details?.amount_discount ?? 0;
+    const promotionLeadId = a.promotion_lead_id ?? promotion?.leadId ?? null;
+    if (promotion && (discountAmount <= 0 || session.amount_total === null || session.amount_total + discountAmount !== r.total_price_snapshot))
+      throw new Error("PAYMENT_TOTAL_MISMATCH");
+    if (!promotionLeadId && discountAmount !== 0) throw new Error("PAYMENT_TOTAL_MISMATCH");
+    if (session.amount_total === null) throw new Error("PAYMENT_TOTAL_MISMATCH");
+    await recordPaymentSession(attemptId, session.id, session.amount_total, discountAmount, promotionLeadId);
     if (session.status === "expired") {
       await rpc("close_shirt_payment", {
         p_attempt: attemptId,
@@ -126,7 +134,7 @@ export const POST: APIRoute = async (context) => {
         },
         409,
       );
-    if (!session.url || session.amount_total !== r.total_price_snapshot)
+    if (!session.url || session.amount_total + discountAmount !== r.total_price_snapshot)
       throw new Error("PAYMENT_TOTAL_MISMATCH");
     return privateJson({ url: session.url });
   } catch (error) {

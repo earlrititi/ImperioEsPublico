@@ -56,7 +56,7 @@ export const POST: APIRoute = async (context) => {
       p_token_hash: hash(reservationToken(parsed.requestId)),
       p_user_id: user?.id ?? null,
       p_customer: parsed.customer,
-      p_address: null,
+      p_address: parsed.address,
       p_marketing: parsed.marketing,
       p_waitlist: waitlist,
       p_items: parsed.items,

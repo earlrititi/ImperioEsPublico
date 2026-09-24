@@ -1,11 +1,12 @@
 import { useEffect, useState } from "preact/hooks";
 import { formatMoney, SHIRT_FINAL_PRICE_CENTS, SHIRT_PRICE_COPY } from "../../config/commerce";
-import { api } from "./shared";
+import { AddressFields, emptyAddress, api } from "./shared";
 
 export default function ReservationForm({ initialSize = "M" }: { initialSize?: string }) {
   const [inventory, setInventory] = useState<any[]>([]);
   const [size, setSize] = useState(initialSize), [quantity, setQuantity] = useState(1);
   const [customer, setCustomer] = useState({ name: "", email: "" });
+  const [address, setAddress] = useState({ ...emptyAddress });
   const [challenge, setChallenge] = useState(""), [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false), [available, setAvailable] = useState(false);
   const [accepted, setAccepted] = useState(false), [marketing, setMarketing] = useState(false);
@@ -51,6 +52,7 @@ export default function ReservationForm({ initialSize = "M" }: { initialSize?: s
         requestId: challenge.split(".")[0], challenge, nonce: String(nonce), customer,
         items: [{ sku: variant.sku, quantity: waitlist ? 1 : quantity }],
         accepted, marketing, website, expirationHours, waitlist,
+        address: waitlist ? undefined : address,
       });
       window.location.assign(result.url);
     } catch (error) {
@@ -59,9 +61,12 @@ export default function ReservationForm({ initialSize = "M" }: { initialSize?: s
   }
   return (
     <form class="reservation-form" onSubmit={submit}>
-      <h2>{waitlist ? "Lista de espera" : "Pre-reserva gratuita"}</h2>
-      <p class="reservation-total">{formatMoney(0)} ahora</p>
-      <p>Precio de compra posterior: {formatMoney(SHIRT_FINAL_PRICE_CENTS)} por camiseta. {SHIRT_PRICE_COPY}.</p>
+      <header class="reservation-form__header">
+        <span class="commerce-kicker">Solicitud de reserva</span>
+        <h2>{waitlist ? "Lista de espera" : "Pre-reserva gratuita"}</h2>
+        <p class="reservation-total">{formatMoney(0)} ahora</p>
+        <p>Precio de compra posterior: {formatMoney(SHIRT_FINAL_PRICE_CENTS)} por camiseta. {SHIRT_PRICE_COPY}.</p>
+      </header>
       <fieldset disabled={busy}>
         <legend>Talla y cantidad</legend>
         <div class="reservation-fields">
@@ -75,8 +80,8 @@ export default function ReservationForm({ initialSize = "M" }: { initialSize?: s
               onInput={(e) => setQuantity(Number(e.currentTarget.value))} />
           </label>}
         </div>
-        <p role="status" aria-live="polite">{variant ? soldOut ? "AGOTADO" : `Quedan ${variant.available_stock} unidades en talla ${size}` : "Consultando stock..."}</p>
-        {!waitlist && <p>Maximo {campaign?.max_reservation_quantity ?? 2} unidades por pre-reserva.</p>}
+        <p class="reservation-stock" role="status" aria-live="polite">{variant ? soldOut ? "AGOTADO" : `Quedan ${variant.available_stock} unidades en talla ${size}` : "Consultando stock..."}</p>
+        {!waitlist && <p class="reservation-note">Máximo {campaign?.max_reservation_quantity ?? 2} unidades por pre-reserva.</p>}
       </fieldset>
       {soldOut && !waitlist && <>
         <p>Todas las unidades de esta talla estan actualmente reservadas o vendidas.</p>
@@ -94,16 +99,19 @@ export default function ReservationForm({ initialSize = "M" }: { initialSize?: s
               onInput={(e) => setCustomer({ ...customer, email: e.currentTarget.value })} />
           </label>
         </fieldset>
+        {!waitlist && <AddressFields value={address} onChange={setAddress} disabled={busy} />}
         <label class="commerce-honeypot" aria-hidden="true">Sitio web
           <input tabIndex={-1} autoComplete="off" value={website} onInput={(e) => setWebsite(e.currentTarget.value)} />
         </label>
-        <p>{waitlist ? "La lista de espera no asigna stock ni obliga a comprar. Te avisaremos por orden de entrada si se libera una unidad." : "Pre-reserva gratuita. No se realiza ningun cobro y la pre-reserva no implica obligacion de compra. La unidad quedara temporalmente asignada hasta que finalice el periodo indicado para completar la compra."}</p>
-        {campaign?.purchase_open_at && <p>Compra prioritaria prevista: {new Date(campaign.purchase_open_at).toLocaleString("es-ES", { timeZone: "Europe/Madrid" })} (hora peninsular).</p>}
-        <p>Tras recibir la invitacion de compra dispondras de {campaign?.purchase_window_hours ?? 24} horas para completarla.</p>
-        {expirationHours > 0 && !waitlist && <p>Esta reserva caduca {expirationHours} horas despues de confirmarla.</p>}
+        <div class="reservation-conditions">
+          <p>{waitlist ? "La lista de espera no asigna stock ni obliga a comprar. Te avisaremos por orden de entrada si se libera una unidad." : "Pre-reserva gratuita. No se realiza ningún cobro y la pre-reserva no implica obligación de compra. La unidad quedará temporalmente asignada hasta que finalice el periodo indicado para completar la compra."}</p>
+          {campaign?.purchase_open_at && <p><strong>Compra prioritaria prevista:</strong> {new Date(campaign.purchase_open_at).toLocaleString("es-ES", { timeZone: "Europe/Madrid" })} (hora peninsular).</p>}
+          <p>Tras recibir la invitación de compra dispondrás de {campaign?.purchase_window_hours ?? 24} horas para completarla.</p>
+          {expirationHours > 0 && !waitlist && <p>Esta reserva caduca {expirationHours} horas después de confirmarla.</p>}
+        </div>
         <label class="reservation-consent">
           <input type="checkbox" checked={accepted} required disabled={busy} onChange={(e) => setAccepted(e.currentTarget.checked)} />
-          <span>He leido la <a href="/legal/privacidad" target="_blank" rel="noreferrer">Politica de privacidad</a> y las <a href="/legal/reservas" target="_blank" rel="noreferrer">condiciones de la pre-reserva</a>.</span>
+          <span>He leído la <a href="/legal/privacidad" target="_blank" rel="noreferrer">Política de privacidad</a> y las <a href="/legal/reservas" target="_blank" rel="noreferrer">condiciones de la pre-reserva</a>.</span>
         </label>
         <label class="reservation-consent">
           <input type="checkbox" checked={marketing} disabled={busy} onChange={(e) => setMarketing(e.currentTarget.checked)} />

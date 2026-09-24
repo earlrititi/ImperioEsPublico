@@ -14,6 +14,8 @@ export default function CommerceAdmin() {
   }
   useEffect(() => {
     let active = true;
+    setData(null);
+    setMessage("");
     const load = () =>
       api(`/api/commerce-admin?view=${view}&page=${page}`)
         .then((d) => {
@@ -68,6 +70,8 @@ export default function CommerceAdmin() {
   const stats = data?.stats;
   return (
     <section class="commerce-admin">
+      {!data && !message && <p role="status">Cargando reservas...</p>}
+      {message && <p role="status" aria-live="polite">{message}</p>}
       <nav class="commerce-admin-nav" aria-label="Gestion comercial">
         <button class="btn btn-ghost" aria-pressed={view === "waitlist"} onClick={() => { setView("waitlist"); setPage(0); }}>Lista de espera</button>
         <a class="btn btn-ghost" href="/api/commerce-export">Exportar pedidos pagados</a>
@@ -134,6 +138,8 @@ export default function CommerceAdmin() {
           </span>
         </div>
       )}
+      <details class="commerce-inventory">
+      <summary>Consultar inventario por talla</summary>
       <div class="commerce-table-wrap">
         <table>
           <caption>Inventario</caption>
@@ -168,13 +174,16 @@ export default function CommerceAdmin() {
           </tbody>
         </table>
       </div>
-      <div class="commerce-table-wrap">
+      </details>
+      <div class="commerce-table-wrap commerce-reservations-table" role="region" aria-label="Listado de reservas y pedidos" tabIndex={0}>
         <table>
           <caption>{view === "orders" ? "Pedidos" : view === "waitlist" ? "Lista de espera" : "Reservas"}</caption>
           <thead>
             <tr>
-              <th>Numero / cliente</th>
-              <th>Unidades</th>
+              <th>Reserva / nombre</th>
+              <th>Direccion de entrega</th>
+              <th>Talla y cantidad</th>
+              <th>Total camisetas</th>
               <th>{view === "orders" ? "Total cobrado" : "Valor reservado"}</th>
               <th>Estado</th>
               <th>Detalle y acciones</th>
@@ -184,10 +193,20 @@ export default function CommerceAdmin() {
             {data?.rows.map((r: any) => (
               <tr key={r.id}>
                 <th scope="row">
-                  <span class="commerce-reference">{r.number}</span>
+                  <span class="commerce-reference">{r.number ?? r.reservation_number}</span>
                   <small>{r.customer_name}</small>
                   <small>{r.customer_email}</small>
                 </th>
+                <td class="commerce-delivery-address">
+                  {r.shipping_address ? <AddressSummary address={r.shipping_address} /> : <span>Direccion pendiente</span>}
+                </td>
+                <td>
+                  <ul class="commerce-size-list">
+                    {(r.reservation_items ?? r.commerce_order_items ?? []).map((item: any) => (
+                      <li key={item.id ?? item.sku}><strong>{item.size}</strong>: {item.quantity} {item.quantity === 1 ? "camiseta" : "camisetas"}</li>
+                    ))}
+                  </ul>
+                </td>
                 <td>{r.total_quantity}</td>
                 <td>
                   {formatMoney(r.total ?? r.total_price_snapshot)}
@@ -203,7 +222,6 @@ export default function CommerceAdmin() {
                     {r.stripe_checkout_session_id && <p class="commerce-reference">Stripe: {r.stripe_checkout_session_id}</p>}
                     {r.order_id && <p class="commerce-reference">Pedido: {r.order_id}</p>}
                     {view !== "orders" && <p>Marketing: {r.marketing_consent ? "Aceptado" : "No aceptado"}</p>}
-                    <AddressSummary address={r.shipping_address} />
                     {view !== "orders" ? (
                       <>
                         <ItemsSummary
@@ -294,9 +312,6 @@ export default function CommerceAdmin() {
           Siguiente
         </button>
       </div>
-      <p role="status" aria-live="polite">
-        {message}
-      </p>
     </section>
   );
 }

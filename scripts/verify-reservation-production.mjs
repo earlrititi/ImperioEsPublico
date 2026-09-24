@@ -31,7 +31,7 @@ try{
  writeFileSync('.codex-reservation-release/smoke-reservation.json',JSON.stringify(own),{mode:0o600});
  const view=await call(`/api/reservations/${id}`,{action:'view',token});assert.equal(view.status,200);
  assert.equal(view.data.reservation.status,'RESERVED');assert.equal(view.data.reservation.total_price_snapshot,2999);
- assert.equal(view.data.reservation.shipping_address,null);
+ assert.deepEqual(view.data.reservation.shipping_address,address);
  assert.equal(view.data.reservation.customer_phone,null);
  assert.equal(view.data.reservation.marketing_consent,false);
  assert.equal((await call(`/api/reservations/${id}/checkout`,{token,address,confirmPurchase:true})).data.code,'RESERVATION_MODE');

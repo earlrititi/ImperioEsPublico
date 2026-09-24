@@ -8,6 +8,7 @@ assert.equal(env.PUBLIC_SUPABASE_URL, 'https://joicpkgvggfxzrdazisx.supabase.co'
 assert.equal(env.STRIPE_LIVE_CHECKOUT_ENABLED, 'false');
 const db = createClient(env.PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 const base = 'http://127.0.0.1:4325', created = [], run = randomUUID();
+const address = { name: 'Prueba pre-reserva', line1: 'Calle de pruebas 12', line2: '', postalCode: '28001', city: 'Madrid', province: '28', country: 'ES' };
 let checks = 0;
 const call = async (path, body) => {
   const response = await fetch(base + path, { method: body ? 'POST' : 'GET', headers: body ? { 'Content-Type': 'application/json', Origin: base } : {}, body: body ? JSON.stringify(body) : undefined });
@@ -19,7 +20,7 @@ const body = async (quantity = 1, extra = {}) => {
   while (!createHash('sha256').update(`${proof.challenge}:${nonce}`).digest('hex').startsWith('000')) nonce++;
   await new Promise((resolve) => setTimeout(resolve, 1100));
   return { requestId: proof.challenge.split('.')[0], challenge: proof.challenge, nonce: String(nonce),
-    customer: { name: 'Prueba pre-reserva', email: `${run}@example.invalid` },
+    customer: { name: 'Prueba pre-reserva', email: `${run}@example.invalid` }, address,
     accepted: true, website: '', items: [{ sku: 'IE-CAMISETA-IMPERIAL-S', quantity }], ...extra };
 };
 const keep = (result) => {
@@ -38,7 +39,7 @@ try {
   assert.equal(pair.find((r) => r.status === 409).data.code, 'OUT_OF_STOCK'); checks++;
   const own = created.at(-1);
   const viewed = await call(`/api/reservations/${own.id}`, { action: 'view', token: own.token });
-  assert.equal(viewed.data.reservation.customer_phone, null); assert.equal(viewed.data.reservation.shipping_address, null);
+  assert.equal(viewed.data.reservation.customer_phone, null); assert.deepEqual(viewed.data.reservation.shipping_address, address);
   assert.equal(viewed.data.reservation.marketing_consent, false); assert.equal(viewed.data.reservation.total_price_snapshot, 2999); checks++;
   assert.equal((await call(`/api/reservations/${own.id}`, { action: 'view', token: 'a'.repeat(64) })).status, 404); checks++;
   assert.equal((await call(`/api/reservations/${own.id}/checkout`, { token: own.token })).data.code, 'RESERVATION_MODE'); checks++;

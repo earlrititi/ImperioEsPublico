@@ -44,9 +44,8 @@
       ]);
 
       elements = domModule.getClientRuntimeElements();
-      if (!elements.nav?.hasAttribute("data-persistent")) {
-        nav = navModule.createNavController({ ...elements, reducedMotion });
-      } else {
+      nav = navModule.createNavController({ ...elements, reducedMotion });
+      if (elements.nav?.hasAttribute("data-persistent")) {
         const { createNavSurfaceController } = await import("../utils/clientRuntime/navSurfaceController");
         navSurface = createNavSurfaceController(elements.nav);
       }

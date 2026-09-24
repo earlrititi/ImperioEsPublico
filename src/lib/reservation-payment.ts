@@ -50,7 +50,8 @@ export async function handleReservationCheckout(
       : session.payment_intent?.id;
   if (
     !intent ||
-    session.total_details?.amount_discount !== 0 ||
+    session.total_details?.amount_discount === null ||
+    session.total_details?.amount_discount === undefined ||
     (session.total_details?.amount_tax ?? 0) <= 0
   )
     throw new Error("PAYMENT_VALIDATION_FAILED");
@@ -62,18 +63,27 @@ export async function handleReservationCheckout(
     p_currency: session.currency,
     p_tax: session.total_details?.amount_tax,
     p_shipping: session.total_details?.amount_shipping ?? 0,
+    p_discount: session.total_details?.amount_discount ?? 0,
   });
   return true;
 }
 export async function recordPaymentSession(
   attemptId: string,
   sessionId: string,
+  expectedTotal: number,
+  discountAmount: number,
+  promotionLeadId: string | null,
 ) {
   const { error } = await (
     await database()
   )
     .from("reservation_payment_attempts")
-    .update({ stripe_session_id: sessionId })
+    .update({
+      stripe_session_id: sessionId,
+      expected_total: expectedTotal,
+      discount_amount: discountAmount,
+      promotion_lead_id: promotionLeadId,
+    })
     .eq("id", attemptId)
     .is("stripe_session_id", null);
   if (error) throw new Error("DATABASE_UNAVAILABLE");

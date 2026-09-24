@@ -1,8 +1,24 @@
 import { NAV_ITEMS } from "../config/navigation";
 import { withBase } from "../utils/basePath";
 import { UserRound } from "lucide";
+import { useEffect, useState } from "preact/hooks";
 
-export default function Navigation({ persistent = false }) {
+/** @param {{ persistent?: boolean, userEmail?: string | null }} props */
+export default function Navigation({ persistent = false, userEmail = null }) {
+  const [sessionEmail, setSessionEmail] = useState(userEmail);
+  useEffect(() => {
+    let active = true;
+    let unsubscribe;
+    void import("../lib/supabase/client").then(async ({ supabase }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (active) setSessionEmail(user?.email ?? null);
+      const listener = supabase.auth.onAuthStateChange((_event, session) => {
+        if (active) setSessionEmail(session?.user.email ?? null);
+      });
+      unsubscribe = () => listener.data.subscription.unsubscribe();
+    }).catch(() => { if (active) setSessionEmail(null); });
+    return () => { active = false; unsubscribe?.(); };
+  }, []);
   return (
     <>
       <nav
@@ -13,7 +29,7 @@ export default function Navigation({ persistent = false }) {
       >
         <div class="main-nav__fx" aria-hidden="true">
         </div>
-        <div class="main-nav__floating-links-layer" aria-hidden="true">
+        <div class="main-nav__floating-links-layer hidden md:block" aria-hidden="true">
           <div class="main-nav__floating-links-wrap">
             <ul class="main-nav__floating-links nav-links-cluster text-sm font-medium tracking-wide uppercase">
               {NAV_ITEMS.map((item) => (
@@ -45,7 +61,7 @@ export default function Navigation({ persistent = false }) {
             />
           </a>
 
-          <div class="main-nav__links-wrap">
+          <div class="main-nav__links-wrap hidden md:block">
             <ul class="main-nav__links nav-links-cluster text-sm font-medium tracking-wide uppercase">
               {NAV_ITEMS.map((item) => (
                 <li key={item.href}>
@@ -63,10 +79,10 @@ export default function Navigation({ persistent = false }) {
           </div>
 
           <div class="main-nav__actions">
-          <a href={withBase("/cuenta")} class="menu-button account-button" aria-label="Mi cuenta / Iniciar sesion" title="Mi cuenta / Iniciar sesion">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <a href={withBase("/cuenta")} class={`menu-button account-button${sessionEmail ? " account-button--email" : ""}`} aria-label={sessionEmail ? `Mi cuenta: ${sessionEmail}` : "Mi cuenta / Iniciar sesion"} title={sessionEmail ?? "Mi cuenta / Iniciar sesion"}>
+            {sessionEmail ? <span class="account-button__email">{sessionEmail}</span> : <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               {UserRound.map(([Tag, attrs], index) => <Tag key={index} {...attrs} />)}
-            </svg>
+            </svg>}
           </a>
           <button
             id="mobile-menu-btn"
@@ -255,7 +271,7 @@ export default function Navigation({ persistent = false }) {
 
         .main-nav__links {
           color: #111;
-          opacity: 1;
+          opacity: var(--nav-links-progress, 1);
           will-change: opacity;
           pointer-events: none;
         }

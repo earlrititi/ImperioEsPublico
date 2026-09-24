@@ -9,6 +9,16 @@ const size=Astro.url.searchParams.get('size')??'M';
 Astro.response.headers.set('Cache-Control','no-store');
 Astro.response.headers.set('Referrer-Policy','no-referrer');
 ---
-<PageShell title="Reserva tu Camiseta Imperial | Imperio Español" heading="Camiseta Imperial" noindex showCookieConsent={false}>
-  <div class="commerce-layout"><aside class="commerce-product"><img src="/images/museo-camiseta-front.webp" alt="Camiseta Imperial, vista delantera" width="1400" height="1150"/><h2>VALENTO BRICKPLUS</h2><p>100 % poliéster · Bird-Eye · 145 g/m²</p><p>{shirt.shippingInformation}</p><a href="/checkout/camiseta-imperial">Ficha tecnica y medidas</a></aside><ReservationForm client:load initialSize={shirt.variants.some(v=>v===size)?size:'M'}/></div>
+<PageShell title="Reserva tu Camiseta Imperial | Imperio Español" eyebrow="Lanzamiento I" heading="Camiseta Imperial" summary="Reserva tu talla sin pago y completa la compra cuando recibas la invitación." noindex showCookieConsent={false} mainClass="reservation-page">
+  <div class="commerce-layout">
+    <aside class="commerce-product" aria-label="Información de la Camiseta Imperial">
+      <div class="commerce-product__image"><img src="/images/museo-camiseta-front.webp" alt="Camiseta Imperial, vista delantera" width="1400" height="1150"/></div>
+      <span class="commerce-kicker">Edición Imperial</span>
+      <h2>VALENTO BRICKPLUS</h2>
+      <p class="commerce-product__specs">100 % poliéster · Bird-Eye · 145 g/m²</p>
+      <p>{shirt.shippingInformation}</p>
+      <a class="commerce-product__link" href="/checkout/camiseta-imperial">Ficha técnica y medidas</a>
+    </aside>
+    <ReservationForm client:load initialSize={shirt.variants.some(v=>v===size)?size:'M'}/>
+  </div>
 </PageShell>

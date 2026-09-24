@@ -52,6 +52,15 @@ export function parseReservationInput(value: unknown, maximum = 2) {
     !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(b.customer.email.trim())
   )
     throw new Error("INVALID_CUSTOMER");
+  let address: ShippingAddress | null = null;
+  if (b.waitlist !== true) {
+    if (!isMainlandAddress(b.address)) throw new Error("INVALID_ADDRESS");
+    address = {
+      name: b.address.name.trim(), line1: b.address.line1.trim(),
+      line2: b.address.line2.trim(), postalCode: b.address.postalCode,
+      city: b.address.city.trim(), province: b.address.province, country: "ES",
+    };
+  }
   if (!Array.isArray(b.items) || b.items.length < 1 || b.items.length > 5)
     throw new Error("INVALID_ITEMS");
   const items: ReservationItemInput[] = b.items
@@ -88,6 +97,7 @@ export function parseReservationInput(value: unknown, maximum = 2) {
       email: b.customer.email.trim().toLowerCase(),
     },
     marketing: b.marketing === true,
+    address,
     items,
   };
 }

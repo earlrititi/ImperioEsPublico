@@ -171,6 +171,7 @@ export function failure(error: unknown) {
       "Comprueba provincia y codigo postal. Solo enviamos a Espana peninsular.",
     INVALID_INPUT: "Revisa los datos y acepta las condiciones.",
     INVALID_CUSTOMER: "Comprueba nombre y email.",
+    INVALID_ADDRESS: "Completa la direccion de entrega y comprueba provincia y codigo postal. Solo enviamos a Espana peninsular.",
     INVALID_QUANTITY: "La cantidad no es valida.",
     INVALID_ITEMS: "Revisa las tallas seleccionadas.",
     NOT_FOUND: "Reserva no disponible o enlace incorrecto.",

@@ -1,4 +1,4 @@
-// Read the surface under each control so mixed backgrounds remain legible.
+// Choose one opaque surface for the whole interior-page navbar.
 export const createNavSurfaceController = (nav) => {
   const controls = [...nav.querySelectorAll('.main-nav__links .main-nav__link, .main-nav__brand, .menu-button')];
   const surfaceAt = (x, y) => {
@@ -21,12 +21,14 @@ export const createNavSurfaceController = (nav) => {
   return {
     update() {
       if (nav.classList.contains('main-nav--menu-open')) return;
+      const navRect = nav.getBoundingClientRect();
+      const surfaces = [0.05, 0.25, 0.5, 0.75, 0.95].flatMap((fraction) =>
+        [0.25, 0.75].map((row) =>
+          surfaceAt(window.innerWidth * fraction, navRect.top + navRect.height * row)),
+      );
+      const surface = surfaces.filter((value) => value === 'dark').length > surfaces.length / 2 ? 'dark' : 'light';
+      nav.dataset.navTheme = surface;
       for (const control of controls) {
-        const rect = control.getBoundingClientRect();
-        const x = Math.max(1, Math.min(window.innerWidth - 1, rect.left + rect.width / 2));
-        const y = rect.top + rect.height / 2;
-        if (!rect.width || rect.right <= 0 || rect.left >= window.innerWidth) continue;
-        const surface = surfaceAt(x, y);
         if (control.dataset.navSurface === surface) continue;
         control.dataset.navSurface = surface;
         control.style.setProperty('--nav-item-ink', surface === 'dark' ? '#fff' : '#111');

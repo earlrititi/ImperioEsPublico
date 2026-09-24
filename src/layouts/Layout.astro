@@ -3,6 +3,7 @@ import "../styles/global.css";
 import "../styles/navigation.css";
 import ClientRuntime from "../islands/ClientRuntime.astro";
 import CookieConsent from "../components/CookieConsent.astro";
+import TshirtLeadPopup from "../components/TshirtLeadPopup.astro";
 import Footer from "../components/Footer.jsx";
 import GlobalHomeMark from "../components/GlobalHomeMark.astro";
 import Navigation from "../components/Navigation.jsx";
@@ -139,7 +140,7 @@ const jsonLd = {
     <noscript><style is:global>.fade-in-up, .reveal { opacity: 1 !important; transform: none !important; }</style></noscript>
     <a class="skip-link" href="#main-content">Saltar al contenido</a>
     <GlobalHomeMark />
-    {navigation === "persistent" && <Navigation persistent />}
+    {navigation === "persistent" && <Navigation persistent client:load />}
     <div id="main-content" tabindex="-1">
       <slot />
     </div>
@@ -150,6 +151,7 @@ const jsonLd = {
       </div>
     </div>
     <ClientRuntime />
+    <TshirtLeadPopup />
     {showCookieConsent && <CookieConsent />}
   </body>
 </html>

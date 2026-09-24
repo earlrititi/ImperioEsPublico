@@ -8,13 +8,13 @@ import { TSHIRT_DISCOUNT_PERCENT, TSHIRT_LEAD_SOURCE } from "../../lib/tshirt-pr
 
 export const prerender = false;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const COUPON_ID = "imperio_e_camiseta_20";
+const COUPON_ID = "imperio_e_camiseta_15";
 const clean = (value: unknown, max: number) => typeof value === "string" ? value.trim().slice(0, max) : "";
 const json = (body: Record<string, unknown>, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
 
 function randomCode() {
   const bytes = crypto.getRandomValues(new Uint8Array(6));
-  return `IMPERIO20-${Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("").toUpperCase()}`;
+  return `IMPERIO15-${Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("").toUpperCase()}`;
 }
 
 async function getCoupon(stripe: any) {
@@ -24,7 +24,7 @@ async function getCoupon(stripe: any) {
     return coupon;
   } catch (error) {
     if ((error as { code?: string }).code !== "resource_missing") throw error;
-    return stripe.coupons.create({ id: COUPON_ID, percent_off: TSHIRT_DISCOUNT_PERCENT, duration: "once", name: "Camiseta Imperial - 20%", metadata: { source: TSHIRT_LEAD_SOURCE } });
+    return stripe.coupons.create({ id: COUPON_ID, percent_off: TSHIRT_DISCOUNT_PERCENT, duration: "once", name: "Camiseta Imperial - 15%", metadata: { source: TSHIRT_LEAD_SOURCE } });
   }
 }
 
@@ -93,7 +93,10 @@ export const POST: APIRoute = async ({ request }) => {
       if (updated.error) throw new Error("DATABASE_UNAVAILABLE");
     }
     if (!promotionCode) throw new Error("PROMOTION_UNAVAILABLE");
-    const delivered = await sendTshirtDiscountEmail({ to: email, name, code: promotionCode });
+    const { stripe } = await import("../../lib/stripe");
+    const coupon = await stripe.coupons.retrieve(couponId!);
+    if (!coupon.percent_off) throw new Error("INVALID_PROMOTION_CONFIGURATION");
+    const delivered = await sendTshirtDiscountEmail({ to: email, name, code: promotionCode, percent: coupon.percent_off });
     if (delivered.error) throw new Error("EMAIL_DELIVERY_FAILED");
     const marked = await supabaseAdmin.from("marketing_leads").update({ email_sent_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", lead.id);
     if (marked.error) throw new Error("DATABASE_UNAVAILABLE");

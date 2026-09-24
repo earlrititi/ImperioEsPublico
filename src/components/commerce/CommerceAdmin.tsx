@@ -325,7 +325,7 @@ function CampaignSettings({ campaign, busy, disabled, onSave, onActivate }: {
       <fieldset disabled={busy || campaign.purchase_activated}>
         <legend>Configuracion</legend>
         <label>Total de edicion (pendiente si esta vacio)<input type="number" min="1" step="1" value={draft.edition_total ?? ""} onInput={(e) => setDraft({ ...draft, edition_total: e.currentTarget.value ? Number(e.currentTarget.value) : null })} /></label>
-        <label>Maximo por pre-reserva<input type="number" required min="1" max="50" step="1" value={draft.max_reservation_quantity} onInput={(e) => setDraft({ ...draft, max_reservation_quantity: Number(e.currentTarget.value) })} /></label>
+        <label>Maximo por pre-reserva (vacio: solo limita el stock)<input type="number" min="1" max="50" step="1" value={draft.max_reservation_quantity ?? ""} onInput={(e) => setDraft({ ...draft, max_reservation_quantity: e.currentTarget.value ? Number(e.currentTarget.value) : null })} /></label>
         <label>Ventana de compra (horas)<input type="number" required min="1" max="8760" step="1" value={draft.purchase_window_hours} onInput={(e) => setDraft({ ...draft, purchase_window_hours: Number(e.currentTarget.value) })} /></label>
         {([['reservations_open_at', 'Inicio de pre-reservas (UTC)'], ['purchase_open_at', 'Inicio de compra prioritaria (UTC)']] as const).map(([key, label]) => <label key={key}>{label}
           <input type="datetime-local" value={draft[key] ? new Date(draft[key]).toISOString().slice(0, 16) : ""} onInput={(e) => setDraft({ ...draft, [key]: e.currentTarget.value ? new Date(`${e.currentTarget.value}:00Z`).toISOString() : null })} />

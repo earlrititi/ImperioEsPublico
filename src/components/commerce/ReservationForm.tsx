@@ -31,7 +31,7 @@ export default function ReservationForm({ initialSize = "M" }: { initialSize?: s
   }, []);
   const variant = inventory.find((v) => v.name === size);
   const soldOut = variant?.available_stock === 0;
-  const maximum = Math.min(campaign?.max_reservation_quantity ?? 2, variant?.available_stock ?? 0);
+  const maximum = Math.min(campaign?.max_reservation_quantity ?? Infinity, variant?.available_stock ?? 0);
   const canWait = Boolean(campaign && (!campaign.reservations_open_at || Date.parse(campaign.reservations_open_at) <= Date.now()));
   async function submit(event: SubmitEvent) {
     event.preventDefault();
@@ -65,7 +65,8 @@ export default function ReservationForm({ initialSize = "M" }: { initialSize?: s
         <span class="commerce-kicker">Solicitud de reserva</span>
         <h2>{waitlist ? "Lista de espera" : "Pre-reserva gratuita"}</h2>
         <p class="reservation-total">{formatMoney(0)} ahora</p>
-        <p>Precio de compra posterior: {formatMoney(SHIRT_FINAL_PRICE_CENTS)} por camiseta. {SHIRT_PRICE_COPY}.</p>
+        <p>{SHIRT_PRICE_COPY}.</p>
+        <p>Compra posterior: {formatMoney(SHIRT_FINAL_PRICE_CENTS)} por unidad. Total para {quantity} {quantity === 1 ? "camiseta" : "camisetas"}: {formatMoney(SHIRT_FINAL_PRICE_CENTS * quantity)}.</p>
       </header>
       <fieldset disabled={busy}>
         <legend>Talla y cantidad</legend>
@@ -81,7 +82,7 @@ export default function ReservationForm({ initialSize = "M" }: { initialSize?: s
           </label>}
         </div>
         <p class="reservation-stock" role="status" aria-live="polite">{variant ? soldOut ? "AGOTADO" : `Quedan ${variant.available_stock} unidades en talla ${size}` : "Consultando stock..."}</p>
-        {!waitlist && <p class="reservation-note">Máximo {campaign?.max_reservation_quantity ?? 2} unidades por pre-reserva.</p>}
+        {!waitlist && typeof campaign?.max_reservation_quantity === "number" && <p class="reservation-note">Máximo {campaign.max_reservation_quantity} unidades por pre-reserva.</p>}
       </fieldset>
       {soldOut && !waitlist && <>
         <p>Todas las unidades de esta talla estan actualmente reservadas o vendidas.</p>

@@ -1,7 +1,7 @@
 import { supabaseAdmin } from "./supabase/admin";
 
 export const TSHIRT_LEAD_SOURCE = "tshirt_20_popup";
-export const TSHIRT_DISCOUNT_PERCENT = 20;
+export { TSHIRT_DISCOUNT_PERCENT } from "../config/commerce";
 
 export async function findActiveTshirtPromotion(email: string) {
   const { data, error } = await supabaseAdmin

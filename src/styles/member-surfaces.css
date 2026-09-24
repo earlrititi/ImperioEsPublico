@@ -1,0 +1,107 @@
+/* Shared manifesto treatment for account, subscription and reservation flows. */
+.page-shell.member-surface {
+  --ink: #fff;
+  --ink-soft: rgb(255 255 255 / 76%);
+  --line: rgb(255 255 255 / 20%);
+  color-scheme: dark;
+  color: var(--ink);
+  min-height: calc(100svh - 64px);
+  background-color: var(--color-black-papers);
+  background-image: var(--imperio-dot-pattern), linear-gradient(145deg, #0b0c0c 15%, #160b0d 55%, #400a0f 100%);
+  background-size: var(--imperio-dot-pattern-size), auto;
+  padding-bottom: 48px;
+}
+body:has(.member-surface) #main-content { background-color: #0b0c0c; }
+.member-surface :is(h1,h2,h3,legend) { color: #fff; }
+.member-surface h1 { font-family: var(--font-serif); font-size: 44px; line-height: 1.1; letter-spacing: 0; }
+.member-surface h2 { font-family: var(--font-serif); font-size: 28px; line-height: 1.2; letter-spacing: 0; }
+.member-surface h3 { font-family: var(--font-serif); font-size: 22px; line-height: 1.25; letter-spacing: 0; }
+.member-surface .pill { justify-self: start; width: fit-content; }
+.member-surface .section { padding-block: 40px; }
+.member-surface :is(.muted,.reservation-note,.page-shell__summary) { color: var(--ink-soft); }
+.member-surface .page-shell__intro { padding-bottom: 32px; }
+.page-shell.member-surface :is(.auth-panel,.reservation-form,.reservation-manager) {
+  background: transparent;
+  border-color: var(--line);
+  box-shadow: none;
+}
+.page-shell.member-surface :is(.auth-panel,.reservation-form)::before { background: var(--color-red-accent); }
+.member-surface .card {
+  background: rgb(255 255 255 / 5%);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 8%);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.member-surface :is(.pill,.badge,.reservation-stock,.reservation-conditions,.auth-notice) {
+  color: #fff;
+  background: rgb(255 255 255 / 8%);
+  border-color: var(--color-red-accent);
+}
+.page-shell.member-surface :is(.commerce-kicker,.auth-register a) { color: #ff9588; }
+.member-surface .btn {
+  color: #fff;
+  border: 1px solid rgb(255 255 255 / 28%);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 13%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 12%);
+  backdrop-filter: blur(10px);
+  transition: background 180ms ease, border-color 180ms ease;
+  white-space: normal;
+  min-height: 48px;
+}
+.member-surface .btn:hover:not(:disabled) {
+  background: rgb(242 56 30 / 24%);
+  border-color: var(--color-red-accent);
+}
+.member-surface .btn:disabled { opacity: .5; cursor: not-allowed; }
+.page-shell.member-surface input:not([type=checkbox]):not([type=hidden]),
+.page-shell.member-surface select,
+.page-shell.member-surface textarea,
+.page-shell.member-surface .password-field {
+  color-scheme: light;
+  color: #261b18;
+  background: #fff9f1;
+  border: 2px solid var(--color-red-accent);
+  border-radius: 18px;
+  min-height: 52px;
+  padding: 12px 16px;
+  font: inherit;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.page-shell.member-surface .password-field { padding: 0; }
+.page-shell.member-surface .password-field input:not([type=checkbox]):not([type=hidden]) {
+  border: 0;
+  background: transparent;
+  padding-right: 4px;
+}
+.member-surface .password-field button { color: #261b18; }
+.member-surface input::placeholder { color: #655852; opacity: 1; }
+.member-surface input[type=checkbox] { accent-color: var(--color-red-accent); }
+.member-surface :is(input,select,textarea,.btn,a):focus-visible {
+  outline: 2px solid #ff9588;
+  outline-offset: 3px;
+}
+.member-surface .password-field:focus-within {
+  outline: 2px solid #ff9588;
+  outline-offset: 3px;
+}
+.member-surface .password-field input:focus-visible { outline: none; }
+.member-surface .commerce-product__image {
+  background: rgb(255 255 255 / 5%);
+  border-color: var(--line);
+}
+.member-surface .commerce-product__image::after { background: var(--color-red-accent); }
+.member-surface :is(.reservation-summary,.commerce-table-wrap th,.commerce-table-wrap td) { border-color: var(--line); }
+.member-surface .meta { flex-wrap: wrap; }
+.member-surface .meta > * { max-width: 100%; }
+@media (max-width: 600px) {
+  .member-surface h1 { font-size: 34px; }
+  .member-surface h2 { font-size: 26px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .member-surface .btn { transition: none; }
+}

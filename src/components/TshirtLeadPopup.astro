@@ -1,4 +1,5 @@
 ---
+import { TSHIRT_DISCOUNT_PERCENT } from "../config/commerce";
 const excluded = /^\/(?:login|registro|recuperar-contrasena|confirmar-correo|checkout|reservas(?:\/|$)|reserva(?:\/|$)|compra(?:\/|$)|gracias(?:\/|$)|admin(?:\/|$))/;
 const enabled = !excluded.test(Astro.url.pathname);
 ---
@@ -12,9 +13,9 @@ const enabled = !excluded.test(Astro.url.pathname);
         <img src="/images/camiseta-imperio-frontal.webp" alt="Camiseta Imperial de Imperio E" width="1080" height="1080" loading="lazy" decoding="async" />
       </div>
       <div class="tshirt-lead__content">
-        <span class="tshirt-lead__eyebrow">20% de descuento</span>
+        <span class="tshirt-lead__eyebrow">{TSHIRT_DISCOUNT_PERCENT}% de descuento</span>
         <h2 id="tshirt-lead-title">Una pieza de nuestra historia.</h2>
-        <p id="tshirt-lead-copy">Déjanos tu nombre y correo y recibe un 20% de descuento para tu Camiseta Imperial.</p>
+        <p id="tshirt-lead-copy">Déjanos tu nombre y correo y recibe un {TSHIRT_DISCOUNT_PERCENT}% de descuento para tu Camiseta Imperial.</p>
         <form data-tshirt-form>
           <label for="tshirt-lead-name">Nombre</label>
           <input id="tshirt-lead-name" name="name" autocomplete="name" minlength="2" maxlength="150" required />
@@ -25,7 +26,7 @@ const enabled = !excluded.test(Astro.url.pathname);
             <span>Quiero recibir este descuento y novedades seleccionadas de Imperio E. He leído la <a href="/legal/privacidad">Política de Privacidad</a>.</span>
           </label>
           <input class="tshirt-lead__trap" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" />
-          <button class="btn btn-primary tshirt-lead__submit" type="submit">Conseguir mi 20%</button>
+          <button class="btn btn-primary tshirt-lead__submit" type="submit">Conseguir mi {TSHIRT_DISCOUNT_PERCENT}%</button>
           <p class="tshirt-lead__fineprint">Sin spam. Solo novedades de Imperio E y lanzamientos seleccionados.</p>
           <p class="tshirt-lead__status" data-tshirt-status role="status" aria-live="polite"></p>
         </form>

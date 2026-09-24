@@ -71,7 +71,7 @@ export const POST: APIRoute = async (context) => {
     if (body.action === "mail") return privateJson(await drainCommerceMail(20));
     if (body.action === "campaign-configure") {
       const c = body.config;
-      if (!c || !Number.isInteger(c.max_reservation_quantity) || c.max_reservation_quantity < 1 || c.max_reservation_quantity > 50 ||
+      if (!c || (c.max_reservation_quantity !== null && (!Number.isInteger(c.max_reservation_quantity) || c.max_reservation_quantity < 1 || c.max_reservation_quantity > 50)) ||
         !Number.isInteger(c.purchase_window_hours) || c.purchase_window_hours < 1 || c.purchase_window_hours > 8760 ||
         (c.edition_total !== null && (!Number.isInteger(c.edition_total) || c.edition_total < 1)) ||
         [c.reservations_open_at, c.purchase_open_at].some((date) => date !== null && (typeof date !== "string" || !Number.isFinite(Date.parse(date)))))

@@ -288,28 +288,29 @@ export default function Footer({ variant = "light" }) {
         .image-footer__cookie-switch-track {
           position: relative;
           display: block;
-          width: 38px;
-          height: 22px;
+          width: 58px;
+          height: 32px;
           box-sizing: border-box;
-          border: 1px solid rgb(255 255 255 / 76%);
+          border: 0;
           border-radius: 999px;
-          background: #555;
+          background: #8b1b16;
           transition: background 180ms ease, border-color 180ms ease;
         }
 
         .image-footer__cookie-switch-track::after {
           content: "";
           position: absolute;
-          top: 2px;
-          left: 2px;
-          width: 16px;
-          height: 16px;
+          top: 5px;
+          left: 5px;
+          width: 22px;
+          height: 22px;
           border-radius: 50%;
           background: #fff;
           transition: left 180ms ease;
         }
 
         .image-footer__cookie-switch-track::before {
+          display: none;
           content: "";
           position: absolute;
           top: 6px;
@@ -336,7 +337,7 @@ export default function Footer({ variant = "light" }) {
         }
 
         .image-footer__cookie-switch input:checked + .image-footer__cookie-switch-track::after {
-          left: 18px;
+          left: 31px;
         }
 
         .image-footer__cookie-switch input:focus-visible + .image-footer__cookie-switch-track {

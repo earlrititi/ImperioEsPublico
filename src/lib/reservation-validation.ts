@@ -33,7 +33,7 @@ export function isMainlandAddress(value: unknown): value is ShippingAddress {
     a.line2.length <= 200
   );
 }
-export function parseReservationInput(value: unknown, maximum = 2) {
+export function parseReservationInput(value: unknown, maximum: number | null = null) {
   if (!value || typeof value !== "object") throw new Error("INVALID_INPUT");
   const b = value as Record<string, any>;
   if (
@@ -86,9 +86,9 @@ export function parseReservationInput(value: unknown, maximum = 2) {
       2147483647
   )
     throw new Error("INVALID_ITEMS");
-  if (!Number.isInteger(maximum) || maximum < 1 || maximum > 50)
+  if (maximum !== null && (!Number.isInteger(maximum) || maximum < 1 || maximum > 50))
     throw new Error("INVALID_CONFIGURATION");
-  if (items.reduce((n, item) => n + item.quantity, 0) > maximum)
+  if (maximum !== null && items.reduce((n, item) => n + item.quantity, 0) > maximum)
     throw new Error("MAX_RESERVATION_QUANTITY");
   return {
     requestId: b.requestId,

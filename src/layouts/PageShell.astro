@@ -1,6 +1,7 @@
 ---
 // Shared shell for internal pages so metadata, spacing, and intro blocks stay consistent.
 import Layout from "./Layout.astro";
+import "../styles/member-surfaces.css";
 
 interface Props {
   title?: string;
@@ -39,6 +40,7 @@ const {
   publishedAt,
   modifiedAt,
 } = Astro.props as Props;
+const memberSurface = /^\/(?:suscribirse|cuenta|login|registro|recuperar-contrasena|confirmar-correo|reservas|reserva|compra|checkout)(?:\/|$)/.test(Astro.url.pathname);
 ---
 
 <Layout
@@ -46,14 +48,14 @@ const {
   description={description}
   noindex={noindex}
   showCookieConsent={showCookieConsent}
-  footerVariant={footerVariant}
+  footerVariant={memberSurface ? "dark" : footerVariant}
   structuredData={structuredData}
   ogImage={ogImage}
   ogType={ogType}
   publishedAt={publishedAt}
   modifiedAt={modifiedAt}
 >
-  <main class:list={["page-shell", mainClass]}>
+  <main class:list={["page-shell", mainClass, memberSurface && "member-surface"]} data-home-mark-surface={memberSurface ? "black" : undefined}>
     <div class="container">
       <section class:list={["section", "page-shell__intro", narrow && "content"]}>
         <slot name="meta" />

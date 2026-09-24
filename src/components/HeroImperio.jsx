@@ -377,7 +377,7 @@ export default function HeroImperio() {
 
         .hero-nav__links-wrap {
           position: absolute;
-          left: var(--hero-source-left, calc(50% - 18px));
+          left: var(--hero-source-left, 50%);
           top: calc(50% + var(--nav-letters-offset-y, 0px));
           transform: translate(-50%, -50%);
         }

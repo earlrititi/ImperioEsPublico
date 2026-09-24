@@ -164,7 +164,7 @@ body:has(.papers-page, .storefront, .contact-page, .article-page) #main-nav:wher
 /* Keep links and account controls in separate desktop tracks. */
 #main-nav .main-nav__inner {
   display:grid;
-  grid-template-columns:64px minmax(0,1fr) minmax(100px,220px);
+  grid-template-columns:220px minmax(0,1fr) 220px;
   align-items:center;
   gap:16px;
   min-height:64px;

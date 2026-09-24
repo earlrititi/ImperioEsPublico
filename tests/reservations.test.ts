@@ -115,7 +115,9 @@ test("Address is validated and stripped of unrelated fields; waitlist needs none
 
 test("Reservation maximum is configurable and applies to all lines combined", () => {
   const items = [{ sku: "IE-CAMISETA-IMPERIAL-M", quantity: 2 }, { sku: "IE-CAMISETA-IMPERIAL-S", quantity: 1 }];
-  assert.throws(() => parseReservationInput({ ...input(), items }), /MAX_RESERVATION_QUANTITY/);
+  assert.throws(() => parseReservationInput({ ...input(), items }, 2), /MAX_RESERVATION_QUANTITY/);
+  assert.equal(parseReservationInput({ ...input(), items }, null).items.length, 2);
+  assert.equal(parseReservationInput({ ...input(), items: [{ sku: "IE-CAMISETA-IMPERIAL-M", quantity: 15 }] }).items[0].quantity, 15);
   assert.equal(parseReservationInput({ ...input(), items }, 3).items.length, 2);
   assert.throws(() => parseReservationInput(input(), 0), /INVALID_CONFIGURATION/);
 });

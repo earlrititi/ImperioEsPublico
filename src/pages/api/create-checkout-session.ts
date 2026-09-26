@@ -155,6 +155,8 @@ export const POST: APIRoute = async ({ cookies, request }) => {
       {
         mode: "subscription",
         locale: "es",
+        billing_address_collection: "required",
+        customer_update: customerId ? { address: "auto", name: "auto" } : undefined,
         client_reference_id: user?.id,
         customer: customerId,
         customer_email: customerId ? undefined : user?.email,

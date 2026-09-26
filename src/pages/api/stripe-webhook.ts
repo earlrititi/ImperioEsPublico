@@ -3,6 +3,8 @@ import type Stripe from "stripe";
 import { getRequiredEnv } from "../../lib/env";
 import { handleReservationCheckout } from "../../lib/reservation-payment";
 import { database, rpc } from "../../lib/reservations";
+import { ADMIN_NOTIFICATION_EMAIL, subscriptionNotification } from "../../lib/admin-notifications";
+import { SITE } from "../../config/site";
 import {
   claimStripeEvent,
   completeStripeEvent,
@@ -361,6 +363,27 @@ export const POST: APIRoute = async ({ request }) => {
         if (subscriptionId) {
           const subscription = await stripe.subscriptions.retrieve(subscriptionId);
           await upsertFromSubscription(subscription, stripe);
+          if (invoice.status === "paid" && invoice.billing_reason === "subscription_create") {
+            // Both invoice events refer to the same initial subscription: keep one durable receipt.
+            const noticeId = `admin_subscription_${subscriptionId}`;
+            const claimed = await claimStripeEvent({ eventId: noticeId, eventType: "internal.subscription_notification" });
+            if (claimed) {
+              try {
+                const { resend } = await import("../../lib/resend");
+                const response = await resend.emails.send({
+                  from: `Imperio Espanol <${SITE.contactEmail}>`,
+                  to: ADMIN_NOTIFICATION_EMAIL,
+                  replyTo: SITE.contactEmail,
+                  ...subscriptionNotification(invoice, getPlanLabel(getPlanFromSubscription(subscription)), getIntervalFromSubscription(subscription)),
+                }, { idempotencyKey: noticeId });
+                if (response.error || !response.data) throw new Error("ADMIN_EMAIL_PROVIDER_UNAVAILABLE");
+                await completeStripeEvent(noticeId);
+              } catch (error) {
+                await failStripeEvent(noticeId, error);
+                throw error;
+              }
+            }
+          }
         }
 
         break;

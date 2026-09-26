@@ -125,6 +125,7 @@ globalThis.fetch = async (input, init) => {
   const body = request.method === "GET" ? null : await request.json();
   if (url.pathname === "/rest/v1/rpc/consume_rate_limit") return json(true);
   if (url.pathname === "/rest/v1/reservations") return json(reservation);
+  if (url.pathname === "/rest/v1/marketing_leads") return json(null);
   if (url.pathname === "/rest/v1/rpc/begin_shirt_payment")
     return json(attemptId);
   if (url.pathname === "/rest/v1/reservation_payment_attempts") {

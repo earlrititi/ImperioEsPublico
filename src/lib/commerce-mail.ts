@@ -14,6 +14,7 @@ import {
 } from "./reservations";
 import { getRequiredEnv } from "./env";
 import { SITE } from "../config/site";
+import { ADMIN_NOTIFICATION_EMAIL, reservationNotification } from "./admin-notifications";
 import {
   createCipheriv,
   createDecipheriv,
@@ -120,6 +121,14 @@ export async function drainCommerceMail(limit = 10) {
             : `${r.commerce_orders ? "Pedido" : "Reserva"} ${r.number}: ${RESERVATION_STATUS[r.status] ?? r.status}`,
           text: reservationMailText(r, job.kind, managementLink(r)),
           replyTo: SITE.contactEmail,
+          adminNotification: ["RESERVED", "WAITLIST"].includes(job.kind)
+            ? {
+                from: `Imperio Espanol <${SITE.contactEmail}>`,
+                to: mode === "test" ? getRequiredEnv("COMMERCE_TEST_EMAIL") : ADMIN_NOTIFICATION_EMAIL,
+                replyTo: SITE.contactEmail,
+                ...reservationNotification(r),
+              }
+            : undefined,
         };
         const saved = await db
           .from("commerce_outbox")
@@ -131,11 +140,18 @@ export async function drainCommerceMail(limit = 10) {
         if (saved.error || saved.data?.length !== 1)
           throw new Error("EMAIL_SNAPSHOT_UNAVAILABLE");
       }
-      const response = await client.emails.send(message, {
+      const { adminNotification, ...customerMessage } = message;
+      const response = await client.emails.send(customerMessage, {
         idempotencyKey: `commerce-mail-${job.id}`,
       });
       if (response.error || !response.data)
         throw new Error("EMAIL_PROVIDER_UNAVAILABLE");
+      if (adminNotification) {
+        const notice = await client.emails.send(adminNotification, {
+          idempotencyKey: `commerce-admin-${job.id}`,
+        });
+        if (notice.error || !notice.data) throw new Error("ADMIN_EMAIL_PROVIDER_UNAVAILABLE");
+      }
       const { error } = await db
         .from("commerce_outbox")
         .update({

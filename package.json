@@ -13,7 +13,7 @@
     "postbuild": "node scripts/prune-vercel-output.mjs",
     "check": "astro check",
     "test": "tsx --test tests/**/*.test.ts",
-    "test:integration": "node scripts/verify-article-access.mjs && node scripts/verify-commerce.mjs && node scripts/verify-shirt-catalog.mjs && node scripts/verify-reservation-checkout.mjs && node scripts/verify-password-auth.mjs",
+    "test:integration": "node scripts/verify-article-access.mjs && node scripts/verify-commerce.mjs && node scripts/verify-admin-mail.mjs && node scripts/verify-shirt-catalog.mjs && node scripts/verify-reservation-checkout.mjs && node scripts/verify-password-auth.mjs",
     "verify": "npm run check && npm test && npm run build",
     "preview": "astro preview",
     "astro": "astro"

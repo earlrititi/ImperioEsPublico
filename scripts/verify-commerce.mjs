@@ -34,6 +34,7 @@ let checkoutParams;
 let consentFailure = false;
 let ledgerFailure = false;
 let subscriptionFailure = false;
+let adminEmailFailure = false;
 let consentRows = [];
 let subscriptionRows = [];
 let currentSubscription;
@@ -79,6 +80,7 @@ globalThis.fetch = async (input, options) => {
     case "/auth/v1/user": return json({ id: userId, email: "fixture@example.invalid", aud: "authenticated", role: "authenticated" });
     case "/emails":
       assert.equal(url.hostname, "api.resend.com");
+      if (adminEmailFailure && body.to.includes("earlrititi@gmail.com")) return json({ name: "application_error", message: "fixture email failure" }, 500);
       emailRows.push(body);
       return json({ id: "email_fixture" });
     case "/rest/v1/rpc/consume_rate_limit": return json(true);
@@ -179,6 +181,8 @@ existingSubscription = { id: "fixture", user_id: userId, stripe_customer_id: "cu
 assert.equal((await checkout("arcabucero-monthly", {}, true)).status, 200);
 assert.equal(checkoutParams.customer, "cus_fixture");
 assert.equal(checkoutParams.customer_email, undefined);
+assert.equal(checkoutParams.billing_address_collection, "required");
+assert.deepEqual(checkoutParams.customer_update, { address: "auto", name: "auto" });
 existingSubscription.status = "active";
 const beforeActive = sessionCount;
 assert.equal((await checkout("arcabucero-monthly", {}, true)).status, 409);
@@ -276,4 +280,24 @@ assert.equal((await webhook("customer.subscription.updated", currentSubscription
 assert.equal(events.get(retryId).status, "completed");
 assert.equal(events.get(retryId).attempts, 2);
 cases += 10;
+const initialInvoice = { ...invoice, id: "in_fixture", status: "paid", billing_reason: "subscription_create",
+  customer_name: "Cliente de prueba", customer_email: "fixture@example.invalid",
+  customer_address: { line1: "Calle prueba 12", postal_code: "28001", city: "Madrid", country: "ES" } };
+const beforeAdmin = emailRows.length;
+assert.equal((await webhook("invoice.paid", { ...initialInvoice, status: "open" })).status, 200);
+assert.equal((await webhook("invoice.paid", { ...initialInvoice, billing_reason: "subscription_cycle" })).status, 200);
+assert.equal(emailRows.length, beforeAdmin, "Unpaid invoices and renewals must not notify new subscriptions");
+adminEmailFailure = true;
+const noticeRetry = "evt_fixture_admin_retry";
+assert.equal((await webhook("invoice.paid", initialInvoice, noticeRetry)).status, 500);
+assert.equal(events.get("admin_subscription_sub_fixture").status, "failed");
+adminEmailFailure = false;
+assert.equal((await webhook("invoice.paid", initialInvoice, noticeRetry)).status, 200);
+assert.equal(emailRows.length, beforeAdmin + 1);
+assert.ok(emailRows.at(-1).to.includes("earlrititi@gmail.com"));
+assert.match(emailRows.at(-1).text, /Cliente de prueba/);
+assert.match(emailRows.at(-1).text, /Calle prueba 12/);
+assert.equal((await webhook("invoice.payment_succeeded", initialInvoice)).status, 200);
+assert.equal(emailRows.length, beforeAdmin + 1, "Different invoice events must not duplicate the admin notice");
+cases += 6;
 console.log(`${cases} compiled commerce scenarios passed. No network, real payments or emails.`);

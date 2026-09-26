@@ -26,7 +26,8 @@ assert.match(storefront, /RESERVAR \u2014 0 \u20ac/);
 for (const size of ["S", "M", "L", "XL", "XXL"]) {
   const html = await page(`/checkout/camiseta-imperial?size=${size}`);
   assert.match(html, new RegExp(`Talla elegida<\/dt>\\s*<dd[^>]*>${size}<\/dd>`));
-  assert.doesNotMatch(html, /26,99/);
+  assert.match(html, /26,99/);
+  assert.match(html, /3 [\s\S]{0,12} de env/);
   assert.match(html, /29,99/);
   assert.match(html, /100 % poliester/);
   assert.doesNotMatch(html, /Valento BRICKPLUS/);

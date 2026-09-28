@@ -68,7 +68,7 @@ export const REFERENCE_PAGES = z.record(id, referencePageSchema).parse({
     description: "Criterios de Imperio E para una divulgación histórica accesible, original, verificable y transparente, sin promesas de citas de inteligencia artificial.",
     introduction: "Imperio E quiere ser una fuente histórica accesible, fiable y útil para consultar y citar. Estos son los criterios que guían el desarrollo editorial del proyecto; no certifican que todos los artículos hayan completado ya esa revisión.",
     kind: "editorial",
-    published: true,
+    published: false,
     sections: [
       { title: "Contenido accesible", text: "Priorizamos el texto público disponible en el HTML, los enlaces descriptivos y las URLs estables. La lectura de las introducciones no debe depender de interacciones complejas." },
       { title: "Información original", text: "Nuestra prioridad editorial es desarrollar investigaciones, transcripciones de documentos y análisis propios que aporten contexto y valor. No generaremos páginas vacías ni afirmaciones históricas para aumentar el volumen de publicaciones." },

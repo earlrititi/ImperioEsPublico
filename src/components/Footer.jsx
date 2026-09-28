@@ -195,9 +195,13 @@ export default function Footer({ variant = "light" }) {
           width: 100%;
           overflow: hidden;
           background: #f7f5f1;
+          -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 10px);
+          mask-image: linear-gradient(to bottom, transparent 0, #000 10px);
         }
 
         .image-footer--dark {
+          margin-top: -10px;
+          padding-top: 10px;
           background: var(--color-black-papers);
         }
 
@@ -293,8 +297,9 @@ export default function Footer({ variant = "light" }) {
           box-sizing: border-box;
           border: 0;
           border-radius: 999px;
-          background: #8b1b16;
-          transition: background 180ms ease, border-color 180ms ease;
+          background: #969696;
+          box-shadow: inset 0 1px 2px rgb(0 0 0 / 16%);
+          transition: background 180ms ease, box-shadow 180ms ease;
         }
 
         .image-footer__cookie-switch-track::after {
@@ -305,8 +310,9 @@ export default function Footer({ variant = "light" }) {
           width: 22px;
           height: 22px;
           border-radius: 50%;
-          background: #fff;
-          transition: left 180ms ease;
+          background: #f5f5f5;
+          box-shadow: 0 1px 3px rgb(0 0 0 / 28%);
+          transition: left 180ms ease, background-color 180ms ease;
         }
 
         .image-footer__cookie-switch-track::before {
@@ -332,12 +338,15 @@ export default function Footer({ variant = "light" }) {
         }
 
         .image-footer__cookie-switch input:checked + .image-footer__cookie-switch-track {
-          border-color: var(--color-red-accent);
-          background: var(--color-red-accent);
+          background: #d2d2d2;
+          box-shadow:
+            inset 0 1px 2px rgb(0 0 0 / 16%),
+            inset 0 0 0 1px rgb(169 35 23 / 18%);
         }
 
         .image-footer__cookie-switch input:checked + .image-footer__cookie-switch-track::after {
           left: 31px;
+          background: var(--color-red-accent);
         }
 
         .image-footer__cookie-switch input:focus-visible + .image-footer__cookie-switch-track {

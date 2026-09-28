@@ -8,8 +8,8 @@ La carpeta local tiene dos remotos de Git:
 
 | Nombre local | Repositorio | Estado actual |
 | --- | --- | --- |
-| `deploy` | `https://github.com/earlrititi/ImperioEsPublico.git` | Es el repositorio conectado a Vercel. |
-| `origin` | `https://github.com/earlrititi-lang/Imperio_web.git` | GitHub responde `Repository not found`; no debe usarse hasta reparar el acceso o la URL. |
+| `origin` | `https://github.com/earlrititi/ImperioEsPublico.git` | Es el repositorio principal conectado a Vercel. |
+| `legacy` | `https://github.com/earlrititi-lang/Imperio_web.git` | GitHub responde `Repository not found`; se conserva solo como referencia. |
 
 Vercel tiene enlazado el proyecto `imperio-espa-ol-deploy` con:
 
@@ -19,58 +19,60 @@ Vercel tiene enlazado el proyecto `imperio-espa-ol-deploy` con:
 - version de Node en Vercel: `24.x`;
 - dominios de produccion: `imperioes.com` y `www.imperioes.com`.
 
-El flujo automatico es:
+El flujo automatico queda limitado a dos ramas:
 
 ```text
-rama de GitHub distinta de main
+rama preview
         |
         v
-Vercel crea una Preview
+Vercel actualiza el enlace estable de Preview
         |
         v
-merge o push a deploy/main
+promocion mediante push o merge a main
         |
         v
 Vercel crea una Production y asigna imperioes.com
 ```
 
-La rama local activa es:
+`vercel.json` desactiva los despliegues de cualquier otra rama. Esto evita que
+cada rama temporal, experimento o commit genere otra compilacion y consuma el
+limite de Vercel.
+
+Las dos referencias publicas son:
 
 ```text
-feature/subscriptions-stripe-supabase-resend
+Preview:    se actualiza con la rama preview
+Produccion: https://imperioes.com
 ```
 
-Aunque se llama `feature/...`, actualmente esta configurada para seguir
-`deploy/main`. La rama local `main` sigue `origin/main`, que esta 95 commits por
-detras del codigo usado en produccion y cuyo repositorio no es accesible ahora.
-Por eso no se debe ejecutar `git push origin main` ni usar la rama local `main`
-como referencia de produccion sin corregir antes la configuracion.
+El remoto principal es `origin`, conectado a `earlrititi/ImperioEsPublico`. El
+antiguo repositorio inaccesible se conserva localmente con el nombre `legacy`,
+pero no participa en los despliegues.
 
-## 2. GitHub Pages no publica imperioes.com
+## 2. GitHub Pages queda retirado
 
-Existe `.github/workflows/deploy.yml`. Ese workflow se ejecuta al actualizar
-`main`, pero despliega en GitHub Pages mediante `actions/deploy-pages`.
+El antiguo `.github/workflows/deploy.yml` publicaba una tercera copia mediante
+GitHub Pages. Se ha retirado para que GitHub no muestre otro entorno de
+publicacion que no controla `imperioes.com`.
 
 Es un sistema diferente de Vercel:
 
 - GitHub Pages no controla `imperioes.com` en la configuracion actual.
 - Vercel esta conectado directamente a `earlrititi/ImperioEsPublico`.
-- Al hacer merge en `deploy/main` pueden arrancar tanto Vercel como el workflow
-  de GitHub Pages.
-- Si GitHub Pages no se utiliza, conviene retirar ese workflow en una tarea
-  separada para evitar despliegues duplicados y confusiones.
+- Los unicos entornos web del proyecto pasan a ser Preview y Produccion en
+  Vercel.
 
 ## 3. Dos formas de publicar
 
-### Opcion A: publicar mediante GitHub, recomendada para trabajo normal
+### Opcion A: ramas Preview y Produccion, flujo normal
 
 Este flujo conserva historial, permite revisar el cambio y mantiene GitHub y
 produccion sincronizados.
 
 ```powershell
 Set-Location "C:\Users\lorit\Imperio E"
-git fetch deploy
-git switch -c cambio/nombre-breve deploy/main
+git switch preview
+git pull --ff-only origin preview
 
 # Editar y comprobar el proyecto.
 npm run check
@@ -79,23 +81,32 @@ npm test
 git status --short
 git add <archivos-revisados>
 git commit -m "Descripcion breve del cambio"
-git push -u deploy HEAD
+git push origin preview
 ```
 
-Ese ultimo comando crea una rama del mismo nombre en
-`earlrititi/ImperioEsPublico`. Vercel deberia generar una Preview. Despues se
-abre una Pull Request en GitHub contra `main`. Al fusionarla, Vercel publica la
-nueva version en produccion.
+Ese ultimo comando actualiza el unico enlace estable de Preview. Cuando la
+revision sea correcta, se lleva exactamente ese commit a produccion:
+
+```powershell
+git push origin preview:main
+```
+
+Vercel actualiza `https://imperioes.com`. No se ejecuta despues un despliegue
+manual con la CLI, porque eso crearia una segunda Production identica.
 
 No se recomienda usar `git add .` sin revisar antes `git status`, porque el
 directorio puede contener cambios de varias tareas.
 
-### Opcion B: publicar directamente con Vercel CLI
+### Opcion B: Vercel CLI solo para recuperacion
 
-Este es el procedimiento utilizado cuando hay que publicar exactamente el
+Este procedimiento se reserva para recuperar una publicacion bloqueada o cuando
+la integracion de GitHub no funcione. Permite publicar exactamente el
 estado actual de la carpeta, incluidos archivos modificados que aun no tienen
 commit. No actualiza GitHub: produccion puede quedar por delante del repositorio
 hasta que esos cambios se confirmen y se suban.
+
+No debe combinarse con un push del mismo cambio a `main`: ambas operaciones
+crean deployments de produccion independientes.
 
 En este proyecto el artefacto se copia a una carpeta temporal externa porque el
 despliegue directo desde el repositorio ha mostrado estados `BLOCKED` o
@@ -287,10 +298,11 @@ confirmar exactamente la version recien publicada, `vercel inspect` y
 | Metodo | Incluye cambios sin commit | Actualiza GitHub | Publica produccion |
 | --- | --- | --- | --- |
 | Push a una rama distinta de `main` | No | Si | No, crea Preview |
-| Merge o push a `deploy/main` | No | Si | Si, automaticamente |
+| Push a `origin/preview` | No | Si | No, actualiza Preview |
+| Push de `preview` a `origin/main` | No | Si | Si, automaticamente |
 | `vercel deploy --prebuilt --prod` | Si | No | Si, directamente |
 
 Para mantener un historial fiable, despues de una publicacion directa con la
 CLI deben revisarse, confirmarse y subirse a GitHub los mismos cambios. De lo
-contrario, una publicacion automatica posterior desde `deploy/main` podria
+contrario, una publicacion automatica posterior desde `origin/main` podria
 reemplazar produccion con una version que no los contiene.

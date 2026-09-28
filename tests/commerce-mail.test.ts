@@ -11,6 +11,8 @@ const reservation = {
 
 test("Reservation mail distinguishes management link from the October purchase invitation", () => {
   const text = reservationMailText(reservation, "RESERVED", "https://example.invalid/manage");
+  assert.match(text, /^¡Gracias por reservar tu pedacito de historia!/);
+  assert.match(text, /Empieza a formar parte de nuestra comunidad hasta entonces:\nhttps:\/\/imperioes\.com\/suscribirse/);
   assert.match(text, /correo electr\u00f3nico el enlace de compra/);
   assert.match(text, /12 de octubre de 2026/);
   assert.match(text, /este no es el enlace de compra/);
@@ -19,6 +21,7 @@ test("Reservation mail distinguishes management link from the October purchase i
 test("Other mail states do not promise a future purchase invitation", () => {
   for (const status of ["WAITLIST", "CANCELLED", "EXPIRED", "PURCHASE_AVAILABLE", "CONVERTED_TO_ORDER"]) {
     const text = reservationMailText({ ...reservation, status }, status, "https://example.invalid/manage");
+    assert.doesNotMatch(text, /pedacito de historia|imperioes\.com\/suscribirse/);
     assert.doesNotMatch(text, /12 de octubre|este no es el enlace de compra/);
   }
 });

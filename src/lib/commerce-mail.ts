@@ -54,7 +54,20 @@ function unseal(value: string, id: string) {
 export function reservationMailText(r: any, kind: string, url: string) {
   const paid = Boolean(r.commerce_orders);
   const a = paid ? r.commerce_orders.shipping_address : r.shipping_address;
+  const isInitialReservation = kind === "RESERVED" && r.status === "RESERVED";
   return [
+    isInitialReservation
+      ? "¡Gracias por reservar tu pedacito de historia!"
+      : null,
+    isInitialReservation
+      ? "La compra se habilita el 12 de octubre de 2026."
+      : null,
+    isInitialReservation
+      ? "Empieza a formar parte de nuestra comunidad hasta entonces:"
+      : null,
+    isInitialReservation
+      ? `${SITE.url}/suscribirse`
+      : null,
     paid ? "Pedido confirmado" : "Reserva anticipada",
     r.number,
     `Estado: ${RESERVATION_STATUS[r.status] ?? r.status}`,

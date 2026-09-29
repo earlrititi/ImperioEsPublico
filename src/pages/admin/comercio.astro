@@ -8,4 +8,4 @@ Astro.response.headers.set('Cache-Control','private, no-store');
 Astro.response.headers.set('Referrer-Policy','no-referrer');
 try { await requireAdmin(Astro); } catch { return Astro.redirect('/login?next=/admin/comercio'); }
 ---
-<PageShell heading="Comercio" title="Administracion de comercio | Imperio Español" noindex showCookieConsent={false}><CommerceAdmin client:load/></PageShell>
+<PageShell heading="Dashboard de reservas" mainClass="commerce-dashboard-page" title="Administracion de comercio | Imperio Español" noindex showCookieConsent={false}><CommerceAdmin client:load/></PageShell>

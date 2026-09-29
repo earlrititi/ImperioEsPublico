@@ -7,10 +7,22 @@ export default function CommerceAdmin() {
     [page, setPage] = useState(0),
     [data, setData] = useState<any>(null),
     [message, setMessage] = useState(""),
-    [busy, setBusy] = useState(false);
+    [busy, setBusy] = useState(false),
+    [updatedAt, setUpdatedAt] = useState<Date | null>(null),
+    [loadError, setLoadError] = useState(""),
+    [refreshing, setRefreshing] = useState(false);
   async function refresh() {
-    const d = await api(`/api/commerce-admin?view=${view}&page=${page}`);
-    setData(d);
+    setRefreshing(true);
+    try {
+      const d = await api(`/api/commerce-admin?view=${view}&page=${page}`);
+      setData(d);
+      setUpdatedAt(new Date());
+      setLoadError("");
+    } catch (e) {
+      setLoadError(e instanceof Error ? e.message : "No se pudo actualizar el panel.");
+    } finally {
+      setRefreshing(false);
+    }
   }
   useEffect(() => {
     let active = true;
@@ -19,18 +31,25 @@ export default function CommerceAdmin() {
     const load = () =>
       api(`/api/commerce-admin?view=${view}&page=${page}`)
         .then((d) => {
-          if (active) setData(d);
+          if (active) {
+            setData(d);
+            setUpdatedAt(new Date());
+            setLoadError("");
+          }
         })
         .catch((e) => {
-          if (active) setMessage(e.message);
+          if (active) setLoadError(e.message);
         });
     void load();
     const timer = setInterval(() => {
       if (!document.hidden) void load();
     }, 10000);
+    const onVisible = () => { if (!document.hidden) void load(); };
+    document.addEventListener("visibilitychange", onVisible);
     return () => {
       active = false;
       clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, [view, page]);
   async function action(
@@ -68,10 +87,35 @@ export default function CommerceAdmin() {
     }
   }
   const stats = data?.stats;
+  const inventory = [...(data?.inventory ?? [])].sort((a, b) => {
+    const sizes = ["S", "M", "L", "XL", "XXL"];
+    return sizes.indexOf(a.sku.split("-").at(-1)) - sizes.indexOf(b.sku.split("-").at(-1));
+  });
+  const available = inventory.reduce((total, v) => total + v.available_stock, 0);
   return (
     <section class="commerce-admin">
-      {!data && !message && <p role="status">Cargando reservas...</p>}
+      <div class="commerce-dashboard-heading">
+        <div><h2>Stock y reservas</h2><p class="commerce-sync" role="status">{loadError ? "Actualizacion interrumpida" : updatedAt ? `Actualizado a las ${updatedAt.toLocaleTimeString("es-ES")}` : "Conectando..."}</p></div>
+        <button class="btn btn-ghost" disabled={refreshing || busy} onClick={() => void refresh()}>{refreshing ? "Actualizando..." : "Actualizar"}</button>
+      </div>
+      {loadError && <p class="commerce-load-error" role="alert">{loadError}. {data ? "Se muestran los ultimos datos recibidos." : "Pulsa Actualizar para reintentar."}</p>}
+      {!data && !loadError && <p role="status">Cargando reservas...</p>}
       {message && <p role="status" aria-live="polite">{message}</p>}
+      {data && <>
+        <div class="commerce-dashboard-totals">
+          <div><span>Disponibles para reservar</span><strong>{available}</strong></div>
+          <div><span>Unidades reservadas</span><strong>{inventory.reduce((total, v) => total + v.reserved_stock, 0)}</strong></div>
+          <div><span>Unidades vendidas</span><strong>{inventory.reduce((total, v) => total + v.sold_stock, 0)}</strong></div>
+          <div><span>Reservas activas</span><strong>{stats?.reservations ?? 0}</strong></div>
+        </div>
+        <section class="commerce-size-overview" aria-label="Stock por talla">
+          {inventory.map((v: any) => <article class="commerce-size-stock" key={v.id}>
+            <header><h3>{v.sku.split("-").at(-1)}</h3><span class={v.available_stock === 0 ? "commerce-stock-empty" : "commerce-stock-available"}>{v.available_stock === 0 ? "Sin disponibles" : "Disponible"}</span></header>
+            <strong class="commerce-size-quantity">{v.available_stock}<small>disponibles</small></strong>
+            <dl><div><dt>Reservadas</dt><dd>{v.reserved_stock}</dd></div><div><dt>Vendidas</dt><dd>{v.sold_stock}</dd></div><div><dt>Pendientes de vender</dt><dd>{v.available_stock + v.reserved_stock}</dd></div></dl>
+          </article>)}
+        </section>
+      </>}
       <nav class="commerce-admin-nav" aria-label="Gestion comercial">
         <button class="btn btn-ghost" aria-pressed={view === "waitlist"} onClick={() => { setView("waitlist"); setPage(0); }}>Lista de espera</button>
         <a class="btn btn-ghost" href="/api/commerce-export">Exportar pedidos pagados</a>
@@ -303,7 +347,7 @@ export default function CommerceAdmin() {
         >
           Anterior
         </button>
-        <span>Pagina {page + 1}</span>
+        <span>Pagina {page + 1}{data ? ` de ${Math.max(1, Math.ceil(data.count / 20))} · ${data.count} registros` : ""}</span>
         <button
           class="btn btn-ghost"
           disabled={!data || (page + 1) * 20 >= data.count}

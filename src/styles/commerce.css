@@ -42,6 +42,28 @@
 .reservation-form button:disabled,.reservation-manager button:disabled,.commerce-admin button:disabled {opacity:.55;cursor:not-allowed}
 .reservation-manager address{font-style:normal;line-height:1.7}
 .commerce-admin {padding-bottom:64px;min-width:0}
+.commerce-dashboard-page .page-shell__intro{padding-block:32px 16px}
+.commerce-dashboard-page .page-shell__intro h1{font-size:32px;line-height:1.2}
+.commerce-dashboard-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.commerce-dashboard-heading h2{font-size:22px;margin:0}
+.commerce-sync{font-size:13px;color:#555;margin:6px 0}
+.commerce-load-error{padding:12px;border-left:3px solid #b52821;background:#fff0ee;color:#8b1b16}
+.commerce-dashboard-totals{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;padding:24px 0;border-block:1px solid #ddd;margin:20px 0}
+.commerce-dashboard-totals span{display:block;font-size:13px;color:#555}
+.commerce-dashboard-totals strong{display:block;font-size:32px;font-variant-numeric:tabular-nums}
+.commerce-size-overview{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:24px 0}
+.commerce-size-stock{border:1px solid #ddd;border-radius:6px;padding:16px;background:#fff;color:#171717;min-width:0}
+.commerce-size-stock header{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.commerce-size-stock h3{font:700 20px/1.2 var(--font-body);margin:0}
+.commerce-size-stock header span{font-size:11px}
+.commerce-stock-available{color:#246341}.commerce-stock-empty{color:#ae2920}
+.commerce-size-quantity{display:block;font-size:36px;font-variant-numeric:tabular-nums;margin:18px 0}
+.commerce-size-quantity small{display:block;font-size:12px;font-weight:400;color:#555}
+.commerce-size-stock dl{margin:0;font-size:12px;border-top:1px solid #eee;padding-top:10px}
+.commerce-size-stock dl div{display:flex;justify-content:space-between;gap:8px;margin-top:6px}
+.commerce-size-stock dd{margin:0;font-weight:700}
+@media(max-width:1000px){.commerce-size-overview{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:600px){.commerce-size-overview,.commerce-dashboard-totals{grid-template-columns:repeat(2,minmax(0,1fr))}.commerce-dashboard-page .page-shell__intro h1{font-size:26px}.commerce-size-stock{padding:12px}.commerce-admin-nav{gap:6px}}
 .commerce-inventory {margin-block:24px}
 .commerce-inventory[open] summary {margin-bottom:16px}
 .commerce-reservations-table {margin-top:24px}

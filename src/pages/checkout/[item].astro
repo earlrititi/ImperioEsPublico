@@ -9,6 +9,8 @@ import { getCheckoutPlan, isCheckoutPriceValid } from "../../lib/stripe-prices";
 import { getEsVatRate } from "../../lib/stripe-tax";
 import { ES_VAT } from "../../config/tax";
 import { SHIRT_PRICE_COPY } from "../../config/commerce";
+import { TSHIRT_OFFER_COPY } from "../../config/tshirt-offer";
+import { createSupabaseServerClient } from "../../lib/supabase/server";
 
 export const prerender = false;
 
@@ -70,6 +72,7 @@ const checkoutModeEnabled = isCheckoutModeEnabled(
 const canStartSubscription = isSubscription && priceMatchesPlan && hasPlanContent && checkoutModeEnabled && taxReady;
 const productReady = product?.legalStatus !== "LEGAL_PRODUCT_DATA_INCOMPLETE";
 const currentBenefits = "Acceso a todos los articulos para suscriptores, compartidos por Arcabucero y Maestre de Campo.";
+const { data: { user } } = await createSupabaseServerClient({ cookies: Astro.cookies, request: Astro.request }).auth.getUser();
 const pageTitle = selectedPlan
   ? `Contratar ${selectedPlan.displayName}`
   : product
@@ -110,6 +113,8 @@ const pageTitle = selectedPlan
           </div>
           <div><dt>Acceso</dt><dd>Tras confirmacion del pago por webhook verificado</dd></div>
           <div><dt>Prestaciones actuales</dt><dd>{currentBenefits}</dd></div>
+          {selectedPlan.plan === "arcabucero" && <div><dt>Descuento camiseta</dt><dd>{TSHIRT_OFFER_COPY}</dd></div>}
+          <div><dt>Foro</dt><dd>Próximamente</dd></div>
         </dl>
 
         {!priceMatchesPlan && (
@@ -142,6 +147,10 @@ const pageTitle = selectedPlan
           data-amount={formattedAmount}
           data-interval={intervalLabel}
         >
+          <label class="checkout-email">
+            <span>Correo de la suscripción</span>
+            <input type="email" name="email" value={user?.email ?? ""} readonly={Boolean(user)} autocomplete="email" maxlength="254" required />
+          </label>
           <label>
             <input type="checkbox" name="terms" required />
             <span>
@@ -252,6 +261,7 @@ const pageTitle = selectedPlan
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             plan: form.dataset.plan,
+            email: formData.get("email"),
             requestId,
             anonymousId,
             consents: {
@@ -346,6 +356,9 @@ const pageTitle = selectedPlan
     margin-top: 0.1rem;
     accent-color: var(--color-red-accent);
   }
+
+  .checkout-consents .checkout-email { grid-template-columns:1fr; }
+  .checkout-consents input[type="email"] { width:100%;height:auto;min-height:46px;padding:10px 12px;border:1px solid var(--line);border-radius:4px;font:inherit;background:#fff;color:#111; }
 
   .checkout-consents a {
     text-decoration: underline;

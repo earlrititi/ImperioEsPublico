@@ -364,6 +364,10 @@ export const POST: APIRoute = async ({ request }) => {
           const subscription = await stripe.subscriptions.retrieve(subscriptionId);
           await upsertFromSubscription(subscription, stripe);
           if (invoice.status === "paid" && invoice.billing_reason === "subscription_create") {
+            if (invoice.customer_email && getPlanFromSubscription(subscription) === "arcabucero") {
+              const { sendArcabuceroDiscount } = await import("../../lib/tshirt-promotion");
+              await sendArcabuceroDiscount(invoice.customer_email, invoice.customer_name ?? undefined);
+            }
             // Both invoice events refer to the same initial subscription: keep one durable receipt.
             const noticeId = `admin_subscription_${subscriptionId}`;
             const claimed = await claimStripeEvent({ eventId: noticeId, eventType: "internal.subscription_notification" });

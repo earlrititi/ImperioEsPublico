@@ -2,6 +2,22 @@ import { formatMoney, PROVINCES } from "../config/commerce";
 
 export const ADMIN_NOTIFICATION_EMAIL = "earlrititi@gmail.com";
 
+export function leadNotification(params: {
+  kind: "registration" | "manifesto" | "subscription_interest";
+  email: string; name?: string; plan?: string;
+}) {
+  const label = params.kind === "manifesto" ? "Solicitud del manifiesto"
+    : params.kind === "subscription_interest" ? "Inicio de suscripción" : "Registro de cuenta PIQUERO";
+  return {
+    subject: `${label}: Imperio Español`,
+    text: [label, `Nombre: ${params.name || "No facilitado"}`, `Correo: ${params.email}`,
+      params.plan ? `Plan: ${params.plan}` : null,
+      params.kind === "subscription_interest" ? "El pago todavía no está confirmado." : null,
+      params.kind === "registration" ? "La cuenta puede estar pendiente de confirmar el correo. No se ha cobrado una suscripción." : null,
+    ].filter(Boolean).join("\n"),
+  };
+}
+
 export function subscriptionNotification(invoice: {
   id: string;
   customer_name?: string | null;

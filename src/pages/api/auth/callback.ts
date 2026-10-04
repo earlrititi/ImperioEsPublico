@@ -14,7 +14,7 @@ export const GET: APIRoute = async ({ cookies, redirect, request, url }) => {
   }
 
   const supabase = createSupabaseServerClient({ cookies, request });
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
   if (error) {
     console.error("Supabase auth callback failed", { code: error.code });
@@ -22,6 +22,11 @@ export const GET: APIRoute = async ({ cookies, redirect, request, url }) => {
   }
 
   const pendingConsent = cookies.get("imperio_registration_consent")?.value;
+  if (pendingConsent && data.user?.email) {
+    const { notifyLead } = await import("../../../lib/lead-notifications");
+    await notifyLead({ kind: "registration", reference: data.user.id, email: data.user.email })
+      .catch(() => console.error("Registration owner notification failed"));
+  }
 
   if (pendingConsent) {
     const {

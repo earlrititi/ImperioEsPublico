@@ -6,6 +6,7 @@ import { getSubscriptionByUserId, isActivePaidSubscription } from "../lib/subscr
 import { createSupabaseServerClient } from "../lib/supabase/server";
 import { hasEditorialAccess } from "../lib/editorial-access";
 import { privateAuthHeaders } from "../lib/auth-forms";
+import { qualifiesForTshirtOffer, TSHIRT_OFFER_COPY } from "../config/tshirt-offer";
 privateAuthHeaders(Astro.response.headers);
 
 const supabase = createSupabaseServerClient({
@@ -71,12 +72,31 @@ const accessLabel = editorialAccess ? "ADMINISTRADOR EDITORIAL" : hasPaidAccess
       </form>
     </div>
     <p class="muted" id="billing-portal-status" role="status" aria-live="polite"></p>
+    {qualifiesForTshirtOffer(subscription) && <div class="notice">
+      <p>{TSHIRT_OFFER_COPY}</p>
+      <button class="btn btn-ghost" type="button" id="shirt-discount-button">Recibir mi descuento por correo</button>
+      <p id="shirt-discount-status" role="status" aria-live="polite"></p>
+    </div>}
   </Fragment>
   <MyReservations client:load />
   {user.app_metadata?.commerce_admin === true && <p><a href="/admin/comercio">Administrar comercio</a></p>}
 </PageShell>
 
 <script>
+  const discountButton = document.getElementById("shirt-discount-button");
+  discountButton?.addEventListener("click", async () => {
+    const status = document.getElementById("shirt-discount-status");
+    discountButton.setAttribute("disabled", "true");
+    try {
+      const response = await fetch("/api/tshirt-lead", { method: "POST" });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "No se pudo enviar el descuento.");
+      if (status) status.textContent = "Tu descuento se ha enviado al correo de la suscripción. Si ya lo recibiste, consulta ese mensaje.";
+    } catch (error) {
+      if (status) status.textContent = error instanceof Error ? error.message : "No se pudo enviar el descuento.";
+    } finally { discountButton.removeAttribute("disabled"); }
+  });
+
   const portalButton = document.getElementById("billing-portal-button");
   const portalStatus = document.getElementById("billing-portal-status");
 

@@ -1,4 +1,5 @@
 import { SITE } from "./site";
+import { TSHIRT_OFFER_COPY } from "./tshirt-offer";
 
 export const READER_FAQ = [
   { question: "¿Qué es Imperio E?", answer: "Un proyecto de divulgación sobre la Monarquía Hispánica, su historia, cultura y patrimonio, con especial atención al Siglo de Oro." },
@@ -14,7 +15,7 @@ export const READER_FAQ = [
   { question: "¿Qué obtengo creando una cuenta gratuita?", answer: "Obtienes una cuenta PIQUERO con la que acceder a tu área personal y gestionar tu acceso. Crear la cuenta no inicia una suscripción de pago ni genera un cargo." },
   { question: "¿Qué incluye PIQUERO?", answer: "Es el nivel gratuito: permite empezar con el manifiesto y las publicaciones abiertas. Los artículos gratuitos también pueden leerse sin suscripción. Las secciones anunciadas como próximas aún no forman parte de un servicio disponible." },
   { question: "¿Qué ventajas tienen los miembros de pago?", answer: "Acceden a los artículos reservados a suscriptores mientras su suscripción esté activa. Actualmente Arcabucero y Maestre de Campo comparten ese catálogo; las ventajas anunciadas como próximas no están todavía disponibles." },
-  { question: "¿Qué incluye ARCABUCERO?", answer: "Acceso a los artículos para suscriptores por 1,99 € al mes o 17,99 € al año, según la modalidad elegida. Actualmente incluye los mismos artículos que Maestre de Campo." },
+  { question: "¿Qué incluye ARCABUCERO?", answer: `Acceso a los artículos para suscriptores por 1,99 € al mes o 17,99 € al año, según la modalidad elegida. Actualmente incluye los mismos artículos que Maestre de Campo. ${TSHIRT_OFFER_COPY}` },
   { question: "¿Qué incluye MAESTRE DE CAMPO?", answer: "Acceso al mismo catálogo de artículos para suscriptores que Arcabucero, con una aportación de 3,99 € al mes o 37,99 € al año. Elige este nivel si deseas aportar más al proyecto, teniendo presente que hoy no añade artículos exclusivos frente a Arcabucero." },
   { question: "¿Por qué existe contenido de pago?", answer: "Las suscripciones ayudan a sostener la creación de contenido y permiten ofrecer publicaciones ampliadas. Puedes apoyar el proyecto de esta forma o seguir leyendo el contenido gratuito sin compromiso." },
   { question: "¿Tengo que pagar para leer Imperio E?", answer: "No. Hay artículos gratuitos. Cada publicación indica si requiere suscripción y puedes explorar el proyecto antes de decidir." },

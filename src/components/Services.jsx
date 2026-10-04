@@ -16,7 +16,7 @@ const FOUNDATION_CARDS = [
   {
     title: "Forma parte",
     description:
-      "Descarga el manifiesto del Imperio Español. Forma parte de este proyecto que recupera la increíble historia del imperio donde nunca se ponía el sol. Empápate de nuestros artículos exclusivos, información y divulgación, debates en el foro, acceso a preventa de lanzamientos en nuestra tienda y muchas más ventajas para suscriptores.",
+      "Descarga el manifiesto del Imperio Español y descubre nuestras publicaciones de historia y divulgación. Con Arcabucero accedes a los artículos para suscriptores y obtienes un 15% de descuento de un solo uso en la Camiseta Imperial. El foro estará disponible próximamente.",
   },
 ];
 
@@ -46,12 +46,14 @@ export default function Services() {
   const [manifestLastName, setManifestLastName] = useState("");
   const [manifestEmail, setManifestEmail] = useState("");
   const [manifestCompany, setManifestCompany] = useState("");
+  const [manifestPrivacy, setManifestPrivacy] = useState(false);
+  const manifestRequestIdRef = useRef(null);
   const [manifestStatus, setManifestStatus] = useState("idle");
   const [manifestError, setManifestError] = useState("");
   const manifestModalRef = useRef(null);
   const manifestFirstNameInputRef = useRef(null);
   const isManifestFormReady = Boolean(
-    manifestFirstName.trim() &&
+    manifestPrivacy && manifestFirstName.trim() &&
       manifestLastName.trim() &&
       /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(manifestEmail.trim())
   );
@@ -208,6 +210,7 @@ export default function Services() {
     setManifestError("");
 
     try {
+      manifestRequestIdRef.current ||= crypto.randomUUID();
       const response = await fetch("/api/manifesto.php", {
         method: "POST",
         headers: {
@@ -219,6 +222,9 @@ export default function Services() {
           email: manifestEmail,
           company: manifestCompany,
           source: "home",
+          anonymousId: manifestRequestIdRef.current,
+          requestId: manifestRequestIdRef.current,
+          privacyAcknowledged: manifestPrivacy,
         }),
       });
       const result = await response.json().catch(() => ({}));
@@ -228,6 +234,7 @@ export default function Services() {
       }
 
       setManifestStatus("sent");
+      manifestRequestIdRef.current = null;
       setManifestFirstName("");
       setManifestLastName("");
       setManifestEmail("");
@@ -455,6 +462,10 @@ export default function Services() {
                         {manifestError}
                       </p>
                     )}
+                    <label class="services-manifest-modal__privacy">
+                      <input type="checkbox" checked={manifestPrivacy} required onChange={(event) => setManifestPrivacy(event.currentTarget.checked)} />
+                      <span>He leído la <a href="/legal/privacidad">política de privacidad</a> para recibir el manifiesto.</span>
+                    </label>
                     <button
                       class="services-manifest-modal__submit"
                       type="submit"
@@ -1442,6 +1453,10 @@ export default function Services() {
           overflow: hidden;
           white-space: nowrap;
         }
+
+        .services-manifest-modal__privacy { display:flex;align-items:flex-start;gap:10px;color:#fff;font-size:14px;line-height:1.5; }
+        .services-manifest-modal__privacy input { flex:0 0 auto;width:20px;height:20px;accent-color:var(--color-red-accent); }
+        .services-manifest-modal__privacy a { text-decoration:underline; }
 
         .services-manifest-modal__error,
         .services-manifest-modal__message {

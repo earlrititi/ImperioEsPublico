@@ -1,6 +1,7 @@
 import { getRequiredEnv } from "./env";
 import { resend } from "./resend";
 import { SITE } from "../config/site";
+import { TSHIRT_OFFER_COPY } from "../config/tshirt-offer";
 
 const from = `Imperio Espanol <${SITE.contactEmail}>`;
 
@@ -12,7 +13,7 @@ function escapeHtml(value: string) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 
-export async function sendTshirtDiscountEmail(params: { to: string; name: string; code: string; percent: number }) {
+export async function sendTshirtDiscountEmail(params: { to: string; name: string; code: string; percent: number; reference: string }) {
   const siteUrl = getRequiredEnv("PUBLIC_SITE_URL").replace(/\/$/, "");
   const name = escapeHtml(params.name);
   const code = escapeHtml(params.code);
@@ -21,9 +22,9 @@ export async function sendTshirtDiscountEmail(params: { to: string; name: string
     replyTo: SITE.contactEmail,
     to: params.to,
     subject: `Tu ${params.percent}% para la Camiseta Imperial`,
-    html: `<div style="font-family:Georgia,serif;line-height:1.6;color:#111"><h1>Una pieza de nuestra historia</h1><p>Hola ${name},</p><p>Tu descuento del ${params.percent}% para la Camiseta Imperial está preparado.</p><p><strong>Código: ${code}</strong></p><p>Se aplicará automáticamente cuando completes la compra con este mismo correo. Es personal y de un solo uso.</p><p><a href="${siteUrl}/tienda">Ver la Camiseta Imperial</a></p><p><strong>Plus Ultra.</strong></p></div>`,
-    text: `Hola ${params.name}. Tu descuento del ${params.percent}% para la Camiseta Imperial está preparado. Código: ${params.code}. Se aplicará automáticamente cuando completes la compra con este mismo correo. Es personal y de un solo uso. ${siteUrl}/tienda`,
-  });
+    html: `<div style="font-family:Georgia,serif;line-height:1.6;color:#111"><h1>Una pieza de nuestra historia</h1><p>Hola ${name},</p><p>Tu suscripción Arcabucero está activa. Tu descuento del ${params.percent}% para la Camiseta Imperial está preparado.</p><p><strong>Código: ${code}</strong></p><p>${TSHIRT_OFFER_COPY} Se aplica automáticamente al confirmar la compra, no al reservar. La compra se habilita el 12 de octubre de 2026.</p><p><a href="${siteUrl}/tienda">Ver la Camiseta Imperial</a></p><p><strong>Plus Ultra.</strong></p></div>`,
+    text: `Hola ${params.name}. Tu suscripción Arcabucero está activa. Código: ${params.code}. ${TSHIRT_OFFER_COPY} Se aplica automáticamente al confirmar la compra, no al reservar. La compra se habilita el 12 de octubre de 2026. ${siteUrl}/tienda`,
+  }, { idempotencyKey: `arcabucero-discount-${params.reference}` });
 }
 
 export async function sendPiqueroWelcomeEmail(params: {
@@ -59,6 +60,7 @@ export async function sendPaidWelcomeEmail(params: {
   const { to, name, planName, priceSummary, termsVersion } = params;
   const siteUrl = getRequiredEnv("PUBLIC_SITE_URL").replace(/\/$/, "");
   const copy = "Ya puedes leer todos los articulos para suscriptores, compartidos por Arcabucero y Maestre de Campo.";
+  const offer = planName === "ARCABUCERO" ? TSHIRT_OFFER_COPY : "";
 
   return resend.emails.send({
     from,
@@ -73,10 +75,11 @@ export async function sendPaidWelcomeEmail(params: {
         <p>La suscripcion se renueva automaticamente hasta que la canceles desde tu cuenta antes de la siguiente renovacion.</p>
         <p>Terminos aceptados: version ${termsVersion}. Puedes consultarlos en <a href="${siteUrl}/legal/terminos">${siteUrl}/legal/terminos</a>.</p>
         <p>${copy}</p>
+        ${offer ? `<p>${offer}</p>` : ""}
         <p><strong>Plus Ultra.</strong></p>
       </div>
     `,
-    text: `${greeting(name)}. Tu suscripcion ${planName} esta activa. Precio y periodicidad: ${priceSummary}. Se renueva automaticamente hasta que la canceles desde tu cuenta antes de la siguiente renovacion. Terminos aceptados: version ${termsVersion}, disponibles en ${siteUrl}/legal/terminos. ${copy} Plus Ultra.`,
+    text: `${greeting(name)}. Tu suscripcion ${planName} esta activa. Precio y periodicidad: ${priceSummary}. Se renueva automaticamente hasta que la canceles desde tu cuenta antes de la siguiente renovacion. Terminos aceptados: version ${termsVersion}, disponibles en ${siteUrl}/legal/terminos. ${copy} ${offer} Plus Ultra.`,
   });
 }
 

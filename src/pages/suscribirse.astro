@@ -1,6 +1,7 @@
 ---
 import PageShell from "../layouts/PageShell.astro";
 import { ES_VAT } from "../config/tax";
+import { TSHIRT_OFFER_COPY } from "../config/tshirt-offer";
 ---
 
 <PageShell
@@ -18,6 +19,7 @@ import { ES_VAT } from "../config/tax";
         <h2>PIQUERO</h2>
         <p class="muted">Entrada gratuita al circulo de lectores.</p>
         <p>Manifiesto y contenido gratuito publicado en el archivo.</p>
+        <p class="muted">Foro: próximamente.</p>
         <a class="btn btn-ghost" href="/registro">Crear cuenta gratis</a>
       </article>
 
@@ -26,6 +28,8 @@ import { ES_VAT } from "../config/tax";
         <h2>ARCABUCERO</h2>
         <p class="muted">Acceso a los articulos para suscriptores.</p>
         <p>Incluye los mismos articulos que Maestre de Campo. Los seis articulos originales siguen siendo gratuitos.</p>
+        <p>{TSHIRT_OFFER_COPY}</p>
+        <p class="muted">Foro: próximamente.</p>
         <div class="billing-options" role="group" aria-label="Facturacion de Arcabucero">
           <a class="btn btn-primary" href="/checkout/arcabucero-monthly">
             Mensual · 1,99 EUR
@@ -41,6 +45,7 @@ import { ES_VAT } from "../config/tax";
         <h2>MAESTRE DE CAMPO</h2>
         <p class="muted">Acceso a los articulos para suscriptores.</p>
         <p>Incluye los mismos articulos que Arcabucero. Los seis articulos originales siguen siendo gratuitos.</p>
+        <p class="muted">Foro: próximamente.</p>
         <div class="billing-options" role="group" aria-label="Facturacion de Maestre de Campo">
           <a class="btn btn-primary" href="/checkout/maestre-campo-monthly">
             Mensual · 3,99 EUR

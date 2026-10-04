@@ -5,6 +5,7 @@ import { getRequiredEnv } from "../../lib/env";
 import { recordLegalConsents } from "../../lib/legal-consents";
 import { consumeRateLimit } from "../../lib/rate-limit";
 import { isAllowedRequestOrigin } from "../../lib/request-security";
+import { notifyLead } from "../../lib/lead-notifications";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -14,7 +15,7 @@ export const prerender = false;
 function jsonResponse(body: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
   });
 }
 
@@ -100,12 +101,14 @@ export const POST: APIRoute = async ({ request }) => {
     const firstName = safeName(payload.firstName);
     const lastName = safeName(payload.lastName);
     const anonymousId = safeName(payload.anonymousId);
+    const requestId = safeName(payload.requestId) || anonymousId;
     const privacyAcknowledged = payload.privacyAcknowledged === true;
 
     if (
       !firstName ||
       !lastName ||
       !UUID_PATTERN.test(anonymousId) ||
+      !UUID_PATTERN.test(requestId) ||
       !privacyAcknowledged
     ) {
       return jsonResponse(
@@ -167,7 +170,7 @@ export const POST: APIRoute = async ({ request }) => {
           value: source,
         },
       ],
-    });
+    }, { idempotencyKey: `manifesto-${requestId}` });
 
     if (result.error) {
       console.error("Resend manifesto email failed:", result.error);
@@ -176,6 +179,8 @@ export const POST: APIRoute = async ({ request }) => {
         502
       );
     }
+
+    await notifyLead({ kind: "manifesto", reference: requestId, email, name: greetingName });
 
     return jsonResponse({
       ok: true,

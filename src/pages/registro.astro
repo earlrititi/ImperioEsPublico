@@ -80,6 +80,12 @@ if (Astro.request.method === "POST") {
     return Astro.redirect(`/registro?error=otp&next=${encodeURIComponent(next)}`);
   }
 
+  if (signUpData.user && signUpData.user.identities?.length) {
+    const { notifyLead } = await import("../lib/lead-notifications");
+    await notifyLead({ kind: "registration", reference: signUpData.user.id, email })
+      .catch(() => console.error("Registration owner notification failed"));
+  }
+
   if (signUpData.session && signUpData.user) {
     const { linkAnonymousConsents } = await import("../lib/legal-consents");
     await linkAnonymousConsents({ anonymousId, userId: signUpData.user.id });

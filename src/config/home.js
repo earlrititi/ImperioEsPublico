@@ -1,20 +1,17 @@
 import { withBase } from "../utils/basePath";
+import { TSHIRT_OFFER_COPY } from "./tshirt-offer";
 
 export const PLAN_COMPARISON_INTRO =
-  "Elige cómo formar parte de Imperio Español. El plan Piquero es gratuito y te permite empezar a explorar la comunidad y descubrir nuestras publicaciones principales. El plan Arcabucero está pensado para quienes quieren apoyar el proyecto y recibir contenido adicional. El plan Maestre de Campo ofrece la experiencia más completa, con acceso prioritario y contenidos pensados para los miembros más comprometidos con el proyecto. Únete a la comunidad, apoya la divulgación histórica y acompáñanos en la construcción de un espacio dedicado al legado, la cultura y la memoria del Imperio Español.";
+  `Piquero es gratuito y permite leer las publicaciones abiertas. Arcabucero y Maestre de Campo comparten el catálogo de artículos para suscriptores; Maestre de Campo permite aportar más al proyecto. ${TSHIRT_OFFER_COPY} El foro estará disponible próximamente.`;
 
 export const PLAN_COMPARISON_LABELS = [
   "Mensual",
   "Anual",
   "Función",
   "Foro",
-  "Discord",
   "Artículos",
   "Archivo",
-  "Boletín personalizado",
-  "Lanzamientos anticipados",
-  "Descuento lanzamientos",
-  "Bonus anual",
+  "Descuento camiseta",
 ];
 
 export const SERVICES_ITEMS = [
@@ -31,13 +28,9 @@ export const SERVICES_ITEMS = [
       "GRATIS",
       "-",
       "Explorar",
-      "Acceso como lector al foro",
-      "-",
+      "Próximamente",
       "Lectura de nuevos artículos limitada",
       "Lectura de artículos del archivo limitada",
-      "-",
-      "-",
-      "-",
       "-",
     ],
   },
@@ -46,7 +39,7 @@ export const SERVICES_ITEMS = [
     statLabel: "Nivel 2",
     title: "Arcabucero",
     subscriptionHref: withBase("/suscribirse#arcabucero"),
-    subscriptionLabel: "Consultar estado",
+    subscriptionLabel: "Suscribirme",
     priceBadge: "1,99 €/mes",
     imageSrc: withBase("/images/services/planificacion.jpg"),
     imageAlt: "Planificacion",
@@ -56,14 +49,10 @@ export const SERVICES_ITEMS = [
       "1,99 €",
       "17,99 €",
       "Acceder",
-      "Próximamente: comentar en el foro de debate",
-      "Próximamente: acceso básico al Discord",
+      "Próximamente",
       "Todos los artículos para suscriptores",
       "Lectura ilimitada de todo el archivo",
-      "Próximamente: boletín semanal",
-      "Próximamente: acceso anticipado a lanzamientos",
-      "Próximamente: descuento en la tienda",
-      "Próximamente: obsequio anual",
+      "15% en la camiseta · un solo uso",
     ],
     reverseOnDesktop: true,
   },
@@ -72,24 +61,20 @@ export const SERVICES_ITEMS = [
     statLabel: "Nivel 3",
     title: "Maestre de Campo",
     subscriptionHref: withBase("/suscribirse#maestre-de-campo"),
-    subscriptionLabel: "Consultar estado",
+    subscriptionLabel: "Suscribirme",
     priceBadge: "3,99 €/mes",
     imageSrc: withBase("/images/services/arquitectura.jpg"),
     imageAlt: "Maestre de Campo",
     description:
-      "El Maestre de Campo era uno de los oficiales de mayor rango. Al mando de un Tercio ejercía autoridad, y tenía un rol operativo, tomaba decisiones y lideraba a sus tropas. Esta es la suscripción para quienes desean involucrarse más profundamente y recibir el mayor número de beneficios. Incluye:",
+      "El Maestre de Campo era uno de los oficiales de mayor rango y ejercía el mando de un Tercio. Este nivel permite aportar más al proyecto y comparte el catálogo de artículos de Arcabucero. Incluye:",
     highlights: [
       "3,99 €",
       "37,99 €",
       "Participar",
-      "Próximamente: propuestas en foro y Discord",
-      "Próximamente: acceso completo al Discord",
+      "Próximamente",
       "Todos los artículos para suscriptores",
       "Lectura ilimitada de todo el archivo",
-      "Próximamente: Gaceta Imperial digital",
-      "Próximamente: acceso anticipado a lanzamientos",
-      "Próximamente: descuento en la tienda",
-      "Próximamente: obsequio anual",
+      "-",
     ],
   },
 ];

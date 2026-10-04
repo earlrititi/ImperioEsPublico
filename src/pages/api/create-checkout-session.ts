@@ -58,8 +58,10 @@ export const POST: APIRoute = async ({ cookies, request }) => {
     const requestId = typeof body?.requestId === "string" ? body.requestId : "";
     const anonymousId = typeof body?.anonymousId === "string" ? body.anonymousId : "";
     const consents = body?.consents;
+    const subscriberEmail = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
 
     if (
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(subscriberEmail) || subscriberEmail.length > 254 ||
       !UUID_PATTERN.test(requestId) ||
       !UUID_PATTERN.test(anonymousId) ||
       consents?.terms !== true ||
@@ -137,6 +139,8 @@ export const POST: APIRoute = async ({ cookies, request }) => {
     if (authError && authError.name !== "AuthSessionMissingError") {
       return Response.json({ error: "No se pudo verificar la cuenta." }, { status: 503 });
     }
+    if (user?.email?.toLowerCase() !== subscriberEmail && user)
+      return Response.json({ error: "Utiliza el correo de tu cuenta para la suscripción." }, { status: 400 });
     const existing = user ? await getSubscriptionByUserId(user.id) : null;
     if (existing && isActivePaidSubscription(existing)) {
       return Response.json({ error: "Ya tienes una suscripcion activa. Gestiona tu plan desde tu cuenta." }, { status: 409 });
@@ -159,7 +163,7 @@ export const POST: APIRoute = async ({ cookies, request }) => {
         customer_update: customerId ? { address: "auto", name: "auto" } : undefined,
         client_reference_id: user?.id,
         customer: customerId,
-        customer_email: customerId ? undefined : user?.email,
+        customer_email: customerId ? undefined : subscriberEmail,
         automatic_tax: { enabled: false },
         payment_method_types: ["card"],
         line_items: [
@@ -223,6 +227,10 @@ export const POST: APIRoute = async ({ cookies, request }) => {
         headers: { "Content-Type": "application/json" },
       });
     }
+
+    const { notifyLead } = await import("../../lib/lead-notifications");
+    await notifyLead({ kind: "subscription_interest", reference: session.id,
+      email: subscriberEmail, plan: selectedPlan.label });
 
     return new Response(JSON.stringify({ url: session.url }), {
       status: 200,

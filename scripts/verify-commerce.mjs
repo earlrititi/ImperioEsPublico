@@ -126,7 +126,7 @@ const cookie = `sb-${project}-auth-token=base64-${encode({ access_token: token,
 async function checkout(plan, extra = {}, authenticated = false) {
   return app.fetch(new Request("https://imperioes.com/api/create-checkout-session", {
     method: "POST", headers: { "Content-Type": "application/json", Origin: "https://imperioes.com", ...(authenticated ? { cookie } : {}) },
-    body: JSON.stringify({ plan, requestId: crypto.randomUUID(), anonymousId: crypto.randomUUID(),
+    body: JSON.stringify({ plan, email: "fixture@example.invalid", requestId: crypto.randomUUID(), anonymousId: crypto.randomUUID(),
       consents: { terms: true, privacy: true, immediateAccess: true, withdrawalAcknowledgement: true }, ...extra }),
   }));
 }
@@ -149,6 +149,7 @@ for (const [slug, plan, billingInterval] of plans) {
   const result = await checkout(slug);
   assert.equal(result.status, 200, await result.text());
   assert.equal(checkoutParams.mode, "subscription");
+  assert.equal(checkoutParams.customer_email, "fixture@example.invalid");
   assert.deepEqual(Object.keys(checkoutParams.metadata), ["termsVersion"]);
   assert.equal(checkoutParams.subscription_data.metadata.plan, plan);
   assert.equal(checkoutParams.subscription_data.metadata.billingInterval, billingInterval);
@@ -201,6 +202,9 @@ assert.equal(expiredCount, 1, "Consent persistence failure must expire the sessi
 consentFailure = false;
 cases += 5;
 
+assert.ok(emailRows.some(message => message.to.includes("earlrititi@gmail.com") && /Inicio de suscripción/.test(message.subject)));
+emailRows.length = 0;
+events.clear();
 const signingClient = new Stripe("sk_test_fixture");
 async function webhook(type, object, id = `evt_fixture_${crypto.randomUUID()}`, signed = true, eventLive = false) {
   const payload = JSON.stringify({ id, object: "event", type, livemode: eventLive, data: { object } });

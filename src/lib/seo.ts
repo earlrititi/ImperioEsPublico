@@ -35,7 +35,7 @@ export function formatEditorialDate(date: string) {
 
 // Only pages reviewed as useful public destinations belong in this allowlist.
 export const INDEXABLE_STATIC_ROUTES = [
-  "/", "/manifiesto", "/suscribirse", "/papeles-y-tratados", "/tienda",
+  "/", "/instagram", "/manifiesto", "/suscribirse", "/papeles-y-tratados", "/tienda",
   "/sobre-nosotros", "/contacto", "/legal/aviso-legal", "/legal/privacidad",
   "/legal/cookies", "/legal/terminos", "/legal/devoluciones", "/legal/desistimiento",
   "/legal/accesibilidad", "/legal/envios", "/legal/reservas",

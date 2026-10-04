@@ -9,7 +9,7 @@ const size=Astro.url.searchParams.get('size')??'M';
 Astro.response.headers.set('Cache-Control','no-store');
 Astro.response.headers.set('Referrer-Policy','no-referrer');
 ---
-<PageShell title="Reserva tu Camiseta Imperial | Imperio Español" eyebrow="Lanzamiento I" heading="Camiseta Imperial" summary="Reserva tu talla sin pago y completa la compra cuando recibas la invitación." noindex showCookieConsent={false} mainClass="reservation-page">
+<PageShell title="Reserva tu Camiseta Imperial | Imperio Español" eyebrow="Lanzamiento I" heading="Camiseta Imperial" summary="Reserva tu talla sin pago y completa la compra cuando recibas la invitación." noindex mainClass="reservation-page">
   <div class="commerce-layout">
     <aside class="commerce-product" aria-label="Información de la Camiseta Imperial">
       <div class="commerce-product__image"><img src="/images/museo-camiseta-front.webp" alt="Camiseta Imperial, vista delantera" width="1400" height="1150"/></div>

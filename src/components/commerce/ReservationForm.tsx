@@ -1,6 +1,7 @@
 import { useEffect, useState } from "preact/hooks";
 import { formatMoney, SHIRT_FINAL_PRICE_CENTS, SHIRT_PRICE_COPY } from "../../config/commerce";
 import { AddressFields, emptyAddress, api } from "./shared";
+import { attributedPath, socialEvent } from "../../lib/social-attribution";
 
 export default function ReservationForm({ initialSize = "M" }: { initialSize?: string }) {
   const [inventory, setInventory] = useState<any[]>([]);
@@ -40,6 +41,7 @@ export default function ReservationForm({ initialSize = "M" }: { initialSize?: s
       setMessage("La disponibilidad ha cambiado. Revisa talla y cantidad."); return;
     }
     setBusy(true); setMessage("Verificando solicitud...");
+    if (!waitlist) socialEvent("reservation_started", { sku: variant.sku, quantity });
     try {
       let nonce = 0;
       const encoder = new TextEncoder();
@@ -54,7 +56,8 @@ export default function ReservationForm({ initialSize = "M" }: { initialSize?: s
         accepted, marketing, website, expirationHours, waitlist,
         address: waitlist ? undefined : address,
       });
-      window.location.assign(result.url);
+      if (!waitlist) socialEvent("reservation_completed", { sku: variant.sku, quantity });
+      window.location.assign(attributedPath(result.url));
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "No se pudo confirmar la solicitud."); setBusy(false);
     }

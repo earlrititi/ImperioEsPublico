@@ -24,6 +24,7 @@ interface Props {
   ogType?: "website" | "article";
   publishedAt?: string;
   modifiedAt?: string;
+  exactTitle?: boolean;
 }
 
 const {
@@ -39,10 +40,11 @@ const {
   ogType = "website",
   publishedAt,
   modifiedAt,
+  exactTitle = false,
 } = Astro.props as Props;
 
 const pageTitle =
-  title === SITE.name || title.includes(SITE.name) ? title : `${title} | ${SITE.name}`;
+  exactTitle || title === SITE.name || title.includes(SITE.name) ? title : `${title} | ${SITE.name}`;
 const isGitHubPagesBuild = import.meta.env.BASE_URL.startsWith("/Imperio_web");
 const deploymentOrigin =
   isGitHubPagesBuild ? "https://earlrititi-lang.github.io" : SITE.url;

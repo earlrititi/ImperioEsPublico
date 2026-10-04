@@ -1,0 +1,95 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { readPublicInventory } from "../lib/public-inventory";
+import { formatMoney, SHIRT_PRICE_COPY } from "../config/commerce";
+import { campaignParameters } from "../lib/social-attribution";
+export const prerender = false;
+Astro.response.headers.set("Cache-Control", "no-store");
+const inventory = await readPublicInventory().catch(() => null);
+inventory?.variants.sort((a, b) => ["S", "M", "L", "XL", "XXL"].indexOf(a.name) - ["S", "M", "L", "XL", "XXL"].indexOf(b.name));
+const stock = inventory?.variants.reduce((sum, variant) => sum + variant.available_stock, 0) ?? null;
+const params = campaignParameters(Astro.url.search);
+const requestedSize = Astro.url.searchParams.get("size");
+const selected = inventory?.variants.find(v => v.name === requestedSize) ?? inventory?.variants.find(v => v.available_stock > 0);
+if (selected) params.set("size", selected.name);
+const reserveUrl = `/reservas?${params}`;
+const open = Boolean(inventory?.reservationMode && stock && stock > 0);
+---
+<Layout exactTitle title="NON SUFFICIT ORBIS | Imperio E" description="Primera edición de Imperio E. Una camiseta inspirada en los símbolos de la Monarquía Hispánica." ogImage="/images/camiseta-imperio-frontal.webp" navigation="home" footerVariant="dark">
+  <main class="instagram" data-home-mark-surface="black">
+    <section class="ig-first" aria-labelledby="ig-title">
+      <div class="ig-heading"><p>Primera edición de Imperio E</p><h1 id="ig-title">NON SUFFICIT ORBIS</h1></div>
+      <figure class="ig-photo"><img src="/images/camiseta-imperio-frontal.webp" alt="Camiseta NON SUFFICIT ORBIS, vista frontal" width="1080" height="1080" fetchpriority="high" /></figure>
+      <div class="ig-buy">
+        <p class="ig-stock" data-stock aria-live="polite">{stock === null ? "No se pudo consultar el stock" : stock === 0 ? "Edición agotada" : `SOLO QUEDAN ${stock} UNIDADES`}</p>
+        <p class="ig-price" data-price>{inventory ? formatMoney(inventory.unitPrice) : "Precio no disponible"}</p>
+        <p class="ig-small">Reserva gratuita. Sin cobro ni obligación de compra.</p>
+        <label class="ig-size">Talla <select id="ig-size" disabled={!inventory}>{inventory?.variants.map(v => <option value={v.name} selected={v.name === selected?.name} disabled={v.available_stock === 0}>{v.name}{v.available_stock === 0 ? " · agotada" : ""}</option>)}</select></label>
+        <a class="ig-cta" data-reserve aria-disabled={!open} href={open ? reserveUrl : undefined}>{open ? "RESERVAR CAMISETA" : "RESERVA NO DISPONIBLE"}</a>
+        <p class="ig-small">Primera edición limitada.</p>
+        <p class="ig-fine">{SHIRT_PRICE_COPY}. {inventory?.campaign.purchase_open_at && `Compra prevista: ${new Date(inventory.campaign.purchase_open_at).toLocaleDateString("es-ES", { timeZone: "Europe/Madrid" })}.`}</p>
+      </div>
+    </section>
+    <section class="ig-story">
+      <div><p class="ig-kicker">Monarquía Hispánica · Siglo de Oro</p><h2>Una historia contada en símbolos.</h2><p>No queríamos diseñar una camiseta cualquiera. Queríamos plasmar parte de nuestra historia en algo físico: un diseño con el que sentirnos identificados.</p><ul><li>NON SUFFICIT ORBIS</li><li>Escudo de Felipe II</li><li>Cruz de Borgoña</li><li>Carabela</li><li>Estrella</li></ul></div>
+      <img src="/images/camiseta-imperio-atras.webp" alt="Diseño posterior de la camiseta NON SUFFICIT ORBIS" width="1080" height="1080" loading="lazy" />
+    </section>
+    <section class="ig-details" id="producto"><h2>Tu talla. Tu pedacito de historia.</h2><p>Tejido técnico Bird-Eye · 100 % poliéster · 145 g/m².</p><p>Consulta las medidas antes de reservar. La disponibilidad se confirma al completar la solicitud.</p><a href="/checkout/camiseta-imperial" data-attribution>Ficha técnica y guía de tallas</a><a class="ig-cta" data-reserve href={open ? reserveUrl : undefined} aria-disabled={!open}>RESERVAR LA MÍA</a></section>
+    <section class="ig-community"><p class="ig-kicker">Imperio E</p><h2>La historia no termina aquí.</h2><p>Manifiesto gratuito y artículos premium para seguir descubriendo nuestra historia.</p><p>Los suscriptores activos del plan Arcabucero tienen un 15 % de descuento en la camiseta. La reserva es gratuita; el descuento se aplica al comprar.</p><a class="ig-cta" href="/suscribirse#arcabucero" data-community data-attribution>FORMAR PARTE DE IMPERIO E</a><a href="/manifiesto" data-attribution>Descubrir el manifiesto gratuito</a></section>
+    <div class="ig-sticky" hidden><a class="ig-cta" data-reserve href={open ? reserveUrl : undefined} aria-disabled={!open}>RESERVAR · <span data-price>{inventory ? formatMoney(inventory.unitPrice) : "—"}</span></a></div>
+  </main>
+</Layout>
+<script>
+  import { attributedPath, socialEvent } from "../lib/social-attribution";
+  import { formatMoney } from "../config/commerce";
+  const size = document.querySelector<HTMLSelectElement>("#ig-size")!;
+  const reserve = Array.from(document.querySelectorAll<HTMLAnchorElement>("[data-reserve]"));
+  const stock = document.querySelector<HTMLElement>("[data-stock]")!;
+  let available = reserve[0].getAttribute("aria-disabled") === "false";
+  function updateLinks() {
+    const url = attributedPath(`/reservas?size=${encodeURIComponent(size.value)}`);
+    reserve.forEach(link => { if (available) link.href = url; else link.removeAttribute("href"); link.setAttribute("aria-disabled", String(!available)); });
+  }
+  size.addEventListener("change", updateLinks);
+  document.querySelectorAll<HTMLAnchorElement>("[data-attribution]").forEach(link => link.href = attributedPath(link.href));
+  reserve.forEach(link => link.addEventListener("click", event => {
+    if (!available) { event.preventDefault(); return; }
+    socialEvent("instagram_reserve_click", { size: size.value });
+  }));
+  document.querySelector("[data-community]")?.addEventListener("click", () => socialEvent("instagram_subscription_click"));
+  let viewed = false;
+  function recordView() {
+    if (viewed) return;
+    socialEvent("instagram_landing_view"); socialEvent("instagram_product_view");
+    if (new URLSearchParams(location.search).get("utm_medium") === "product_tag") socialEvent("meta_product_click");
+    viewed = document.documentElement.dataset.analyticsLoaded === "true";
+  }
+  recordView(); window.addEventListener("imperio:cookie-consent", recordView);
+  const sticky = document.querySelector<HTMLElement>(".ig-sticky")!;
+  let firstVisible = true, footerVisible = false;
+  const syncSticky = () => sticky.hidden = firstVisible || footerVisible || !available;
+  new IntersectionObserver(entries => { firstVisible = entries[0].isIntersecting; syncSticky(); }).observe(document.querySelector(".ig-buy")!);
+  const footer = document.querySelector("footer");
+  if (footer) new IntersectionObserver(entries => { footerVisible = entries[0].isIntersecting; syncSticky(); }).observe(footer);
+  async function refresh() {
+    if (document.hidden) return;
+    try {
+      const response = await fetch("/api/reservations/inventory", { cache: "no-store" });
+      if (!response.ok) throw new Error();
+      const data = await response.json();
+      const total = data.variants.reduce((sum: number, v: { available_stock: number }) => sum + v.available_stock, 0);
+      stock.textContent = total > 0 ? `SOLO QUEDAN ${total} UNIDADES` : "Edición agotada";
+      for (const option of size.options) option.disabled = !data.variants.some((v: { name: string; available_stock: number }) => v.name === option.value && v.available_stock > 0);
+      available = data.reservationMode && data.variants.some((v: { name: string; available_stock: number }) => v.name === size.value && v.available_stock > 0);
+      document.querySelectorAll("[data-price]").forEach(el => el.textContent = formatMoney(data.unitPrice));
+    } catch { available = false; stock.textContent = "No se pudo consultar el stock. Vuelve a intentarlo."; }
+    updateLinks(); syncSticky();
+  }
+  size.addEventListener("change", () => void refresh());
+  const timer = window.setInterval(refresh, 15000);
+  window.addEventListener("pagehide", () => clearInterval(timer), { once: true });
+</script>
+<style>
+  .instagram{background:#101010;color:#fff;letter-spacing:0}.instagram h1,.instagram h2{letter-spacing:0;color:inherit}.instagram a{color:inherit}.ig-first{max-width:1100px;margin:auto;padding:80px 24px 32px;display:grid;grid-template-columns:1fr 1fr;gap:18px 40px}.ig-heading{grid-column:1/-1;text-align:center}.ig-heading p{margin:0 0 8px}.ig-heading h1{font-size:48px;line-height:1.05;margin:0}.ig-photo{margin:0;min-width:0;background:#ededed}.ig-photo img{display:block;width:100%;height:100%;max-height:530px;object-fit:contain}.ig-buy{align-self:center;text-align:center}.ig-stock{color:#ff573c;font-size:14px;font-weight:700}.ig-price{font-size:32px;margin:10px 0}.ig-small{font-size:13px;margin:8px 0}.ig-fine{font-size:12px;line-height:1.5;opacity:.8}.ig-size{display:flex;align-items:center;justify-content:center;gap:12px;margin:14px 0}.ig-size select{color:#111;background:#fff;min-width:100px;min-height:40px;border-radius:0}.ig-cta{display:flex;align-items:center;justify-content:center;gap:6px;min-height:48px;padding:12px 16px;background:#f2381e;color:#fff!important;text-decoration:none;font-size:15px;font-weight:700;text-align:center;line-height:1.3}.ig-cta[aria-disabled="true"]{opacity:.5;cursor:not-allowed}.ig-story{background:#f2381e;color:#fff;padding:56px max(24px,calc((100% - 1100px)/2));display:grid;grid-template-columns:1fr 1fr;gap:32px}.ig-story h2,.ig-details h2,.ig-community h2{font-size:32px;line-height:1.15}.ig-story img{width:100%;object-fit:contain;background:#ededed}.ig-story p{line-height:1.7}.ig-story ul{padding-left:20px;line-height:2}.ig-kicker{text-transform:uppercase;font-size:12px}.ig-details,.ig-community{max-width:760px;margin:auto;padding:48px 24px;line-height:1.7}.ig-details .ig-cta,.ig-community .ig-cta{margin:24px 0}.ig-community{border-top:1px solid #444}.ig-sticky{display:none}.ig-sticky[hidden]{display:none!important}
+  @media(max-width:680px){.ig-first{padding:64px 16px 24px;grid-template-columns:1fr;gap:8px}.ig-heading h1{font-size:28px}.ig-heading p{font-size:12px;margin:0 0 5px}.ig-photo{height:190px;height:min(32svh,260px)}.ig-photo img{height:100%;width:100%}.ig-buy .ig-stock{margin:6px 0}.ig-price{font-size:25px;margin:4px 0}.ig-size{margin:6px 0}.ig-size select{min-height:32px}.ig-small{margin:5px 0;font-size:12px}.ig-fine{font-size:11px}.ig-story{grid-template-columns:1fr;padding:36px 20px}.ig-story h2,.ig-details h2,.ig-community h2{font-size:28px}.ig-sticky{display:block;position:fixed;bottom:0;left:0;right:0;padding:8px 12px calc(8px + env(safe-area-inset-bottom));background:#101010;z-index:80;border-top:1px solid #444}.ig-community{padding-bottom:100px}}
+</style>

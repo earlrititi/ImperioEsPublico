@@ -1,7 +1,7 @@
 ---
 import { TSHIRT_DISCOUNT_PERCENT, TSHIRT_OFFER_COPY } from "../config/tshirt-offer";
 const excluded = /^\/(?:login|registro|recuperar-contrasena|confirmar-correo|cuenta(?:\/|$)|checkout|reservas(?:\/|$)|reserva(?:\/|$)|compra(?:\/|$)|gracias(?:\/|$)|admin(?:\/|$))/;
-const enabled = !excluded.test(Astro.url.pathname);
+const enabled = !excluded.test(Astro.url.pathname) && Astro.url.pathname.replace(/\/$/, "") !== "/instagram";
 ---
 
 {enabled && (

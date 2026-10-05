@@ -14,15 +14,17 @@
 
 ## Estado externo y limitaciones
 
-La herramienta de navegador falla al iniciar codex app-server, antes de abrir Meta. No se han inspeccionado ni modificado Business Portfolio, Facebook, Instagram, Commerce Manager, Events Manager, catalogos, enlaces de perfil o publicaciones. No hay evidencia de solicitud ni aprobacion pendiente de Meta.
+Verificado en navegador el 5 de octubre de 2026: portfolio Imperio Espanol (4100899546628641), pagina 109464237889261, Instagram @imperio_e y catalogo existente Imperio_E (1742623807029552). Se actualizo el producto manual existente, sin crear duplicados: titulo NON SUFFICIT ORBIS - Primera edicion, descripcion de pre-reserva gratuita, marca, material, color y enlace /instagram con UTMs de product_tag. Precio conservado: 29,99 EUR. La UI confirmo Productos actualizados y estado Elegible.
 
-No se ha localizado el carrusel mediante UI; no se ha etiquetado, duplicado, publicado ni eliminado. No se puede concluir que Instagram impida editar sus etiquetas: esa comprobacion sigue pendiente.
+Enlace de bio guardado mediante Business Suite y verificado en el perfil publico: RESERVA NON SUFFICIT ORBIS en primer lugar y TIENDA IMPERIO E conservado en segundo lugar. No se cambio la presentacion editorial, foto ni usuario. Carrusel localizado: https://www.instagram.com/imperio_e/p/DeFJWZeDoVf/ . Su editor web muestra Etiquetar personas, pero no Etiquetar productos. Se cancelo sin cambios; no se duplico, publico ni elimino contenido. Sigue pendiente comprobar etiquetas comerciales por otra interfaz habilitada.
+
+La sesion inspeccionada tiene acceso parcial al portfolio: Dominios indica que no hay dominios asignados y exige control total. Events Manager no muestra origenes de datos accesibles. Esto no demuestra que no existan globalmente. No se ampliaron permisos ni se creo un Pixel. CTA de Facebook pendiente de guardar y verificar.
 
 La web de produccion devuelve vacios data-gtm-id y data-google-tag-id. La instrumentacion no equivale a recepcion de eventos. Falta identificar y configurar la propiedad existente. No se ha creado otra plataforma ni un Pixel duplicado.
 
-El feed esta preparado, pero su ingestion, la elegibilidad para preventa y las etiquetas requieren validacion en Commerce Manager. No representa un catalogo aprobado por Meta. No se ha generado un TXT de dominio ficticio: el VALUE debe obtenerse de la cuenta real.
+El feed esta preparado, pero no conectado: el catalogo contiene un producto manual con ID o0y3czmtpg, distinto de los cinco SKU del feed. Antes de ingerirlo hay que resolver su correspondencia y variantes sin duplicar productos ni perder etiquetas. La elegibilidad para preventa y las etiquetas siguen pendientes. No se ha generado un TXT de dominio ficticio: el VALUE debe obtenerse de la cuenta real.
 
-La adaptacion incluye CSS movil, pero falta comprobacion visual en 320, 375, 390, 393 y 430px y en WebView real de Instagram por el bloqueo del navegador.
+Prueba inicial en navegador entre 320 y 430px sin desbordamiento horizontal. Se detectaron padding global duplicado y texto negro sobre negro; corregidos mediante CSS limitado a esta pagina. Revalidado localmente a 320x568: camiseta cargada, precio blanco, CTA termina en y=506 y sin desbordamiento horizontal. Build correcto. Sigue pendiente prueba en WebView real de Instagram.
 
 ## Enlaces preparados
 
@@ -40,11 +42,11 @@ Nombre de enlace bio: RESERVA NON SUFFICIT ORBIS. Sticker Story: RESERVAR CAMISE
 
 ## Para continuar en Meta
 
-1. Reconectar el navegador autenticado. Cualquier password, 2FA o captcha lo completa el propietario.
-2. Identificar portfolio, pagina e Instagram existentes y permisos; no duplicar ni transferir activos.
+1. Mantener las sesiones autenticadas. Cualquier password, 2FA o captcha lo completa el propietario.
+2. Obtener acceso autorizado a los dominios y origenes de datos existentes; no duplicar ni transferir activos.
 3. Reutilizar catalogo y Pixel existentes; comprobar elegibilidad de preventa antes de conectar el feed.
 4. Asociar catalogo, pagina e Instagram; obtener TXT de dominio real si lo exige Meta.
-5. Actualizar enlace de bio y CTA sin borrar enlaces anteriores.
+5. Guardar y verificar CTA de Facebook. Bio de Instagram completada.
 6. Localizar carrusel correcto y comprobar si admite etiqueta en la slide de la camiseta; nunca republicarlo.
 7. Validar recepcion de eventos con consentimiento, sin Purchase para reservas, y responsive real.
 

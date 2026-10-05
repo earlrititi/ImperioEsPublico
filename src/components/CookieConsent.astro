@@ -76,7 +76,7 @@ import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
       <label class="cookie-choice">
         <span>
           <strong>Marketing</strong>
-          <small>Publicidad y seguimiento entre servicios. Sin proveedores activos.</small>
+          <small>Pixel de Meta para medir visitas a la camiseta y reservas. Solo con tu consentimiento.</small>
         </span>
         <input type="checkbox" data-cookie-marketing />
       </label>
@@ -92,6 +92,7 @@ import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
 <script>
   // @ts-nocheck
   import { CONSENT_KEY, readSavedConsent, saveConsent } from "../lib/cookie-consent";
+  import { applyMetaConsent } from "../lib/meta-pixel";
   (() => {
     const root = document.querySelector("[data-cookie-consent]");
     if (!(root instanceof HTMLElement)) return;
@@ -255,6 +256,7 @@ import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
     };
 
     const applyConsent = (consent) => {
+      applyMetaConsent(Boolean(consent.marketing));
       if (consent.analytics) {
         setGoogleConsent(true);
         loadAnalytics();
@@ -267,6 +269,7 @@ import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
 
     const persistConsent = (choices, source) => {
       const previousAnalytics = Boolean(currentConsent?.analytics);
+      const previousMarketing = Boolean(currentConsent?.marketing);
       const consent = {
         version,
         preferences: choices.preferences,
@@ -285,7 +288,8 @@ import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
       banner?.setAttribute("hidden", "");
       if (settings instanceof HTMLDialogElement && settings.open) settings.close();
 
-      if (previousAnalytics && !consent.analytics) {
+      if ((previousAnalytics && !consent.analytics) || (previousMarketing && !consent.marketing)) {
+        applyMetaConsent(Boolean(consent.marketing));
         deleteAnalyticsCookies();
         setGoogleConsent(false);
         window.location.reload();
@@ -367,6 +371,7 @@ import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
       const saved = readConsent();
       if (JSON.stringify(saved) === JSON.stringify(currentConsent)) return;
       const revokedAnalytics = currentConsent?.analytics && !saved?.analytics;
+      const revokedMarketing = currentConsent?.marketing && !saved?.marketing;
       currentConsent = saved;
       setSettingsValues(saved);
       syncConsentSwitches();
@@ -376,10 +381,11 @@ import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
         banner?.setAttribute("hidden", "");
         applyConsent(saved);
       } else {
+        applyMetaConsent(false);
         setGoogleConsent(false);
         revealBannerWhenReady();
       }
-      if (revokedAnalytics) {
+      if (revokedAnalytics || revokedMarketing) {
         deleteAnalyticsCookies();
         window.location.reload();
       }
@@ -398,6 +404,7 @@ import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
       saveConsent(currentConsent);
       applyConsent(currentConsent);
     } else {
+      applyMetaConsent(false);
       revealBannerWhenReady();
     }
   })();

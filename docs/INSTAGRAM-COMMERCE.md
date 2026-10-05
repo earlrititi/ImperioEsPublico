@@ -18,7 +18,9 @@ Verificado en navegador el 5 de octubre de 2026: portfolio Imperio Espanol (4100
 
 Enlace de bio guardado mediante Business Suite y verificado en el perfil publico: RESERVA NON SUFFICIT ORBIS en primer lugar y TIENDA IMPERIO E conservado en segundo lugar. No se cambio la presentacion editorial, foto ni usuario. Carrusel localizado: https://www.instagram.com/imperio_e/p/DeFJWZeDoVf/ . Su editor web muestra Etiquetar personas, pero no Etiquetar productos. Se cancelo sin cambios; no se duplico, publico ni elimino contenido. Sigue pendiente comprobar etiquetas comerciales por otra interfaz habilitada.
 
-La sesion anterior tenia acceso parcial. La nueva sesion del 5 de octubre permite gestionar Dominios y mostraba que no se habian anadido dominios. Se registro imperioes.com (1628307511975143), propiedad del portfolio, y se obtuvo su metaetiqueta oficial para el head del layout. Verificacion final pendiente tras publicar. Events Manager no mostraba origenes de datos accesibles en la sesion anterior; queda revalidar con la actual. No se ampliaron permisos ni se creo un Pixel. CTA de Facebook pendiente de guardar y verificar.
+Dominio imperioes.com (1628307511975143) verificado en Meta mediante su metaetiqueta oficial publicada en ambos hosts. La UI confirmo Verificado y la asignacion de la pagina al dominio. No se cambiaron DNS ni permisos de usuarios. CTA de Facebook pendiente: la pagina solicita iniciar sesion.
+
+Pixel existente 888945184182715 reutilizado, sin crear otro. Implementacion limitada a /instagram y /reservas, con consentimiento de marketing vigente, autoConfig desactivado y sin coincidencias avanzadas. PageView y ViewContent para visitas; InitiateCheckout al iniciar una reserva y ReservationCompleted al completarla. Nunca Purchase ni importe para una reserva gratuita. Se bloquean URLs privadas, tokens y datos de formularios. Retirar consentimiento revoca el Pixel, borra _fbp/_fbc y recarga. Recepcion real en Events Manager pendiente de la comprobacion posterior al despliegue.
 
 La web de produccion devuelve vacios data-gtm-id y data-google-tag-id. La instrumentacion no equivale a recepcion de eventos. Falta identificar y configurar la propiedad existente. No se ha creado otra plataforma ni un Pixel duplicado.
 
@@ -43,7 +45,7 @@ Nombre de enlace bio: RESERVA NON SUFFICIT ORBIS. Sticker Story: RESERVAR CAMISE
 ## Para continuar en Meta
 
 1. Mantener las sesiones autenticadas. Cualquier password, 2FA o captcha lo completa el propietario.
-2. Obtener acceso autorizado a los dominios y origenes de datos existentes; no duplicar ni transferir activos.
+2. Dominio verificado y Pixel existente identificado; no duplicar ni transferir activos.
 3. Reutilizar catalogo y Pixel existentes; comprobar elegibilidad de preventa antes de conectar el feed.
 4. Asociar catalogo, pagina e Instagram; obtener TXT de dominio real si lo exige Meta.
 5. Guardar y verificar CTA de Facebook. Bio de Instagram completada.

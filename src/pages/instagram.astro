@@ -5,6 +5,7 @@ import { formatMoney, SHIRT_PRICE_COPY } from "../config/commerce";
 import { campaignParameters } from "../lib/social-attribution";
 export const prerender = false;
 Astro.response.headers.set("Cache-Control", "no-store");
+Astro.response.headers.set("Referrer-Policy", "strict-origin");
 const inventory = await readPublicInventory().catch(() => null);
 inventory?.variants.sort((a, b) => ["S", "M", "L", "XL", "XXL"].indexOf(a.name) - ["S", "M", "L", "XL", "XXL"].indexOf(b.name));
 const stock = inventory?.variants.reduce((sum, variant) => sum + variant.available_stock, 0) ?? null;

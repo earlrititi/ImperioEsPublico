@@ -1,5 +1,6 @@
 import { readSavedConsent } from "./cookie-consent";
 import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
+import { trackMetaCommerceEvent } from "./meta-pixel";
 
 export function campaignParameters(search: string) {
   const input = new URLSearchParams(search);
@@ -18,6 +19,7 @@ export function attributedPath(path: string, search = window.location.search) {
 }
 
 export function socialEvent(event: string, details: Record<string, string | number> = {}) {
+  trackMetaCommerceEvent(event);
   if (!readSavedConsent(LEGAL_DOCUMENT_VERSIONS.cookies)?.analytics) return;
   const target = window as typeof window & { dataLayer?: unknown[]; gtag?: (...args: unknown[]) => void };
   const attribution = Object.fromEntries(campaignParameters(window.location.search));

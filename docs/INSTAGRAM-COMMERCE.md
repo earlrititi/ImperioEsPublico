@@ -18,7 +18,7 @@ Verificado en navegador el 5 de octubre de 2026: portfolio Imperio Espanol (4100
 
 Enlace de bio guardado mediante Business Suite y verificado en el perfil publico: RESERVA NON SUFFICIT ORBIS en primer lugar y TIENDA IMPERIO E conservado en segundo lugar. No se cambio la presentacion editorial, foto ni usuario. Carrusel localizado: https://www.instagram.com/imperio_e/p/DeFJWZeDoVf/ . Su editor web muestra Etiquetar personas, pero no Etiquetar productos. Se cancelo sin cambios; no se duplico, publico ni elimino contenido. Sigue pendiente comprobar etiquetas comerciales por otra interfaz habilitada.
 
-La sesion inspeccionada tiene acceso parcial al portfolio: Dominios indica que no hay dominios asignados y exige control total. Events Manager no muestra origenes de datos accesibles. Esto no demuestra que no existan globalmente. No se ampliaron permisos ni se creo un Pixel. CTA de Facebook pendiente de guardar y verificar.
+La sesion anterior tenia acceso parcial. La nueva sesion del 5 de octubre permite gestionar Dominios y mostraba que no se habian anadido dominios. Se registro imperioes.com (1628307511975143), propiedad del portfolio, y se obtuvo su metaetiqueta oficial para el head del layout. Verificacion final pendiente tras publicar. Events Manager no mostraba origenes de datos accesibles en la sesion anterior; queda revalidar con la actual. No se ampliaron permisos ni se creo un Pixel. CTA de Facebook pendiente de guardar y verificar.
 
 La web de produccion devuelve vacios data-gtm-id y data-google-tag-id. La instrumentacion no equivale a recepcion de eventos. Falta identificar y configurar la propiedad existente. No se ha creado otra plataforma ni un Pixel duplicado.
 

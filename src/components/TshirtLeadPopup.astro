@@ -57,20 +57,24 @@ const enabled = !excluded.test(Astro.url.pathname) && Astro.url.pathname.replace
 <script>
   const root = document.querySelector('[data-tshirt-lead]');
   if (root instanceof HTMLElement) {
-    const storageKey = 'imperio:arcabucero-offer:v1';
+    const storageKey = 'imperio:tshirt-offer-session:v2';
+    const legacyStorageKey = 'imperio:arcabucero-offer:v1';
     const closeButtons = root.querySelectorAll('[data-tshirt-close]');
     let previousOverflow = '';
     let lastFocus: Element | null = null;
-    const now = Date.now();
-    let hiddenUntil = 0;
-    try { hiddenUntil = Number(JSON.parse(localStorage.getItem(storageKey) || '{}').until || 0); } catch {}
+    let dismissedForSession = false;
+    try {
+      localStorage.removeItem(legacyStorageKey);
+      dismissedForSession = Boolean(sessionStorage.getItem(storageKey));
+    } catch {}
 
     const focusable = (): HTMLElement[] => Array.from(root.querySelectorAll('a[href],button:not([disabled]),input:not([disabled]):not([tabindex="-1"])')).filter((item): item is HTMLElement => item instanceof HTMLElement && item.offsetParent !== null);
-    const persist = (days: number, state: string) => {
-      try { localStorage.setItem(storageKey, JSON.stringify({ state, until: Date.now() + days * 86400000 })); } catch {}
+    const persist = (state: string) => {
+      dismissedForSession = true;
+      try { sessionStorage.setItem(storageKey, state); } catch {}
     };
-    const close = (days = 7, state = 'closed') => {
-      persist(days, state);
+    const close = (state = 'closed') => {
+      persist(state);
       root.removeAttribute('data-open');
       window.setTimeout(() => { root.hidden = true; document.body.style.overflow = previousOverflow; if (lastFocus instanceof HTMLElement) lastFocus.focus(); }, window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 280);
     };
@@ -91,19 +95,19 @@ const enabled = !excluded.test(Astro.url.pathname) && Astro.url.pathname.replace
       if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
       else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
     });
-    root.querySelector('[data-tshirt-reserve]')?.addEventListener('click', () => persist(7, 'reservation'));
-    root.querySelector('[data-tshirt-offer]')?.addEventListener('click', () => persist(7, 'discount'));
+    root.querySelector('[data-tshirt-reserve]')?.addEventListener('click', () => persist('reservation'));
+    root.querySelector('[data-tshirt-offer]')?.addEventListener('click', () => persist('discount'));
     const scheduleOpen = (delay: number) => window.setTimeout(() => {
-      let currentUntil = hiddenUntil;
-      try { currentUntil = Number(JSON.parse(localStorage.getItem(storageKey) || '{}').until || 0); } catch {}
-      if (currentUntil <= Date.now() && root.hidden) open();
+      let dismissed = dismissedForSession;
+      try { dismissed = Boolean(sessionStorage.getItem(storageKey)); } catch {}
+      if (!dismissed && root.hidden) open();
     }, delay);
-    if (hiddenUntil <= now) {
+    if (!dismissedForSession) {
       const preloader = document.getElementById('preloader');
       if (preloader && !document.body.classList.contains('preloader-done')) {
-        window.addEventListener('preloader:done', () => scheduleOpen(650), { once:true });
+        window.addEventListener('preloader:done', () => scheduleOpen(350), { once:true });
       } else {
-        scheduleOpen(preloader ? 650 : 2200);
+        scheduleOpen(preloader ? 350 : 1500);
       }
     }
   }

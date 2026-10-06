@@ -1,7 +1,24 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { applyMetaConsent, canTrackMetaPage, metaCommerceEvent, trackMetaCommerceEvent } from "../src/lib/meta-pixel";
 import { LEGAL_DOCUMENT_VERSIONS } from "../src/config/legal";
+
+test("Production CSP permits the consent-gated Pixel and its tracking endpoint", () => {
+  const config = JSON.parse(readFileSync(new URL("../vercel.json", import.meta.url), "utf8"));
+  const policy = config.headers.find((entry: { source: string }) => entry.source === "/(.*)").headers
+    .find((header: { key: string }) => header.key === "Content-Security-Policy").value as string;
+  const directives = new Map(policy.split(";").map(part => {
+    const [name, ...sources] = part.trim().split(/\s+/);
+    return [name, sources];
+  }));
+  assert.ok(directives.get("script-src")?.includes("https://connect.facebook.net"));
+  for (const name of ["img-src", "connect-src"]) {
+    assert.ok(directives.get(name)?.includes("https://www.facebook.com/tr/"));
+  }
+  assert.deepEqual(directives.get("object-src"), ["'none'"]);
+  assert.deepEqual(directives.get("frame-ancestors"), ["'none'"]);
+});
 
 test("Meta accepts only public production product and reservation pages", () => {
   assert.equal(canTrackMetaPage("https://imperioes.com/instagram?utm_source=instagram"), true);

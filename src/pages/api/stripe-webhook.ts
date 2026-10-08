@@ -364,7 +364,7 @@ export const POST: APIRoute = async ({ request }) => {
           const subscription = await stripe.subscriptions.retrieve(subscriptionId);
           await upsertFromSubscription(subscription, stripe);
           if (invoice.status === "paid" && invoice.billing_reason === "subscription_create") {
-            if (invoice.customer_email && getPlanFromSubscription(subscription) === "arcabucero") {
+            if (invoice.customer_email) {
               const { sendArcabuceroDiscount } = await import("../../lib/tshirt-promotion");
               await sendArcabuceroDiscount(invoice.customer_email, invoice.customer_name ?? undefined);
             }

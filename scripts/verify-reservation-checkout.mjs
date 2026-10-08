@@ -56,7 +56,7 @@ const attempt = {
   shipping_address: address,
   expires_at: new Date(Date.now() + 3600000).toISOString(),
 };
-let priceAmount = 2999,
+let priceAmount = 2699,
   creates = 0,
   completionCalls = 0,
   checkoutParams,
@@ -202,6 +202,7 @@ assert.equal(checkoutParams.adaptive_pricing.enabled, false);
 assert.deepEqual(checkoutParams.line_items, [
   { price: "price_shirt_fixture", quantity: 2, tax_rates: ["txr_fixture"] },
   { price: "price_shirt_fixture", quantity: 1, tax_rates: ["txr_fixture"] },
+  { price_data: {currency:"eur",unit_amount:300,tax_behavior:"inclusive",product_data:{name:"Envio Correos por camiseta - Peninsula"}},quantity:3,tax_rates:["txr_fixture"] },
 ]);
 for (const key of [
   "shipping_options",
@@ -227,10 +228,10 @@ assert.notEqual(
   200,
 );
 checks++;
-priceAmount = 2699;
+priceAmount = 2999;
 assert.notEqual((await checkout()).status, 200);
 assert.equal(creates, 1);
-priceAmount = 2999;
+priceAmount = 2699;
 checks++;
 async function webhook(type, eventId, object) {
   const body = JSON.stringify({

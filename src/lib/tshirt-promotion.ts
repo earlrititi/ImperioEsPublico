@@ -1,23 +1,34 @@
 import { supabaseAdmin } from "./supabase/admin";
 import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
-import { qualifiesForTshirtOffer } from "../config/tshirt-offer";
+import { shirtDiscountPercent } from "../config/tshirt-offer";
 import { getRequiredEnv } from "./env";
-import { TSHIRT_DISCOUNT_PERCENT } from "../config/commerce";
 
 export const TSHIRT_LEAD_SOURCE = "tshirt_20_popup";
 export { TSHIRT_DISCOUNT_PERCENT } from "../config/commerce";
-const COUPON_ID = "imperio_e_arcabucero_camiseta_15";
 
 export async function ensureArcabuceroPromotion(email: string, name = "Arcabucero") {
   email = email.trim().toLowerCase();
-  const { data: subscription, error: subscriptionError } = await supabaseAdmin.from("subscriptions")
+  const { data: subscriptions, error: subscriptionError } = await supabaseAdmin.from("subscriptions")
     .select("plan,status,stripe_subscription_id").eq("email", email)
-    .order("created_at", { ascending: false }).limit(1).maybeSingle();
+    .in("status", ["active"]).order("created_at", { ascending: false });
   if (subscriptionError) throw new Error("DATABASE_UNAVAILABLE");
-  if (!subscription?.stripe_subscription_id || !qualifiesForTshirtOffer(subscription)) return null;
   const { stripe } = await import("./stripe");
-  const current = await stripe.subscriptions.retrieve(subscription.stripe_subscription_id);
-  if (current.status !== "active") return null;
+  let percent: 0 | 15 | 20 = 0;
+  for (const subscription of subscriptions ?? []) {
+    if (!subscription.stripe_subscription_id) continue;
+    try {
+      const current = await stripe.subscriptions.retrieve(subscription.stripe_subscription_id);
+      if (current.livemode !== /^(sk|rk)_live_/.test(getRequiredEnv("STRIPE_SECRET_KEY"))) continue;
+      const verifiedPlan = current.metadata.plan;
+      const candidate = shirtDiscountPercent({ plan: verifiedPlan, status: current.status });
+      if (candidate > percent) percent = candidate;
+    } catch (error) {
+      if ((error as { code?: string }).code !== "resource_missing") throw error;
+    }
+  }
+  if (!percent) return null;
+  const plan = percent === 20 ? "maestre_campo" : "arcabucero";
+  const COUPON_ID = `imperio_e_${plan}_camiseta_${percent}`;
 
   let { data: lead, error } = await supabaseAdmin.from("marketing_leads").select("*")
     .eq("source", TSHIRT_LEAD_SOURCE).eq("email", email).maybeSingle();
@@ -36,25 +47,26 @@ export async function ensureArcabuceroPromotion(email: string, name = "Arcabucer
     lead = loaded.data;
   }
   if (lead.redeemed_at) return null;
-  if (lead.stripe_coupon_id === COUPON_ID && lead.stripe_promotion_code_id) return lead;
 
   const price = await stripe.prices.retrieve(getRequiredEnv("STRIPE_PRICE_CAMISETA_IMPERIAL"));
   const productId = typeof price.product === "string" ? price.product : price.product.id;
   let coupon;
-  try { coupon = await stripe.coupons.retrieve(COUPON_ID); }
+  try { coupon = await stripe.coupons.retrieve(COUPON_ID, { expand: ["applies_to"] }); }
   catch (error) {
     if ((error as { code?: string }).code !== "resource_missing") throw error;
-    coupon = await stripe.coupons.create({ id: COUPON_ID, percent_off: TSHIRT_DISCOUNT_PERCENT,
-      duration: "once", name: "Arcabucero - Camiseta Imperial 15%", applies_to: { products: [productId] },
+    coupon = await stripe.coupons.create({ id: COUPON_ID, percent_off: percent,
+      duration: "once", name: `${plan} - Camiseta Imperial ${percent}%`, applies_to: { products: [productId] },
+      expand: ["applies_to"],
     }, { idempotencyKey: COUPON_ID });
   }
-  if (!coupon.valid || coupon.percent_off !== TSHIRT_DISCOUNT_PERCENT || coupon.duration !== "once" ||
+  if (!coupon.valid || coupon.percent_off !== percent || coupon.duration !== "once" ||
     coupon.applies_to?.products.length !== 1 || coupon.applies_to.products[0] !== productId)
     throw new Error("INVALID_PROMOTION_CONFIGURATION");
+  if (lead.stripe_coupon_id === COUPON_ID && lead.stripe_promotion_code_id) return lead;
   const promotion = await stripe.promotionCodes.create({
     promotion: { type: "coupon", coupon: coupon.id }, max_redemptions: 1,
-    metadata: { leadId: lead.id, source: "arcabucero_subscription" },
-  }, { idempotencyKey: `arcabucero-shirt-${lead.id}` });
+    metadata: { leadId: lead.id, source: `${plan}_subscription` },
+  }, { idempotencyKey: `shirt-${lead.id}-${COUPON_ID}` });
   const updated = await supabaseAdmin.from("marketing_leads").update({
     stripe_coupon_id: coupon.id, stripe_promotion_code_id: promotion.id, promotion_code: promotion.code,
     email_sent_at: null, updated_at: new Date().toISOString(),
@@ -69,7 +81,7 @@ export async function sendArcabuceroDiscount(email: string, name?: string) {
   if (lead.email_sent_at) return "existing";
   const { sendTshirtDiscountEmail } = await import("./emails");
   const sent = await sendTshirtDiscountEmail({ to: email, name: lead.name, code: lead.promotion_code,
-    percent: TSHIRT_DISCOUNT_PERCENT, reference: lead.id });
+    percent: lead.stripe_coupon_id?.includes("maestre_campo") ? 20 : 15, reference: `${lead.id}-${lead.stripe_coupon_id}` });
   if (sent.error || !sent.data) throw new Error("EMAIL_DELIVERY_FAILED");
   const marked = await supabaseAdmin.from("marketing_leads").update({
     email_sent_at: new Date().toISOString(), updated_at: new Date().toISOString(),

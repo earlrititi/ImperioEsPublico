@@ -74,7 +74,7 @@ export const SERVICES_ITEMS = [
       "Próximamente",
       "Todos los artículos para suscriptores",
       "Lectura ilimitada de todo el archivo",
-      "-",
+      "20% en la camiseta · un solo uso",
     ],
   },
 ];

@@ -1,0 +1,9 @@
+---
+import AdminShell from "../../layouts/AdminShell.astro";
+import Subscriptions from "../../components/admin/Subscriptions";
+import { requireAdmin } from "../../lib/reservations";
+export const prerender = false;
+Astro.response.headers.set("Cache-Control", "private, no-store");
+try { await requireAdmin(Astro); } catch { return Astro.redirect("/login?next=/admin/suscripciones"); }
+---
+<AdminShell title="Suscripciones"><Subscriptions client:load /></AdminShell>

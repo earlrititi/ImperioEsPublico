@@ -13,7 +13,8 @@ const dir = mkdtempSync(join(tmpdir(),'imperio-test-migrate-'));
 const run = (sql) => {
   const file = join(dir,'query.sql');
   writeFileSync(file,sql);
-  const output = execFileSync(process.execPath,[cli,'db','query','--linked','--project-ref',ref,'--file',file,'--output','json'],{encoding:'utf8',stdio:['ignore','pipe','pipe']});
+  const workdir = process.env.SUPABASE_TEST_WORKDIR;
+  const output = execFileSync(process.execPath,[cli,'db','query','--linked','--project-ref',ref,'--file',file,'--output','json',...(workdir ? ['--workdir',workdir] : [])],{encoding:'utf8',stdio:['ignore','pipe','pipe']});
   return JSON.parse(output);
 };
 run('create schema if not exists private; create table if not exists private.test_applied_migrations(name text primary key, checksum text not null)');

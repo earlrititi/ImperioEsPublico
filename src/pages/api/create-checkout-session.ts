@@ -9,7 +9,7 @@ import { consumeRateLimit } from "../../lib/rate-limit";
 import { isAllowedRequestOrigin } from "../../lib/request-security";
 import { getCheckoutPlan, isCheckoutPriceValid } from "../../lib/stripe-prices";
 import { getEsVatRate } from "../../lib/stripe-tax";
-import { getSubscriptionByUserId, isActivePaidSubscription } from "../../lib/subscriptions";
+import { findBillingCustomer, guardedSubscriptionCheckout } from "../../lib/subscription-checkout";
 import { createSupabaseServerClient } from "../../lib/supabase/server";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -141,21 +141,11 @@ export const POST: APIRoute = async ({ cookies, request }) => {
     }
     if (user?.email?.toLowerCase() !== subscriberEmail && user)
       return Response.json({ error: "Utiliza el correo de tu cuenta para la suscripción." }, { status: 400 });
-    const existing = user ? await getSubscriptionByUserId(user.id) : null;
-    if (existing && isActivePaidSubscription(existing)) {
-      return Response.json({ error: "Ya tienes una suscripcion activa. Gestiona tu plan desde tu cuenta." }, { status: 409 });
-    }
-    let customerId: string | undefined;
-    if (existing?.stripe_customer_id && existing.user_id === user?.id) {
-      const customer = await stripe.customers.retrieve(existing.stripe_customer_id);
-      if (customer.deleted || customer.livemode !== price.livemode ||
-        (customer.metadata.userId && customer.metadata.userId !== user?.id)) {
-        return Response.json({ error: "No se pudo verificar el cliente de facturacion." }, { status: 409 });
-      }
-      customerId = customer.id;
-    }
+    const existingCustomerId = await findBillingCustomer(stripe, subscriberEmail, price.livemode);
+    // Never expose saved billing details to a visitor who only knows someone's email.
+    const customerId = user?.email_confirmed_at ? existingCustomerId : undefined;
 
-    const session = await stripe.checkout.sessions.create(
+    const session = await guardedSubscriptionCheckout(stripe, subscriberEmail, body.plan, user?.id ?? null,
       {
         mode: "subscription",
         locale: "es",
@@ -185,8 +175,7 @@ export const POST: APIRoute = async ({ cookies, request }) => {
             userId: user?.id ?? "",
           },
         },
-      },
-      { idempotencyKey: `checkout_${user?.id ?? anonymousId}_${body.plan}_${requestId}` }
+      }
     );
 
     if (session.status === "expired" || !session.url) {
@@ -228,15 +217,23 @@ export const POST: APIRoute = async ({ cookies, request }) => {
       });
     }
 
-    const { notifyLead } = await import("../../lib/lead-notifications");
-    await notifyLead({ kind: "subscription_interest", reference: session.id,
-      email: subscriberEmail, plan: selectedPlan.label });
+    // Opening Checkout is not a purchase. Only the paid-invoice webhook notifies the owner.
 
     return new Response(JSON.stringify({ url: session.url }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
+    const code = error instanceof Error ? error.message : "";
+    const checkoutErrors: Record<string, string> = {
+      SUBSCRIPTION_ALREADY_EXISTS: "Ya existe una suscripcion o un pago pendiente. Gestiona tu plan desde tu cuenta.",
+      CHECKOUT_ALREADY_OPEN: "Ya tienes otro pago abierto. Completa ese pago antes de iniciar otro plan.",
+      CHECKOUT_NOT_OPEN: "Este pago ya ha finalizado o ha caducado. Comprueba el estado en tu cuenta.",
+      CHECKOUT_RETRY_LATER: "Estamos comprobando un intento anterior. Intentalo mas tarde.",
+    };
+    if (checkoutErrors[code]) return Response.json({ error: checkoutErrors[code], code }, {
+      status: 409, headers: { "Cache-Control": "no-store" },
+    });
     console.error("create-checkout-session error:", error);
 
     if (

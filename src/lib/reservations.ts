@@ -10,6 +10,7 @@ import { createSupabaseServerClient } from "./supabase/server";
 import { isAllowedRequestOrigin } from "./request-security";
 import { consumeRateLimit } from "./rate-limit";
 import { UUID } from "./reservation-validation";
+import { isImperioAdmin } from "./admin-identity";
 
 export const optionalEnv = (name: string) => {
   try {
@@ -43,12 +44,12 @@ export async function rpc(name: string, args: Record<string, unknown> = {}) {
     );
   return data;
 }
-export async function requestBody(request: Request) {
+export async function requestBody(request: Request, maxBytes = 16384) {
   if (!isAllowedRequestOrigin(request, getRequiredEnv("PUBLIC_SITE_URL")))
     throw new Error("ORIGIN_NOT_ALLOWED");
   if (!request.headers.get("content-type")?.startsWith("application/json"))
     throw new Error("INVALID_INPUT");
-  if (Number(request.headers.get("content-length") ?? 0) > 16384)
+  if (Number(request.headers.get("content-length") ?? 0) > maxBytes)
     throw new Error("INVALID_INPUT");
   const reader = request.body?.getReader();
   if (!reader) throw new Error("INVALID_INPUT");
@@ -58,7 +59,7 @@ export async function requestBody(request: Request) {
     const { done, value } = await reader.read();
     if (done) break;
     length += value.byteLength;
-    if (length > 16384) {
+    if (length > maxBytes) {
       await reader.cancel();
       throw new Error("INVALID_INPUT");
     }
@@ -90,7 +91,7 @@ export async function requireAdmin(
   context: Pick<APIContext, "cookies" | "request">,
 ) {
   const user = await getUser(context);
-  if (!user || user.app_metadata?.commerce_admin !== true)
+  if (!user || !isImperioAdmin(user))
     throw new Error("FORBIDDEN");
   return user;
 }
@@ -124,7 +125,7 @@ export async function authorizedReservation(
   const user = await getUser(context);
   if (
     user &&
-    (r.user_id === user.id || user.app_metadata?.commerce_admin === true)
+    (r.user_id === user.id || isImperioAdmin(user))
   )
     return r;
   throw new Error("NOT_FOUND");

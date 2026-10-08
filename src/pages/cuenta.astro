@@ -5,6 +5,7 @@ import "../styles/commerce.css";
 import { getSubscriptionByUserId, isActivePaidSubscription } from "../lib/subscriptions";
 import { createSupabaseServerClient } from "../lib/supabase/server";
 import { hasEditorialAccess } from "../lib/editorial-access";
+import { isImperioAdmin } from "../lib/admin-identity";
 import { privateAuthHeaders } from "../lib/auth-forms";
 import { qualifiesForTshirtOffer, TSHIRT_OFFER_COPY } from "../config/tshirt-offer";
 privateAuthHeaders(Astro.response.headers);
@@ -79,7 +80,7 @@ const accessLabel = editorialAccess ? "ADMINISTRADOR EDITORIAL" : hasPaidAccess
     </div>}
   </Fragment>
   <MyReservations client:load />
-  {user.app_metadata?.commerce_admin === true && <p><a href="/admin/comercio">Administrar comercio</a></p>}
+  {isImperioAdmin(user) && <p><a href="/admin">Administrar Imperio E</a></p>}
 </PageShell>
 
 <script>

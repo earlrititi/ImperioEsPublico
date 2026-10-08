@@ -7,6 +7,7 @@ import {
   authorizedReservation,
   database,
   failure,
+  getUser,
   limited,
   privateJson,
   requestBody,
@@ -18,6 +19,7 @@ import {
   shirtPaymentConfiguration,
 } from "../../../../lib/reservation-payment";
 import { findActiveTshirtPromotion } from "../../../../lib/tshirt-promotion";
+import { ownsShirtDiscount, shirtCheckoutLines } from "../../../../lib/shirt-checkout-lines";
 export const prerender = false;
 export const POST: APIRoute = async (context) => {
   try {
@@ -71,7 +73,9 @@ export const POST: APIRoute = async (context) => {
       size: r.reservation_items.map((i: any) => i.size).join(","),
       quantity: String(r.total_quantity),
     };
-    const promotion = a.stripe_session_id ? null : await findActiveTshirtPromotion(customer.email.trim().toLowerCase());
+    const user = await getUser(context);
+    const promotion = a.stripe_session_id || !ownsShirtDiscount(user,r.customer_email,customer.email)
+      ? null : await findActiveTshirtPromotion(user!.email!.trim().toLowerCase());
     const session = a.stripe_session_id
       ? await stripe.checkout.sessions.retrieve(a.stripe_session_id)
       : await stripe.checkout.sessions.create(
@@ -81,11 +85,7 @@ export const POST: APIRoute = async (context) => {
             payment_method_types: ["card"],
             customer_creation: "if_required",
             customer_email: customer.email.trim().toLowerCase(),
-            line_items: r.reservation_items.map((i: any) => ({
-              price: price.id,
-              quantity: i.quantity,
-              tax_rates: [tax.id],
-            })),
+            line_items: shirtCheckoutLines(price.id,tax.id,r.reservation_items),
             automatic_tax: { enabled: false },
             adaptive_pricing: { enabled: false },
             discounts: promotion ? [{ promotion_code: promotion.promotionCodeId }] : undefined,
@@ -99,7 +99,7 @@ export const POST: APIRoute = async (context) => {
             custom_text: {
               submit: {
                 message:
-                  "IVA incluido. Envio estandar a Espana peninsular incluido. Se utilizara la direccion confirmada en tu reserva.",
+                  "Camiseta: 26,99 EUR. Envio: 3 EUR por unidad. IVA incluido. Los descuentos no reducen el envio. Se utilizara la direccion confirmada en tu reserva.",
               },
             },
           },

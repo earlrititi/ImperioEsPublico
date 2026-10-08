@@ -44,6 +44,12 @@ let priceOverride = {};
 const emailRows = [];
 const events = new Map();
 const userId = "00000000-0000-4000-8000-000000000001";
+Stripe.resources.Customers.prototype.list = function () {
+  return { async *[Symbol.asyncIterator]() { if(existingSubscription) yield {id:"cus_fixture",livemode:live}; } };
+};
+Stripe.resources.Subscriptions.prototype.list = function () {
+  return { async *[Symbol.asyncIterator]() { if(existingSubscription) yield {status:existingSubscription.status}; } };
+};
 Stripe.StripeResource.prototype._makeRequest = async (method, pathname, params, options) => {
   if (method === "GET" && pathname.startsWith("/v1/prices/")) {
     const amount = pathname.includes("arcabucero") ? (interval === "month" ? 199 : 1799) : (interval === "month" ? 399 : 3799);
@@ -56,8 +62,8 @@ Stripe.StripeResource.prototype._makeRequest = async (method, pathname, params, 
   if (method === "POST" && pathname === "/v1/checkout/sessions") {
     sessionCount++;
     checkoutParams = params;
-    assert.ok(options.idempotencyKey.startsWith("checkout_"));
-    return { id: "cs_test_fixture", url: "https://checkout.stripe.com/fixture" };
+    assert.ok(options.idempotencyKey.startsWith("subscription-checkout-"));
+    return { id: "cs_test_fixture", status:"open", url: "https://checkout.stripe.com/fixture" };
   }
   if (method === "POST" && pathname === "/v1/checkout/sessions/cs_test_fixture/expire") {
     expiredCount++;
@@ -77,7 +83,9 @@ globalThis.fetch = async (input, options) => {
   const url = new URL(request.url);
   const body = request.method === "GET" ? null : await request.json();
   switch (url.pathname) {
-    case "/auth/v1/user": return json({ id: userId, email: "fixture@example.invalid", aud: "authenticated", role: "authenticated" });
+    case "/auth/v1/user": return json({ id: userId, email: "fixture@example.invalid", email_confirmed_at:"2026-01-01", aud: "authenticated", role: "authenticated" });
+    case "/rest/v1/subscription_checkouts": return json(request.method==="GET"?null:[]);
+    case "/rest/v1/rpc/claim_subscription_checkout": return json({attempt_id:crypto.randomUUID(),parameters:body.p_parameters,expires_at:new Date(Date.now()+23*3600000).toISOString()});
     case "/emails":
       assert.equal(url.hostname, "api.resend.com");
       if (adminEmailFailure && body.to.includes("earlrititi@gmail.com")) return json({ name: "application_error", message: "fixture email failure" }, 500);
@@ -202,7 +210,7 @@ assert.equal(expiredCount, 1, "Consent persistence failure must expire the sessi
 consentFailure = false;
 cases += 5;
 
-assert.ok(emailRows.some(message => message.to.includes("earlrititi@gmail.com") && /Inicio de suscripción/.test(message.subject)));
+assert.equal(emailRows.length,0,"Opening a checkout must not send a purchase notification");
 emailRows.length = 0;
 events.clear();
 const signingClient = new Stripe("sk_test_fixture");

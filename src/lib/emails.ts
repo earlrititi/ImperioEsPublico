@@ -17,13 +17,14 @@ export async function sendTshirtDiscountEmail(params: { to: string; name: string
   const siteUrl = getRequiredEnv("PUBLIC_SITE_URL").replace(/\/$/, "");
   const name = escapeHtml(params.name);
   const code = escapeHtml(params.code);
+  const plan = params.percent === 20 ? "Maestre de Campo" : "Arcabucero";
   return resend.emails.send({
     from,
     replyTo: SITE.contactEmail,
     to: params.to,
     subject: `Tu ${params.percent}% para la Camiseta Imperial`,
-    html: `<div style="font-family:Georgia,serif;line-height:1.6;color:#111"><h1>Una pieza de nuestra historia</h1><p>Hola ${name},</p><p>Tu suscripción Arcabucero está activa. Tu descuento del ${params.percent}% para la Camiseta Imperial está preparado.</p><p><strong>Código: ${code}</strong></p><p>${TSHIRT_OFFER_COPY} Se aplica automáticamente al confirmar la compra, no al reservar. La compra se habilita el 12 de octubre de 2026.</p><p><a href="${siteUrl}/tienda">Ver la Camiseta Imperial</a></p><p><strong>Plus Ultra.</strong></p></div>`,
-    text: `Hola ${params.name}. Tu suscripción Arcabucero está activa. Código: ${params.code}. ${TSHIRT_OFFER_COPY} Se aplica automáticamente al confirmar la compra, no al reservar. La compra se habilita el 12 de octubre de 2026. ${siteUrl}/tienda`,
+    html: `<div style="font-family:Georgia,serif;line-height:1.6;color:#111"><h1>Una pieza de nuestra historia</h1><p>Hola ${name},</p><p>Tu suscripción ${plan} está activa. Tu descuento del ${params.percent}% para la Camiseta Imperial está preparado.</p><p><strong>Código: ${code}</strong></p><p>${TSHIRT_OFFER_COPY} Se aplica automáticamente al confirmar la compra, no al reservar. La compra se habilita el 12 de octubre de 2026.</p><p><a href="${siteUrl}/tienda">Ver la Camiseta Imperial</a></p><p><strong>Plus Ultra.</strong></p></div>`,
+    text: `Hola ${params.name}. Tu suscripción ${plan} está activa. Código: ${params.code}. ${TSHIRT_OFFER_COPY} Se aplica automáticamente al confirmar la compra, no al reservar. La compra se habilita el 12 de octubre de 2026. ${siteUrl}/tienda`,
   }, { idempotencyKey: `arcabucero-discount-${params.reference}` });
 }
 
@@ -60,7 +61,7 @@ export async function sendPaidWelcomeEmail(params: {
   const { to, name, planName, priceSummary, termsVersion } = params;
   const siteUrl = getRequiredEnv("PUBLIC_SITE_URL").replace(/\/$/, "");
   const copy = "Ya puedes leer todos los articulos para suscriptores, compartidos por Arcabucero y Maestre de Campo.";
-  const offer = planName === "ARCABUCERO" ? TSHIRT_OFFER_COPY : "";
+  const offer = TSHIRT_OFFER_COPY;
 
   return resend.emails.send({
     from,

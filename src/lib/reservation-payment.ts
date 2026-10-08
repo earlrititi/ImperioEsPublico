@@ -2,7 +2,7 @@ import type Stripe from "stripe";
 import { getRequiredEnv } from "./env";
 import { database, optionalEnv, reservationMode, rpc } from "./reservations";
 import { getEsVatRate } from "./stripe-tax";
-import { SHIRT_FINAL_PRICE_CENTS } from "../config/commerce";
+import { SHIRT_PRODUCT_PRICE_CENTS } from "../config/commerce";
 
 export function assertShirtSalesEnabled() {
   if (reservationMode()) throw new Error("RESERVATION_MODE");
@@ -28,7 +28,7 @@ export async function shirtPaymentConfiguration() {
     !price.active ||
     price.type !== "one_time" ||
     price.currency !== "eur" ||
-    price.unit_amount !== SHIRT_FINAL_PRICE_CENTS ||
+    price.unit_amount !== SHIRT_PRODUCT_PRICE_CENTS ||
     price.livemode !== live ||
     price.tax_behavior === "exclusive"
   )

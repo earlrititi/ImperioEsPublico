@@ -7,7 +7,7 @@ export function leadNotification(params: {
   email: string; name?: string; plan?: string;
 }) {
   const label = params.kind === "manifesto" ? "Solicitud del manifiesto"
-    : params.kind === "subscription_interest" ? "Inicio de suscripción" : "Registro de cuenta PIQUERO";
+    : params.kind === "subscription_interest" ? "Checkout de suscripción pendiente de pago" : "Registro gratuito PIQUERO (no es una suscripción de pago)";
   return {
     subject: `${label}: Imperio Español`,
     text: [label, `Nombre: ${params.name || "No facilitado"}`, `Correo: ${params.email}`,
@@ -26,7 +26,7 @@ export function subscriptionNotification(invoice: {
 }, plan: string, interval: "month" | "year") {
   const a = invoice.customer_address;
   return {
-    subject: `Nueva suscripcion: ${plan} (${interval === "year" ? "anual" : "mensual"})`,
+    subject: `Suscripcion confirmada - pago recibido: ${plan} (${interval === "year" ? "anual" : "mensual"})`,
     text: [
       "Nueva suscripcion con pago confirmado",
       `Nombre: ${invoice.customer_name || "No facilitado"}`,

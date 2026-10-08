@@ -1,0 +1,8 @@
+---
+import AdminShell from "../../layouts/AdminShell.astro";
+import { requireAdmin } from "../../lib/reservations";
+export const prerender = false;
+Astro.response.headers.set("Cache-Control", "private, no-store");
+try { await requireAdmin(Astro); } catch { return Astro.redirect("/login?next=/admin"); }
+---
+<AdminShell title="Administracion"><h1>Administracion</h1><nav class="admin-shortcuts"><a href="/admin/comercio">Reservas y stock &rarr;</a><a href="/admin/suscripciones">Suscripciones &rarr;</a><a href="/admin/interacciones">Interacciones &rarr;</a></nav></AdminShell>

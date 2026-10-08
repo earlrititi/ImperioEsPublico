@@ -139,16 +139,17 @@ try {
       assert.equal(session.customer, null);
       const lines = await stripe.checkout.sessions.listLineItems(sessionId);
       assert.equal(
-        lines.data.reduce((sum, line) => sum + line.quantity, 0),
+        lines.data.filter(line=>line.price.unit_amount===2699).reduce((sum, line) => sum + line.quantity, 0),
         quantity,
       );
       assert.ok(
         lines.data.every(
           (line) =>
-            line.price.unit_amount === 2999 &&
+            [2699,300].includes(line.price.unit_amount) &&
             line.price.tax_behavior === "inclusive",
         ),
       );
+      assert.equal(lines.data.filter(line=>line.price.unit_amount===300).reduce((sum,line)=>sum+line.quantity,0),quantity);
       assert.equal((await checkout()).status, 200);
       const attempts = await db
         .from("reservation_payment_attempts")

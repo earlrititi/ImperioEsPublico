@@ -1,0 +1,26 @@
+---
+import PageShell from "../../layouts/PageShell.astro";
+export const prerender = false;
+Astro.response.headers.set("Cache-Control","private, no-store");
+Astro.response.headers.set("Referrer-Policy","no-referrer");
+---
+<PageShell title="Baja de comunicaciones | Imperio E" heading="Tus comunicaciones" noindex showCookieConsent={false}>
+  <p>Dejaras de recibir estas comunicaciones. Seguiras recibiendo los mensajes necesarios para gestionar tus pagos y pedidos.</p>
+  <button id="unsubscribe" class="btn btn-primary" type="button">Confirmar baja</button>
+  <p id="unsubscribe-status" role="status" aria-live="polite"></p>
+</PageShell>
+<script>
+const button = document.querySelector<HTMLButtonElement>("#unsubscribe");
+button?.addEventListener("click",async()=>{
+  button.disabled=true;
+  const status=document.querySelector<HTMLElement>("#unsubscribe-status")!;
+  try {
+    const token=new URL(location.href).searchParams.get("token");
+    const response=await fetch("/api/newsletter-unsubscribe",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token})});
+    if(!response.ok) throw new Error("No se pudo confirmar la baja. Revisa el enlace recibido por correo.");
+    status.textContent="Tu baja se ha registrado.";
+    button.hidden=true;
+    history.replaceState(null,"",location.pathname);
+  } catch(error) { status.textContent=error instanceof Error?error.message:"No se pudo confirmar la baja.";button.disabled=false; }
+});
+</script>

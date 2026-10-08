@@ -1,4 +1,5 @@
 ---
+import InteractionTracker from "../components/InteractionTracker.astro";
 import "../styles/global.css";
 import "../styles/navigation.css";
 import ClientRuntime from "../islands/ClientRuntime.astro";
@@ -154,6 +155,7 @@ const jsonLd = {
       </div>
     </div>
     <ClientRuntime />
+    {!noindex && <InteractionTracker />}
     <TshirtLeadPopup />
     {showCookieConsent && <CookieConsent />}
   </body>

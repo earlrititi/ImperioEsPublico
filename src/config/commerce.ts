@@ -1,4 +1,6 @@
-export const SHIRT_FINAL_PRICE_CENTS = 2999;
+export const SHIRT_PRODUCT_PRICE_CENTS = 2699;
+export const SHIRT_SHIPPING_PRICE_CENTS = 300;
+export const SHIRT_FINAL_PRICE_CENTS = SHIRT_PRODUCT_PRICE_CENTS + SHIRT_SHIPPING_PRICE_CENTS;
 export const TSHIRT_DISCOUNT_PERCENT = 15;
 export const SHIRT_PRICE_COPY = "26,99 € de camiseta + 3 € de envío por unidad. IVA incluido. Solo Península";
 export const RESERVATION_TERMS_VERSION = "2026-09-22";

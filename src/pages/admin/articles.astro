@@ -1,0 +1,8 @@
+---
+import AdminShell from "../../layouts/AdminShell.astro";
+import ArticleEditor from "../../components/admin/ArticleEditor";
+import { requireAdmin } from "../../lib/reservations";
+export const prerender=false;
+try { await requireAdmin(Astro); } catch { return Astro.redirect("/login?next=/admin/articles"); }
+---
+<AdminShell title="Articulos"><ArticleEditor client:load /></AdminShell>

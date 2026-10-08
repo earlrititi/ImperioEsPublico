@@ -1,6 +1,9 @@
 import tsParser from '@typescript-eslint/parser';
 export default [{
   files:['src/config/commerce.ts','src/lib/reservation*.ts','src/lib/commerce-mail.ts','src/components/commerce/**/*.{ts,tsx}',
+    'src/lib/admin-*.ts','src/lib/newsletter-audience.ts','src/lib/subscription-checkout.ts','src/lib/subscription-reconciliation.ts','src/lib/interaction-validation.ts','src/lib/env.ts',
+    'src/lib/shirt-checkout-lines.ts','tests/shirt-checkout-lines.test.ts',
+    'src/components/admin/**/*.{ts,tsx}','src/pages/api/admin/**/*.ts','src/pages/api/newsletter-unsubscribe.ts','src/pages/api/interactions.ts','tests/admin-*.test.ts','tests/subscription-checkout.test.ts',
     'src/lib/meta-catalog.ts','src/lib/meta-pixel.ts','tests/meta-pixel.test.ts','src/lib/public-inventory.ts','src/lib/social-attribution.ts','tests/meta-catalog.test.ts','src/pages/feeds/*.ts',
     'src/pages/api/reservations/**/*.ts','src/pages/api/commerce-*.ts','tests/reservations.test.ts',
     'src/lib/tshirt-promotion.ts','src/lib/emails.ts','src/pages/api/tshirt-lead.ts',

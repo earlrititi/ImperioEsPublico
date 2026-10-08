@@ -218,7 +218,8 @@ export default function ReservationManager({ paymentReturn = false }: { paymentR
             </fieldset>
             <img src="/images/cuadros-explicativos-camiseta.webp" alt="Camiseta Imperial, modelo y detalles" width="640" height="640" style={{ maxWidth: "100%", height: "auto", objectFit: "contain" }} />
             <p>Vendedor: {LEGAL_BUSINESS.ownerName}, {LEGAL_BUSINESS.tradeName}. NIF {LEGAL_BUSINESS.taxId}. {LEGAL_BUSINESS.registeredAddress}.</p>
-            <p>Unidades asignadas a tu reserva. Envio estandar peninsular: 0 EUR adicionales. IVA incluido. Preparacion maxima: 48 horas; entrega maxima: 7 dias laborables tras el pago.</p>
+            <p>Camiseta: 26,99 EUR + 3 EUR de envio por unidad. IVA incluido. Solo Peninsula. Preparacion maxima: 48 horas; entrega maxima: 7 dias laborables tras el pago.</p>
+            <p>Descuento de suscriptor: vinculado a la cuenta verificada y al correo de la reserva. No incluye el envio. <a href="/login?next=/reservas/gestionar">Iniciar sesion</a></p>
             <p>Desistimiento: 14 dias naturales desde la recepcion. Esta camiseta de diseno fijo no se considera personalizada para el comprador.</p>
             <nav aria-label="Condiciones de compra">{LEGAL_LINKS.map((link) => <p key={link.href}><a href={link.href} target="_blank" rel="noreferrer">{link.label}</a></p>)}</nav>
             <AddressFields

@@ -1,0 +1,8 @@
+---
+import AdminShell from "../../layouts/AdminShell.astro";
+import MailComposer from "../../components/admin/MailComposer";
+import { requireAdmin } from "../../lib/reservations";
+export const prerender=false;
+try { await requireAdmin(Astro); } catch { return Astro.redirect("/login?next=/admin/newsletter"); }
+---
+<AdminShell title="Newsletter"><MailComposer newsletter client:load /></AdminShell>

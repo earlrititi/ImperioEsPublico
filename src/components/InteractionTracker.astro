@@ -1,0 +1,52 @@
+<script>
+  import { readSavedConsent } from "../lib/cookie-consent";
+  import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
+  import { validInteraction } from "../lib/interaction-validation";
+  const page = location.pathname;
+  let viewed = false;
+  const scrolls = new Set<number>();
+  const allowed = () => !location.hash && !location.search &&
+    readSavedConsent(LEGAL_DOCUMENT_VERSIONS.cookies)?.analytics === true;
+  function record(event: string, target: string) {
+    const data = { page, event, target };
+    if (!allowed() || !validInteraction(data)) return;
+    void fetch("/api/interactions", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data), keepalive: true }).catch(() => {});
+  }
+  const view = () => { if (allowed() && !viewed) { viewed = true; record("page_view", "page"); } };
+  view();
+  window.addEventListener("imperio:cookie-consent", view);
+  document.addEventListener("click", event => {
+    if (!allowed() || !(event.target instanceof Element)) return;
+    const element = event.target.closest<HTMLElement>("a,button,[data-track]");
+    if (!element || element.closest("form,input,textarea,[data-private]")) return;
+    // Never collect text, form values, query strings, external URLs or private links.
+    let target = element.dataset.track;
+    if (!target && element instanceof HTMLAnchorElement) {
+      const url = new URL(element.href, location.origin);
+      if (url.origin !== location.origin || url.search || url.hash) return;
+      if (!validInteraction({ page: url.pathname, target: "page", event: "click" })) return;
+      target = `link:${url.pathname}`;
+    }
+    if (!target) {
+      const section = element.closest("header,footer,nav,section,main");
+      const region = section?.id || section?.tagName.toLowerCase() || "page";
+      const index = Array.from(section?.querySelectorAll<HTMLElement>("button") ?? []).indexOf(element);
+      target = `${region}:button-${index}`;
+    }
+    record("click", target.toLowerCase());
+  });
+  let pending = false;
+  window.addEventListener("scroll", () => {
+    if (pending || !allowed()) return;
+    pending = true;
+    setTimeout(() => {
+      pending = false;
+      const height = document.documentElement.scrollHeight - innerHeight;
+      if (height <= 0) return;
+      for (const percent of [50, 90]) if (!scrolls.has(percent) && scrollY / height * 100 >= percent) {
+        scrolls.add(percent); record(`scroll_${percent}`, "page");
+      }
+    }, 500);
+  }, { passive: true });
+</script>

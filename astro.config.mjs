@@ -19,7 +19,7 @@ export default defineConfig({
 
   vite: {
     // Bundle the CJS sanitizer with its ESM parser for Vercel's instrumented loader.
-    ssr: { noExternal: ['sanitize-html', 'htmlparser2', 'is-plain-object', 'domhandler', 'domutils', 'domelementtype', 'dom-serializer', 'entities', 'launder'] },
+    ssr: { noExternal: ['sanitize-html', 'htmlparser2', 'is-plain-object', 'domhandler', 'domutils', 'domelementtype', 'dom-serializer', 'entities', 'launder', 'dayjs', 'escape-string-regexp', 'deepmerge', 'parse-srcset', 'postcss', 'nanoid', 'picocolors', 'source-map-js'] },
     plugins: [tailwindcss()],
     resolve: {
       alias: {

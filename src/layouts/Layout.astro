@@ -1,5 +1,6 @@
 ---
 import InteractionTracker from "../components/InteractionTracker.astro";
+import FunnelTracker from "../components/FunnelTracker.astro";
 import "../styles/global.css";
 import "../styles/navigation.css";
 import ClientRuntime from "../islands/ClientRuntime.astro";
@@ -156,6 +157,7 @@ const jsonLd = {
     </div>
     <ClientRuntime />
     {!noindex && <InteractionTracker />}
+    {!noindex && <FunnelTracker />}
     <TshirtLeadPopup />
     {showCookieConsent && <CookieConsent />}
   </body>

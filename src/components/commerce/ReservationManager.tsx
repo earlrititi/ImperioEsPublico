@@ -1,6 +1,7 @@
 import { useEffect, useState } from "preact/hooks";
 import { RESERVATION_STATUS } from "../../config/commerce";
 import { isMainlandAddress } from "../../lib/reservation-validation";
+import {trackFunnel} from "../../lib/funnel-client";
 import { LEGAL_BUSINESS, LEGAL_LINKS } from "../../config/legal";
 import {
   AddressFields,
@@ -106,6 +107,7 @@ export default function ReservationManager({ paymentReturn = false }: { paymentR
         confirmPurchase: true,
         customer,
       });
+      await trackFunnel("shirts",5,"/reservas");
       window.location.assign(data.url);
     } catch (e) {
       setMessage(e instanceof Error ? e.message : "No disponible");

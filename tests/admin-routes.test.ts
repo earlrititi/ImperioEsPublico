@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 test("admin page guards run in page frontmatter, not only inside a layout", () => {
-  for (const route of ["index", "interacciones", "suscripciones", "comercio", "correos", "newsletter", "articles"]) {
+  for (const route of ["index", "embudo", "interacciones", "suscripciones", "comercio", "correos", "newsletter", "articles"]) {
     const source = readFileSync(new URL(`../src/pages/admin/${route}.astro`, import.meta.url), "utf8");
     const frontmatter = source.split("---")[1];
     assert.match(frontmatter, /await requireAdmin\(Astro\)/);

@@ -227,6 +227,7 @@ const pageTitle = selectedPlan
 </PageShell>
 
 <script>
+  import {trackFunnel} from "../../lib/funnel-client";
   const form = document.querySelector("[data-checkout-contract]");
 
   if (form instanceof HTMLFormElement) {
@@ -268,6 +269,7 @@ const pageTitle = selectedPlan
           throw new Error(result.error || "No se pudo iniciar el pago.");
         }
 
+        await trackFunnel("subscriptions",4);
         window.location.assign(result.url);
       } catch (error) {
         if (status) {

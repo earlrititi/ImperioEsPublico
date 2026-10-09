@@ -75,3 +75,29 @@ export async function drainAdminMail(limit = 10) {
   }
   return {sent,disabled:false};
 }
+
+export async function reconcileAdminDelivery(limit=10){
+  if(!["live","test"].includes(optionalEnv("COMMERCE_EMAIL_MODE")))return {checked:0,disabled:true};
+  const {Resend}=await import("resend");const client=new Resend(getRequiredEnv("RESEND_API_KEY"));const db=await database();
+  const now=new Date().toISOString();const cutoff=new Date(Date.now()-6*3600000).toISOString();
+  const result=await db.from("email_logs").select("id,recipient,provider_message_id").eq("status","sent")
+    .gte("sent_at",new Date(Date.now()-7*86400000).toISOString()).or(`provider_checked_at.is.null,provider_checked_at.lt.${cutoff}`)
+    .order("provider_checked_at",{nullsFirst:true}).limit(Math.min(20,limit));
+  if(result.error)throw Error("DATABASE_UNAVAILABLE");
+  let checked=0;
+  for(const row of result.data??[]){
+    if(!row.provider_message_id)continue;
+    const response=await client.emails.get(row.provider_message_id);
+    if(response.error || !response.data)throw Error("EMAIL_PROVIDER_UNAVAILABLE");
+    const event=String(response.data.last_event);
+    const state=["opened","clicked"].includes(event)?"delivered":event;
+    const updated=await db.from("email_logs").update({delivery_status:state,provider_checked_at:now}).eq("id",row.id).eq("provider_message_id",row.provider_message_id);
+    if(updated.error)throw Error("DATABASE_UNAVAILABLE");
+    if(["bounced","complained"].includes(state)){
+      const saved=await db.from("email_suppressions").upsert({email:row.recipient.toLowerCase(),reason:`provider_${state}`},{onConflict:"email",ignoreDuplicates:true});
+      if(saved.error)throw Error("DATABASE_UNAVAILABLE");
+    }
+    checked++;await new Promise(resolve=>{setTimeout(resolve,600);});
+  }
+  return {checked,disabled:false};
+}

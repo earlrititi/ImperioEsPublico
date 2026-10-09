@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mailApproval, verifyMailApproval, readUnsubscribeToken, unsubscribeToken, drainAdminMail, isMailSuppressed } from "../src/lib/admin-mail";
+import { mailApproval, verifyMailApproval, readUnsubscribeToken, unsubscribeToken, drainAdminMail, isMailSuppressed,reconcileAdminDelivery } from "../src/lib/admin-mail";
 
 test("send-time suppression honors late withdrawals and fails closed",async()=>{
   type Result = {data: Array<{id?: string; email?: string}>; error?: object};
@@ -53,5 +53,10 @@ test("disabled admin mail never queries a database or sends a message",async()=>
   const old=process.env.COMMERCE_EMAIL_MODE;
   process.env.COMMERCE_EMAIL_MODE="disabled";
   try{assert.deepEqual(await drainAdminMail(),{sent:0,disabled:true});}
+  finally{if(old===undefined)delete process.env.COMMERCE_EMAIL_MODE;else process.env.COMMERCE_EMAIL_MODE=old;}
+});
+test("disabled delivery reconciliation never contacts a provider",async()=>{
+  const old=process.env.COMMERCE_EMAIL_MODE;process.env.COMMERCE_EMAIL_MODE="disabled";
+  try{assert.deepEqual(await reconcileAdminDelivery(),{checked:0,disabled:true});}
   finally{if(old===undefined)delete process.env.COMMERCE_EMAIL_MODE;else process.env.COMMERCE_EMAIL_MODE=old;}
 });

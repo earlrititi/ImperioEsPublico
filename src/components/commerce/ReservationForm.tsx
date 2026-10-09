@@ -2,6 +2,7 @@ import { useEffect, useState } from "preact/hooks";
 import { formatMoney, SHIRT_FINAL_PRICE_CENTS, SHIRT_PRICE_COPY } from "../../config/commerce";
 import { AddressFields, emptyAddress, api } from "./shared";
 import { attributedPath, socialEvent } from "../../lib/social-attribution";
+import {trackFunnel} from "../../lib/funnel-client";
 
 export default function ReservationForm({ initialSize = "M" }: { initialSize?: string }) {
   const [inventory, setInventory] = useState<any[]>([]);
@@ -58,13 +59,14 @@ export default function ReservationForm({ initialSize = "M" }: { initialSize?: s
         address: waitlist ? undefined : address,
       });
       if (!waitlist) socialEvent("reservation_completed", { sku: variant.sku, quantity });
+      await trackFunnel("shirts",4);
       window.location.assign(attributedPath(result.url));
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "No se pudo confirmar la solicitud."); setBusy(false);
     }
   }
   return (
-    <form class="reservation-form" onSubmit={submit}>
+    <form class="reservation-form" data-funnel-flow="shirts" onSubmit={submit}>
       <header class="reservation-form__header">
         <span class="commerce-kicker">{sales?"Compra de camiseta":"Solicitud de reserva"}</span>
         <h2>{waitlist ? "Lista de espera" : sales?"Camiseta Imperial":"Pre-reserva gratuita"}</h2>

@@ -1,0 +1,33 @@
+<script>
+  import {trackFunnel,clearFunnel} from "../lib/funnel-client";
+  import {FUNNEL_PAGES,type FunnelFlow} from "../lib/funnel";
+  if(FUNNEL_PAGES.test(location.pathname)){
+    const watched=new WeakSet<Element>();
+    const forms="[data-funnel-flow],form[data-checkout-contract]";
+    const targets=`${forms},[data-funnel-manifesto],a[href*='/checkout/arcabucero-'],a[href*='/checkout/maestre-campo-'],a[href*='/suscribirse'],a[href='/reservas'],a[data-reserve]`;
+    const flowOf=(el:Element):FunnelFlow=>el.hasAttribute("data-checkout-contract")?"subscriptions":el.getAttribute("data-funnel-flow") as FunnelFlow;
+    const observer=new IntersectionObserver(entries=>{for(const e of entries){if(!e.isIntersecting)continue;
+      const element=e.target;
+      if(element.matches(forms)){
+        const dialog=element.closest("dialog");if(dialog&&!dialog.open)continue;
+        void trackFunnel(flowOf(element),1);
+      }else{
+        const href=element.getAttribute("href")??"";
+        const flow=element.hasAttribute("data-funnel-manifesto")?"manifesto":href.includes("/reservas")||element.hasAttribute("data-reserve")?"shirts":"subscriptions";
+        void trackFunnel(flow,0);
+      }
+    }},{threshold:0.25});
+    const scan=()=>{
+      for(const el of document.querySelectorAll(targets)){
+        if(!watched.has(el)){watched.add(el);observer.observe(el);}
+        if(el.matches(forms)&&el.closest("dialog[open]"))void trackFunnel(flowOf(el),1);
+      }
+    };
+    scan();const changes=new MutationObserver(scan);changes.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:["open"]});
+    document.addEventListener("input",e=>{if(e.target instanceof Element){const form=e.target.closest(forms);if(form)void trackFunnel(flowOf(form),2);}},true);
+    document.addEventListener("submit",e=>{if(e.target instanceof Element&&e.target.matches(forms))void trackFunnel(flowOf(e.target),3);},true);
+    window.addEventListener("imperio:funnel",e=>{const d=(e as CustomEvent).detail;if(d?.flow==="manifesto"&&d?.step===4)void trackFunnel("manifesto",4);});
+    window.addEventListener("imperio:cookie-consent",()=>{clearFunnel();scan();for(const el of document.querySelectorAll(targets)){observer.unobserve(el);observer.observe(el);}});
+    window.addEventListener("pagehide",()=>{observer.disconnect();changes.disconnect();},{once:true});
+  }
+</script>

@@ -6,6 +6,7 @@ import {
 } from "../config/home";
 import { TextHoverEffect } from "./ui/text-hover-effect";
 import { withBase } from "../utils/basePath";
+import {trackFunnel} from "../lib/funnel-client";
 
 const FOUNDATION_CARDS = [
   {
@@ -47,6 +48,7 @@ export default function Services() {
   const [manifestEmail, setManifestEmail] = useState("");
   const [manifestCompany, setManifestCompany] = useState("");
   const [manifestPrivacy, setManifestPrivacy] = useState(false);
+  const [manifestMarketing,setManifestMarketing]=useState(false);
   const manifestRequestIdRef = useRef(null);
   const [manifestStatus, setManifestStatus] = useState("idle");
   const [manifestError, setManifestError] = useState("");
@@ -225,6 +227,7 @@ export default function Services() {
           anonymousId: manifestRequestIdRef.current,
           requestId: manifestRequestIdRef.current,
           privacyAcknowledged: manifestPrivacy,
+          marketingConsent:manifestMarketing,
         }),
       });
       const result = await response.json().catch(() => ({}));
@@ -233,12 +236,15 @@ export default function Services() {
         throw new Error(result.error || "No se pudo enviar el manifiesto.");
       }
 
+      void trackFunnel("manifesto",4);
       setManifestStatus("sent");
       manifestRequestIdRef.current = null;
       setManifestFirstName("");
       setManifestLastName("");
       setManifestEmail("");
       setManifestCompany("");
+      setManifestMarketing(false);
+      setManifestPrivacy(false);
     } catch (error) {
       setManifestStatus("idle");
       setManifestError(error.message || "No se pudo enviar el manifiesto.");
@@ -331,6 +337,7 @@ export default function Services() {
               type="button"
               aria-controls="services-manifest-modal"
               aria-expanded={isManifestFormOpen}
+              data-funnel-manifesto
               onClick={() => setIsManifestFormOpen(true)}
             >
               <span class="services-next-liquid-lens" aria-hidden="true"></span>
@@ -387,7 +394,7 @@ export default function Services() {
               ref={manifestModalRef}
               onCancel={(event) => event.preventDefault()}
             >
-              <form class="services-manifest-modal__panel" method="dialog" onSubmit={handleManifestSubmit}>
+              <form class="services-manifest-modal__panel" data-funnel-flow="manifesto" method="dialog" onSubmit={handleManifestSubmit}>
                 <h2 class="services-manifest-modal__title" id="services-manifest-modal-title">
                   {manifestStatus === "sent" ? "Manifiesto enviado" : "Recibe el manifiesto"}
                 </h2>
@@ -466,6 +473,7 @@ export default function Services() {
                       <input type="checkbox" checked={manifestPrivacy} required onChange={(event) => setManifestPrivacy(event.currentTarget.checked)} />
                       <span>He leído la <a href="/legal/privacidad">política de privacidad</a> para recibir el manifiesto.</span>
                     </label>
+                    <label class="services-manifest-modal__privacy"><input type="checkbox" checked={manifestMarketing} onChange={e=>setManifestMarketing(e.currentTarget.checked)}/><span>Quiero recibir la newsletter de Imperio E. Opcional; puedo darme de baja cuando quiera.</span></label>
                     <button
                       class="services-manifest-modal__submit"
                       type="submit"

@@ -4,7 +4,7 @@ interface Props { title: string }
 Astro.response.headers.set("Cache-Control", "private, no-store");
 Astro.response.headers.set("Referrer-Policy", "no-referrer");
 Astro.response.headers.set("X-Robots-Tag", "noindex, nofollow");
-const links = [["/admin", "Resumen"], ["/admin/interacciones", "Interacciones"], ["/admin/suscripciones", "Suscripciones"], ["/admin/comercio", "Reservas y stock"], ["/admin/correos","Correos"], ["/admin/newsletter","Newsletter"], ["/admin/articles","Articulos"]];
+const links = [["/admin", "Resumen"], ["/admin/embudo", "Embudo"], ["/admin/interacciones", "Interacciones"], ["/admin/suscripciones", "Suscripciones"], ["/admin/comercio", "Reservas y stock"], ["/admin/correos","Correos"], ["/admin/newsletter","Newsletter"], ["/admin/articles","Articulos"]];
 ---
 <!doctype html><html lang="es"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width"/><meta name="robots" content="noindex,nofollow"/><title>{Astro.props.title} | Imperio E</title></head>
 <body><div class="admin-shell"><aside><a class="admin-brand" href="/admin">IMPERIO E</a><details open><summary>Administracion</summary><nav aria-label="Administracion">{links.map(([href,label]) => <a href={href} aria-current={Astro.url.pathname === href ? "page" : undefined}>{label}</a>)}</nav></details><a href="/cuenta">Mi cuenta</a><form method="post" action="/api/auth/logout"><button type="submit">Cerrar sesion</button></form></aside><main id="main"><slot /></main></div></body></html>

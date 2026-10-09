@@ -5,7 +5,7 @@
   const page = location.pathname;
   let viewed = false;
   const scrolls = new Set<number>();
-  const allowed = () => !location.hash && !location.search &&
+  const allowed = () => validInteraction({page,target:"page",event:"page_view"}) &&
     readSavedConsent(LEGAL_DOCUMENT_VERSIONS.cookies)?.analytics === true;
   function record(event: string, target: string) {
     const data = { page, event, target };
@@ -24,7 +24,7 @@
     let target = element.dataset.track;
     if (!target && element instanceof HTMLAnchorElement) {
       const url = new URL(element.href, location.origin);
-      if (url.origin !== location.origin || url.search || url.hash) return;
+      if (url.origin !== location.origin) return;
       if (!validInteraction({ page: url.pathname, target: "page", event: "click" })) return;
       target = `link:${url.pathname}`;
     }

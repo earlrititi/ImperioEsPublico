@@ -8,7 +8,7 @@ import {
   safeEqual,
 } from "../../lib/reservations";
 import { drainCommerceMail } from "../../lib/commerce-mail";
-import { drainAdminMail } from "../../lib/admin-mail";
+import { drainAdminMail,reconcileAdminDelivery } from "../../lib/admin-mail";
 import { closeOpenReservationPayment, shirtPaymentConfiguration } from "../../lib/reservation-payment";
 import { readCampaign } from "../../lib/reservation-campaign";
 export const prerender = false;
@@ -54,7 +54,8 @@ export const POST: APIRoute = async ({ request }) => {
       if (pendingError) throw new Error("DATABASE_UNAVAILABLE");
       for (const r of pending ?? []) if (await rpc("open_shirt_purchase", { p_id: r.id })) opened++;
     }
-    return privateJson({ expired, opened, ...(await drainCommerceMail(20)), adminMail: await drainAdminMail(10) });
+    const adminDelivery=await reconcileAdminDelivery(10);
+    return privateJson({ expired, opened, ...(await drainCommerceMail(20)), adminMail: await drainAdminMail(10),adminDelivery });
   } catch (error) {
     return failure(error);
   }

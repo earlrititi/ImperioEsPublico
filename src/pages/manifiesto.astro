@@ -34,6 +34,7 @@ import PageShell from "../layouts/PageShell.astro";
       <button
         class="btn btn-primary manifesto-open-button"
         id="manifesto-open-button"
+        data-funnel-manifesto
         type="button"
         aria-controls="manifesto-modal"
         aria-expanded="false"
@@ -44,7 +45,7 @@ import PageShell from "../layouts/PageShell.astro";
   </section>
 
   <dialog class="manifesto-modal" id="manifesto-modal" aria-labelledby="manifesto-modal-title" hidden>
-    <form class="manifesto-modal__panel" id="manifesto-modal-form" method="dialog">
+    <form class="manifesto-modal__panel" data-funnel-flow="manifesto" id="manifesto-modal-form" method="dialog">
       <h2 class="manifesto-modal__title" id="manifesto-modal-title">Recibe el manifiesto</h2>
       <input
         class="manifesto-modal__field"
@@ -95,6 +96,7 @@ import PageShell from "../layouts/PageShell.astro";
         </span>
       </label>
       <p class="manifesto-modal__error" id="manifesto-error" role="alert" hidden></p>
+      <label class="manifesto-modal__privacy"><input id="manifesto-marketing" type="checkbox"/><span>Quiero recibir la newsletter de Imperio E. Opcional; puedo darme de baja cuando quiera.</span></label>
       <p class="manifesto-modal__message" id="manifesto-message" role="status" hidden></p>
       <button class="btn btn-primary manifesto-modal__submit" id="manifesto-submit" type="submit" disabled>
         Recibir manifiesto
@@ -119,13 +121,16 @@ import PageShell from "../layouts/PageShell.astro";
   const manifestoError = document.getElementById("manifesto-error");
   const manifestoMessage = document.getElementById("manifesto-message");
   let manifestoIsSubmitting = false;
+  let manifestoRequestId = null;
 
   const getManifestoAnonymousId = () => {
     const key = "imperio_anonymous_id";
-    const existing = window.localStorage.getItem(key);
-    if (existing) return existing;
     const created = window.crypto.randomUUID();
-    window.localStorage.setItem(key, created);
+    try {
+      const existing = window.localStorage.getItem(key);
+      if (existing) return existing;
+      window.localStorage.setItem(key, created);
+    } catch { /* The resource request also works when storage is unavailable. */ }
     return created;
   };
 
@@ -212,7 +217,9 @@ import PageShell from "../layouts/PageShell.astro";
           email: manifestoEmailInput?.value || "",
           company: manifestoCompanyInput?.value || "",
           privacyAcknowledged: Boolean(manifestoPrivacyInput?.checked),
+          marketingConsent:document.getElementById("manifesto-marketing")?.checked===true,
           anonymousId: getManifestoAnonymousId(),
+          requestId:manifestoRequestId ||= crypto.randomUUID(),
           source: "manifiesto",
         }),
       });
@@ -222,6 +229,9 @@ import PageShell from "../layouts/PageShell.astro";
         throw new Error(result.error || "No se pudo enviar el manifiesto.");
       }
 
+      window.dispatchEvent(new CustomEvent("imperio:funnel",{detail:{flow:"manifesto",step:4}}));
+      manifestoRequestId=null;
+      document.getElementById("manifesto-marketing").checked=false;
       setManifestoMessage(result.message || "Te hemos enviado el PDF a tu correo. Revisa tambien spam o promociones.");
       if (manifestoFirstNameInput) {
         manifestoFirstNameInput.value = "";

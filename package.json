@@ -7,14 +7,14 @@
   },
   "scripts": {
     "lint": "eslint src/config/commerce.ts src/lib/reservation*.ts src/lib/commerce-mail.ts src/lib/tshirt-promotion.ts src/lib/emails.ts src/components/commerce src/pages/api/reservations src/pages/api/commerce-*.ts src/pages/api/tshirt-lead.ts tests/reservations.test.ts src/lib/auth-*.ts src/pages/api/auth tests/auth-forms.test.ts src/config/editorial.ts src/lib/seo.ts src/lib/article-seo.ts src/pages/feed.xml.ts src/pages/sitemap.xml.ts tests/seo.test.ts scripts/verify-seo.mjs",
-    "lint:admin": "eslint src/lib/admin-*.ts src/lib/newsletter-audience.ts src/lib/subscription-checkout.ts src/lib/subscription-reconciliation.ts src/lib/interaction-validation.ts src/lib/env.ts src/components/admin src/pages/api/admin src/pages/api/newsletter-unsubscribe.ts src/pages/api/interactions.ts tests/admin-*.test.ts tests/subscription-checkout.test.ts",
+    "lint:admin": "eslint src/lib/admin-*.ts src/lib/newsletter-audience.ts src/lib/subscription-checkout.ts src/lib/subscription-reconciliation.ts src/lib/interaction-validation.ts src/lib/env.ts src/lib/funnel*.ts src/components/admin src/pages/api/admin src/pages/api/newsletter-unsubscribe.ts src/pages/api/interactions.ts src/pages/api/funnel.ts src/pages/api/manifesto.php.ts tests/admin-*.test.ts tests/subscription-checkout.test.ts tests/funnel.test.ts",
     "test:seo": "node scripts/verify-seo.mjs",
     "dev": "astro dev",
     "build": "astro build",
     "postbuild": "node scripts/prune-vercel-output.mjs",
     "check": "astro check",
     "test": "tsx --test tests/**/*.test.ts",
-    "test:integration": "node scripts/verify-article-access.mjs && node scripts/verify-commerce.mjs && node scripts/verify-admin-mail.mjs && node scripts/verify-shirt-catalog.mjs && node scripts/verify-reservation-checkout.mjs && node scripts/verify-password-auth.mjs",
+    "test:integration": "node scripts/verify-article-access.mjs && node scripts/verify-commerce.mjs && node scripts/verify-admin-mail.mjs && node scripts/verify-shirt-catalog.mjs && node scripts/verify-reservation-checkout.mjs && node scripts/verify-password-auth.mjs && node scripts/verify-manifesto.mjs && node scripts/verify-admin-delivery.mjs && node scripts/verify-newsletter-audience.mjs",
     "verify": "npm run check && npm test && npm run build",
     "preview": "astro preview",
     "astro": "astro"

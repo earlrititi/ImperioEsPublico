@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { database, failure, limited, privateJson, requestBody, requireAdmin, rpc } from "../../../lib/reservations";
 import { renderAdminMail, validateMail } from "../../../lib/admin-mail-template";
-import { mailApproval, verifyMailApproval } from "../../../lib/admin-mail";
+import { mailApproval, verifyMailApproval,reconcileAdminDelivery } from "../../../lib/admin-mail";
 import { normalizeEmail, validEmail } from "../../../lib/newsletter-audience";
 import { UUID } from "../../../lib/reservation-validation";
 export const prerender = false;
@@ -19,6 +19,7 @@ export const POST: APIRoute = async context => {
     const user = await requireAdmin(context);
     await limited(context.request,"admin_mail",30);
     const body = await requestBody(context.request);
+    if(body.action==="reconcile")return privateJson(await reconcileAdminDelivery(10));
     const content = validateMail(body);
     const type = body.type === "test" ? "test" : "individual";
     const recipient = normalizeEmail(type === "test" ? user.email : body.recipient);

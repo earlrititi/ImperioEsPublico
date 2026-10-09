@@ -6,6 +6,7 @@ import { recordLegalConsents } from "../../lib/legal-consents";
 import { consumeRateLimit } from "../../lib/rate-limit";
 import { isAllowedRequestOrigin } from "../../lib/request-security";
 import { notifyLead } from "../../lib/lead-notifications";
+import {database,optionalEnv} from "../../lib/reservations";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -103,6 +104,7 @@ export const POST: APIRoute = async ({ request }) => {
     const anonymousId = safeName(payload.anonymousId);
     const requestId = safeName(payload.requestId) || anonymousId;
     const privacyAcknowledged = payload.privacyAcknowledged === true;
+    const marketingConsent = payload.marketingConsent === true;
 
     if (
       !firstName ||
@@ -117,6 +119,17 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
+    if(optionalEnv("COMMERCE_EMAIL_MODE")==="disabled")return jsonResponse({ok:false,error:"Envio desactivado en este entorno de pruebas."},503);
+    const db=await database();
+    const saved=await db.from("manifesto_requests").upsert({id:requestId,email,name:`${firstName} ${lastName}`,source:safeSource(payload.source),marketing_consent:marketingConsent},{onConflict:"id",ignoreDuplicates:true});
+    if(saved.error)throw Error("DATABASE_UNAVAILABLE");
+    const existing=await db.from("manifesto_requests").select("email,name,marketing_consent,status").eq("id",requestId).single();
+    if(existing.error)throw Error("DATABASE_UNAVAILABLE");
+    if(existing.data.email!==email || existing.data.name!==`${firstName} ${lastName}` || existing.data.marketing_consent!==marketingConsent)return jsonResponse({ok:false,error:"La solicitud ha cambiado. Recarga el formulario."},409);
+    if(existing.data.status==="accepted"){
+      await notifyLead({kind:"manifesto",reference:requestId,email,name:`${firstName} ${lastName}`});
+      return jsonResponse({ok:true,message:"Tu manifiesto ya ha sido enviado por correo."});
+    }
     await recordLegalConsents([
       {
         anonymousId,
@@ -125,9 +138,10 @@ export const POST: APIRoute = async ({ request }) => {
         accepted: true,
         source: "manifesto",
         contextType: "resource_request",
-        contextId: anonymousId,
+        contextId: requestId,
         metadata: { resource: "manifesto" },
       },
+      ...(marketingConsent?[{anonymousId,consentType:"marketing_email" as const,documentVersion:LEGAL_DOCUMENT_VERSIONS.privacy,accepted:true,source:"manifesto",contextType:"resource_request",contextId:requestId,metadata:{resource:"newsletter"}}]:[]),
     ]);
 
     const greetingName = `${firstName} ${lastName}`;
@@ -148,7 +162,7 @@ export const POST: APIRoute = async ({ request }) => {
     const result = await resend.emails.send({
       from,
       replyTo: SITE.contactEmail,
-      to: email,
+      to: optionalEnv("COMMERCE_EMAIL_MODE")==="test"?getRequiredEnv("COMMERCE_TEST_EMAIL"):email,
       subject,
       html: `
         <div style="font-family: Georgia, serif; line-height: 1.6; color: #111;">
@@ -173,6 +187,7 @@ export const POST: APIRoute = async ({ request }) => {
     }, { idempotencyKey: `manifesto-${requestId}` });
 
     if (result.error) {
+      await db.from("manifesto_requests").update({status:"failed"}).eq("id",requestId);
       console.error("Resend manifesto email failed:", result.error);
       return jsonResponse(
         { ok: false, error: "No se pudo enviar el correo. Intentalo de nuevo." },
@@ -180,6 +195,9 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
+    if(!result.data)throw Error("EMAIL_PROVIDER_UNAVAILABLE");
+    const accepted=await db.from("manifesto_requests").update({status:"accepted",provider_id:result.data.id,accepted_at:new Date().toISOString()}).eq("id",requestId);
+    if(accepted.error)throw Error("DATABASE_UNAVAILABLE");
     await notifyLead({ kind: "manifesto", reference: requestId, email, name: greetingName });
 
     return jsonResponse({

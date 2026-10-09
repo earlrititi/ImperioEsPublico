@@ -1,0 +1,11 @@
+---
+import AdminShell from "../../layouts/AdminShell.astro";
+import Funnel from "../../components/admin/Funnel";
+import {requireAdmin} from "../../lib/reservations";
+export const prerender=false;
+try{await requireAdmin(Astro);}catch{return Astro.redirect("/login?next=/admin/embudo");}
+---
+<AdminShell title="Embudo"><Funnel client:load /></AdminShell>
+<style is:global>
+  .admin-shell meter {display:block;width:100%;min-width:100px;height:12px;accent-color:#dc3434}
+</style>

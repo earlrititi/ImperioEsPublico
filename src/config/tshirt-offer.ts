@@ -4,7 +4,7 @@ export { TSHIRT_DISCOUNT_PERCENT };
 export function shirtOfferCopy(plan: "arcabucero" | "maestre_campo") {
   return `${plan === "arcabucero" ? 15 : 20}% de descuento en la camiseta. Un solo uso, sin acumular descuentos y con la suscripcion activa al comprar. Envio no incluido en el descuento.`;
 }
-export const TSHIRT_OFFER_COPY = "15% de descuento en la camiseta con Arcabucero y 20% con Maestre de Campo. Reserva tambien tu camiseta. Un solo uso, sin acumular descuentos y con la suscripcion activa al comprar.";
+export const TSHIRT_OFFER_COPY = "15% de descuento en la camiseta con Arcabucero y 20% con Maestre de Campo. Un solo uso, sin acumular descuentos y con la suscripcion activa al comprar. Envio no incluido en el descuento.";
 
 export function shirtDiscountPercent(subscription: { plan?: string | null; status?: string | null } | null | undefined): 0 | 15 | 20 {
   if (subscription?.status !== "active") return 0;

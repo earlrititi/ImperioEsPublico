@@ -14,7 +14,8 @@ const requestedSize = Astro.url.searchParams.get("size");
 const selected = inventory?.variants.find(v => v.name === requestedSize) ?? inventory?.variants.find(v => v.available_stock > 0);
 if (selected) params.set("size", selected.name);
 const reserveUrl = `/reservas?${params}`;
-const open = Boolean(inventory?.reservationMode && stock && stock > 0);
+const buying = Boolean(inventory?.salesEnabled);
+const open = Boolean((inventory?.reservationMode || buying) && stock && stock > 0);
 ---
 <Layout exactTitle title="NON SUFFICIT ORBIS | Imperio E" description="Primera edición de Imperio E. Una camiseta inspirada en los símbolos de la Monarquía Hispánica." ogImage="/images/camiseta-imperio-frontal.webp" navigation="home" footerVariant="dark">
   <main class="instagram" data-home-mark-surface="black">
@@ -24,23 +25,23 @@ const open = Boolean(inventory?.reservationMode && stock && stock > 0);
       <div class="ig-buy">
         <p class="ig-stock" data-stock aria-live="polite">{stock === null ? "No se pudo consultar el stock" : stock === 0 ? "Edición agotada" : `SOLO QUEDAN ${stock} UNIDADES`}</p>
         <p class="ig-price" data-price>{inventory ? formatMoney(inventory.unitPrice) : "Precio no disponible"}</p>
-        <p class="ig-small">Reserva gratuita. Sin cobro ni obligación de compra.</p>
+        <p class="ig-small">{buying ? "Pago seguro en Stripe. IVA incluido." : "Reserva gratuita. Sin cobro ni obligacion de compra."}</p>
         <label class="ig-size">Talla <select id="ig-size" disabled={!inventory}>{inventory?.variants.map(v => <option value={v.name} selected={v.name === selected?.name} disabled={v.available_stock === 0}>{v.name}{v.available_stock === 0 ? " · agotada" : ""}</option>)}</select></label>
         <div class="ig-actions">
-          <a class="ig-cta ig-cta--primary" data-reserve aria-disabled={!open} href={open ? reserveUrl : undefined}>{open ? "RESERVAR YA" : "RESERVA NO DISPONIBLE"}</a>
+          <a class="ig-cta ig-cta--primary" data-reserve aria-disabled={!open} href={open ? reserveUrl : undefined}>{open ? buying ? "COMPRAR CAMISETA" : "RESERVAR YA" : "NO DISPONIBLE"}</a>
           <a class="ig-cta ig-cta--discount" href="/suscribirse#arcabucero" data-community data-attribution>QUIERO DESCUENTO</a>
         </div>
         <p class="ig-small">Primera edición limitada.</p>
-        <p class="ig-fine">{SHIRT_PRICE_COPY}. {inventory?.campaign.purchase_open_at && `Compra prevista: ${new Date(inventory.campaign.purchase_open_at).toLocaleDateString("es-ES", { timeZone: "Europe/Madrid" })}.`}</p>
+        <p class="ig-fine">{SHIRT_PRICE_COPY}.</p>
       </div>
     </section>
     <section class="ig-story">
       <div><p class="ig-kicker">Monarquía Hispánica · Siglo de Oro</p><h2>Una historia contada en símbolos.</h2><p>No queríamos diseñar una camiseta cualquiera. Queríamos plasmar parte de nuestra historia en algo físico: un diseño con el que sentirnos identificados.</p><ul><li>NON SUFFICIT ORBIS</li><li>Escudo de Felipe II</li><li>Cruz de Borgoña</li><li>Carabela</li><li>Estrella</li></ul></div>
       <img src="/images/camiseta-imperio-atras.webp" alt="Diseño posterior de la camiseta NON SUFFICIT ORBIS" width="1080" height="1080" loading="lazy" />
     </section>
-    <section class="ig-details" id="producto"><h2>Tu talla. Tu pedacito de historia.</h2><p>Tejido técnico Bird-Eye · 100 % poliéster · 145 g/m².</p><p>Consulta las medidas antes de reservar. La disponibilidad se confirma al completar la solicitud.</p><a href="/checkout/camiseta-imperial" data-attribution>Ficha técnica y guía de tallas</a><a class="ig-cta" data-reserve href={open ? reserveUrl : undefined} aria-disabled={!open}>RESERVAR LA MÍA</a></section>
-    <section class="ig-community"><p class="ig-kicker">Imperio E</p><h2>La historia no termina aquí.</h2><p>Manifiesto gratuito y artículos premium para seguir descubriendo nuestra historia.</p><p>Los suscriptores activos del plan Arcabucero tienen un 15 % de descuento en la camiseta. La reserva es gratuita; el descuento se aplica al comprar.</p><a class="ig-cta ig-cta--discount" href="/suscribirse#arcabucero" data-community data-attribution>QUIERO DESCUENTO</a><a href="/manifiesto" data-attribution>Descubrir el manifiesto gratuito</a></section>
-    <div class="ig-sticky" hidden><a class="ig-cta" data-reserve href={open ? reserveUrl : undefined} aria-disabled={!open}>RESERVAR YA · <span data-price>{inventory ? formatMoney(inventory.unitPrice) : "—"}</span></a></div>
+    <section class="ig-details" id="producto"><h2>Tu talla. Tu pedacito de historia.</h2><p>Tejido técnico Bird-Eye · 100 % poliéster · 145 g/m².</p><p>Consulta las medidas antes de completar la solicitud.</p><a href="/checkout/camiseta-imperial" data-attribution>Ficha técnica y guía de tallas</a><a class="ig-cta" data-reserve href={open ? reserveUrl : undefined} aria-disabled={!open}>{buying ? "COMPRAR LA MIA" : "RESERVAR LA MIA"}</a></section>
+    <section class="ig-community"><p class="ig-kicker">Imperio E</p><h2>La historia no termina aquí.</h2><p>Manifiesto gratuito y artículos premium para seguir descubriendo nuestra historia.</p><p>Arcabucero incluye un 15 % de descuento y Maestre de Campo un 20 %. Se aplica al comprar, con la suscripcion activa y sin descontar el envio.</p><a class="ig-cta ig-cta--discount" href="/suscribirse#arcabucero" data-community data-attribution>QUIERO DESCUENTO</a><a href="/manifiesto" data-attribution>Descubrir el manifiesto gratuito</a></section>
+    <div class="ig-sticky" hidden><a class="ig-cta" data-reserve href={open ? reserveUrl : undefined} aria-disabled={!open}>{buying ? "COMPRAR CAMISETA" : "RESERVAR YA"} · <span data-price>{inventory ? formatMoney(inventory.unitPrice) : "—"}</span></a></div>
   </main>
 </Layout>
 <script>
@@ -84,7 +85,7 @@ const open = Boolean(inventory?.reservationMode && stock && stock > 0);
       const total = data.variants.reduce((sum: number, v: { available_stock: number }) => sum + v.available_stock, 0);
       stock.textContent = total > 0 ? `SOLO QUEDAN ${total} UNIDADES` : "Edición agotada";
       for (const option of size.options) option.disabled = !data.variants.some((v: { name: string; available_stock: number }) => v.name === option.value && v.available_stock > 0);
-      available = data.reservationMode && data.variants.some((v: { name: string; available_stock: number }) => v.name === size.value && v.available_stock > 0);
+      available = (data.reservationMode || data.salesEnabled) && data.variants.some((v: { name: string; available_stock: number }) => v.name === size.value && v.available_stock > 0);
       document.querySelectorAll("[data-price]").forEach(el => el.textContent = formatMoney(data.unitPrice));
     } catch { available = false; stock.textContent = "No se pudo consultar el stock. Vuelve a intentarlo."; }
     updateLinks(); syncSticky();

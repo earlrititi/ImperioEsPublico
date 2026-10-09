@@ -51,5 +51,8 @@ export const POST: APIRoute = async context => {
     await auditAdmin(user.id,"newsletter",body.requestId,"NEWSLETTER_CONFIRMED");
     const count = await rpc("queue_newsletter_revision",{p_id:body.requestId,p_emails:audience.recipients,p_actor:user.id,p_revision:body.revision});
     return privateJson({id:body.requestId,status:"pending",recipients:count},202);
-  } catch(error) { return failure(error); }
+  } catch(error) {
+    if(error instanceof Error && error.message==="REQUEST_CONFLICT")return privateJson({error:"El borrador ha cambiado. Abre su version actual antes de continuar.",code:"REQUEST_CONFLICT"},409);
+    return failure(error);
+  }
 };

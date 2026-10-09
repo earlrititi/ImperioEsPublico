@@ -1,9 +1,11 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import { ARTICLES_ITEMS } from "../config/home";
+import { publishedArticles } from "../lib/published-articles";
 import { articleSearchText } from "../lib/article-seo";
 
-const articles = ARTICLES_ITEMS;
+export const prerender=false;
+Astro.response.headers.set("Cache-Control","no-store");
+const articles = await publishedArticles();
 const categories = [...new Set(articles.map((article) => article.category))];
 const imageSizes = "(max-width: 720px) calc(100vw - 32px), (max-width: 1100px) 45vw, 23vw";
 ---

@@ -9,8 +9,10 @@ import { readerFaqSchema } from "../config/reader-faq";
 import { PRELOADER_SESSION_KEY } from "../config/hero";
 import Layout from "../layouts/Layout.astro";
 import { SITE } from "../config/site";
+import { publishedArticles } from "../lib/published-articles";
 
 const preloaderSessionKey = PRELOADER_SESSION_KEY;
+const articles = await publishedArticles();
 ---
 
 <Layout
@@ -33,7 +35,7 @@ const preloaderSessionKey = PRELOADER_SESSION_KEY;
     <Navigation />
     <HeroImperio client:load />
     <Services client:visible={{ rootMargin: "-20% 0px" }} />
-    <ArticlesGrid />
+    <ArticlesGrid articles={articles} />
     <ReaderFaq />
   </main>
   <noscript>

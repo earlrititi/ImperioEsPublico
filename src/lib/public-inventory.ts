@@ -4,7 +4,7 @@ import {
   reservationMode,
 } from "./reservations";
 import { SHIRT_FINAL_PRICE_CENTS } from "../config/commerce";
-import { readCampaign, campaignAcceptsReservations } from "./reservation-campaign";
+import { readCampaign, campaignAcceptsReservations, campaignAcceptsPurchases } from "./reservation-campaign";
 export async function readPublicInventory() {
     const db = await database();
     const campaign = await readCampaign();
@@ -46,6 +46,7 @@ export async function readPublicInventory() {
       variants: data,
       unitPrice: price.amount,
       reservationMode: reservationMode() && campaignAcceptsReservations(campaign),
+      salesEnabled: !reservationMode() && optionalEnv("SHIRT_SALES_APPROVED")==="true" && campaignAcceptsPurchases(campaign),
       campaign,
       expirationHours,
     };

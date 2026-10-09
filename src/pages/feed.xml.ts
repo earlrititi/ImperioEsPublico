@@ -1,12 +1,12 @@
 import type { APIRoute } from "astro";
-import { ARTICLES_ITEMS } from "../config/home";
+import { publishedArticles } from "../lib/published-articles";
 import { getArticleTier } from "../config/article-access";
 import { SITE } from "../config/site";
 import { canonicalUrl, escapeXml } from "../lib/seo";
 
 // Metadata only: this endpoint never imports the server-only article source loader.
-export const GET: APIRoute = () => {
-  const articles = ARTICLES_ITEMS.filter(article => getArticleTier(article.slug) === "piquero")
+export const GET: APIRoute = async () => {
+  const articles = (await publishedArticles()).filter(article => getArticleTier(article.slug) === "piquero")
     .sort((a, b) => (b.publishedAt ?? "").localeCompare(a.publishedAt ?? ""));
   const body = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel>

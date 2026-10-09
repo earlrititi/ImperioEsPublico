@@ -59,7 +59,7 @@ function ArticleCardContent({ article }) {
   );
 }
 
-export default function ArticlesGrid() {
+export default function ArticlesGrid({ articles = ARTICLES_ITEMS }) {
   return (
     <section class="articles-section home-section bg-white" aria-labelledby="articles-title">
       <div class="home-shell">
@@ -68,7 +68,7 @@ export default function ArticlesGrid() {
         </header>
 
         <div class="articles-grid">
-          {ARTICLES_ITEMS.map((article) => (
+          {articles.map((article) => (
             <article
               class={`article-card fade-in-up${article.href ? " article-card--published" : ""}`}
               key={article.title}

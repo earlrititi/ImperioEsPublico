@@ -1,6 +1,7 @@
 ---
-import { ARTICLES_ITEMS } from "../../config/home";
-const article = ARTICLES_ITEMS.find(item => item.slug === Astro.params.slug);
+import { publishedArticles } from "../../lib/published-articles";
+export const prerender=false;
+const article = (await publishedArticles()).find(item => item.slug === Astro.params.slug);
 if (!article) return new Response("Articulo no encontrado", { status: 404 });
 return Astro.redirect(`${article.href}${Astro.url.search}`, 301);
 ---

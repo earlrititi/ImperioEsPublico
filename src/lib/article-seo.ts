@@ -30,9 +30,9 @@ export function articleSchema(article: typeof ARTICLES_ITEMS[number]) {
     isAccessibleForFree: getArticleTier(article.slug) === "piquero",
     ...(article.publishedAt ? { datePublished: article.publishedAt } : {}),
     ...(editorial.modifiedAt ? { dateModified: editorial.modifiedAt } : {}),
-    ...(authors.length ? { author: authors.map(author => ({
+    author: "cmsId" in article && "author" in article ? [{"@type":"Person",name:String(article.author)}] : authors.map(author => ({
       "@type": author.type, name: author.name, url: canonicalUrl(`/autores/${author.id}`),
-    })) } : {}),
+    })),
     ...(entities.length ? { about: entities.map(entity => ({
       "@type": "Thing", name: entity.title, url: canonicalUrl(`/${entity.id}`),
     })) } : {}),

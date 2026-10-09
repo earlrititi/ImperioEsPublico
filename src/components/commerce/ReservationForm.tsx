@@ -13,13 +13,14 @@ export default function ReservationForm({ initialSize = "M" }: { initialSize?: s
   const [accepted, setAccepted] = useState(false), [marketing, setMarketing] = useState(false);
   const [website, setWebsite] = useState(""), [campaign, setCampaign] = useState<any>(null);
   const [expirationHours, setExpirationHours] = useState(0), [waitlist, setWaitlist] = useState(false);
+  const [sales,setSales]=useState(false);
   useEffect(() => {
     let active = true;
     const refresh = async () => {
       try {
         const data = await api("/api/reservations/inventory");
         if (active) {
-          setInventory(data.variants); setAvailable(data.reservationMode);
+          setInventory(data.variants); setAvailable(data.reservationMode||data.salesEnabled);setSales(Boolean(data.salesEnabled));
           setExpirationHours(data.expirationHours); setCampaign(data.campaign);
         }
       } catch { if (active) setAvailable(false); }
@@ -65,11 +66,11 @@ export default function ReservationForm({ initialSize = "M" }: { initialSize?: s
   return (
     <form class="reservation-form" onSubmit={submit}>
       <header class="reservation-form__header">
-        <span class="commerce-kicker">Solicitud de reserva</span>
-        <h2>{waitlist ? "Lista de espera" : "Pre-reserva gratuita"}</h2>
-        <p class="reservation-total">{formatMoney(0)} ahora</p>
+        <span class="commerce-kicker">{sales?"Compra de camiseta":"Solicitud de reserva"}</span>
+        <h2>{waitlist ? "Lista de espera" : sales?"Camiseta Imperial":"Pre-reserva gratuita"}</h2>
+        <p class="reservation-total">{sales&&!waitlist?formatMoney(SHIRT_FINAL_PRICE_CENTS*quantity):formatMoney(0)}{!sales&&" ahora"}</p>
         <p>{SHIRT_PRICE_COPY}.</p>
-        <p>Compra posterior: {formatMoney(SHIRT_FINAL_PRICE_CENTS)} por unidad. Total para {quantity} {quantity === 1 ? "camiseta" : "camisetas"}: {formatMoney(SHIRT_FINAL_PRICE_CENTS * quantity)}.</p>
+        <p>{sales?"Precio":"Compra posterior"}: {formatMoney(SHIRT_FINAL_PRICE_CENTS)} por unidad. Total para {quantity} {quantity === 1 ? "camiseta" : "camisetas"}: {formatMoney(SHIRT_FINAL_PRICE_CENTS * quantity)}.</p>
       </header>
       <fieldset disabled={busy}>
         <legend>Talla y cantidad</legend>
@@ -108,9 +109,10 @@ export default function ReservationForm({ initialSize = "M" }: { initialSize?: s
           <input tabIndex={-1} autoComplete="off" value={website} onInput={(e) => setWebsite(e.currentTarget.value)} />
         </label>
         <div class="reservation-conditions">
-          <p>{waitlist ? "La lista de espera no asigna stock ni obliga a comprar. Te avisaremos por orden de entrada si se libera una unidad." : "Pre-reserva gratuita. No se realiza ningún cobro y la pre-reserva no implica obligación de compra. La unidad quedará temporalmente asignada hasta que finalice el periodo indicado para completar la compra."}</p>
-          {campaign?.purchase_open_at && <p><strong>Compra prioritaria prevista:</strong> {new Date(campaign.purchase_open_at).toLocaleString("es-ES", { timeZone: "Europe/Madrid" })} (hora peninsular).</p>}
-          <p>Tras recibir la invitación de compra dispondrás de {campaign?.purchase_window_hours ?? 24} horas para completarla.</p>
+          <p>{waitlist ? "La lista de espera no asigna stock ni obliga a comprar. Te avisaremos por orden de entrada si se libera una unidad." : sales ? "Las unidades quedan asignadas temporalmente mientras completas el pago. Revisa la direccion y confirma tu compra en Stripe." : "Pre-reserva gratuita. No se realiza ningún cobro y la pre-reserva no implica obligación de compra. La unidad quedará temporalmente asignada hasta que finalice el periodo indicado para completar la compra."}</p>
+          {sales&&!waitlist&&<p>Revisa el resumen y confirma el pago en Stripe. El descuento de tu suscripcion activa se comprueba al pagar.</p>}
+          {!sales&&campaign?.purchase_open_at && <p><strong>Compra prioritaria prevista:</strong> {new Date(campaign.purchase_open_at).toLocaleString("es-ES", { timeZone: "Europe/Madrid" })} (hora peninsular).</p>}
+          <p>Dispones de {campaign?.purchase_window_hours ?? 24} horas para completarla.</p>
           {expirationHours > 0 && !waitlist && <p>Esta reserva caduca {expirationHours} horas después de confirmarla.</p>}
         </div>
         <label class="reservation-consent">
@@ -122,10 +124,10 @@ export default function ReservationForm({ initialSize = "M" }: { initialSize?: s
           <span>Quiero recibir novedades y comunicaciones comerciales de Imperio E.</span>
         </label>
         <button class="btn btn-primary" type="submit" disabled={busy || !challenge || (waitlist ? !canWait : !available || maximum < 1)}>
-          {busy ? "Confirmando..." : waitlist ? "Confirmar lista de espera" : "RESERVAR \u2014 0 \u20ac"}
+          {busy ? "Confirmando..." : waitlist ? "Confirmar lista de espera" : sales?"Continuar con la compra":"RESERVAR \u2014 0 \u20ac"}
         </button>
       </>}
-      {!available && !soldOut && <p role="status">El periodo de pre-reserva no esta abierto.</p>}
+      {!available && !soldOut && <p role="status">Las compras no estan disponibles temporalmente.</p>}
       <p role="status" aria-live="polite">{message}</p>
     </form>
   );

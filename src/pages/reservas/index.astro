@@ -3,13 +3,14 @@ import PageShell from "../../layouts/PageShell.astro";
 import ReservationForm from "../../components/commerce/ReservationForm";
 import { PRODUCTS } from "../../config/products";
 import "../../styles/commerce.css";
+import {reservationMode} from "../../lib/reservations";
 export const prerender=false;
 const shirt=PRODUCTS['camiseta-imperial'];
 const size=Astro.url.searchParams.get('size')??'M';
 Astro.response.headers.set('Cache-Control','no-store');
 Astro.response.headers.set('Referrer-Policy','no-referrer');
 ---
-<PageShell title="Reserva tu Camiseta Imperial | Imperio Español" eyebrow="Lanzamiento I" heading="Camiseta Imperial" summary="Reserva tu talla sin pago y completa la compra cuando recibas la invitación." noindex mainClass="reservation-page">
+<PageShell title="Camiseta Imperial | Imperio Español" eyebrow="Lanzamiento I" heading="Camiseta Imperial" summary={reservationMode()?"Reserva tu talla sin pago y completa la compra cuando recibas la invitacion.":"Elige tu talla y cantidad. Camiseta 26,99 EUR + envio 3 EUR por unidad, IVA incluido. Solo Peninsula."} noindex mainClass="reservation-page">
   <div class="commerce-layout">
     <aside class="commerce-product" aria-label="Información de la Camiseta Imperial">
       <div class="commerce-product__image"><img src="/images/museo-camiseta-front.webp" alt="Camiseta Imperial, vista delantera" width="1400" height="1150"/></div>

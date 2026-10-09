@@ -5,11 +5,11 @@ export async function auditAdmin(actor: string, entity: string, id: string, acti
   if (error) throw new Error("AUDIT_UNAVAILABLE");
 }
 
-export async function readAll(table: string, columns: string) {
+export async function readAll(table: string, columns: string, orderKey="id") {
   const db = await database();
   const rows: Record<string, any>[] = [];
   for (let page = 0; page < 100; page++) {
-    const { data, error } = await db.from(table).select(columns).order("id").range(page * 500, page * 500 + 499);
+    const { data, error } = await db.from(table).select(columns).order(orderKey).range(page * 500, page * 500 + 499);
     if (error) throw new Error("DATABASE_UNAVAILABLE");
     rows.push(...(data as unknown as Record<string, any>[]));
     if (!data || data.length < 500) return rows;

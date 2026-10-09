@@ -9,14 +9,16 @@ export type ArticleDraft = {
 
 export function safeArticleImage(value: string) {
   // Local media only. Uploads will be served from the same-origin media route.
-  return /^\/(?:images|media\/articles)\/[a-zA-Z0-9_/.% -]+\.(?:png|jpg|jpeg|webp|avif)$/i.test(value) &&
-    !value.includes("..") && !value.includes("%") && !value.includes("\\");
+  let decoded:string;
+  try{decoded=decodeURIComponent(value);}catch{return false;}
+  return /^\/(?:images|media\/articles)\/[\p{L}\p{M}0-9_/(). -]+\.(?:png|jpg|jpeg|webp|avif)$/iu.test(decoded) &&
+    !decoded.includes("..") && !decoded.includes("%") && !decoded.includes("\\");
 }
 
 export function sanitizeArticleBody(html: string) {
   return sanitizeHtml(html, {
-    allowedTags: ["p","br","h2","h3","strong","em","s","u","blockquote","ul","ol","li","a","img","figure","figcaption","hr"],
-    allowedAttributes: { a: ["href","title","rel"], img: ["src","alt","title","width","height","loading"] },
+    allowedTags: ["p","br","h2","h3","strong","em","s","u","sup","blockquote","ul","ol","li","a","img","figure","figcaption","hr"],
+    allowedAttributes: { h2:["id"],h3:["id"],a: ["href","title","rel"], img: ["src","alt","title","width","height","loading"] },
     allowedSchemes: ["https","http"], allowProtocolRelative: false,
     transformTags: { a: sanitizeHtml.simpleTransform("a",{rel:"noopener noreferrer"}),
       img: sanitizeHtml.simpleTransform("img",{loading:"lazy"}) },

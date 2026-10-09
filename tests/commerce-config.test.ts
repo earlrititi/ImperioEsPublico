@@ -20,7 +20,7 @@ test("paid checkout remains blocked without eligible published content", () => {
 
 test("carrier-provided packaging is confirmed while physical checkout remains gated", () => {
   const shirt = PRODUCTS["camiseta-imperial"];
-  assert.equal(shirt.legalStatus, "LEGAL_PRODUCT_DATA_INCOMPLETE");
+  assert.equal(shirt.legalStatus, "OWNER_APPROVED_FOR_SALE");
   assert.equal(shirt.packagingProvider, "Correos");
   assert.equal(shirt.packagingCompliance, "CARRIER_PROVIDED_ARTICLE_17_5_CONFIRMED");
 });
@@ -35,9 +35,9 @@ test("shirt inventory matches the owner's remaining stock, including XXL", () =>
 
 test("shirt uses the owner-confirmed VAT-inclusive amount and mainland shipping", () => {
   const shirt = PRODUCTS["camiseta-imperial"];
-  assert.equal(shirt.expectedUnitAmount, 2999);
+  assert.equal(shirt.expectedUnitAmount, 2699);
   assert.deepEqual(shirt.tax, { percentage: 21, behavior: "inclusive", confirmedByOwner: true });
-  assert.equal(shirt.shipping.amount, 0);
+  assert.equal(shirt.shipping.amount, 300);
   assert.equal(shirt.expectedUnitAmount + shirt.shipping.amount, 2999);
   assert.equal(shirt.shipping.country, "ES");
   assert.equal(shirt.shipping.region, "ES_MAINLAND");

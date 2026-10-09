@@ -26,6 +26,8 @@ let unavailable = false;
 let calls = 0;
 globalThis.fetch = async (input, options) => {
   calls++;
+  const requestedUrl = new URL(typeof input === "string" || input instanceof URL ? input : input.url);
+  if (requestedUrl.pathname === "/rest/v1/cms_articles") return new Response("[]", {headers:{"Content-Type":"application/json"}});
   if (unavailable) return new Response(JSON.stringify({ message: "fixture unavailable" }), { status: 503 });
   const url = new URL(typeof input === "string" || input instanceof URL ? input : input.url);
   let data;
@@ -63,7 +65,7 @@ async function check(label, pathname, authenticated, accessible, status = 200) {
 }
 
 await check("anonymous premium", premiumPath, false, false);
-assert.equal(calls, 0, "Anonymous access should not need a network request");
+assert.equal(calls, 1, "Anonymous access queries public metadata only, never authentication or premium bodies");
 for (const plan of ["piquero", "arcabucero", "maestre_campo"]) {
   for (const billing_interval of ["month", "year"]) {
     for (const status of ["active", "trialing", "canceled", "past_due", "unpaid"]) {

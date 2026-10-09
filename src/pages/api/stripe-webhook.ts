@@ -381,6 +381,10 @@ export const POST: APIRoute = async ({ request }) => {
                   ...subscriptionNotification(invoice, getPlanLabel(getPlanFromSubscription(subscription)), getIntervalFromSubscription(subscription)),
                 }, { idempotencyKey: noticeId });
                 if (response.error || !response.data) throw new Error("ADMIN_EMAIL_PROVIDER_UNAVAILABLE");
+                const notice=subscriptionNotification(invoice,getPlanLabel(getPlanFromSubscription(subscription)),getIntervalFromSubscription(subscription));
+                const recorded=await (await database()).from("admin_notification_history").upsert({id:noticeId,kind:"paid_subscription",
+                  customer_email:(invoice.customer_email??"").toLowerCase(),subject:notice.subject,source:"application",delivery_status:"accepted_by_provider"},{onConflict:"id"});
+                if(recorded.error)throw new Error("DATABASE_UNAVAILABLE");
                 await completeStripeEvent(noticeId);
               } catch (error) {
                 await failStripeEvent(noticeId, error);

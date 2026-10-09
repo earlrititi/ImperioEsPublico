@@ -1,13 +1,13 @@
 import type { APIRoute } from "astro";
 import { getCollection } from "astro:content";
-import { ARTICLES_ITEMS } from "../config/home";
+import { publishedArticles } from "../lib/published-articles";
 import { AUTHORS, REFERENCE_PAGES, getArticleEditorial } from "../config/editorial";
 import { INDEXABLE_STATIC_ROUTES, canonicalUrl, escapeXml } from "../lib/seo";
 
 export const GET: APIRoute = async () => {
   const entries: { path: string; modified?: string }[] = [
     ...INDEXABLE_STATIC_ROUTES.map(path => ({ path })),
-    ...ARTICLES_ITEMS.map(article => ({
+    ...(await publishedArticles()).map(article => ({
       path: `/papeles-y-tratados/${article.slug}`,
       modified: getArticleEditorial(article.slug).modifiedAt ?? article.publishedAt,
     })),

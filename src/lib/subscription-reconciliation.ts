@@ -8,7 +8,9 @@ export async function verifiedSubscriptions() {
   const live = /^(sk|rk)_live_/.test(getRequiredEnv("STRIPE_SECRET_KEY"));
   const verified: Record<string, any>[] = [];
   const unresolved: Record<string, any>[] = [];
+  const archived: Record<string, any>[] = [];
   for (const row of rows) {
+    if (row.status === "legacy_unverified") { archived.push({...row,reason:"legacy_unverified"}); continue; }
     if (!row.stripe_subscription_id) {
       unresolved.push({ ...row, reason: "missing_stripe_id" });
       continue;
@@ -36,5 +38,5 @@ export async function verifiedSubscriptions() {
   }
   const active = verified.filter(s => s.status === "active");
   const duplicateEmails = [...new Set(active.map(s => s.email))].filter(email => active.filter(s => s.email === email).length > 1);
-  return { verified, unresolved, duplicateEmails };
+  return { verified, unresolved, archived, duplicateEmails };
 }

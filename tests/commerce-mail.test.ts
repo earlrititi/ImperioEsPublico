@@ -9,12 +9,12 @@ const reservation = {
     line_total_snapshot: 2999 }],
 };
 
-test("Reservation mail distinguishes management link from the October purchase invitation", () => {
+test("Reservation mail distinguishes management link from a later purchase invitation", () => {
   const text = reservationMailText(reservation, "RESERVED", "https://example.invalid/manage");
   assert.match(text, /^¡Gracias por reservar tu pedacito de historia!/);
   assert.match(text, /Empieza a formar parte de nuestra comunidad hasta entonces:\nhttps:\/\/imperioes\.com\/suscribirse/);
-  assert.match(text, /correo electr\u00f3nico el enlace de compra/);
-  assert.match(text, /12 de octubre de 2026/);
+  assert.match(text, /por correo el enlace privado/);
+  assert.match(text, /invitacion de compra/);
   assert.match(text, /este no es el enlace de compra/);
 });
 

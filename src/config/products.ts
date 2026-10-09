@@ -1,5 +1,5 @@
 import { LEGAL_BUSINESS } from "./legal";
-import { SHIRT_FINAL_PRICE_CENTS } from "./commerce";
+import { SHIRT_PRODUCT_PRICE_CENTS, SHIRT_SHIPPING_PRICE_CENTS } from "./commerce";
 
 const shirtVariants = [
   { size: "S", stock: 3, lengthCm: 66, widthCm: 50 },
@@ -25,7 +25,7 @@ export const PRODUCTS = {
     ],
     baseGarmentDecorationMethods: ["sublimacion", "serigrafia", "transfer", "vinilo", "bordado", "cosido"],
     priceEnvName: "STRIPE_PRICE_CAMISETA_IMPERIAL",
-    expectedUnitAmount: SHIRT_FINAL_PRICE_CENTS,
+    expectedUnitAmount: SHIRT_PRODUCT_PRICE_CENTS,
     currency: "eur",
     // Owner-supplied snapshot, not an inventory reservation or a live stock feed.
     stock: shirtVariants.reduce((total, variant) => total + variant.stock, 0),
@@ -48,7 +48,7 @@ export const PRODUCTS = {
       country: "ES",
       region: "ES_MAINLAND",
       carrier: "Correos",
-      amount: 0,
+      amount: SHIRT_SHIPPING_PRICE_CENTS,
       preparationMaxHours: 48,
       deliveryMaxBusinessDays: 7,
     },
@@ -58,7 +58,7 @@ export const PRODUCTS = {
     packagingType: "Sobre de envio",
     packagingProvider: "Correos",
     packagingCompliance: "CARRIER_PROVIDED_ARTICLE_17_5_CONFIRMED",
-    legalStatus: "LEGAL_PRODUCT_DATA_INCOMPLETE",
+    legalStatus: "OWNER_APPROVED_FOR_SALE",
   },
 } as const;
 

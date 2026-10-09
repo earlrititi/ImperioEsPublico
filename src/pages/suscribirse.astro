@@ -1,7 +1,7 @@
 ---
 import PageShell from "../layouts/PageShell.astro";
 import { ES_VAT } from "../config/tax";
-import { TSHIRT_OFFER_COPY } from "../config/tshirt-offer";
+import { shirtOfferCopy } from "../config/tshirt-offer";
 ---
 
 <PageShell
@@ -28,7 +28,7 @@ import { TSHIRT_OFFER_COPY } from "../config/tshirt-offer";
         <h2>ARCABUCERO</h2>
         <p class="muted">Acceso a los articulos para suscriptores.</p>
         <p>Incluye los mismos articulos que Maestre de Campo. Los seis articulos originales siguen siendo gratuitos.</p>
-        <p>{TSHIRT_OFFER_COPY}</p>
+        <p>{shirtOfferCopy("arcabucero")}</p>
         <p class="muted">Foro: próximamente.</p>
         <div class="billing-options" role="group" aria-label="Facturacion de Arcabucero">
           <a class="btn btn-primary" href="/checkout/arcabucero-monthly">
@@ -45,6 +45,7 @@ import { TSHIRT_OFFER_COPY } from "../config/tshirt-offer";
         <h2>MAESTRE DE CAMPO</h2>
         <p class="muted">Acceso a los articulos para suscriptores.</p>
         <p>Incluye los mismos articulos que Arcabucero. Los seis articulos originales siguen siendo gratuitos.</p>
+        <p>{shirtOfferCopy("maestre_campo")}</p>
         <p class="muted">Foro: próximamente.</p>
         <div class="billing-options" role="group" aria-label="Facturacion de Maestre de Campo">
           <a class="btn btn-primary" href="/checkout/maestre-campo-monthly">

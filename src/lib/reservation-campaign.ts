@@ -10,3 +10,6 @@ export async function readCampaign() {
 export function campaignAcceptsReservations(c: { reservations_open_at: string | null; purchase_activated: boolean }, now = Date.now()) {
   return !c.purchase_activated && (!c.reservations_open_at || Date.parse(c.reservations_open_at) <= now);
 }
+export function campaignAcceptsPurchases(c:{purchase_activated:boolean;purchase_open_at:string|null},now=Date.now()){
+  return c.purchase_activated && (!c.purchase_open_at || Date.parse(c.purchase_open_at)<=now);
+}

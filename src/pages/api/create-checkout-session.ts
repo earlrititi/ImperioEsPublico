@@ -2,7 +2,7 @@ import type { APIRoute } from "astro";
 import { getCollection } from "astro:content";
 import { LEGAL_DOCUMENT_VERSIONS } from "../../config/legal";
 import { hasPublishedPaidContent, isCheckoutModeEnabled } from "../../lib/commercial-readiness";
-import { getPublishedArticleTiers } from "../../lib/article-content";
+import { publishedArticles,publishedArticleTier } from "../../lib/published-articles";
 import { getRequiredEnv } from "../../lib/env";
 import { recordLegalConsents } from "../../lib/legal-consents";
 import { consumeRateLimit } from "../../lib/rate-limit";
@@ -79,7 +79,7 @@ export const POST: APIRoute = async ({ cookies, request }) => {
     }
 
     if (body?.product === "camiseta-imperial") {
-      return new Response(JSON.stringify({ error: "LEGAL_PRODUCT_DATA_INCOMPLETE" }), {
+      return new Response(JSON.stringify({ error: "Elige talla y cantidad en el formulario de camisetas.",code:"SHIRT_ORDER_REQUIRED" }), {
         status: 409,
         headers: { "Content-Type": "application/json" },
       });
@@ -96,7 +96,7 @@ export const POST: APIRoute = async ({ cookies, request }) => {
 
     const publishedTiers = [
       ...(await getCollection("articles")).map((entry) => entry.data.tier),
-      ...getPublishedArticleTiers(),
+      ...(await publishedArticles()).map(publishedArticleTier),
     ];
 
     if (!hasPublishedPaidContent(publishedTiers, selectedPlan.plan)) {

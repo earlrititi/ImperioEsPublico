@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { ARTICLES_ITEMS } from "../src/config/home";
 import {sanitizeArticleBody,validateArticleDraft,articleDraftPreview,safeArticleImage} from "../src/lib/admin-article-content";
 const draft={title:"El Siglo de Oro",slug:"el-siglo-de-oro",lead:"Resumen",category:"Historia",author:"Imperio E",imageSrc:"",imageAlt:"",imageCaption:"",publishedAt:"2026-10-08",seoTitle:"El Siglo de Oro",description:"Historia",body:"<h2>Literatura</h2><p>Texto</p>"};
 test("CMS rejects malformed slugs, dates and oversized content",()=>{
@@ -15,4 +16,11 @@ test("CMS preview treats metadata as text and rejects disguised remote images",(
   assert.doesNotMatch(articleDraftPreview({...draft,title:'<script>alert(1)</script>'}),/<script>/);
   for(const path of ["//evil.test/a.jpg","/images/../a.jpg","/images/%2e%2e/a.jpg","/images/a.svg","/images/a.jpg\" onerror=\"x"])assert.equal(safeArticleImage(path),false);
   assert.equal(safeArticleImage("/images/articulos/example.webp"),true);
+});
+test("Every legacy article can be imported without changing its metadata or URL",()=>{
+  for(const article of ARTICLES_ITEMS){
+    const parsed=validateArticleDraft({...draft,...article,author:"Imperio Espanol",imageCaption:article.imageCaption??"",publishedAt:article.publishedAt??"",lead:article.lead??""});
+    assert.equal(parsed.slug,article.slug);
+    assert.equal(parsed.imageSrc,article.imageSrc);
+  }
 });

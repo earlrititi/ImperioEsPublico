@@ -17,7 +17,7 @@ async function fixture(id){
   const existing=await db.auth.admin.getUserById(id);
   assert.ok(!existing.data.user,'Refuse to modify an existing Test user');
   const email=`preview-${id}@example.invalid`;
-  const made=await db.auth.admin.createUser({id,email,email_confirm:true});
+  const made=await db.auth.admin.createUser({id,email,email_confirm:true,...(id==='24f42701-98e0-4716-810c-363ae1cc8fa2'?{app_metadata:{editorial_admin:true}}:{})});
   assert.ifError(made.error);created.push(id);
   const link=await db.auth.admin.generateLink({type:'magiclink',email});assert.ifError(link.error);
   const auth=createClient(e.PUBLIC_SUPABASE_URL,e.PUBLIC_SUPABASE_ANON_KEY,{auth:{persistSession:false,autoRefreshToken:false}});
@@ -35,10 +35,10 @@ function request(path,cookie,body){
 try{
   const admin=await fixture('24f42701-98e0-4716-810c-363ae1cc8fa2');
   const normal=await fixture(randomUUID());
-  for(const path of ['/admin','/admin/interacciones','/admin/suscripciones','/admin/correos','/admin/newsletter','/admin/articles']){
+  for(const path of ['/admin','/admin/interacciones','/admin/suscripciones','/admin/correos','/admin/newsletter','/admin/articles','/admin/comercio']){
     const r=request(path,admin);assert.equal(r.status,200,path);assert.match(r.body,/Administracion/);assert.doesNotMatch(r.body,/sk_live_|service_role/);console.log(`Admin page verified: ${path}`);
   }
-  for(const path of ['/api/admin/analytics','/api/admin/subscriptions','/api/admin/mail','/api/admin/newsletter','/api/admin/articles']){
+  for(const path of ['/api/admin/analytics','/api/admin/subscriptions','/api/admin/mail','/api/admin/newsletter','/api/admin/articles','/api/admin/overview']){
     assert.equal(request(path,admin).status,200,path);
     assert.equal(request(path,normal).status,403,`Normal user denied ${path}`);console.log(`Admin and non-admin API verified: ${path}`);
   }
@@ -50,6 +50,21 @@ try{
   assert.equal(request('/api/admin/articles',admin,{action:'save',id:articleId,revision:1,draft:{...draft,title:'Updated'}}).status,200);
   assert.equal(request('/api/admin/articles',admin,{action:'save',id:articleId,revision:1,draft}).status,409);
   console.log('Real Test draft save, preview sanitation, revision conflict and non-admin denial verified');
+  assert.equal(request('/api/admin/articles',normal,{action:'publish',id:articleId,revision:2}).status,403);
+  assert.equal(request('/api/admin/articles',admin,{action:'publish',id:articleId,revision:2}).status,200);
+  const path='/papeles-y-tratados/'+draft.slug;
+  const publicPage=request(path,'');assert.equal(publicPage.status,200);assert.match(publicPage.body,/Articulo para suscriptores/);assert.doesNotMatch(publicPage.body,/<p>Body<\/p>/);
+  const adminPage=request(path,admin);assert.equal(adminPage.status,200);assert.match(adminPage.body,/<p>Body<\/p>/);
+  const catalogue=request('/papeles-y-tratados','');assert.equal(catalogue.status,200);assert.ok(catalogue.body.includes(draft.slug));assert.doesNotMatch(catalogue.body,/<p>Body<\/p>/);
+  assert.ok(request('/sitemap.xml','').body.includes(draft.slug));
+  assert.ok(!request('/feed.xml','').body.includes(draft.slug));
+  assert.equal(request('/api/admin/articles',admin,{action:'save',id:articleId,revision:3,draft:{...draft,body:'<p>UNPUBLISHED_SENTINEL</p>'}}).status,200);
+  assert.doesNotMatch(request(path,admin).body,/UNPUBLISHED_SENTINEL/);
+  assert.equal(request('/api/admin/articles',admin,{action:'publish',id:articleId,revision:3}).status,409);
+  assert.equal(request('/api/admin/articles',admin,{action:'withdraw',id:articleId,revision:4}).status,200);
+  assert.equal(request(path,'').status,404);assert.ok(!request('/sitemap.xml','').body.includes(draft.slug));
+  assert.equal(request('/api/admin/articles',admin,{action:'delete',id:articleId,revision:5}).status,200);
+  console.log('Publication, public catalogue, sitemap, premium protection, draft isolation and withdrawal verified in Preview.');
 }finally{
   assert.ifError((await db.from('cms_articles').delete().eq('id',articleId)).error);
   assert.ifError((await db.from('commerce_audit').delete().eq('entity','article').eq('entity_id',articleId)).error);

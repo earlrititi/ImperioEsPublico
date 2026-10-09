@@ -18,8 +18,8 @@
         const variant = data.variants.find((v: { name: string }) => v.name === select.value);
         if (!variant) throw new Error();
         const exhausted = variant.available_stock === 0;
-        button.textContent = exhausted ? "AGOTADO" : "RESERVAR \u2014 0 \u20ac";
-        button.disabled = exhausted || !data.reservationMode;
+        button.textContent = exhausted ? "AGOTADO" : data.salesEnabled?"COMPRAR CAMISETA":"RESERVAR \u2014 0 \u20ac";
+        button.disabled = exhausted || (!data.reservationMode && !data.salesEnabled);
         waiting.hidden = !exhausted;
         waiting.href = `/reservas?size=${encodeURIComponent(select.value)}`;
         status.textContent = exhausted ? "Todas las unidades de esta talla estan reservadas o vendidas." : `Quedan ${variant.available_stock} en talla ${select.value}`;

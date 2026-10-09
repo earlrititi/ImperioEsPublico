@@ -60,7 +60,8 @@ test("article bodies are not public files and the route cannot be prerendered", 
   assert.equal(existsSync(join(process.cwd(), "public/images/articulos/textos")), false);
   const route = readFileSync(join(process.cwd(), "src/pages/papeles-y-tratados/[slug].astro"), "utf8");
   assert.match(route, /export const prerender = false/);
-  assert.match(route, /hasAccess \? await loadArticleSource/);
+  assert.match(route, /hasAccess && !article.cmsId \? await loadArticleSource/);
+  assert.match(route, /hasAccess && article.cmsId \? await publishedArticleBody/);
   assert.match(route, /private, no-store/);
   assert.doesNotMatch(route, /client:(?:load|visible|idle).*ArticleBody/);
 });

@@ -26,5 +26,5 @@ test("Shirt preserves owner-confirmed manufacturer details and own stock", () =>
   assert.equal(product.packagingType, "Sobre de envio");
   assert.equal(product.packagingProvider, "Correos");
   assert.equal(product.packagingCompliance, "CARRIER_PROVIDED_ARTICLE_17_5_CONFIRMED");
-  assert.equal(product.legalStatus, "LEGAL_PRODUCT_DATA_INCOMPLETE");
+  assert.equal(product.legalStatus, "OWNER_APPROVED_FOR_SALE");
 });

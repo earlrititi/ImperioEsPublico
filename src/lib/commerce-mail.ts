@@ -60,7 +60,7 @@ export function reservationMailText(r: any, kind: string, url: string) {
       ? "¡Gracias por reservar tu pedacito de historia!"
       : null,
     isInitialReservation
-      ? "La compra se habilita el 12 de octubre de 2026."
+      ? "Recibiras la invitacion de compra en cuanto el pago este disponible."
       : null,
     isInitialReservation
       ? "Empieza a formar parte de nuestra comunidad hasta entonces:"

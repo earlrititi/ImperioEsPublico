@@ -13,7 +13,7 @@ function query(sql){
 }
 const applied=query('select version from supabase_migrations.schema_migrations order by version');
 for(const version of ['016','017','018','019'])assert.ok(applied.some(row=>row.version===version),`Missing prerequisite ${version}`);
-const pending=readdirSync('supabase/migrations').filter(name=>/^02[0-4]_.*\.sql$/.test(name)&&!applied.some(row=>row.version===name.slice(0,3))).sort();
+const pending=readdirSync('supabase/migrations').filter(name=>/^02[0-7]_.*\.sql$/.test(name)&&!applied.some(row=>row.version===name.slice(0,3))).sort();
 console.log(JSON.stringify({project,pending,apply:process.argv.includes('--apply')}));
 if(process.argv.includes('--apply')&&pending.length){
   const statements=pending.map(name=>{

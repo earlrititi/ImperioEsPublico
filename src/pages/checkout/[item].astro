@@ -4,12 +4,12 @@ import { getCollection } from "astro:content";
 import { LEGAL_DOCUMENT_VERSIONS } from "../../config/legal";
 import { getProduct } from "../../config/products";
 import { hasPublishedPaidContent, isCheckoutModeEnabled } from "../../lib/commercial-readiness";
-import { getPublishedArticleTiers } from "../../lib/article-content";
+import { publishedArticles,publishedArticleTier } from "../../lib/published-articles";
 import { getCheckoutPlan, isCheckoutPriceValid } from "../../lib/stripe-prices";
 import { getEsVatRate } from "../../lib/stripe-tax";
 import { ES_VAT } from "../../config/tax";
 import { SHIRT_PRICE_COPY } from "../../config/commerce";
-import { TSHIRT_OFFER_COPY } from "../../config/tshirt-offer";
+import { shirtOfferCopy } from "../../config/tshirt-offer";
 import { createSupabaseServerClient } from "../../lib/supabase/server";
 
 export const prerender = false;
@@ -58,10 +58,10 @@ const formattedAmount = amount === null
       currency: currency.toUpperCase(),
     }).format(amount / 100);
 const priceMatchesPlan = Boolean(stripePrice && selectedPlan && isCheckoutPriceValid(stripePrice, selectedPlan));
-const publishedTiers = [
+const publishedTiers = selectedPlan ? [
   ...(await getCollection("articles")).map((entry) => entry.data.tier),
-  ...getPublishedArticleTiers(),
-];
+  ...(await publishedArticles()).map(publishedArticleTier),
+] : [];
 const hasPlanContent = selectedPlan
   ? hasPublishedPaidContent(publishedTiers, selectedPlan.plan)
   : false;
@@ -70,7 +70,6 @@ const checkoutModeEnabled = isCheckoutModeEnabled(
   import.meta.env.STRIPE_LIVE_CHECKOUT_ENABLED
 );
 const canStartSubscription = isSubscription && priceMatchesPlan && hasPlanContent && checkoutModeEnabled && taxReady;
-const productReady = product?.legalStatus !== "LEGAL_PRODUCT_DATA_INCOMPLETE";
 const currentBenefits = "Acceso a todos los articulos para suscriptores, compartidos por Arcabucero y Maestre de Campo.";
 const { data: { user } } = await createSupabaseServerClient({ cookies: Astro.cookies, request: Astro.request }).auth.getUser();
 const pageTitle = selectedPlan
@@ -113,7 +112,7 @@ const pageTitle = selectedPlan
           </div>
           <div><dt>Acceso</dt><dd>Tras confirmacion del pago por webhook verificado</dd></div>
           <div><dt>Prestaciones actuales</dt><dd>{currentBenefits}</dd></div>
-          {selectedPlan.plan === "arcabucero" && <div><dt>Descuento camiseta</dt><dd>{TSHIRT_OFFER_COPY}</dd></div>}
+          <div><dt>Descuento camiseta</dt><dd>{shirtOfferCopy(selectedPlan.plan)}</dd></div>
           <div><dt>Foro</dt><dd>Próximamente</dd></div>
         </dl>
 
@@ -201,7 +200,7 @@ const pageTitle = selectedPlan
           <div><dt>Cuidado de la prenda base</dt><dd>{product.careInstructions}</dd></div>
           <div><dt>Talla elegida</dt><dd>{productVariant?.size ?? "Sin seleccionar"}</dd></div>
           <div><dt>Precio camiseta</dt><dd>{formatProductAmount(product.expectedUnitAmount)}</dd></div>
-          <div><dt>Envio estandar a Peninsula</dt><dd>Incluido</dd></div>
+          <div><dt>Envio estandar a Peninsula</dt><dd>3 EUR por unidad, IVA incluido</dd></div>
           <div><dt>Total por una camiseta con envio</dt><dd>{formatProductAmount(product.expectedUnitAmount + product.shipping.amount)}</dd></div>
           <div><dt>Envio</dt><dd>{product.shippingInformation}</dd></div>
           <div><dt>Impuestos</dt><dd>{product.taxInformation}</dd></div>
@@ -218,17 +217,8 @@ const pageTitle = selectedPlan
           </tbody>
         </table>
         <p>{SHIRT_PRICE_COPY}</p>
-        <a class="btn btn-primary" href={`/reservas${productVariant ? `?size=${productVariant.size}` : ''}`}>Reservar sin pago</a>
-        <p>Reserva ahora. No se realizara ningun cobro en este momento.</p>
-        {!productReady && (
-          <div class="notice" role="alert">
-            <strong>LEGAL_PRODUCT_DATA_INCOMPLETE</strong>
-            <p>
-              La venta todavia no esta abierta. Queda pendiente cerrar la revision
-              del producto final y las pruebas del proceso de compra.
-            </p>
-          </div>
-        )}
+        <a class="btn btn-primary" href={`/reservas${productVariant ? `?size=${productVariant.size}` : ''}`}>Elegir talla y continuar</a>
+        <p>Confirma tu compra en Stripe despues de revisar la direccion y el importe final.</p>
         <a class="btn btn-ghost" href="/tienda#camiseta">Volver a la tienda</a>
         <a href="/legal/devoluciones">Envios, devoluciones y reembolsos</a>
       </>

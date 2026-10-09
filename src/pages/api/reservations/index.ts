@@ -19,14 +19,18 @@ import {
   verifyChallenge,
 } from "../../../lib/reservations";
 import { drainCommerceMail } from "../../../lib/commerce-mail";
-import { readCampaign } from "../../../lib/reservation-campaign";
+import { readCampaign, campaignAcceptsPurchases } from "../../../lib/reservation-campaign";
+import { shirtPaymentConfiguration } from "../../../lib/reservation-payment";
 export const prerender = false;
 export const POST: APIRoute = async (context) => {
   try {
     const body = await requestBody(context.request);
-    if (!reservationMode() && body.waitlist !== true) throw new Error("RESERVATION_MODE");
     await limited(context.request, "reservation_create", 12);
     const campaign = await readCampaign();
+    if(!reservationMode() && body.waitlist!==true){
+      if(!campaignAcceptsPurchases(campaign))throw new Error("CAMPAIGN_NOT_OPEN");
+      await shirtPaymentConfiguration();
+    }
     const parsed = parseReservationInput(body, campaign.max_reservation_quantity);
     const waitlist = body.waitlist === true;
     if (waitlist && (parsed.items.length !== 1 || parsed.items[0].quantity !== 1))

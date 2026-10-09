@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { qualifiesForTshirtOffer, shirtDiscountPercent } from "../src/config/tshirt-offer";
+import { qualifiesForTshirtOffer, shirtDiscountPercent, shirtOfferCopy } from "../src/config/tshirt-offer";
 import { PLAN_COMPARISON_LABELS, SERVICES_ITEMS } from "../src/config/home";
 
 test("Active paid plans grant their non-stacking shirt benefit", () => {
@@ -22,4 +22,7 @@ test("The subscription comparison has matching rows and only the forum is forthc
     });
   }
   assert.match(SERVICES_ITEMS[1].highlights.at(-1) ?? "", /15%/);
+  assert.match(SERVICES_ITEMS[2].highlights.at(-1) ?? "", /20%/);
+  assert.match(shirtOfferCopy("arcabucero"), /^15%/);
+  assert.match(shirtOfferCopy("maestre_campo"), /^20%/);
 });

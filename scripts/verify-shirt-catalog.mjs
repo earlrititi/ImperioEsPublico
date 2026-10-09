@@ -21,7 +21,7 @@ for (const size of ["S", "M", "L", "XL", "XXL"]) {
 }
 assert.match(storefront, /<option[^>]*value="M"[^>]*selected/);
 assert.match(storefront, /IVA incluido/);
-assert.match(storefront, /RESERVAR \u2014 0 \u20ac/);
+assert.match(storefront, /COMPRAR CAMISETA/);
 
 for (const size of ["S", "M", "L", "XL", "XXL"]) {
   const html = await page(`/checkout/camiseta-imperial?size=${size}`);
@@ -41,7 +41,7 @@ for (const size of ["S", "M", "L", "XL", "XXL"]) {
   assert.match(html, /Proveedor del envase de transporte<\/dt>\s*<dd[^>]*>Correos/);
   assert.doesNotMatch(html, /PACKAGING_COMPLIANCE_EXTERNAL_REVIEW_REQUIRED/);
   assert.doesNotMatch(html, /advertencias? de seguridad|INFORMACION E INSTRUCCIONES DE SEGURIDAD/i);
-  assert.match(html, /LEGAL_PRODUCT_DATA_INCOMPLETE/);
+  assert.doesNotMatch(html, /LEGAL_PRODUCT_DATA_INCOMPLETE/);
   assert.doesNotMatch(html, /<form[^>]*data-checkout-contract/);
 }
 for (const query of ["", "?size=NOT-A-SIZE"]) {

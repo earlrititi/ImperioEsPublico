@@ -59,7 +59,7 @@ export default function ReservationForm({ initialSize = "M" }: { initialSize?: s
         address: waitlist ? undefined : address,
       });
       if (!waitlist) socialEvent("reservation_completed", { sku: variant.sku, quantity });
-      await trackFunnel("shirts",4);
+      if(!waitlist)await trackFunnel("shirts",4);
       window.location.assign(attributedPath(result.url));
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "No se pudo confirmar la solicitud."); setBusy(false);

@@ -12,10 +12,10 @@ export const GET:APIRoute=async context=>{
     const since=Date.now()-days*86400000;
     const [runs,manifesto,orders,consents,analytics]=await Promise.all([
       readAll("funnel_runs","id,flow,stages,created_at,last_seen_at"),readAll("manifesto_requests","id,status,marketing_consent,created_at,source"),
-      readAll("commerce_orders","id,status,total,created_at"),readAll("legal_consents","id,source,context_id,created_at"),rpc("admin_analytics_summary",{p_days:days}),
+      readAll("commerce_orders","id,status,total,created_at"),readAll("legal_consents","id,source,context_id,context_type,consent_type,accepted,created_at"),rpc("admin_analytics_summary",{p_days:days}),
     ]);
     const current=manifesto.filter(r=>Date.parse(r.created_at)>=since);
-    const legacy=new Set(consents.filter(r=>r.source==="manifesto"&&Date.parse(r.created_at)>=since&&!manifesto.some(m=>m.id===r.context_id)).map(r=>r.context_id));
+    const legacy=new Set(consents.filter(r=>r.source==="manifesto"&&r.consent_type==="privacy_acknowledgement"&&r.accepted===true&&r.context_type==="resource_request"&&r.context_id&&Date.parse(r.created_at)>=since&&!manifesto.some(m=>m.id===r.context_id)).map(r=>r.context_id));
     const {stripe}=await import("../../../lib/stripe");
     const site=getRequiredEnv("PUBLIC_SITE_URL").replace(/\/$/,"");
     const checkout={subscriptions:{opened:0,paid:0,expired:0,pending:0},shirts:{opened:0,paid:0,expired:0,pending:0}};

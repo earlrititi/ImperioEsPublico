@@ -84,15 +84,15 @@ export function reservationMailText(r: any, kind: string, url: string) {
     a ? `${a.postalCode} ${a.city}, ${PROVINCES.find(([code]) => code === a.province)?.[1] ?? a.province}, Espana` : null,
     r.customer_phone ? `Telefono: ${r.customer_phone}` : null,
     paid
-      ? "Pago confirmado. Consulta el estado de tu pedido."
+      ? "Tu compra se ha realizado correctamente. Comenzaremos a tramitar tu env\u00edo a partir del 13 de octubre de 2026. Esta fecha corresponde al inicio de la tramitaci\u00f3n, no a la entrega."
       : ["PAYMENT_PENDING", "PAYMENT_FAILED"].includes(r.status)
         ? "El pago no se ha confirmado todavia."
         : "NO SE HA REALIZADO NINGUN COBRO.",
-    r.expires_at
+    paid ? null : r.expires_at
       ? `Reserva valida hasta: ${new Date(r.expires_at).toLocaleString("es-ES", { timeZone: "Europe/Madrid" })} (hora peninsular)`
       : "Recibiras el plazo de compra en la invitacion. No tienes obligacion de comprar.",
     r.status === "WAITLIST" ? "Lista de espera: no se ha asignado stock. Avisaremos por orden de entrada si se libera una unidad." : null,
-    kind === "PURCHASE_AVAILABLE"
+    paid ? null : kind === "PURCHASE_AVAILABLE"
       ? "Ya puedes revisar tu reserva y confirmar expresamente el pago."
       : "La reserva no autoriza cargos futuros.",
     !paid && r.status === "RESERVED" ? RESERVATION_PURCHASE_NOTICE : null,

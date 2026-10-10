@@ -135,10 +135,10 @@ export async function sendMerchPurchaseEmail(params: {
       <div style="font-family: Georgia, serif; line-height: 1.6; color: #111;">
         <h1>Pedido confirmado</h1>
         <p>Hemos recibido el pago de <strong>${productName}${sizeCopy}</strong>.</p>
-        <p>Prepararemos el pedido y te informaremos cuando salga hacia su destino.</p>
+        <p>Tu compra se ha realizado correctamente. Comenzaremos a tramitar tu env&iacute;o a partir del 13 de octubre de 2026. Esta fecha corresponde al inicio de la tramitaci&oacute;n, no a la entrega.</p>
         <p><strong>Plus Ultra.</strong></p>
       </div>
     `,
-    text: `Pedido confirmado. Hemos recibido el pago de ${productName}${sizeCopy}. Prepararemos el pedido y te informaremos cuando salga hacia su destino. Plus Ultra.`,
+    text: `Pedido confirmado. Hemos recibido el pago de ${productName}${sizeCopy}. Tu compra se ha realizado correctamente. Comenzaremos a tramitar tu env\u00edo a partir del 13 de octubre de 2026. Esta fecha corresponde al inicio de la tramitaci\u00f3n, no a la entrega. Plus Ultra.`,
   });
 }

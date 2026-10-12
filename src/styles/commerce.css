@@ -41,6 +41,16 @@
 .reservation-form .btn,.reservation-manager .btn,.commerce-admin .btn {white-space:normal;max-width:100%;margin:6px 8px 6px 0}
 .reservation-form button:disabled,.reservation-manager button:disabled,.commerce-admin button:disabled {opacity:.55;cursor:not-allowed}
 .reservation-manager address{font-style:normal;line-height:1.7}
+.reservation-manager h2:focus{outline:2px solid var(--color-red-accent);outline-offset:6px}
+.reservation-purchase-details{margin-block:20px;padding-block:16px;border-block:1px solid var(--line)}
+.reservation-purchase-details summary{cursor:pointer;min-height:44px;display:list-item;padding-block:10px;font-weight:700;box-sizing:border-box}
+.reservation-payment-status{padding:16px;border-left:3px solid var(--color-red-accent);margin-block:20px}
+.commerce-payment-actions{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-block:24px}
+.commerce-payment-actions>a:last-child{overflow-wrap:anywhere}
+.reservation-summary .commerce-table-wrap table{min-width:32rem}
+.reservation-summary th[scope=col]{white-space:nowrap;overflow-wrap:normal}
+.reservation-summary td{white-space:nowrap}
+@media(max-width:800px){.reservation-manager .btn-primary{width:100%;margin-right:0}}
 .commerce-admin {padding-bottom:64px;min-width:0}
 .commerce-dashboard-page .page-shell__intro{padding-block:32px 16px}
 .commerce-dashboard-page .page-shell__intro h1{font-size:32px;line-height:1.2}

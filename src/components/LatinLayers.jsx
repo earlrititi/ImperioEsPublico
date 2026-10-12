@@ -53,7 +53,6 @@ export default function LatinLayers({
   className = "",
 }) {
   const [svgMarkup, setSvgMarkup] = useState("");
-  const [glyphAnimationCss, setGlyphAnimationCss] = useState("");
   const wrapperRef = useRef(null);
 
   const activeLayers = useMemo(
@@ -97,7 +96,7 @@ export default function LatinLayers({
 
     const loadSvg = async () => {
       try {
-        const response = await fetch(src, { cache: "no-cache" });
+        const response = await fetch(src, { cache: "force-cache" });
         if (!response.ok) return;
         const rawSvg = await response.text();
         if (isCancelled) return;
@@ -189,15 +188,11 @@ export default function LatinLayers({
           }
 
           const glyphNodes = Array.from(contentGroup.querySelectorAll("path"));
-          glyphNodes.forEach((glyphNode, glyphIndex) => {
+          glyphNodes.forEach((glyphNode) => {
             const glyphClass = glyphNode.getAttribute("class") || "";
             glyphNode.setAttribute(
               "class",
-              [
-                glyphClass,
-                "latin-glyph",
-                `latin-glyph--l${layerConfig.index}-g${glyphIndex}`,
-              ]
+              [glyphClass, "latin-glyph"]
                 .filter(Boolean)
                 .join(" ")
             );
@@ -215,7 +210,6 @@ export default function LatinLayers({
         setSvgMarkup(root.outerHTML);
       } catch {
         setSvgMarkup("");
-        setGlyphAnimationCss("");
       }
     };
 
@@ -293,13 +287,9 @@ export default function LatinLayers({
     const targetTopY = verticalReferenceBounds?.y ?? 0;
 
     const clampPct = (value) => Math.min(100, Math.max(0, roundPct(value)));
-    const cssRules = [];
+    const animations = [];
 
     enabledLayers.forEach((layer, layerIndex) => {
-      const mappedIndex = Math.max(
-        0,
-        activeLayers.findIndex((entry) => entry.id === layer.id)
-      );
       const group = root.querySelector(`g[data-layer-id="${layer.id}"]`);
       if (!group || typeof group.getBBox !== "function") return;
 
@@ -354,7 +344,7 @@ export default function LatinLayers({
       const groupWidth = Math.max(1, groupBox.width);
       const groupLeft = groupBox.x;
 
-      glyphNodes.forEach((glyphNode, glyphIndex) => {
+      glyphNodes.forEach((glyphNode) => {
         if (typeof glyphNode.getBBox !== "function") return;
 
         let glyphBox = null;
@@ -414,19 +404,52 @@ export default function LatinLayers({
           Math.min(safeOutEndPct - 0.01, outFadeStartPct)
         );
 
-        const glyphClass = `latin-glyph--l${mappedIndex}-g${glyphIndex}`;
-        const keyframeName = `latin-glyph-cycle-l${mappedIndex}-g${glyphIndex}`;
-
-        cssRules.push(
-          `.hero-imperio--latin-ready .latin-layers--ready .${glyphClass}{animation:${keyframeName} var(--latin-cycle-ms) linear infinite both;animation-delay:var(--latin-start-delay-ms);}`
+        const hiddenFilter = `blur(${anim.maxBlurPx}px)`;
+        const animation = glyphNode.animate(
+          [
+            { offset: 0, opacity: 0, filter: hiddenFilter },
+            { offset: inStartPct / 100, opacity: 0, filter: hiddenFilter },
+            { offset: safeInPreviewOnPct / 100, opacity: inPreviewOpacity, filter: hiddenFilter },
+            { offset: safeInBlurEndPct / 100, opacity: inPreviewOpacity, filter: "blur(0px)" },
+            { offset: safeInFadeStartPct / 100, opacity: inPreviewOpacity, filter: "blur(0px)" },
+            { offset: safeInEndPct / 100, opacity: 1, filter: "blur(0px)" },
+            { offset: safeOutStartPct / 100, opacity: 1, filter: "blur(0px)" },
+            { offset: safeOutFadeStartPct / 100, opacity: 1, filter: hiddenFilter },
+            { offset: safeOutEndPct / 100, opacity: 0, filter: hiddenFilter },
+            { offset: 1, opacity: 0, filter: hiddenFilter },
+          ],
+          {
+            duration: timeline.cycleDurationMs,
+            delay: anim.startDelayMs,
+            iterations: Infinity,
+            easing: "linear",
+            fill: "both",
+          }
         );
-        cssRules.push(
-          `@keyframes ${keyframeName}{0%,${inStartPct}%{opacity:0;filter:blur(var(--latin-max-blur-px));}${safeInPreviewOnPct}%{opacity:${inPreviewOpacity};filter:blur(var(--latin-max-blur-px));}${safeInBlurEndPct}%{opacity:${inPreviewOpacity};filter:blur(0);}${safeInFadeStartPct}%{opacity:${inPreviewOpacity};filter:blur(0);}${safeInEndPct}%{opacity:1;filter:blur(0);}${safeOutStartPct}%{opacity:1;filter:blur(0);}${safeOutFadeStartPct}%{opacity:1;filter:blur(var(--latin-max-blur-px));}${safeOutEndPct}%{opacity:0;filter:blur(var(--latin-max-blur-px));}100%{opacity:0;filter:blur(var(--latin-max-blur-px));}}`
-        );
+        animation.pause();
+        animations.push(animation);
       });
     });
 
-    setGlyphAnimationCss(cssRules.join("\n"));
+    const hero = wrapperRef.current.closest(".hero-imperio");
+    const playAnimations = () => {
+      if (!hero?.classList.contains("hero-imperio--latin-ready")) return false;
+      animations.forEach((animation) => animation.play());
+      return true;
+    };
+    const observer = playAnimations()
+      ? null
+      : new MutationObserver(() => {
+          if (playAnimations()) observer?.disconnect();
+        });
+    if (hero) {
+      observer?.observe(hero, { attributes: true, attributeFilter: ["class"] });
+    }
+
+    return () => {
+      observer?.disconnect();
+      animations.forEach((animation) => animation.cancel());
+    };
   }, [svgMarkup, activeLayers, anim, timeline]);
 
   const wrapperClassName = useMemo(
@@ -442,8 +465,6 @@ export default function LatinLayers({
       ref={wrapperRef}
       class={wrapperClassName}
       style={{
-        "--latin-start-delay-ms": `${anim.startDelayMs}ms`,
-        "--latin-cycle-ms": `${timeline.cycleDurationMs}ms`,
         "--latin-max-blur-px": `${anim.maxBlurPx}px`,
       }}
       aria-hidden="true"
@@ -510,7 +531,6 @@ export default function LatinLayers({
         }
 
       `}</style>
-      {glyphAnimationCss && <style>{glyphAnimationCss}</style>}
     </div>
   );
 }

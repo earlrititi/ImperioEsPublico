@@ -24,7 +24,12 @@ const articles = await publishedArticles();
   <main class="home-page">
     <script is:inline define:vars={{ preloaderSessionKey }}>
       try {
-        if (window.sessionStorage.getItem(preloaderSessionKey) === "1") {
+        const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+        const skipForDevice =
+          window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+          connection?.saveData === true ||
+          /(^|-)2g$/.test(connection?.effectiveType || "");
+        if (window.sessionStorage.getItem(preloaderSessionKey) === "1" || skipForDevice) {
           document.body.classList.add("preloader-done", "preloader-session-skip");
         }
       } catch {

@@ -1,19 +1,28 @@
 import { withBase } from "../utils/basePath";
 
-const preloaderSourceSet = (name, extension, fullWidth = 2496) => {
-  const widths = fullWidth > 1920 ? [1280, 1920, fullWidth] : [1280, 1920];
+const preloaderSourceSet = (name, extension) => {
+  const widths = [1280, 1920];
   return widths
     .map((width) => {
-      const suffix = width === fullWidth && fullWidth > 1920 ? "" : `-${width}`;
-      return `${withBase(`/images/preloader/${name}${suffix}.${extension}`)} ${width}w`;
+      return `${withBase(`/images/preloader/${name}-${width}.${extension}`)} ${width}w`;
     })
     .join(", ");
 };
 
+const mobilePreloaderSourceSet = (name, extension, widths = [480, 640]) =>
+  widths
+    .map(
+      (width) =>
+        `${withBase(`/images/preloader/Preload%20movil/${name}-${width}.${extension}`)} ${width}w`
+    )
+    .join(", ");
+
+const compactMobilePreloaderSource = (name, extension) =>
+  withBase(`/images/preloader/Preload%20movil/${name}-480.${extension}`);
+
 export const HERO_VIEW_TRANSITION_NAME = "imperio-preloader-hero";
 export const PRELOADER_SESSION_KEY = "imperio-preloader-seen";
-export const HERO_IMAGE_DEFAULT_SRC = withBase("/images/preloader/Preload_6_def_upscaled_2x.webp");
-export const HERO_IMAGE_AVIF_SRC = withBase("/images/preloader/Preload_6_def_upscaled_2x.avif");
+export const HERO_IMAGE_DEFAULT_SRC = withBase("/images/preloader/Preload_6_def_upscaled_2x-1920.webp");
 export const HERO_IMAGE_AVIF_SRC_SET = preloaderSourceSet(
   "Preload_6_def_upscaled_2x",
   "avif"
@@ -22,11 +31,15 @@ export const HERO_IMAGE_WEBP_SRC_SET = preloaderSourceSet(
   "Preload_6_def_upscaled_2x",
   "webp"
 );
-export const HERO_IMAGE_MOBILE_SRC = withBase(
-  "/images/preloader/Preload%20movil/06_preloader_phone.webp"
+export const HERO_IMAGE_MOBILE_SRC = mobilePreloaderSourceSet(
+  "06_preloader_phone",
+  "webp",
+  [480, 768]
 );
-export const HERO_IMAGE_MOBILE_AVIF_SRC = withBase(
-  "/images/preloader/Preload%20movil/06_preloader_phone.avif"
+export const HERO_IMAGE_MOBILE_AVIF_SRC = mobilePreloaderSourceSet(
+  "06_preloader_phone",
+  "avif",
+  [480, 768]
 );
 
 export const HERO_LAYER_VARS = {
@@ -42,9 +55,9 @@ export const HERO_LAYER_VARS = {
 };
 
 export const HERO_ENTRANCE_SEQUENCE = {
-  wordmarkDelayMs: 980,
-  navBandDelayMs: 2850,
-  latinDelayMs: 4300,
+  wordmarkDelayMs: 180,
+  navBandDelayMs: 850,
+  latinDelayMs: 1600,
 };
 
 export const LATIN_LAYER_SEQUENCE = [
@@ -78,64 +91,70 @@ export const LATIN_LAYER_ANIMATION = {
 
 export const PRELOADER_SEQUENCE_IMAGES = [
   {
-    src: withBase("/images/preloader/Preload_1_def_upscaled_2x.webp"),
-    avifSrc: withBase("/images/preloader/Preload_1_def_upscaled_2x.avif"),
+    src: withBase("/images/preloader/Preload_1_def_upscaled_2x-1920.webp"),
     avifSrcSet: preloaderSourceSet("Preload_1_def_upscaled_2x", "avif"),
     webpSrcSet: preloaderSourceSet("Preload_1_def_upscaled_2x", "webp"),
-    mobileSrc: withBase("/images/preloader/Preload%20movil/01_preloader_phone.webp"),
-    mobileAvifSrc: withBase("/images/preloader/Preload%20movil/01_preloader_phone.avif"),
+    mobileSrcSet: mobilePreloaderSourceSet("01_preloader_phone", "webp"),
+    mobileAvifSrcSet: mobilePreloaderSourceSet("01_preloader_phone", "avif"),
+    compactMobileSrc: compactMobilePreloaderSource("01_preloader_phone", "webp"),
+    compactMobileAvifSrc: compactMobilePreloaderSource("01_preloader_phone", "avif"),
     alt: "Cargando 1",
     scaleEnd: "1",
   },
   {
-    src: withBase("/images/preloader/Preload_2_def_upscaled_2x.webp"),
-    avifSrc: withBase("/images/preloader/Preload_2_def_upscaled_2x.avif"),
+    src: withBase("/images/preloader/Preload_2_def_upscaled_2x-1920.webp"),
     avifSrcSet: preloaderSourceSet("Preload_2_def_upscaled_2x", "avif"),
     webpSrcSet: preloaderSourceSet("Preload_2_def_upscaled_2x", "webp"),
-    mobileSrc: withBase("/images/preloader/Preload%20movil/02_preloader_phone.webp"),
-    mobileAvifSrc: withBase("/images/preloader/Preload%20movil/02_preloader_phone.avif"),
+    mobileSrcSet: mobilePreloaderSourceSet("02_preloader_phone", "webp"),
+    mobileAvifSrcSet: mobilePreloaderSourceSet("02_preloader_phone", "avif"),
+    compactMobileSrc: compactMobilePreloaderSource("02_preloader_phone", "webp"),
+    compactMobileAvifSrc: compactMobilePreloaderSource("02_preloader_phone", "avif"),
     alt: "Cargando 2",
     scaleEnd: "0.988",
   },
   {
-    src: withBase("/images/preloader/Preload_Archivo.webp"),
-    avifSrc: withBase("/images/preloader/Preload_Archivo.avif"),
-    avifSrcSet: preloaderSourceSet("Preload_Archivo", "avif", 1920),
-    webpSrcSet: preloaderSourceSet("Preload_Archivo", "webp", 1920),
-    mobileSrc: withBase("/images/preloader/Preload%20movil/preload_archivo_phone.webp"),
-    mobileAvifSrc: withBase("/images/preloader/Preload%20movil/preload_archivo_phone.avif"),
+    src: withBase("/images/preloader/Preload_Archivo-1920.webp"),
+    avifSrcSet: preloaderSourceSet("Preload_Archivo", "avif"),
+    webpSrcSet: preloaderSourceSet("Preload_Archivo", "webp"),
+    mobileSrcSet: mobilePreloaderSourceSet("preload_archivo_phone", "webp"),
+    mobileAvifSrcSet: mobilePreloaderSourceSet("preload_archivo_phone", "avif"),
+    compactMobileSrc: compactMobilePreloaderSource("preload_archivo_phone", "webp"),
+    compactMobileAvifSrc: compactMobilePreloaderSource("preload_archivo_phone", "avif"),
     alt: "Cargando archivo",
     width: 1920,
     height: 1080,
     scaleEnd: "0.976",
   },
   {
-    src: withBase("/images/preloader/Preload_4_def_upscaled_2x.webp"),
-    avifSrc: withBase("/images/preloader/Preload_4_def_upscaled_2x.avif"),
+    src: withBase("/images/preloader/Preload_4_def_upscaled_2x-1920.webp"),
     avifSrcSet: preloaderSourceSet("Preload_4_def_upscaled_2x", "avif"),
     webpSrcSet: preloaderSourceSet("Preload_4_def_upscaled_2x", "webp"),
-    mobileSrc: withBase("/images/preloader/Preload%20movil/04_preloader_phone.webp"),
-    mobileAvifSrc: withBase("/images/preloader/Preload%20movil/04_preloader_phone.avif"),
+    mobileSrcSet: mobilePreloaderSourceSet("04_preloader_phone", "webp"),
+    mobileAvifSrcSet: mobilePreloaderSourceSet("04_preloader_phone", "avif"),
+    compactMobileSrc: compactMobilePreloaderSource("04_preloader_phone", "webp"),
+    compactMobileAvifSrc: compactMobilePreloaderSource("04_preloader_phone", "avif"),
     alt: "Cargando 4",
     scaleEnd: "0.964",
   },
   {
-    src: withBase("/images/preloader/Preload_5_def_upscaled_2x.webp"),
-    avifSrc: withBase("/images/preloader/Preload_5_def_upscaled_2x.avif"),
+    src: withBase("/images/preloader/Preload_5_def_upscaled_2x-1920.webp"),
     avifSrcSet: preloaderSourceSet("Preload_5_def_upscaled_2x", "avif"),
     webpSrcSet: preloaderSourceSet("Preload_5_def_upscaled_2x", "webp"),
-    mobileSrc: withBase("/images/preloader/Preload%20movil/05_preloader_phone.webp"),
-    mobileAvifSrc: withBase("/images/preloader/Preload%20movil/05_preloader_phone.avif"),
+    mobileSrcSet: mobilePreloaderSourceSet("05_preloader_phone", "webp"),
+    mobileAvifSrcSet: mobilePreloaderSourceSet("05_preloader_phone", "avif"),
+    compactMobileSrc: compactMobilePreloaderSource("05_preloader_phone", "webp"),
+    compactMobileAvifSrc: compactMobilePreloaderSource("05_preloader_phone", "avif"),
     alt: "Cargando 5",
     scaleEnd: "0.952",
   },
   {
-    src: withBase("/images/preloader/Preload_3_def_upscaled_2x.webp"),
-    avifSrc: withBase("/images/preloader/Preload_3_def_upscaled_2x.avif"),
+    src: withBase("/images/preloader/Preload_3_def_upscaled_2x-1920.webp"),
     avifSrcSet: preloaderSourceSet("Preload_3_def_upscaled_2x", "avif"),
     webpSrcSet: preloaderSourceSet("Preload_3_def_upscaled_2x", "webp"),
-    mobileSrc: withBase("/images/preloader/Preload%20movil/03_preloader_phone.webp"),
-    mobileAvifSrc: withBase("/images/preloader/Preload%20movil/03_preloader_phone.avif"),
+    mobileSrcSet: mobilePreloaderSourceSet("03_preloader_phone", "webp"),
+    mobileAvifSrcSet: mobilePreloaderSourceSet("03_preloader_phone", "avif"),
+    compactMobileSrc: compactMobilePreloaderSource("03_preloader_phone", "webp"),
+    compactMobileAvifSrc: compactMobilePreloaderSource("03_preloader_phone", "avif"),
     alt: "Cargando 6",
     scaleEnd: "0.94",
     shrinkTrigger: true,

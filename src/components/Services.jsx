@@ -236,8 +236,8 @@ export default function Services() {
         throw new Error(result.error || "No se pudo enviar el manifiesto.");
       }
 
-      void trackFunnel("manifesto",4);
       setManifestStatus("sent");
+      void trackFunnel("manifesto",4);
       manifestRequestIdRef.current = null;
       setManifestFirstName("");
       setManifestLastName("");
@@ -499,13 +499,13 @@ export default function Services() {
             </dialog>
           )}
 
-          <div class="services-grid">
+          <div class="services-grid" style={{ "--services-comparison-row-count": PLAN_COMPARISON_LABELS.length }}>
             <aside class="services-plan-index fade-in-up" aria-labelledby="services-plan-index-title">
-              <h3 class="services-plan-index__title" id="services-plan-index-title">
-                Planes
-              </h3>
-              <ul class="services-plan-index__list">
-                <li class="services-plan-index__item services-plan-index__item--intro">
+              <div class="services-plan-index__header">
+                <h3 class="services-plan-index__title" id="services-plan-index-title">
+                  Planes
+                </h3>
+                <div class="services-plan-index__item services-plan-index__item--intro">
                   <span class="services-plan-index__intro-sizer" aria-hidden="true">
                     {PLAN_COMPARISON_INTRO}
                   </span>
@@ -526,7 +526,9 @@ export default function Services() {
                       fetchpriority="low"
                     />
                   </picture>
-                </li>
+                </div>
+              </div>
+              <ul class="services-plan-index__list">
                 {PLAN_COMPARISON_LABELS.map((label) => (
                   <li class="services-plan-index__item" key={label}>
                     {label}
@@ -672,7 +674,7 @@ export default function Services() {
                                   >
                                     {isUnavailable ? (
                                       <img
-                                        src={withBase("/images/subscription-x-brush.png")}
+                                        src={withBase("/images/subscription-x-brush.webp")}
                                         alt=""
                                         width="128"
                                         height="128"
@@ -2523,13 +2525,16 @@ export default function Services() {
           .services-grid {
             --services-comparison-row-height: clamp(3.625rem, 3.5vw, 4.125rem);
             grid-template-columns: minmax(190px, 0.72fr) repeat(3, minmax(0, 1fr));
+            grid-template-rows: auto auto;
             align-items: stretch;
             gap: clamp(var(--space-2), 1.55vw, var(--space-4));
+            row-gap: var(--space-4);
           }
 
           .services-plan-index {
             display: grid;
-            grid-template-rows: auto auto;
+            grid-row: span 2;
+            grid-template-rows: subgrid;
             align-content: start;
             min-height: clamp(34rem, 48vw, 46rem);
             padding: clamp(var(--space-3), 2.4vw, var(--space-5, 40px));
@@ -2557,9 +2562,14 @@ export default function Services() {
             text-transform: uppercase;
           }
 
+          .services-plan-index__header {
+            display: grid;
+            grid-template-rows: auto minmax(0, 1fr);
+          }
+
           .services-plan-index__list {
             display: grid;
-            grid-template-rows: auto repeat(11, var(--services-comparison-row-height));
+            grid-template-rows: repeat(var(--services-comparison-row-count), var(--services-comparison-row-height));
             min-height: 0;
             margin: 0;
             padding: 0;
@@ -2571,7 +2581,7 @@ export default function Services() {
             align-items: center;
             min-width: 0;
             padding-block: 0.58rem;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+            border-top: 1px solid rgba(0, 0, 0, 0.12);
             color: var(--color-black-pure);
             font-family: var(--font-serif);
             font-size: clamp(1rem, 1.28vw, 1.28rem);
@@ -2585,6 +2595,7 @@ export default function Services() {
             align-items: flex-start;
             padding-block: 1rem;
             overflow: hidden;
+            border: 0;
             font-family: var(--font-display);
             font-size: clamp(0.72rem, 0.78vw, 0.82rem);
             font-weight: 500;
@@ -2613,17 +2624,32 @@ export default function Services() {
             object-position: 76% center;
           }
 
-          .services-plan-index__item:last-child {
-            border-bottom: 0;
+          .service-cta-card {
+            grid-row: span 2;
+            grid-template-rows: subgrid;
+            align-content: start;
+            content-visibility: visible;
           }
 
-          .service-cta-card {
-            grid-template-rows: auto auto;
-            align-content: start;
+          .service-cta-card:is(:hover, :focus-within, .service-cta-card--locked-open) {
+            min-height: clamp(34rem, 48vw, 46rem);
+            transform: none;
+          }
+
+          .service-cta-card__body {
+            align-self: stretch;
+            grid-template-rows: auto auto 1fr auto;
+          }
+
+          .service-cta-card__copy,
+          .service-cta-card:is(:hover, :focus-within, .service-cta-card--locked-open) .service-cta-card__copy {
+            align-self: start;
+            max-height: none;
+            padding: 0.7rem 0.8rem;
           }
 
           .service-cta-card__list {
-            grid-template-rows: repeat(11, var(--services-comparison-row-height));
+            grid-template-rows: repeat(var(--services-comparison-row-count), var(--services-comparison-row-height));
             align-self: start;
             gap: 0;
             font-size: clamp(0.84rem, 1.06vw, 1.06rem);

@@ -127,8 +127,13 @@ export default function HeroImperio() {
               type="image/avif"
               media="(max-width: 768px)"
               srcSet={HERO_IMAGE_MOBILE_AVIF_SRC}
+              sizes="100vw"
             />
-            <source media="(max-width: 768px)" srcSet={HERO_IMAGE_MOBILE_SRC} />
+            <source
+              media="(max-width: 768px)"
+              srcSet={HERO_IMAGE_MOBILE_SRC}
+              sizes="100vw"
+            />
             <source type="image/avif" srcSet={HERO_IMAGE_AVIF_SRC_SET} sizes="100vw" />
             <img
               src={HERO_IMAGE_DEFAULT_SRC}

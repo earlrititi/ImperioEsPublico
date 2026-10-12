@@ -1,6 +1,30 @@
 # Admin phase 1 checkpoint
 
-Not published. No production migrations, charges, subscription cancellations, or campaign sends performed in this phase.
+## Current release checkpoint: 2026-10-09
+
+Published `0b87da95a63b2885426b3e5f20276ecca9216a69` through isolated Preview -> main. Production deployment `dpl_2WAuFPUX9KempuQUhnWZofajpKeT` is READY on imperioes.com and www.imperioes.com. This checkpoint supersedes the older checkpoints below.
+
+- Unified private dashboard now includes Auth accounts, confirmation status, verified paid subscriptions, reservations, orders and owner notification history. Imported 56 received Gmail notices idempotently: 55 free registrations and one checkout-interest notice explicitly stating payment was unconfirmed. Import created no accounts, paid access or marketing consents. Current Stripe account has no actual subscriptions; a registration notice is not evidence of payment.
+- Exactly three historical subscription rows were reconciled to `legacy_unverified`, using current-account Stripe evidence, optimistic checks and an audit record. Records were retained; no Stripe subscriptions were canceled. Administrator article access remains separate.
+- Migrations 025-027 applied transactionally to Test and Production. CMS supports legacy import, save, sanitized preview, publish changes, withdrawal and soft deletion. Published snapshots stay isolated from drafts. Public catalogue, article pages and sitemap use published metadata; premium bodies remain server-authorized. Only the original six articles are free. Image upload is not implemented; existing local image paths can be edited.
+- Production flags: `RESERVATION_MODE=false`, `SHIRT_SALES_APPROVED=true`, `STRIPE_LIVE_CHECKOUT_ENABLED=true`. Shirt campaign activated immediately at the owner's explicit request, superseding the earlier 12 October plan. New orders hold stock transactionally for the 24-hour payment window. Price is 2699 cents plus 300 cents shipping per unit, inclusive VAT, mainland Spain only.
+- Five existing reservation purchase invitations have provider delivery event `delivered`. The maintenance scheduler is active every five minutes. No unrelated admin email was queued or sent during activation.
+- Live Stripe account `acct_1UCc4cDRITvLIOKF`: charges/payouts enabled; webhook, all four subscription prices, shirt price and inclusive 21% VAT verified. Five unpaid validation Checkout sessions were created and explicitly expired, without charges or subscriptions. Arcabucero copy and benefit are 15%; Maestre de Campo 20%; shipping excluded from discounts.
+- Validation: 89 unit tests, Astro check (zero errors/warnings, six existing hints), production build, compiled integration suites and sanitizer bundling passed. Authenticated Preview verified private APIs, non-admin denial, draft revisions, publish, catalogue/sitemap integration, premium protection, draft isolation, withdrawal and deletion. Temporary Test users and articles were removed. Public production pages and private API rejection verified; no error logs found. Chrome verified live stock, enabled purchase controls, both product images and no horizontal overflow at desktop/mobile widths. Signed-in dashboard visual testing remains separate from the authenticated HTTP tests.
+
+Original workspace preserves unrelated performance/assets/navigation changes. Current production commit contains only the scoped admin/editor/commerce work. Private local environment and Gmail import snapshot were not committed.
+
+## Release checkpoint: 2026-10-08
+
+Published commit `0378cdb13af51d8e08d2f650459524ed3a47e3c6` through Preview -> main. Production deployment `dpl_CCodRSG4GnsG8wskrWVYMsTBMVjn` is READY and assigned to imperioes.com and www.imperioes.com. Both domains return HTTP 200. Four subscription checkout pages have enabled submit buttons, shirts remain prereservations, /admin redirects anonymous visitors to login, and all five private admin APIs return 403 anonymously.
+
+Migrations 020-024 were applied transactionally to production and verified. Preview was isolated onto Test Supabase and Stripe, with outbound mail disabled. Authenticated Preview tests passed for admin pages/APIs, normal-user rejection, draft creation, sanitized preview, revision updates and stale revision rejection; temporary Test fixtures were removed.
+
+Validation: 88 unit tests, Astro check, lint, production build, compiled integration suites and sanitizer bundle checks passed. Dependency updates reduced npm audit to zero vulnerabilities. The sanitizer dependency closure is bundled for the Vercel Node 24 runtime.
+
+No real charges, subscription cancellations or campaign sends were performed. Historical subscription reconciliation, authenticated desktop/mobile visual checks, campaign delivery reconciliation and full CMS publishing/import/uploads remain pending. This release includes draft-only CMS, not completion of the full master request.
+
+Release worktree: `C:\Users\lorit\Imperio E Release`, branch `release/admin-commerce-20261008`. The original worktree retains unrelated local performance/asset edits. The following earlier checkpoint is historical; production and audit statements below are superseded by this release checkpoint.
 
 ## Implemented locally
 

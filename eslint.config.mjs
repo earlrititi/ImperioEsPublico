@@ -7,6 +7,7 @@ export default [{
     'src/components/admin/**/*.{ts,tsx}','src/pages/api/admin/**/*.ts','src/pages/api/newsletter-unsubscribe.ts','src/pages/api/interactions.ts','tests/admin-*.test.ts','tests/subscription-checkout.test.ts',
     'src/lib/meta-catalog.ts','src/lib/meta-pixel.ts','tests/meta-pixel.test.ts','src/lib/public-inventory.ts','src/lib/social-attribution.ts','tests/meta-catalog.test.ts','src/pages/feeds/*.ts',
     'src/pages/api/reservations/**/*.ts','src/pages/api/commerce-*.ts','tests/reservations.test.ts',
+    'src/pages/api/subscriptions/status.ts','tests/payment-ux.test.ts',
     'src/lib/tshirt-promotion.ts','src/lib/emails.ts','src/pages/api/tshirt-lead.ts',
     'src/lib/admin-notifications.ts','tests/admin-notifications.test.ts','src/pages/api/stripe-webhook.ts','src/pages/api/create-checkout-session.ts',
     'src/lib/auth-*.ts','src/pages/api/auth/*.ts','tests/auth-forms.test.ts',

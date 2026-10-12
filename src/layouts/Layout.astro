@@ -130,22 +130,12 @@ const jsonLd = {
       set:html={serializeJsonLd(jsonLd)}
     ></script>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
-    <link
-      href="https://db.onlinewebfonts.com/c/35da23d6d7d68a326080792c63a6251b?family=FS+Rosa+Black"
-      rel="stylesheet"
-    />
   </head>
   <body>
     <noscript><style is:global>.fade-in-up, .reveal { opacity: 1 !important; transform: none !important; }</style></noscript>
     <a class="skip-link" href="#main-content">Saltar al contenido</a>
     <GlobalHomeMark />
-    {navigation === "persistent" && <Navigation persistent client:load />}
+    {navigation === "persistent" && <Navigation persistent />}
     <div id="main-content" tabindex="-1">
       <slot />
     </div>
@@ -160,5 +150,66 @@ const jsonLd = {
     {!noindex && <FunnelTracker />}
     <TshirtLeadPopup />
     {showCookieConsent && <CookieConsent />}
+    <script>
+      const accountButtons = Array.from(document.querySelectorAll("[data-account-button]"));
+      if (accountButtons.length) {
+        const cacheKey = "imperio:account-label:v1";
+        const applyEmail = (email: string) => {
+          accountButtons.forEach((button) => {
+            if (!(button instanceof HTMLAnchorElement)) return;
+            const label = document.createElement("span");
+            label.className = "account-button__email";
+            label.textContent = email;
+            button.replaceChildren(label);
+            button.classList.add("account-button--email");
+            button.setAttribute("aria-label", `Mi cuenta: ${email}`);
+            button.title = email;
+          });
+        };
+
+        let cached: { email?: string; checkedAt?: number } | null = null;
+        try {
+          cached = JSON.parse(sessionStorage.getItem(cacheKey) || "null");
+        } catch {}
+
+        if (cached?.email) applyEmail(cached.email);
+        const cacheIsFresh = Boolean(
+          cached?.email && cached?.checkedAt && Date.now() - cached.checkedAt < 300_000
+        );
+        const hasAuthCookie = document.cookie
+          .split(";")
+          .some((cookie) => /^\s*sb-[^=]+-auth-token(?:\.\d+)?=/.test(cookie));
+
+        const refreshAccount = async () => {
+          if (cacheIsFresh || !hasAuthCookie) return;
+          try {
+            const response = await fetch("/api/auth/session", {
+              credentials: "same-origin",
+              headers: { Accept: "application/json" },
+            });
+            const data = response.ok ? await response.json() : null;
+            if (typeof data?.email === "string" && data.email) applyEmail(data.email);
+            if (typeof data?.email === "string" && data.email) {
+              sessionStorage.setItem(cacheKey, JSON.stringify({
+                email: data.email,
+                checkedAt: Date.now(),
+              }));
+            } else {
+              sessionStorage.removeItem(cacheKey);
+            }
+          } catch {}
+        };
+
+        const scheduleRefresh = () => {
+          if (typeof window.requestIdleCallback === "function") {
+            window.requestIdleCallback(() => void refreshAccount(), { timeout: 4_000 });
+          } else {
+            globalThis.setTimeout(() => void refreshAccount(), 2_500);
+          }
+        };
+        if (document.readyState === "complete") scheduleRefresh();
+        else window.addEventListener("load", scheduleRefresh, { once: true });
+      }
+    </script>
   </body>
 </html>

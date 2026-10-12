@@ -3,7 +3,7 @@ import path from "node:path";
 
 const outputRoot = path.resolve(".vercel/output/static");
 const imageRoot = path.join(outputRoot, "images");
-const retainedPngFiles = new Set(["logo-redv2.png", "subscription-x-brush.png"]);
+const retainedPngFiles = new Set(["logo-redv2.png"]);
 const unusedImageFiles = new Set([
   "cuadros-explicativos-camiseta-2x.webp",
   "cuadros-explicativos-camiseta.webp",
@@ -38,8 +38,16 @@ const pruneImages = async (directory) => {
       const isSourcePng = extension === ".png" && !retainedPngFiles.has(entry.name);
       const isArticleSource =
         extension === ".jpg" && entryPath.startsWith(path.join(imageRoot, "articulos"));
+      const isLegacyPreloaderVariant =
+        relativePath.startsWith("preloader/") &&
+        /(?:Preload_(?:[1-6]_def_upscaled_2x|Archivo)|(?:0[1-6]_preloader_phone|preload_archivo_phone))\.(?:avif|webp)$/i.test(relativePath);
 
-      if (isSourcePng || isArticleSource || unusedImageFiles.has(relativePath)) {
+      if (
+        isSourcePng ||
+        isArticleSource ||
+        isLegacyPreloaderVariant ||
+        unusedImageFiles.has(relativePath)
+      ) {
         await removeFile(entryPath);
       }
     })

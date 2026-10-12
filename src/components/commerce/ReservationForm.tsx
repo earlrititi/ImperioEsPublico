@@ -1,13 +1,15 @@
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 import { formatMoney, SHIRT_FINAL_PRICE_CENTS, SHIRT_PRICE_COPY } from "../../config/commerce";
 import { AddressFields, emptyAddress, api } from "./shared";
 import { attributedPath, socialEvent } from "../../lib/social-attribution";
 import {trackFunnel} from "../../lib/funnel-client";
 
-export default function ReservationForm({ initialSize = "M" }: { initialSize?: string }) {
+export default function ReservationForm({ initialSize = "M", initialCustomer = { name: "", email: "" } }: { initialSize?: string; initialCustomer?: { name: string; email: string } }) {
   const [inventory, setInventory] = useState<any[]>([]);
   const [size, setSize] = useState(initialSize), [quantity, setQuantity] = useState(1);
-  const [customer, setCustomer] = useState({ name: "", email: "" });
+  const [customer, setCustomer] = useState(initialCustomer);
+  const [differentRecipient, setDifferentRecipient] = useState(false);
+  const submitting = useRef(false);
   const [address, setAddress] = useState({ ...emptyAddress });
   const [challenge, setChallenge] = useState(""), [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false), [available, setAvailable] = useState(false);
@@ -38,11 +40,12 @@ export default function ReservationForm({ initialSize = "M" }: { initialSize?: s
   const canWait = Boolean(campaign && (!campaign.reservations_open_at || Date.parse(campaign.reservations_open_at) <= Date.now()));
   async function submit(event: SubmitEvent) {
     event.preventDefault();
-    if (busy || !variant) return;
+    if (submitting.current || busy || !variant) return;
     if ((!waitlist && (!Number.isInteger(quantity) || quantity < 1 || quantity > maximum)) || (waitlist && !soldOut)) {
       setMessage("La disponibilidad ha cambiado. Revisa talla y cantidad."); return;
     }
-    setBusy(true); setMessage("Verificando solicitud...");
+    submitting.current = true;
+    setBusy(true); setMessage(sales ? "Guardando tus datos para revisar el pago..." : "Verificando solicitud...");
     if (!waitlist) socialEvent("reservation_started", { sku: variant.sku, quantity });
     try {
       let nonce = 0;
@@ -56,17 +59,17 @@ export default function ReservationForm({ initialSize = "M" }: { initialSize?: s
         requestId: challenge.split(".")[0], challenge, nonce: String(nonce), customer,
         items: [{ sku: variant.sku, quantity: waitlist ? 1 : quantity }],
         accepted, marketing, website, expirationHours, waitlist,
-        address: waitlist ? undefined : address,
+        address: waitlist ? undefined : { ...address, name: differentRecipient ? address.name : customer.name },
       });
       if (!waitlist) socialEvent("reservation_completed", { sku: variant.sku, quantity });
       if(!waitlist)await trackFunnel("shirts",4);
       window.location.assign(attributedPath(result.url));
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "No se pudo confirmar la solicitud."); setBusy(false);
+      setMessage(error instanceof Error ? error.message : "No se pudo confirmar la solicitud."); setBusy(false); submitting.current = false;
     }
   }
   return (
-    <form class="reservation-form" data-funnel-flow="shirts" onSubmit={submit}>
+    <form class="reservation-form" data-funnel-flow="shirts" onSubmit={submit} aria-busy={busy} aria-describedby="reservation-feedback">
       <header class="reservation-form__header">
         <span class="commerce-kicker">{sales?"Compra de camiseta":"Solicitud de reserva"}</span>
         <h2>{waitlist ? "Lista de espera" : sales?"Camiseta Imperial":"Pre-reserva gratuita"}</h2>
@@ -98,15 +101,21 @@ export default function ReservationForm({ initialSize = "M" }: { initialSize?: s
         <fieldset disabled={busy}>
           <legend>Contacto</legend>
           <label>Nombre
-            <input autoComplete="name" required minLength={2} maxLength={150} value={customer.name}
+            <input name="customerName" autoComplete="name" required minLength={2} maxLength={150} value={customer.name}
               onInput={(e) => setCustomer({ ...customer, name: e.currentTarget.value })} />
           </label>
           <label>Email
-            <input type="email" autoComplete="email" required maxLength={254} value={customer.email}
+            <input name="email" type="email" autoComplete="email" required maxLength={254} value={customer.email}
               onInput={(e) => setCustomer({ ...customer, email: e.currentTarget.value })} />
           </label>
         </fieldset>
-        {!waitlist && <AddressFields value={address} onChange={setAddress} disabled={busy} />}
+        {!waitlist && <>
+          <label class="reservation-consent">
+            <input type="checkbox" checked={differentRecipient} disabled={busy} onChange={e => setDifferentRecipient(e.currentTarget.checked)} />
+            <span>Enviar a otra persona</span>
+          </label>
+          <AddressFields value={address} onChange={setAddress} disabled={busy} includeRecipient={differentRecipient} />
+        </>}
         <label class="commerce-honeypot" aria-hidden="true">Sitio web
           <input tabIndex={-1} autoComplete="off" value={website} onInput={(e) => setWebsite(e.currentTarget.value)} />
         </label>
@@ -114,23 +123,23 @@ export default function ReservationForm({ initialSize = "M" }: { initialSize?: s
           <p>{waitlist ? "La lista de espera no asigna stock ni obliga a comprar. Te avisaremos por orden de entrada si se libera una unidad." : sales ? "Las unidades quedan asignadas temporalmente mientras completas el pago. Revisa la direccion y confirma tu compra en Stripe." : "Pre-reserva gratuita. No se realiza ningún cobro y la pre-reserva no implica obligación de compra. La unidad quedará temporalmente asignada hasta que finalice el periodo indicado para completar la compra."}</p>
           {sales&&!waitlist&&<p>Revisa el resumen y confirma el pago en Stripe. El descuento de tu suscripcion activa se comprueba al pagar.</p>}
           {!sales&&campaign?.purchase_open_at && <p><strong>Compra prioritaria prevista:</strong> {new Date(campaign.purchase_open_at).toLocaleString("es-ES", { timeZone: "Europe/Madrid" })} (hora peninsular).</p>}
-          <p>Dispones de {campaign?.purchase_window_hours ?? 24} horas para completarla.</p>
+          {!waitlist && !sales && <p>Dispones de {campaign?.purchase_window_hours ?? 24} horas para completarla.</p>}
           {expirationHours > 0 && !waitlist && <p>Esta reserva caduca {expirationHours} horas después de confirmarla.</p>}
         </div>
         <label class="reservation-consent">
           <input type="checkbox" checked={accepted} required disabled={busy} onChange={(e) => setAccepted(e.currentTarget.checked)} />
-          <span>He leído la <a href="/legal/privacidad" target="_blank" rel="noreferrer">Política de privacidad</a> y las <a href="/legal/reservas" target="_blank" rel="noreferrer">condiciones de la pre-reserva</a>.</span>
+          <span>He leído la <a href="/legal/privacidad" target="_blank" rel="noreferrer">Política de privacidad</a> y las <a href={sales && !waitlist ? "/legal/terminos" : "/legal/reservas"} target="_blank" rel="noreferrer">{sales && !waitlist ? "condiciones de compra" : "condiciones de la pre-reserva"}</a>.</span>
         </label>
         <label class="reservation-consent">
           <input type="checkbox" checked={marketing} disabled={busy} onChange={(e) => setMarketing(e.currentTarget.checked)} />
           <span>Quiero recibir novedades y comunicaciones comerciales de Imperio E.</span>
         </label>
         <button class="btn btn-primary" type="submit" disabled={busy || !challenge || (waitlist ? !canWait : !available || maximum < 1)}>
-          {busy ? "Confirmando..." : waitlist ? "Confirmar lista de espera" : sales?"Continuar con la compra":"RESERVAR \u2014 0 \u20ac"}
+          {busy ? "Guardando..." : waitlist ? "Confirmar lista de espera" : sales?"Revisar y continuar al pago":"RESERVAR \u2014 0 \u20ac"}
         </button>
       </>}
       {!available && !soldOut && <p role="status">Las compras no estan disponibles temporalmente.</p>}
-      <p role="status" aria-live="polite">{message}</p>
+      <p id="reservation-feedback" role="status" aria-live="polite" aria-atomic="true">{message}</p>
     </form>
   );
 }

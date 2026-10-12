@@ -1,4 +1,4 @@
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 import { RESERVATION_STATUS } from "../../config/commerce";
 import { isMainlandAddress } from "../../lib/reservation-validation";
 import {trackFunnel} from "../../lib/funnel-client";
@@ -19,6 +19,18 @@ export default function ReservationManager({ paymentReturn = false }: { paymentR
     [message, setMessage] = useState("Consultando reserva..."),
     [busy, setBusy] = useState(false);
   const [customer, setCustomer] = useState({ name: "", email: "" });
+  const [editing, setEditing] = useState(false);
+  const [confirmationDelayed, setConfirmationDelayed] = useState(false);
+  const heading = useRef<HTMLHeadingElement>(null);
+  const editButton = useRef<HTMLButtonElement>(null);
+  const submitting = useRef(false);
+  const notifiedPaid = useRef(false);
+  useEffect(() => {
+    if (paymentReturn && r?.status === "CONVERTED_TO_ORDER" && !notifiedPaid.current) {
+      notifiedPaid.current = true;
+      heading.current?.focus();
+    }
+  }, [paymentReturn, r?.status]);
   useEffect(() => {
     const fragment = window.location.hash.slice(1);
     let saved = "";
@@ -32,7 +44,7 @@ export default function ReservationManager({ paymentReturn = false }: { paymentR
       try {
         sessionStorage.setItem("imperio-reservation-access", fragment);
       } catch {}
-      history.replaceState(null, "", "/reservas/gestionar");
+      history.replaceState(null, "", window.location.pathname);
     }
     if (!id) {
       setMessage(
@@ -44,6 +56,8 @@ export default function ReservationManager({ paymentReturn = false }: { paymentR
     setAccess(credentials);
     let active = true;
     let initialized = false;
+    let timer: ReturnType<typeof setInterval>;
+    const started = Date.now();
     const refresh = async () => {
       try {
         const data = await api(`/api/reservations/${id}`, {
@@ -59,9 +73,12 @@ export default function ReservationManager({ paymentReturn = false }: { paymentR
               data.reservation.paymentAddress ??
                 data.reservation.shipping_address ?? { ...emptyAddress, name: data.reservation.customer_name },
             );
+            setEditing(!isMainlandAddress(data.reservation.paymentAddress ?? data.reservation.shipping_address));
             initialized = true;
           }
           setMessage("");
+          if (["CONVERTED_TO_ORDER", "CANCELLED", "EXPIRED"].includes(data.reservation.status)) clearInterval(timer);
+          if (paymentReturn && Date.now() - started > 90000) setConfirmationDelayed(true);
         }
       } catch (e) {
         if (active)
@@ -69,9 +86,10 @@ export default function ReservationManager({ paymentReturn = false }: { paymentR
       }
     };
     void refresh();
-    const timer = setInterval(() => {
+    timer = setInterval(() => {
+      if (paymentReturn && Date.now() - started > 180000) { clearInterval(timer); return; }
       if (!document.hidden) void refresh();
-    }, 10000);
+    }, paymentReturn ? 5000 : 10000);
     return () => {
       active = false;
       clearInterval(timer);
@@ -95,11 +113,14 @@ export default function ReservationManager({ paymentReturn = false }: { paymentR
   }
   async function pay(e: SubmitEvent) {
     e.preventDefault();
+    if (submitting.current || busy || editing) return;
     if (!isMainlandAddress(address)) {
       setMessage("Comprueba la direccion peninsular.");
       return;
     }
     setBusy(true);
+    submitting.current = true;
+    setMessage("Abriendo el pago seguro. Tus datos ya estan guardados.");
     try {
       const data = await api(`/api/reservations/${access.id}/checkout`, {
         token: access.token,
@@ -112,6 +133,7 @@ export default function ReservationManager({ paymentReturn = false }: { paymentR
     } catch (e) {
       setMessage(e instanceof Error ? e.message : "No disponible");
       setBusy(false);
+      submitting.current = false;
     }
   }
   async function resetPayment() {
@@ -132,17 +154,36 @@ export default function ReservationManager({ paymentReturn = false }: { paymentR
   if (!r) return <p role="status">{message}</p>;
   const paid = r.status === "CONVERTED_TO_ORDER";
   const order = r.commerce_orders;
+  const confirming = paymentReturn && r.status === "PAYMENT_PENDING";
+  const paymentLocked = ["PAYMENT_PENDING", "PAYMENT_FAILED"].includes(r.status);
+  const canPay = !mode && ["PURCHASE_AVAILABLE", "PAYMENT_FAILED", "PAYMENT_PENDING"].includes(r.status) && !confirming;
+  function finishEditing() {
+    if (!isMainlandAddress(address) || customer.name.trim().length < 2 || customer.name.length > 150 ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customer.email.trim()) || customer.email.length > 254) {
+      setMessage("Revisa el nombre, el correo y la direccion peninsular antes de continuar.");
+      return;
+    }
+    setEditing(false);
+    setMessage("Datos revisados. Puedes continuar al pago.");
+    editButton.current?.focus();
+  }
   return (
-    <section class="reservation-manager">
-      <h2>
+    <section class="reservation-manager" aria-busy={busy}>
+      <h2 ref={heading} tabIndex={-1}>
         {paid
           ? (paymentReturn ? "Pago recibido" : "Pedido confirmado")
-          : paymentReturn && ["PAYMENT_PENDING", "PAYMENT_FAILED"].includes(r.status)
+          : confirming
             ? "Estamos confirmando tu pago."
+          : r.status === "PAYMENT_FAILED" ? "El pago no se ha completado"
           : r.status === "RESERVED"
             ? "Reserva confirmada"
             : RESERVATION_STATUS[r.status]}
       </h2>
+      {confirming && <div class="reservation-payment-status" role="status" aria-live="polite" aria-atomic="true">
+        <p>{confirmationDelayed ? "La confirmacion esta tardando un poco mas de lo habitual. No repitas el pago; te avisaremos por correo cuando se confirme." : "Estamos comprobando el resultado del pago. Esta pantalla se actualiza automaticamente; no necesitas volver a pagar."}</p>
+        {confirmationDelayed && <button type="button" class="btn btn-ghost" onClick={() => window.location.reload()}>Comprobar estado</button>}
+      </div>}
+      {paid && <p role="status">Tu pedido esta confirmado. Recibiras los detalles por correo; no necesitas rellenar nada mas.</p>}
       <p class="commerce-reference">{r.number}</p>
       {r.marketing_consent && <button class="btn btn-ghost" disabled={busy} onClick={async () => {
         setBusy(true);
@@ -150,26 +191,26 @@ export default function ReservationManager({ paymentReturn = false }: { paymentR
         catch (e) { setMessage(e instanceof Error ? e.message : "No disponible"); }
         finally { setBusy(false); }
       }}>Retirar consentimiento comercial</button>}
-      <p>Estado: {RESERVATION_STATUS[r.status]}</p>
+      {!canPay && <p>Estado: {RESERVATION_STATUS[r.status]}</p>}
       <ItemsSummary
         items={r.reservation_items}
         total={r.total_price_snapshot}
       />
-      {(order?.shipping_address || r.paymentAddress || r.shipping_address) && <h3>Direccion de entrega</h3>}
+      {(canPay || order?.shipping_address || r.paymentAddress || r.shipping_address) && <h3>Contacto y entrega</h3>}
       <AddressSummary
         address={
-          order?.shipping_address ?? r.paymentAddress ?? r.shipping_address
+          canPay ? address : order?.shipping_address ?? r.paymentAddress ?? r.shipping_address
         }
       />
       <p>
-        {r.customer_email}{r.customer_phone ? ` \u00b7 ${r.customer_phone}` : ""}
+        {canPay ? customer.name : r.customer_name}{" \u00b7 "}{canPay ? customer.email : r.customer_email}{r.customer_phone ? ` \u00b7 ${r.customer_phone}` : ""}
       </p>
-      {!paid && (
+      {!paid && !confirming && (
         <>
           <p>
             <strong>
               {["PAYMENT_PENDING", "PAYMENT_FAILED"].includes(r.status)
-                ? "El pago todavia no se ha confirmado."
+                ? "El pago todavia no se ha confirmado. No inicies otro si tu banco ya muestra un cargo."
                 : "NO SE HA REALIZADO NINGUN COBRO."}
             </strong>
           </p>
@@ -196,41 +237,33 @@ export default function ReservationManager({ paymentReturn = false }: { paymentR
           )}
         </>
       )}
-      {[
-        "WAITLIST",
-        "RESERVED",
-        "PURCHASE_AVAILABLE",
-        "PAYMENT_FAILED",
-        "PAYMENT_PENDING",
-      ].includes(r.status) && (
-        <button class="btn btn-ghost" disabled={busy} onClick={cancel}>
-          Cancelar reserva
-        </button>
-      )}
-      {!mode &&
-        ["PURCHASE_AVAILABLE", "PAYMENT_FAILED", "PAYMENT_PENDING"].includes(
-          r.status,
-        ) && (
-          <form onSubmit={pay}>
-            <h3>Revision final de compra</h3>
-            <fieldset disabled={busy || ["PAYMENT_PENDING", "PAYMENT_FAILED"].includes(r.status)}>
+      {canPay && (
+          <form onSubmit={pay} aria-describedby="purchase-feedback">
+            <h3>Revisa y continua al pago</h3>
+            <button ref={editButton} type="button" class="btn btn-ghost" disabled={busy || paymentLocked} aria-expanded={editing} aria-controls="purchase-edit-fields" onClick={() => editing ? finishEditing() : setEditing(true)}>
+              {editing ? "Usar estos datos" : "Editar contacto y entrega"}
+            </button>
+            <div id="purchase-edit-fields" hidden={!editing}>{editing && <>
+            <fieldset disabled={busy || paymentLocked}>
               <legend>Contacto de compra</legend>
               <label>Nombre<input autoComplete="name" required minLength={2} maxLength={150} value={customer.name} onInput={(e) => setCustomer({ ...customer, name: e.currentTarget.value })} /></label>
               <label>Email<input type="email" autoComplete="email" required maxLength={254} value={customer.email} onInput={(e) => setCustomer({ ...customer, email: e.currentTarget.value })} /></label>
             </fieldset>
-            <img src="/images/cuadros-explicativos-camiseta.webp" alt="Camiseta Imperial, modelo y detalles" width="640" height="640" style={{ maxWidth: "100%", height: "auto", objectFit: "contain" }} />
+            <AddressFields value={address} onChange={setAddress} disabled={busy || paymentLocked} />
+            <button type="button" class="btn btn-ghost" onClick={finishEditing}>Usar estos datos</button>
+            </>}</div>
+            <details class="reservation-purchase-details">
+            <summary>Producto, envio y condiciones</summary>
+            <picture>
+              <source type="image/avif" srcSet="/images/cuadros-explicativos-camiseta-640.avif 640w, /images/cuadros-explicativos-camiseta-960.avif 960w" sizes="(max-width: 760px) calc(100vw - 48px), 640px" />
+              <img src="/images/cuadros-explicativos-camiseta-960.webp" srcSet="/images/cuadros-explicativos-camiseta-640.webp 640w, /images/cuadros-explicativos-camiseta-960.webp 960w" sizes="(max-width: 760px) calc(100vw - 48px), 640px" alt="Camiseta Imperial, modelo y detalles" width="1920" height="1080" loading="lazy" decoding="async" style={{ maxWidth: "100%", height: "auto", objectFit: "contain" }} />
+            </picture>
             <p>Vendedor: {LEGAL_BUSINESS.ownerName}, {LEGAL_BUSINESS.tradeName}. NIF {LEGAL_BUSINESS.taxId}. {LEGAL_BUSINESS.registeredAddress}.</p>
             <p>Camiseta: 26,99 EUR + 3 EUR de envio por unidad. IVA incluido. Solo Peninsula. Preparacion maxima: 48 horas; entrega maxima: 7 dias laborables tras el pago.</p>
             <p>Descuento de suscriptor: vinculado a la cuenta verificada y al correo de la reserva. No incluye el envio. <a href="/login?next=/reservas/gestionar">Iniciar sesion</a></p>
             <p>Desistimiento: 14 dias naturales desde la recepcion. Esta camiseta de diseno fijo no se considera personalizada para el comprador.</p>
             <nav aria-label="Condiciones de compra">{LEGAL_LINKS.map((link) => <p key={link.href}><a href={link.href} target="_blank" rel="noreferrer">{link.label}</a></p>)}</nav>
-            <AddressFields
-              value={address}
-              onChange={setAddress}
-              disabled={
-                busy || ["PAYMENT_PENDING", "PAYMENT_FAILED"].includes(r.status)
-              }
-            />
+            </details>
             {["PAYMENT_PENDING", "PAYMENT_FAILED"].includes(r.status) && (
               <button
                 type="button"
@@ -242,19 +275,26 @@ export default function ReservationManager({ paymentReturn = false }: { paymentR
               </button>
             )}
             <label class="reservation-consent">
-              <input type="checkbox" required />
+              <input type="checkbox" required disabled={busy || editing} />
               <span>
                 He revisado mis datos y acepto las{" "}
                 <a href="/legal/terminos">condiciones de compra</a>. Confirmo el
-                pago del importe mostrado.
+                acceso al pago seguro en Stripe, donde vere el importe final antes de pagar.
               </span>
             </label>
-            <button class="btn btn-primary" disabled={busy}>
-              Confirmar y pagar
+            <button class="btn btn-primary" type="submit" disabled={busy || editing}>
+              {busy ? "Abriendo Stripe..." : "Continuar al pago seguro"}
             </button>
           </form>
         )}
-      <p role="status" aria-live="polite">
+      {["WAITLIST", "RESERVED", "PURCHASE_AVAILABLE", "PAYMENT_FAILED", "PAYMENT_PENDING"].includes(r.status) && !confirming && (
+        <details class="reservation-purchase-details">
+          <summary>Cancelar la reserva</summary>
+          <p>Esta opcion libera las unidades. Si hay un pago en curso, antes se comprobara su estado.</p>
+          <button type="button" class="btn btn-ghost" disabled={busy} onClick={cancel}>Cancelar reserva</button>
+        </details>
+      )}
+      <p id="purchase-feedback" role="status" aria-live="polite" aria-atomic="true">
         {message}
       </p>
       <p>

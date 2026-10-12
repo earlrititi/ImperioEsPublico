@@ -3,7 +3,7 @@ import Layout from "../layouts/Layout.astro";
 import { SITE } from "../config/site";
 import { withBase } from "../utils/basePath";
 
-const backgroundImage = withBase("/images/ejercito-blanco_upscaled_2x.webp");
+const backgroundImage = withBase("/images/ejercito-blanco_upscaled_2x-960.avif");
 const email = SITE.contactEmail;
 const sent = Astro.url.searchParams.get("sent") === "1";
 const error = Astro.url.searchParams.get("error") === "1";

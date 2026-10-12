@@ -3,8 +3,35 @@ import Layout from "../layouts/Layout.astro";
 import { withBase } from "../utils/basePath";
 
 const heroLetters = withBase("/images/memorial-letters.webp");
+const heroLettersSrcSet = [
+  `${withBase("/images/memorial-letters-640.webp")} 640w`,
+  `${withBase("/images/memorial-letters-960.webp")} 960w`,
+  `${heroLetters} 1403w`,
+].join(", ");
+const heroLettersMobileSrcSet = [
+  `${withBase("/images/memorial-letters-640.webp")} 640w`,
+  `${withBase("/images/memorial-letters-960.webp")} 960w`,
+].join(", ");
 const heroImage = withBase("/images/memorial-foreground.webp");
 const heroImageAvif = withBase("/images/memorial-foreground.avif");
+const heroImageSrcSet = [
+  `${withBase("/images/memorial-foreground-640.webp")} 640w`,
+  `${withBase("/images/memorial-foreground-960.webp")} 960w`,
+  `${heroImage} 1448w`,
+].join(", ");
+const heroImageAvifSrcSet = [
+  `${withBase("/images/memorial-foreground-640.avif")} 640w`,
+  `${withBase("/images/memorial-foreground-960.avif")} 960w`,
+  `${heroImageAvif} 1448w`,
+].join(", ");
+const heroImageMobileAvifSrcSet = [
+  `${withBase("/images/memorial-foreground-640.avif")} 640w`,
+  `${withBase("/images/memorial-foreground-960.avif")} 960w`,
+].join(", ");
+const heroImageMobileSrcSet = [
+  `${withBase("/images/memorial-foreground-640.webp")} 640w`,
+  `${withBase("/images/memorial-foreground-960.webp")} 960w`,
+].join(", ");
 const accordionItems = [
   {
     title: "Como trabajamos",
@@ -35,20 +62,29 @@ const accordionItems = [
   <main class="memorial-page">
     <section class="memorial-hero" aria-labelledby="memorial-title">
       <h1 id="memorial-title" class="memorial-title">
-        <img
-          src={heroLetters}
-          alt="MEMORIAL"
-          width="1403"
-          height="199"
-          loading="eager"
-          decoding="async"
-        />
+        <picture>
+          <source media="(max-width: 600px)" srcset={heroLettersMobileSrcSet} sizes="96vw" />
+          <img
+            src={heroLetters}
+            srcset={heroLettersSrcSet}
+            sizes="min(96vw, 1400px)"
+            alt="MEMORIAL"
+            width="1403"
+            height="199"
+            loading="eager"
+            decoding="async"
+          />
+        </picture>
       </h1>
       <div class="memorial-figure" aria-label="Formacion historica del Imperio Espanol">
         <picture>
-          <source type="image/avif" srcset={heroImageAvif} />
+          <source type="image/avif" media="(max-width: 600px)" srcset={heroImageMobileAvifSrcSet} sizes="98vw" />
+          <source media="(max-width: 600px)" srcset={heroImageMobileSrcSet} sizes="98vw" />
+          <source type="image/avif" srcset={heroImageAvifSrcSet} sizes="min(98vw, 1448px)" />
           <img
             src={heroImage}
+            srcset={heroImageSrcSet}
+            sizes="min(98vw, 1448px)"
             alt=""
             width="1448"
             height="1086"
@@ -141,6 +177,10 @@ const accordionItems = [
     transform-origin: center;
     transition: transform 0.42s cubic-bezier(0.2, 1.28, 0.32, 1);
     will-change: transform;
+  }
+
+  .memorial-title picture {
+    display: contents;
   }
 
   .memorial-title:hover img,

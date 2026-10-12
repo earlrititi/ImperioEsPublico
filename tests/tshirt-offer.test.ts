@@ -23,6 +23,10 @@ test("The subscription comparison has matching rows and only the forum is forthc
   }
   assert.match(SERVICES_ITEMS[1].highlights.at(-1) ?? "", /15%/);
   assert.match(SERVICES_ITEMS[2].highlights.at(-1) ?? "", /20%/);
+  for (const service of SERVICES_ITEMS.slice(1)) {
+    assert.match(service.highlights.at(-1) ?? "", /descuento para cada lanzamiento/);
+    assert.doesNotMatch(service.highlights.at(-1) ?? "", /un solo uso/i);
+  }
   assert.match(shirtOfferCopy("arcabucero"), /^15%/);
   assert.match(shirtOfferCopy("maestre_campo"), /^20%/);
 });

@@ -1,22 +1,21 @@
 ---
 import PageShell from "../layouts/PageShell.astro";
+import SubscriptionConfirmation from "../components/commerce/SubscriptionConfirmation";
+import "../styles/commerce.css";
+export const prerender = false;
+Astro.response.headers.set("Cache-Control", "private, no-store");
+Astro.response.headers.set("Referrer-Policy", "no-referrer");
 ---
 
 <PageShell
-  title="Suscripción confirmada y acceso al archivo | Imperio Español"
+  title="Estado de tu suscripcion | Imperio E"
   description="Estamos confirmando tu suscripcion de forma segura."
   eyebrow="Confirmacion"
-  heading="Gracias por suscribirte"
-  summary="Estamos confirmando tu suscripcion de forma segura. Recibiras un email de bienvenida cuando Stripe confirme el pago."
+  heading="Tu suscripcion"
+  summary="Consulta el estado de tu acceso despues del pago seguro."
   noindex
   narrow
 >
-  <section class="section content">
-    <div class="notice">
-      <p>
-        No cierres tu cuenta ni dupliques el pago. La activacion premium se confirma mediante Stripe Webhook, no desde esta pagina.
-      </p>
-      <a class="btn btn-primary" href="/cuenta">Ir a mi cuenta</a>
-    </div>
-  </section>
+  <SubscriptionConfirmation client:load />
+  <noscript><p>Consulta tu suscripcion en <a href="/cuenta">tu cuenta</a>. Te avisaremos por correo cuando se confirme. No repitas el pago.</p></noscript>
 </PageShell>

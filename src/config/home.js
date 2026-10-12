@@ -52,7 +52,7 @@ export const SERVICES_ITEMS = [
       "Próximamente",
       "Todos los artículos para suscriptores",
       "Lectura ilimitada de todo el archivo",
-      "15% en la camiseta · un solo uso",
+      "15% en la camiseta · descuento para cada lanzamiento",
     ],
     reverseOnDesktop: true,
   },
@@ -74,15 +74,21 @@ export const SERVICES_ITEMS = [
       "Próximamente",
       "Todos los artículos para suscriptores",
       "Lectura ilimitada de todo el archivo",
-      "20% en la camiseta · un solo uso",
+      "20% en la camiseta · descuento para cada lanzamiento",
     ],
   },
 ];
 
 const responsiveArticleImage = (fileBase, widths, imageWidth, imageHeight) => {
-  const largestWidth = widths[widths.length - 1];
+  const responsiveWidths = [
+    ...new Set([
+      ...widths,
+      ...(widths.includes(640) && widths.some((width) => width >= 1024) ? [768] : []),
+    ]),
+  ].sort((a, b) => a - b);
+  const largestWidth = responsiveWidths[responsiveWidths.length - 1];
   const buildSrcSet = (format) =>
-    widths
+    responsiveWidths
       .map(
         (width) =>
           `${withBase(`/images/articulos/${encodeURIComponent(fileBase)}-${width}.${format}`)} ${width}w`
@@ -111,10 +117,10 @@ export const ARTICLES_ITEMS = [
     publishedAt: "2026-09-03",
     sourceFile: "Bienvenidos a la web del Imperio Español.txt",
     href: withBase("/papeles-y-tratados/bienvenidos-a-la-web-del-imperio-espanol"),
-    imageSrc: withBase("/images/logo-redv2-480.webp"),
+    imageSrc: withBase("/images/logo-redv2-320.webp"),
     imageAlt: "Emblema de Imperio Español",
-    imageWidth: 480,
-    imageHeight: 371,
+    imageWidth: 320,
+    imageHeight: 247,
     wordmarkSrc: withBase("/images/imperio-espanol-wordmark.svg"),
     imageCaption: "Emblema y marca editorial de Imperio Español.",
     imageCredit: "Imperio Español",

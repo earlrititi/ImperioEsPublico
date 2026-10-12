@@ -40,7 +40,7 @@ const {
   publishedAt,
   modifiedAt,
 } = Astro.props as Props;
-const memberSurface = /^\/(?:suscribirse|cuenta|login|registro|recuperar-contrasena|confirmar-correo|reservas|reserva|compra|checkout)(?:\/|$)/.test(Astro.url.pathname);
+const memberSurface = /^\/(?:suscribirse|cuenta|login|registro|recuperar-contrasena|confirmar-correo|reservas|reserva|compra|checkout|gracias)(?:\/|$)/.test(Astro.url.pathname);
 ---
 
 <Layout

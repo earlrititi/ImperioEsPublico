@@ -86,26 +86,36 @@ const shirtPrice = new Intl.NumberFormat("es-ES", {
                 />
               </div>
               <div class="product-shirt-final" data-shirt-gallery>
-                <img
-                  class="product-shirt-final__image product-shirt-final__image--front"
-                  src="/images/museo-camiseta-front.webp"
-                  alt="Camiseta Imperial vista por delante"
-                  width="1400"
-                  height="1150"
-                  loading="lazy"
-                  decoding="async"
-                  fetchpriority="low"
-                />
-                <img
-                  class="product-shirt-final__image product-shirt-final__image--back"
-                  src="/images/museo-camiseta-back.webp"
-                  alt="Camiseta Imperial vista por detras"
-                  width="1400"
-                  height="1150"
-                  loading="lazy"
-                  decoding="async"
-                  fetchpriority="low"
-                />
+                <picture class="product-shirt-final__picture">
+                  <source type="image/avif" srcset="/images/museo-camiseta-front-640.avif 640w, /images/museo-camiseta-front-960.avif 960w" sizes="(max-width: 760px) calc(100vw - 32px), 50vw" />
+                  <img
+                    class="product-shirt-final__image product-shirt-final__image--front"
+                    src="/images/museo-camiseta-front-960.webp"
+                    srcset="/images/museo-camiseta-front-640.webp 640w, /images/museo-camiseta-front-960.webp 960w"
+                    sizes="(max-width: 760px) calc(100vw - 32px), 50vw"
+                    alt="Camiseta Imperial vista por delante"
+                    width="1400"
+                    height="1150"
+                    loading="lazy"
+                    decoding="async"
+                    fetchpriority="low"
+                  />
+                </picture>
+                <picture class="product-shirt-final__picture">
+                  <source type="image/avif" srcset="/images/museo-camiseta-back-640.avif 640w, /images/museo-camiseta-back-960.avif 960w" sizes="(max-width: 760px) calc(100vw - 32px), 50vw" />
+                  <img
+                    class="product-shirt-final__image product-shirt-final__image--back"
+                    src="/images/museo-camiseta-back-960.webp"
+                    srcset="/images/museo-camiseta-back-640.webp 640w, /images/museo-camiseta-back-960.webp 960w"
+                    sizes="(max-width: 760px) calc(100vw - 32px), 50vw"
+                    alt="Camiseta Imperial vista por detras"
+                    width="1400"
+                    height="1150"
+                    loading="lazy"
+                    decoding="async"
+                    fetchpriority="low"
+                  />
+                </picture>
                 <button
                   class="product-shirt-gallery-next"
                   type="button"
@@ -176,10 +186,12 @@ const shirtPrice = new Intl.NumberFormat("es-ES", {
       <figure class="shirt-story__image">
         <div class="shirt-story__canvas">
           <picture class="shirt-story__base-picture">
-            <source type="image/avif" srcset="/images/explicacion-camiseta.avif" />
+            <source type="image/avif" srcset="/images/explicacion-camiseta-960.avif 960w, /images/explicacion-camiseta-1440.avif 1440w, /images/explicacion-camiseta.avif 1920w" sizes="(max-width: 760px) calc(100vw - 32px), calc(100vw - 96px)" />
             <img
               class="shirt-story__base-image"
-              src="/images/explicacion-camiseta.webp"
+              src="/images/explicacion-camiseta-1440.webp"
+              srcset="/images/explicacion-camiseta-960.webp 960w, /images/explicacion-camiseta-1440.webp 1440w, /images/explicacion-camiseta.webp 1920w"
+              sizes="(max-width: 760px) calc(100vw - 32px), calc(100vw - 96px)"
               alt="Explicación visual de los símbolos y elementos históricos de la Camiseta Imperial"
               width="1920"
               height="1080"
@@ -329,9 +341,9 @@ const shirtPrice = new Intl.NumberFormat("es-ES", {
             alt="Camiseta Imperial vista por delante"
             width="944"
             height="1181"
-            loading="eager"
+            loading="lazy"
             decoding="async"
-            fetchpriority="high"
+            fetchpriority="low"
           />
           <img
             class="shirt-detail__image shirt-detail__image--back"
@@ -339,8 +351,9 @@ const shirtPrice = new Intl.NumberFormat("es-ES", {
             alt="Camiseta Imperial vista por detras"
             width="1077"
             height="1211"
-            loading="eager"
+            loading="lazy"
             decoding="async"
+            fetchpriority="low"
           />
         </div>
 
@@ -1291,6 +1304,10 @@ const shirtPrice = new Intl.NumberFormat("es-ES", {
     opacity: 0;
     pointer-events: none;
     transition: opacity 500ms ease;
+  }
+
+  .product-shirt-final__picture {
+    display: contents;
   }
 
   .product-shirt-final__image {

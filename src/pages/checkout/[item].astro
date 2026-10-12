@@ -82,9 +82,9 @@ const pageTitle = selectedPlan
 <PageShell
   title={`${pageTitle} | Imperio Español`}
   description="Informacion contractual inmediatamente anterior al pago."
-  eyebrow="Resumen contractual"
+  eyebrow="Pago seguro"
   heading={pageTitle}
-  summary="Revisa la informacion y confirma tus elecciones antes de acceder a Stripe."
+  summary="Revisa el plan y continua al pago seguro en Stripe."
   narrow
   noindex
 >
@@ -110,7 +110,7 @@ const pageTitle = selectedPlan
             <dt>Impuestos</dt>
             <dd>{ES_VAT.description}</dd>
           </div>
-          <div><dt>Acceso</dt><dd>Tras confirmacion del pago por webhook verificado</dd></div>
+          <div><dt>Acceso</dt><dd>Se activa automaticamente cuando se confirme el pago</dd></div>
           <div><dt>Prestaciones actuales</dt><dd>{currentBenefits}</dd></div>
           <div><dt>Descuento camiseta</dt><dd>{shirtOfferCopy(selectedPlan.plan)}</dd></div>
           <div><dt>Foro</dt><dd>Próximamente</dd></div>
@@ -233,18 +233,25 @@ const pageTitle = selectedPlan
   if (form instanceof HTMLFormElement) {
     const button = form.querySelector("button[type='submit']");
     const status = form.querySelector("[data-checkout-status]");
+    let submitting = false;
     const requestId = window.crypto.randomUUID();
-    const anonymousId = window.localStorage.getItem("imperio_anonymous_id") || window.crypto.randomUUID();
+    let anonymousId: string = window.crypto.randomUUID();
+    try {
+      const savedId = window.localStorage.getItem("imperio_anonymous_id");
+      if (savedId && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(savedId)) anonymousId = savedId;
+    } catch { /* Payment does not depend on optional browser storage. */ }
 
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
-      if (!form.reportValidity() || !(button instanceof HTMLButtonElement)) return;
+      if (submitting || !form.reportValidity() || !(button instanceof HTMLButtonElement)) return;
+      submitting = true;
+      form.setAttribute("aria-busy", "true");
 
       const formData = new FormData(form);
       const originalText = button.textContent || "Suscribirme y pagar";
       button.disabled = true;
       button.textContent = "Abriendo Stripe...";
-      if (status) status.textContent = "";
+      if (status) status.textContent = "Abriendo el pago seguro con tu correo. Solo queda confirmar el pago en Stripe.";
 
       try {
         const response = await fetch("/api/create-checkout-session", {
@@ -276,7 +283,10 @@ const pageTitle = selectedPlan
           status.textContent = error instanceof Error ? error.message : "No se pudo iniciar el pago.";
         }
         button.disabled = false;
+        submitting = false;
+        form.removeAttribute("aria-busy");
         button.textContent = originalText;
+        if (status instanceof HTMLElement) { status.tabIndex = -1; status.focus(); }
       }
     });
   }

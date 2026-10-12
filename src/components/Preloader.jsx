@@ -11,11 +11,11 @@ import {
 } from "../config/hero";
 
 const TIMING = {
-  step: 460,
-  fade: 520,
-  shrink: 760,
-  grow: 1600,
-  preloadTimeout: 1350,
+  step: 180,
+  fade: 220,
+  shrink: 300,
+  grow: 520,
+  preloadTimeout: 650,
 };
 
 const SEQUENCE_FRAME_SCALE = 0.88;
@@ -25,7 +25,7 @@ const FINAL_IMAGE_ENTRY_SCALE = 0.58;
 const FINAL_IMAGE_START_SCALE = 0.72;
 const FINAL_OVERLAP_RATIO = 0.82;
 const GROW_DELAY_RATIO = 0.28;
-const DONE_DELAY_MS = 120;
+const DONE_DELAY_MS = 40;
 export default function Preloader() {
   useEffect(() => {
     const preloader = document.getElementById("preloader");
@@ -191,7 +191,7 @@ export default function Preloader() {
       }, fallbackFinish);
     };
 
-    const preloadPromises = [...sequenceImages, finalImage].map((img) => {
+    const preloadPromises = [sequenceImages[0], finalImage].map((img) => {
       if (img.complete) return Promise.resolve();
       if (img.decode) {
         return img.decode().catch(() => undefined);
@@ -229,23 +229,37 @@ export default function Preloader() {
             <picture key={image.src}>
               <source
                 type="image/avif"
-                media="(max-width: 768px)"
-                srcSet={image.mobileAvifSrc}
+                media="(max-width: 520px)"
+                srcSet={image.compactMobileAvifSrc}
               />
-              <source media="(max-width: 768px)" srcSet={image.mobileSrc} />
+              <source
+                media="(max-width: 520px)"
+                srcSet={image.compactMobileSrc}
+              />
+              <source
+                type="image/avif"
+                media="(max-width: 768px)"
+                srcSet={image.mobileAvifSrcSet}
+                sizes="50vw"
+              />
+              <source
+                media="(max-width: 768px)"
+                srcSet={image.mobileSrcSet}
+                sizes="50vw"
+              />
               <source
                 type="image/avif"
                 srcSet={image.avifSrcSet || image.avifSrc}
-                sizes="100vw"
+                sizes="88vw"
               />
               <img
                 src={image.src}
                 srcSet={image.webpSrcSet}
-                sizes="100vw"
+                sizes="88vw"
                 alt={image.alt}
                 width={image.width ?? 2496}
                 height={image.height ?? 1664}
-                loading={index === 0 ? "eager" : "lazy"}
+                loading="lazy"
                 decoding="async"
                 fetchpriority={index === 0 ? "high" : "low"}
                 class={[
@@ -269,8 +283,13 @@ export default function Preloader() {
               type="image/avif"
               media="(max-width: 768px)"
               srcSet={HERO_IMAGE_MOBILE_AVIF_SRC}
+              sizes="100vw"
             />
-            <source media="(max-width: 768px)" srcSet={HERO_IMAGE_MOBILE_SRC} />
+            <source
+              media="(max-width: 768px)"
+              srcSet={HERO_IMAGE_MOBILE_SRC}
+              sizes="100vw"
+            />
             <source type="image/avif" srcSet={HERO_IMAGE_AVIF_SRC_SET} sizes="100vw" />
             <img
               src={HERO_IMAGE_DEFAULT_SRC}

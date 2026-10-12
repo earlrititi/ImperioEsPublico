@@ -30,10 +30,12 @@ export function AddressFields({
   value,
   onChange,
   disabled = false,
+  includeRecipient = true,
 }: {
   value: ShippingAddress;
   onChange: (a: ShippingAddress) => void;
   disabled?: boolean;
+  includeRecipient?: boolean;
 }) {
   const field = (
     key: keyof ShippingAddress,
@@ -51,6 +53,8 @@ export function AddressFields({
         required={required}
         maxLength={maxLength}
         disabled={disabled}
+        inputMode={key === "postalCode" ? "numeric" : undefined}
+        pattern={key === "postalCode" ? "[0-9]{5}" : undefined}
         onInput={(e) => onChange({ ...value, [key]: e.currentTarget.value })}
       />
     </label>
@@ -58,7 +62,7 @@ export function AddressFields({
   return (
     <fieldset class="reservation-address" disabled={disabled}>
       <legend>Direccion de entrega</legend>
-      {field(
+      {includeRecipient && field(
         "name",
         "Nombre y apellidos del destinatario",
         "shipping name",
@@ -81,6 +85,7 @@ export function AddressFields({
           Provincia
           <select
             name="province"
+            autoComplete="shipping address-level1"
             value={value.province}
             required
             onChange={(e) =>
@@ -113,15 +118,15 @@ export function ItemsSummary({
 }) {
   return (
     <div class="reservation-summary">
-      <div class="commerce-table-wrap">
+      <div class="commerce-table-wrap" role="region" aria-label="Resumen de camisetas" tabIndex={0}>
         <table>
           <caption>Resumen</caption>
           <thead>
             <tr>
-              <th>Producto / talla</th>
-              <th>Unidades</th>
-              <th>Precio unitario</th>
-              <th>Total</th>
+              <th scope="col">Producto / talla</th>
+              <th scope="col">Unidades</th>
+              <th scope="col">Precio unitario</th>
+              <th scope="col">Total</th>
             </tr>
           </thead>
           <tbody>

@@ -1,6 +1,30 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/inter-latin.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Cormorant Garamond";
+  src: url("/fonts/cormorant-garamond-latin.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 500 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "FS Rosa Black";
+  src: url("/fonts/fs-rosa-black.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
 :root {
   color-scheme: light;
   --color-black-papers: #0b0c0c;

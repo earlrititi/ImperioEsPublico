@@ -202,13 +202,19 @@ const imageSizes = "(max-width: 720px) calc(100vw - 32px), (max-width: 1100px) 4
     position: absolute;
     inset: 0;
     z-index: -1;
-    background-image: url("/images/card-1.webp");
+    background-image: url("/images/card-1-768.avif");
     background-size: cover;
     background-position: center top;
     opacity: 0.075;
     filter: contrast(145%) brightness(55%);
     mix-blend-mode: screen;
     pointer-events: none;
+  }
+
+  @media (min-width: 769px) {
+    .papers-page__texture {
+      background-image: url("/images/card-1-1440.avif");
+    }
   }
 
   .papers-page__texture::after {

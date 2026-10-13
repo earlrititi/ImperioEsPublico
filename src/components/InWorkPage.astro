@@ -128,6 +128,11 @@ const homeUrl = withBase("/");
     line-height: 1;
   }
 
+  :global(body:has([data-cookie-banner]:not([hidden]))) .in-work-page__control--back {
+    top: max(clamp(1rem, 2.5vw, 2.5rem), env(safe-area-inset-top));
+    bottom: auto;
+  }
+
   @media (max-width: 600px) {
     .in-work-page__control {
       width: 3.25rem;

@@ -93,6 +93,7 @@ import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
   // @ts-nocheck
   import { CONSENT_KEY, readSavedConsent, saveConsent } from "../lib/cookie-consent";
   import { applyMetaConsent } from "../lib/meta-pixel";
+  import { applyGoogleConsent, canTrackGooglePage } from "../lib/google-analytics";
   (() => {
     const root = document.querySelector("[data-cookie-consent]");
     if (!(root instanceof HTMLElement)) return;
@@ -172,6 +173,10 @@ import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
     const readConsent = () => readSavedConsent(version);
 
     const setGoogleConsent = (granted) => {
+      if (!gtmId) {
+        applyGoogleConsent(granted, googleTagId);
+        return;
+      }
       window.dataLayer = window.dataLayer || [];
       window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
       window.gtag("consent", "update", {
@@ -184,7 +189,7 @@ import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
 
     const loadAnalytics = () => {
       if (document.documentElement.dataset.analyticsLoaded === "true") return;
-      if (!gtmId && !googleTagId) return;
+      if (!gtmId || !canTrackGooglePage(window.location.href, document.referrer)) return;
 
       document.documentElement.dataset.analyticsLoaded = "true";
       window.dataLayer = window.dataLayer || [];
@@ -193,16 +198,8 @@ import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
       const script = document.createElement("script");
       script.async = true;
 
-      if (gtmId) {
-        window.dataLayer.push({ "gtm.start": Date.now(), event: "gtm.js" });
-        script.src = `https://www.googletagmanager.com/gtm.js?id=${encodeURIComponent(gtmId)}`;
-      } else {
-        script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(googleTagId)}`;
-        document.head.appendChild(script);
-        window.gtag("js", new Date());
-        window.gtag("config", googleTagId, { anonymize_ip: true });
-        return;
-      }
+      window.dataLayer.push({ "gtm.start": Date.now(), event: "gtm.js" });
+      script.src = `https://www.googletagmanager.com/gtm.js?id=${encodeURIComponent(gtmId)}`;
 
       document.head.appendChild(script);
     };
@@ -218,6 +215,9 @@ import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
         document.cookie = `${name}=; Max-Age=0; path=/; SameSite=Lax`;
         document.cookie = `${name}=; Max-Age=0; path=/; domain=${hostname}; SameSite=Lax`;
         document.cookie = `${name}=; Max-Age=0; path=/; domain=.${hostname}; SameSite=Lax`;
+        if (hostname.endsWith(".imperioes.com")) {
+          document.cookie = `${name}=; Max-Age=0; path=/; domain=.imperioes.com; SameSite=Lax`;
+        }
       });
     };
 
@@ -405,6 +405,7 @@ import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
       applyConsent(currentConsent);
     } else {
       applyMetaConsent(false);
+      setGoogleConsent(false);
       revealBannerWhenReady();
     }
   })();

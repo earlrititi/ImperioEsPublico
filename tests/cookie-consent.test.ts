@@ -8,6 +8,46 @@ const decision = (analytics = false) => ({
   updatedAt: new Date(Date.now() - 1000).toISOString(),
 });
 
+test("root and www share the newest decision and cannot restore an older acceptance", () => {
+  const oldWindow = Object.getOwnPropertyDescriptor(globalThis,"window");
+  const oldDocument = Object.getOwnPropertyDescriptor(globalThis,"document");
+  const location = new URL("https://imperioes.com/");
+  const storage = new Map<string,string>();
+  const jar = new Map<string,string>();
+  const writes: string[] = [];
+  const doc = {
+    get cookie() { return [jar.get(location.hostname),jar.get("imperioes.com:shared")].filter(Boolean).join("; "); },
+    set cookie(value: string) {
+      writes.push(value);
+      const domain = value.includes("Domain=imperioes.com") ? "imperioes.com:shared" : location.hostname;
+      if(value.includes("Max-Age=0"))jar.delete(domain);else jar.set(domain,value.split(";")[0]);
+    },
+  };
+  Object.defineProperty(globalThis,"window",{configurable:true,value:{location,localStorage:{
+    getItem:(key:string)=>storage.get(`${location.hostname}:${key}`)??null,
+    setItem:(key:string,value:string)=>storage.set(`${location.hostname}:${key}`,value),
+  }}});
+  Object.defineProperty(globalThis,"document",{configurable:true,value:doc});
+  try {
+    const accepted=decision(true);
+    jar.set("www.imperioes.com",`${CONSENT_KEY}=${encodeURIComponent(JSON.stringify(accepted))}`);
+    saveConsent(accepted);
+    assert.ok(writes.at(-1)?.includes("Domain=imperioes.com"));
+    location.hostname="www.imperioes.com";
+    assert.deepEqual(readSavedConsent(version),accepted);
+    const rejected={...decision(false),updatedAt:new Date().toISOString()};
+    saveConsent(rejected);
+    assert.equal(jar.has("www.imperioes.com"),false);
+    location.hostname="imperioes.com";
+    assert.deepEqual(readSavedConsent(version),rejected);
+    saveConsent(accepted);
+    assert.deepEqual(readSavedConsent(version),rejected);
+  } finally {
+    if(oldWindow)Object.defineProperty(globalThis,"window",oldWindow);else Reflect.deleteProperty(globalThis,"window");
+    if(oldDocument)Object.defineProperty(globalThis,"document",oldDocument);else Reflect.deleteProperty(globalThis,"document");
+  }
+});
+
 test("acceptance, rejection and custom choices survive serialization", () => {
   for (const value of [decision(), decision(true), { ...decision(), preferences: true }]) {
     assert.deepEqual(parseConsent(JSON.stringify(value), version), value);

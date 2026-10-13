@@ -189,7 +189,7 @@ import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
 
     const loadAnalytics = () => {
       if (document.documentElement.dataset.analyticsLoaded === "true") return;
-      if (!gtmId || !canTrackGooglePage(window.location.href, document.referrer)) return;
+      if (!gtmId || !canTrackGooglePage(window.location.href)) return;
 
       document.documentElement.dataset.analyticsLoaded = "true";
       window.dataLayer = window.dataLayer || [];

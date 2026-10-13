@@ -27,23 +27,31 @@ export function parseConsent(raw: string | null, version: string, now = Date.now
 
 export function readSavedConsent(version: string): CookieConsent | null {
   let local: CookieConsent | null = null;
-  let cookie: CookieConsent | null = null;
+  let cookies: CookieConsent[] = [];
   try { local = parseConsent(window.localStorage.getItem(CONSENT_KEY), version); } catch { /* Storage may be blocked. */ }
   try {
-    const raw = document.cookie.split(";").map(part => part.trim())
-      .find(part => part.startsWith(`${CONSENT_KEY}=`))?.slice(CONSENT_KEY.length + 1);
-    cookie = parseConsent(raw ? decodeURIComponent(raw) : null, version);
+    cookies = document.cookie.split(";").map(part => part.trim())
+      .filter(part => part.startsWith(`${CONSENT_KEY}=`))
+      .map(part => {
+        try { return parseConsent(decodeURIComponent(part.slice(CONSENT_KEY.length + 1)), version); }
+        catch { return null; }
+      }).filter((value): value is CookieConsent => value !== null);
   } catch { /* Cookies may also be blocked. */ }
   // Prefer the latest decision so an older backup cannot restore withdrawn consent.
-  return [local, cookie].filter((value): value is CookieConsent => value !== null)
+  return [local, ...cookies].filter((value): value is CookieConsent => value !== null)
     .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt))[0] ?? null;
 }
 
 export function saveConsent(consent: CookieConsent): void {
+  const existing = readSavedConsent(consent.version);
+  if (existing && Date.parse(existing.updatedAt) > Date.parse(consent.updatedAt)) return;
   const raw = JSON.stringify(consent);
   try { window.localStorage.setItem(CONSENT_KEY, raw); } catch { /* The cookie is a fallback. */ }
   try {
     const remaining = Math.max(0, Math.floor((Date.parse(consent.updatedAt) + CONSENT_MAX_AGE * 1000 - Date.now()) / 1000));
-    document.cookie = `${CONSENT_KEY}=${encodeURIComponent(raw)}; Max-Age=${remaining}; Path=/; SameSite=Lax${window.location.protocol === "https:" ? "; Secure" : ""}`;
+    const sharedDomain = ["imperioes.com", "www.imperioes.com"].includes(window.location.hostname);
+    // Remove the old host-only cookie so it cannot shadow the shared decision.
+    if (sharedDomain) document.cookie = `${CONSENT_KEY}=; Max-Age=0; Path=/; SameSite=Lax`;
+    document.cookie = `${CONSENT_KEY}=${encodeURIComponent(raw)}; Max-Age=${remaining}; Path=/; SameSite=Lax${window.location.protocol === "https:" ? "; Secure" : ""}${sharedDomain ? "; Domain=imperioes.com" : ""}`;
   } catch { /* Keep the current page usable if all persistence is blocked. */ }
 }

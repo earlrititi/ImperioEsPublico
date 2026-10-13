@@ -51,7 +51,8 @@ export function applyGoogleConsent(granted: boolean, id: string) {
   // Basic consent mode: no Google SDK or network requests before opt-in.
   if (!initialized) {
     target.dataLayer ??= [];
-    target.gtag ??= function (...args: unknown[]) { target.dataLayer!.push(args); };
+    // gtag commands require Arguments objects, not ordinary arrays.
+    target.gtag ??= function () { target.dataLayer!.push(arguments); };
     target.gtag("consent", "default", { analytics_storage: "denied", ad_storage: "denied", ad_user_data: "denied", ad_personalization: "denied" });
     initialized = true;
   }

@@ -5,7 +5,7 @@ export default [{
     'src/lib/shirt-checkout-lines.ts','tests/shirt-checkout-lines.test.ts',
     'src/lib/funnel*.ts','src/pages/api/funnel.ts','src/pages/api/manifesto.php.ts','tests/funnel.test.ts',
     'src/components/admin/**/*.{ts,tsx}','src/pages/api/admin/**/*.ts','src/pages/api/newsletter-unsubscribe.ts','src/pages/api/interactions.ts','tests/admin-*.test.ts','tests/subscription-checkout.test.ts',
-    'src/lib/meta-catalog.ts','src/lib/meta-pixel.ts','tests/meta-pixel.test.ts','src/lib/public-inventory.ts','src/lib/social-attribution.ts','tests/meta-catalog.test.ts','src/pages/feeds/*.ts',
+    'src/lib/meta-catalog.ts','src/lib/meta-pixel.ts','tests/meta-pixel.test.ts','src/lib/public-inventory.ts','src/lib/social-attribution.ts','src/lib/google-analytics.ts','tests/google-analytics.test.ts','tests/meta-catalog.test.ts','src/pages/feeds/*.ts',
     'src/pages/api/reservations/**/*.ts','src/pages/api/commerce-*.ts','tests/reservations.test.ts',
     'src/pages/api/subscriptions/status.ts','tests/payment-ux.test.ts',
     'src/lib/tshirt-promotion.ts','src/lib/emails.ts','src/pages/api/tshirt-lead.ts',

@@ -20,10 +20,18 @@ test("GA only accepts public production routes and safe campaign parameters", ()
 test("GA stays unloaded without consent, deduplicates views and stops sending after withdrawal", () => {
   let consent: string | null = null;
   const calls: unknown[][] = [];
+  const queue: unknown[] = [];
+  queue.push = (...entries: unknown[]) => {
+    for (const entry of entries) {
+      assert.equal(Object.prototype.toString.call(entry), "[object Arguments]");
+      calls.push(Array.from(entry as IArguments));
+    }
+    return Array.prototype.push.apply(queue, entries);
+  };
   const scripts: { src?: string; onload?: () => void; dataset: Record<string, string> }[] = [];
   const location = new URL("https://imperioes.com/instagram?utm_source=instagram#camiseta");
   const fakeWindow = {
-    location, localStorage: { getItem: () => consent }, gtag: (...args: unknown[]) => calls.push(args),
+    location, localStorage: { getItem: () => consent }, dataLayer: queue,
   };
   const fakeDocument = { cookie: "", referrer: "", documentElement: { dataset: {} },
     createElement: () => ({ dataset: {} }), head: { appendChild: (s: typeof scripts[number]) => scripts.push(s) } };

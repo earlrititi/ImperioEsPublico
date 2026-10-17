@@ -15,7 +15,7 @@
     "optimize:assets": "node scripts/generate-performance-assets.mjs",
     "check": "astro check",
     "test": "tsx --test tests/**/*.test.ts",
-    "test:integration": "node scripts/verify-article-access.mjs && node scripts/verify-commerce.mjs && node scripts/verify-admin-mail.mjs && node scripts/verify-shirt-catalog.mjs && node scripts/verify-reservation-checkout.mjs && node scripts/verify-password-auth.mjs && node scripts/verify-manifesto.mjs && node scripts/verify-admin-delivery.mjs && node scripts/verify-newsletter-audience.mjs && node scripts/verify-payment-ux.mjs",
+    "test:integration": "node scripts/verify-article-access.mjs && node scripts/verify-commerce.mjs && node scripts/verify-admin-mail.mjs && node scripts/verify-paid-order-admin-mail.mjs && node scripts/verify-shirt-catalog.mjs && node scripts/verify-reservation-checkout.mjs && node scripts/verify-password-auth.mjs && node scripts/verify-manifesto.mjs && node scripts/verify-admin-delivery.mjs && node scripts/verify-newsletter-audience.mjs && node scripts/verify-payment-ux.mjs",
     "verify": "npm run check && npm test && npm run build",
     "preview": "astro preview",
     "astro": "astro"

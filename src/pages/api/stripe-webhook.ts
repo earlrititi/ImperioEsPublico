@@ -430,6 +430,8 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     await completeStripeEvent(event.id);
+    const { drainPaidOrderAdminMail } = await import("../../lib/paid-order-admin-mail");
+    await drainPaidOrderAdminMail(1).catch(() => { console.error("Paid order admin notice worker unavailable; durable queue retained"); });
     const { drainCommerceMail } = await import("../../lib/commerce-mail");
     await drainCommerceMail(1).catch(() => {});
 

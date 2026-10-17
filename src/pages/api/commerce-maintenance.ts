@@ -11,6 +11,7 @@ import { drainCommerceMail } from "../../lib/commerce-mail";
 import { drainAdminMail,reconcileAdminDelivery } from "../../lib/admin-mail";
 import { closeOpenReservationPayment, shirtPaymentConfiguration } from "../../lib/reservation-payment";
 import { readCampaign } from "../../lib/reservation-campaign";
+import { drainPaidOrderAdminMail, reconcilePaidOrderAdminDelivery } from "../../lib/paid-order-admin-mail";
 export const prerender = false;
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -20,6 +21,8 @@ export const POST: APIRoute = async ({ request }) => {
       !safeEqual(request.headers.get("authorization") ?? "", `Bearer ${secret}`)
     )
       throw new Error("FORBIDDEN");
+    const paidOrderAdminMail = await drainPaidOrderAdminMail(10);
+    const paidOrderAdminDelivery = await reconcilePaidOrderAdminDelivery(10);
     const { data, error } = await (
       await database()
     )
@@ -55,7 +58,7 @@ export const POST: APIRoute = async ({ request }) => {
       for (const r of pending ?? []) if (await rpc("open_shirt_purchase", { p_id: r.id })) opened++;
     }
     const adminDelivery=await reconcileAdminDelivery(10);
-    return privateJson({ expired, opened, ...(await drainCommerceMail(20)), adminMail: await drainAdminMail(10),adminDelivery });
+    return privateJson({ expired, opened, paidOrderAdminMail, paidOrderAdminDelivery, ...(await drainCommerceMail(20)), adminMail: await drainAdminMail(10),adminDelivery });
   } catch (error) {
     return failure(error);
   }

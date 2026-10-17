@@ -9,7 +9,7 @@ export default [{
     'src/pages/api/reservations/**/*.ts','src/pages/api/commerce-*.ts','tests/reservations.test.ts',
     'src/pages/api/subscriptions/status.ts','tests/payment-ux.test.ts',
     'src/lib/tshirt-promotion.ts','src/lib/emails.ts','src/pages/api/tshirt-lead.ts',
-    'src/lib/admin-notifications.ts','tests/admin-notifications.test.ts','src/pages/api/stripe-webhook.ts','src/pages/api/create-checkout-session.ts',
+    'src/lib/admin-notifications.ts','src/lib/paid-order-admin-mail.ts','tests/paid-order-admin-mail.test.ts','tests/admin-notifications.test.ts','src/pages/api/stripe-webhook.ts','src/pages/api/create-checkout-session.ts',
     'src/lib/auth-*.ts','src/pages/api/auth/*.ts','tests/auth-forms.test.ts',
     'src/config/editorial.ts','src/lib/seo.ts','src/lib/article-seo.ts','src/pages/feed.xml.ts','src/pages/sitemap.xml.ts','tests/seo.test.ts','scripts/verify-seo.mjs'],
   languageOptions:{parser:tsParser,parserOptions:{ecmaFeatures:{jsx:true}},ecmaVersion:'latest',sourceType:'module'},

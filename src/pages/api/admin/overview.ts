@@ -13,10 +13,11 @@ export const GET:APIRoute=async context=>{
       if(error)throw new Error("AUTH_UNAVAILABLE");
       users.push(...data.users);if(data.users.length<1000)break;
     }
-    const [profiles,notices,subscriptions,reservations,orders,checkouts,interaction]=await Promise.all([
+    const [profiles,notices,subscriptions,reservations,orders,checkouts,interaction,orderNotices]=await Promise.all([
       readAll("profiles","id,email,full_name,created_at"),readAll("admin_notification_history","id,kind,customer_email,subject,occurred_at,source,delivery_status,source_url"),
       verifiedSubscriptions(),readAll("reservations","id,number,customer_email,customer_name,status,total_quantity,created_at"),
       readAll("commerce_orders","id,status,total,created_at"),readAll("subscription_checkouts","email,plan,stripe_session_id,expires_at","email"),rpc("admin_analytics_summary",{p_days:30}),
+      readAll("paid_order_admin_outbox","order_id,status,delivery_status,created_at,sent_at"),
     ]);
     const accounts=users.map(user=>{
       const profile=profiles.find(p=>p.id===user.id);const email=user.email?.toLowerCase()??"";
@@ -33,6 +34,6 @@ export const GET:APIRoute=async context=>{
       catch(error){if((error as {code?:string}).code!=="resource_missing")throw error;checkoutStates.push({...c,status:"historical_unavailable"});}
     }
     return privateJson({accounts,notices:notices.sort((a,b)=>b.occurred_at.localeCompare(a.occurred_at)),subscriptions,
-      reservations,orders,checkouts:checkoutStates,interaction});
+      reservations,orders,orderNotices,checkouts:checkoutStates,interaction});
   }catch(error){return failure(error);}
 };

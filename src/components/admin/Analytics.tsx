@@ -2,7 +2,9 @@ import { useEffect, useState } from "preact/hooks";
 
 type Interaction = { page: string; target: string; event: string; count: number };
 type Consent = { consent_type: string; decisions: number; accepted: number; rejected: number; withdrawals: number; identities: number };
-type Summary = { interactions: Interaction[]; consents: Consent[]; daily: { day: string; event: string; count: number }[] };
+type Ga4Row = { dimensions: string[]; metrics: number[] };
+type Summary = { interactions: Interaction[]; consents: Consent[]; daily: { day: string; event: string; count: number }[];
+  ga4?: { status: string; totals: Ga4Row[]; traffic: Ga4Row[]; devices: Ga4Row[]; pages: Ga4Row[]; events: Ga4Row[]; truncated: boolean; thresholded: boolean } };
 const eventLabel: Record<string, string> = { page_view: "Visita", click: "Clic", scroll_50: "Scroll 50%", scroll_90: "Scroll 90%" };
 const consentLabel: Record<string, string> = { cookies_analytics: "Analitica", cookies_marketing: "Marketing", cookies_preferences: "Preferencias" };
 export default function Analytics() {
@@ -24,11 +26,18 @@ export default function Analytics() {
   const rows = (data?.interactions ?? []).filter(row => (!event || row.event === event) && `${row.page} ${row.target}`.toLowerCase().includes(query.toLowerCase()));
   const totals = (name: string) => (data?.daily ?? []).filter(r => r.event === name).reduce((sum, r) => sum + Number(r.count), 0);
   return <section>
-    <div class="admin-toolbar"><h1>Interacciones</h1><label>Periodo <select value={days} onChange={e => setDays(Number(e.currentTarget.value))}>
+    <div class="admin-toolbar"><h1>Analítica</h1><label>Periodo <select value={days} onChange={e => setDays(Number(e.currentTarget.value))}>
       {[7, 30, 90, 365].map(n => <option key={n} value={n}>{n} dias</option>)}</select></label></div>
     {error && <div role="alert"><p>{error}</p><button onClick={() => setAttempt(attempt + 1)}>Reintentar</button></div>}
     {!data && !error && <p role="status">Cargando actividad...</p>}
     {data && <>
+      <h2>Datos medidos por GA4</h2><p>Solo visitas con consentimiento. Informes hasta ayer; pueden incluir retrasos de procesamiento. Las compras medidas no sustituyen a las ventas reales de Stripe.</p>
+      {data.ga4?.status === "available" ? <>
+        <div class="admin-metrics">{["Usuarios activos", "Sesiones", "Vistas", "Compras medidas", "Ingresos medidos (EUR)"].map((label,i)=><div key={label}><span>{label}</span><strong>{(data.ga4?.totals[0]?.metrics[i] ?? 0).toLocaleString("es-ES",{maximumFractionDigits:2})}</strong></div>)}</div>
+        {(data.ga4.truncated || data.ga4.thresholded) && <p role="note">Resultados limitados o sujetos a umbrales de privacidad de Google.</p>}
+        {([["Fuentes y campañas", data.ga4.traffic, ["Fuente / medio", "Campaña", "Sesiones", "Usuarios", "Compras medidas"]], ["Dispositivos", data.ga4.devices, ["Dispositivo", "Sesiones", "Usuarios", "Compras medidas"]], ["Páginas", data.ga4.pages, ["Ruta", "Título", "Vistas", "Usuarios"]], ["Eventos ecommerce y actividad", data.ga4.events, ["Evento", "Veces", "Usuarios"]]] as [string,Ga4Row[],string[]][]).map(([title,values,labels])=><div key={title}><h3>{title}</h3><div class="admin-table-wrap"><table><thead><tr>{labels.map(label=><th key={label}>{label}</th>)}</tr></thead><tbody>{values.map((row,i)=><tr key={i}>{[...row.dimensions,...row.metrics].map((value,j)=><td key={j}>{value}</td>)}</tr>)}{!values.length&&<tr><td colSpan={labels.length}>Sin datos medidos en este periodo.</td></tr>}</tbody></table></div></div>)}
+      </> : <p role="status">{data.ga4?.status === "not_configured" ? "Conexión de servidor a GA4 pendiente de credenciales de lectura." : "Los informes de GA4 no están disponibles. La actividad local sigue accesible."}</p>}
+      <h2>Interacciones locales consentidas</h2>
       <div class="admin-metrics">{[["Visitas registradas", "page_view"], ["Clics", "click"], ["Scroll 50%", "scroll_50"], ["Scroll 90%", "scroll_90"]].map(([label, name]) => <div key={name}><span>{label}</span><strong>{totals(name).toLocaleString("es-ES")}</strong></div>)}</div>
       <div class="admin-toolbar"><h2>Paginas y elementos</h2><label>Buscar <input type="search" value={query} onInput={e => { setQuery(e.currentTarget.value); setPage(0); }} /></label><label>Evento <select value={event} onChange={e => { setEvent(e.currentTarget.value); setPage(0); }}><option value="">Todos</option>{Object.entries(eventLabel).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label></div>
       <div class="admin-table-wrap"><table><thead><tr><th>Pagina</th><th>Elemento</th><th>Evento</th><th>Veces</th></tr></thead><tbody>

@@ -11,11 +11,11 @@ import {
 } from "../config/hero";
 
 const TIMING = {
-  step: 180,
-  fade: 220,
-  shrink: 300,
-  grow: 520,
-  preloadTimeout: 650,
+  step: 367,
+  fade: 418,
+  shrink: 610,
+  grow: 1271,
+  preloadTimeout: 1075,
 };
 
 const SEQUENCE_FRAME_SCALE = 0.88;

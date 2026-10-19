@@ -39,7 +39,8 @@ export default function ArticleEditor() {
     editor.current=instance;setReady(true);
     return ()=>{editor.current=null;instance.destroy();};
   },[]);
-  useEffect(()=>{editor.current?.setEditable(!busy&&status!=="deleted");},[busy,status]);
+  // Locking the UI must not emit a content update or mark a saved draft dirty.
+  useEffect(()=>{editor.current?.setEditable(!busy&&status!=="deleted",false);},[busy,status]);
   useEffect(()=>{const timer=setTimeout(()=>{setQuery(search.trim());setPage(0);},300);return()=>clearTimeout(timer);},[search]);
   useEffect(()=>{
     let current=true;setLoading(true);

@@ -8,6 +8,7 @@ export default [{
     'src/lib/subscription-purchase.ts','src/pages/api/subscriptions/purchase.ts','tests/subscription-purchase.test.ts','tests/google-subscription-purchase.test.ts',
     'src/lib/resend.ts',
     'src/lib/article-media.ts','src/lib/admin-article-editor.ts','src/pages/media/articles/*.ts','tests/article-media.test.ts',
+    'src/components/Services.jsx','tests/service-card-visibility.test.ts',
     'src/lib/email-automations.ts','src/lib/automation-worker.ts','src/pages/api/marketing-maintenance.ts','src/pages/api/marketing/activity.ts','tests/email-automations.test.ts','tests/automation-worker.test.ts','src/lib/mail-delivery.ts','tests/mail-delivery.test.ts','tests/lead-magnet.test.ts',
     'src/lib/funnel*.ts','src/pages/api/funnel.ts','src/pages/api/manifesto.php.ts','tests/funnel.test.ts',
     'src/components/admin/**/*.{ts,tsx}','src/pages/api/admin/**/*.ts','src/pages/api/newsletter-unsubscribe.ts','src/pages/api/interactions.ts','tests/admin-*.test.ts','tests/subscription-checkout.test.ts',

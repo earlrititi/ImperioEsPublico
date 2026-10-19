@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 import { parseEnv } from "node:util";
 import { createClient } from "@supabase/supabase-js";
+import { parse } from "parse5";
 
 const checks=[];
 async function get(url,expected=200,options={}){
@@ -17,6 +18,10 @@ for(const host of ["imperioes.com","www.imperioes.com"]){
   assert.doesNotMatch(home,/BEGIN PRIVATE KEY|\b(?:sk|rk)_live_[A-Za-z0-9]{20,}/);
   const registration=await(await get(origin+"/registro")).text();
   assert.match(registration,/name="newsletter"/);assert.doesNotMatch(registration,/<input[^>]*name="newsletter"[^>]*checked/);
+  const subscriptions=parse(await(await get(origin+"/suscribirse")).text());
+  let popup=false;
+  const visit=node=>{if(node.attrs?.some(attr=>attr.name==="data-tshirt-lead"))popup=true;for(const child of node.childNodes??[])visit(child);};
+  visit(subscriptions);assert.equal(popup,false,"The offer must not interrupt plan selection");
   for(const path of ["/tienda","/carrito","/recursos/7-historias-del-siglo-de-oro"]){await(await get(origin+path)).arrayBuffer();}
   for(const path of ["/api/admin/articles","/api/admin/automations","/api/admin/automation-stats"]){
     const response=await get(origin+path,403);assert.match(response.headers.get("cache-control"),/no-store/);await response.arrayBuffer();

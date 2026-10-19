@@ -85,11 +85,17 @@ export default function Services() {
             { rootMargin: "320px 0px", threshold: 0 }
           );
 
-    const resetCardsWhenTabChanges = () => {
-      if (document.visibilityState === "hidden") cards.forEach(resetCard);
-    };
-
-    document.addEventListener("visibilitychange", resetCardsWhenTabChanges);
+    const resetObserver =
+      typeof IntersectionObserver === "undefined"
+        ? null
+        : new IntersectionObserver(
+            (entries) => {
+              entries.forEach((entry) => {
+                if (!entry.isIntersecting) resetCard(entry.target);
+              });
+            },
+            { threshold: 0 }
+          );
 
     if (armySwap) {
       armySwap.querySelectorAll("[data-army-base-srcset]").forEach((source) => {
@@ -173,6 +179,7 @@ export default function Services() {
       card.addEventListener("focusin", lockCardOpen);
       card.addEventListener("pointerdown", lockCardOpen);
       visibilityObserver?.observe(card);
+      resetObserver?.observe(card);
 
       cleanups.push(() => {
         card.classList.remove(
@@ -184,13 +191,14 @@ export default function Services() {
         card.removeEventListener("focusin", lockCardOpen);
         card.removeEventListener("pointerdown", lockCardOpen);
         visibilityObserver?.unobserve(card);
+        resetObserver?.unobserve(card);
       });
     });
 
     return () => {
       cleanups.forEach((cleanup) => cleanup());
       visibilityObserver?.disconnect();
-      document.removeEventListener("visibilitychange", resetCardsWhenTabChanges);
+      resetObserver?.disconnect();
     };
   }, []);
 

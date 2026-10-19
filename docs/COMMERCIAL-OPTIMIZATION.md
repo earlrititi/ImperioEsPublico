@@ -3,6 +3,39 @@
 Solicitud: prompt maestro recibido el 2026-10-16. Este registro distingue codigo
 implementado, pruebas realizadas y servicios realmente activados.
 
+## Verificacion visual y GA4, 2026-10-19
+
+Chrome vuelve a estar conectado. Comprobaciones reales sobre imperioes.com y
+www.imperioes.com, no solo fixtures:
+
+- Propiedad GA4 558692820, cuenta 411724517: un usuario activo en tiempo real,
+  vistas de home/tienda/carrito y eventos page_view/view_item observados. Esto
+  confirma recepcion de navegacion, no una compra nueva ni atribucion completa.
+- Antes de aceptar analitica, cero scripts Google. Tras aceptar, un contenedor
+  GTM-5VRFG7ZT. Checkout privado sin scripts Google aun con consentimiento.
+  Retirada mediante el switch, persistida y compartida con www: switch apagado
+  y cero scripts Google tras navegar. La prueba termina con analitica desactivada.
+- Tienda, carrito, suscripciones y formulario de camiseta revisados a 390 px;
+  ancho del documento igual al viewport, sin desbordamiento horizontal.
+- Tres camisetas en carrito: 80,97 EUR + 9 EUR de envio = 89,97 EUR. Talla/cantidad
+  llegan al formulario y nombre/email se piden una vez. Carrito de prueba vaciado.
+- Contrato anual Maestre: 37,99 EUR/ano, IVA 21 % incluido y boton de pago activo.
+  No se envia el formulario ni se crean sesiones, reservas, cobros o correos.
+- Comparativa desktop: las siete filas de Planes y de los tres niveles coinciden
+  exactamente en posicion y altura (58 px). Las seis imagenes base/morph cargan.
+- Detectados y corregidos localmente dos problemas: popup sobre la seleccion
+  de planes y tarjetas bloqueadas abiertas fuera de pantalla. El popup queda
+  excluido de /suscribirse; un observer de viewport real reinicia el morph sin
+  alterar el observer de precarga. Cambiar de pestana ya no cierra las tarjetas.
+- Check sin errores/warnings (6 hints anteriores), 157 unitarias y build correctos;
+  lint de Services y pruebas nuevo sin avisos. Hook real probado con DOM e
+  IntersectionObserver sinteticos, incluidos salida, reapertura y limpieza.
+
+Capturas locales no versionadas: tmp/commercial-audit/qa-2026-10-19/.
+Correcciones: pendientes de publicar y comprobar en navegador Live.
+Revision visual autenticada del editor/dashboard: pendiente del inicio de sesion
+del administrador; no se solicita ni se extrae su contrasena.
+
 ## Actualizacion de activacion y CMS, 2026-10-19
 
 El titular solicita activar las series y revisar primero los historicos. Esta
@@ -63,8 +96,8 @@ cero recibos pendientes. Cero errores/fatales en los logs consultados de ese
 despliegue. No se ha enviado ninguna campana retrospectiva ni creado cargos.
 Reproduccion: node scripts/verify-commercial-production.mjs; --maintenance
 comprueba tambien el worker y se niega a despachar si ya hay trabajos pendientes.
-No hay navegador conectado en esta sesion; no se afirma QA visual ni recepcion
-de los nuevos eventos en GA4 Real-time. Los estados anteriores de este registro
+En la comprobacion anterior no habia navegador conectado. La verificacion
+posterior figura arriba; no se afirma recepcion de purchase nuevos. Los estados anteriores de este registro
 se conservan como historial, no como estado actual de las migraciones.
 
 ## Restricciones
@@ -87,11 +120,11 @@ se conservan como historial, no como estado actual de las migraciones.
 | 3 | Dashboard y CMS | CRUD completo e imagenes publicados; APIs protegidas y artefacto servido comprobados; informes GA4 publicados |
 | 4 | Integridad Supabase y Stripe; pruebas aisladas | Camisetas y Maestre anual pagados en Test; webhooks, acceso, correo y deduplicacion verificados |
 | 5 | Consentimiento y textos legales verificables | Publicados tras validacion por el asesor declarada por el titular; no es certificacion juridica independiente |
-| 6 | GA4, GTM y ecommerce sin duplicados | Loader y purchase de camisetas/suscripciones publicados y probados; recepcion en GA4 Real-time pendiente |
+| 6 | GA4, GTM y ecommerce sin duplicados | Recepcion real de page_view/view_item confirmada; purchase validado tecnicamente sin crear nuevos cobros Live |
 | 7 | Automatizaciones de email | Activadas para nuevos registros verificados con opt-in; scheduler HTTP 200; historicos excluidos y atribucion no inventada |
 | 8 | Roles, seguridad y bots | Roles y permisos probados en parte; auditoria Piquero sin borrados |
-| 9 | Responsive y rendimiento | Desktop/movil comprobados en parte; rendimiento y otros navegadores pendientes |
-| 10 | Regresion, informe y bloqueos externos | 156 unitarias, integracion, CMS, SQL Test y HTTP Live correctos; QA visual actual y GA4 real pendientes |
+| 9 | Responsive y rendimiento | Recorridos publicos desktop/movil revisados; editor visual autenticado, rendimiento y otros navegadores pendientes |
+| 10 | Regresion, informe y bloqueos externos | 157 unitarias, integracion, CMS, SQL Test, HTTP Live y GA4 de navegacion correctos; falta QA autenticada |
 
 ## Hechos tecnicos y cambios
 

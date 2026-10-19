@@ -39,10 +39,11 @@ test("Purchase loading never flashes a free reservation or an empty cart", () =>
   assert.doesNotMatch(html, /Pre-reserva gratuita|RESERVAR|0,00|Tu carrito est/);
 });
 
-test("offer never interrupts store, cart or cookie choices", () => {
+test("offer never interrupts subscriptions, store, cart or cookie choices", () => {
   const popup = readFileSync(new URL("../src/components/TshirtLeadPopup.astro", import.meta.url), "utf8");
   assert.match(popup, /\|tienda\(/);
   assert.match(popup, /\|carrito\(/);
+  assert.match(popup, /\|suscribirse\(/);
   assert.match(popup, /data-cookie-banner\]:not\(\[hidden\]\)/);
   assert.match(popup, /waitingForCookies/);
 });

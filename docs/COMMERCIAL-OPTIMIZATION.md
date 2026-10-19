@@ -32,7 +32,14 @@ www.imperioes.com, no solo fixtures:
   IntersectionObserver sinteticos, incluidos salida, reapertura y limpieza.
 
 Capturas locales no versionadas: tmp/commercial-audit/qa-2026-10-19/.
-Correcciones: pendientes de publicar y comprobar en navegador Live.
+Correcciones publicadas en 44d08a3: Preview y Production READY, deployment
+dpl_6rRrgoKvanwsomX7UGkr8mjF8yeg. Veintiseis comprobaciones HTTP correctas en
+ambos dominios, incluida ausencia real del elemento de popup en /suscribirse.
+Chrome Live confirma suscripciones a 390 px sin popup ni desbordamiento.
+La tarjeta permanece bloqueada abierta mientras sigue visible; al desplazarse
+fuera del viewport se quitan locked-open y morph-active de las tres tarjetas.
+Al abrir de nuevo, animationName pasa de none a service-card-morph-cycle (1,08 s).
+No se cambiaron precios, stock, suscripciones, flags o secretos en este bloque.
 Revision visual autenticada del editor/dashboard: pendiente del inicio de sesion
 del administrador; no se solicita ni se extrae su contrasena.
 

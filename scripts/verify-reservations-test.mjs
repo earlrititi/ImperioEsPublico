@@ -16,7 +16,8 @@ const credentials=(url)=>{const [id,token]=new URL(url).hash.slice(1).split('.')
 const created=[];
 try {
   const initial=await call('/api/reservations/inventory');assert.equal(initial.status,200);assert.equal(initial.data.unitPrice,2999);checks++;
-  const sku='IE-CAMISETA-IMPERIAL-S';const stock=initial.data.variants.find(v=>v.sku===sku).available_stock;assert.ok(stock>0);
+  const sku='IE-CAMISETA-IMPERIAL-S';assert.equal(initial.data.variants.find(v=>v.sku===sku).available,true);
+  const {data:stockRow,error:stockError}=await db.from('product_variants').select('available_stock').eq('sku',sku).single();assert.ifError(stockError);const stock=stockRow.available_stock;assert.ok(stock>0);
   const a=await proof();const b=await proof();await new Promise(r=>setTimeout(r,1100));
   const body=p=>({...p,customer,address,accepted:true,website:'',items:[{sku,quantity:stock}],price:1,total:1,shippingCost:9900});
   const pair=await Promise.all([call('/api/reservations',body(a)),call('/api/reservations',body(b))]);
@@ -28,13 +29,13 @@ try {
   const retry=await call('/api/reservations',body(pair[0].status===201?a:b));assert.equal(retry.data.id,own.id);checks++;
   const hidden=await call(`/api/reservations/${own.id}`,{action:'view',token:'a'.repeat(64)});assert.equal(hidden.status,404);checks++;
   const noPay=await call(`/api/reservations/${own.id}/checkout`,{token:own.token,address,confirmPurchase:true});assert.equal(noPay.data.code,'RESERVATION_MODE');checks++;
-  const unavailable=await call('/api/reservations/inventory');assert.equal(unavailable.data.variants.find(v=>v.sku===sku).available_stock,0);checks++;
+  const unavailable=await call('/api/reservations/inventory');assert.equal(unavailable.data.variants.find(v=>v.sku===sku).available,false);checks++;
   const admin=await call('/api/commerce-admin');assert.equal(admin.status,403);checks++;
   const anon=createClient(env.PUBLIC_SUPABASE_URL,env.PUBLIC_SUPABASE_ANON_KEY,{auth:{persistSession:false}});
   const denied=await anon.from('reservations').select('*');assert.ok(denied.error||!denied.data?.length);checks++;
   const deniedRPC=await anon.rpc('release_shirt_reservation',{p_id:own.id,p_status:'CANCELLED'});assert.ok(deniedRPC.error);checks++;
   for(let i=0;i<2;i++)assert.equal((await call(`/api/reservations/${own.id}`,{action:'cancel',token:own.token})).status,200);
-  const restored=await call('/api/reservations/inventory');assert.equal(restored.data.variants.find(v=>v.sku===sku).available_stock,stock);checks++;
+  const restored=await call('/api/reservations/inventory');assert.equal(restored.data.variants.find(v=>v.sku===sku).available,true);const restoredStock=await db.from('product_variants').select('available_stock').eq('sku',sku).single();assert.ifError(restoredStock.error);assert.equal(restoredStock.data.available_stock,stock);checks++;
   const outbox=await db.from('commerce_outbox').select('kind,status').eq('reservation_id',own.id);assert.ifError(outbox.error);assert.deepEqual(outbox.data.map(j=>j.kind).sort(),['CANCELLED','RESERVED']);checks++;
   const invalid=await call('/api/reservations',{...body(b),address:{...address,province:'07',postalCode:'07001'}});assert.notEqual(invalid.status,201);checks++;
   const honeypot=await call('/api/reservations',{...body(b),website:'bot.example'});assert.equal(honeypot.data.code,'ANTI_BOT');checks++;

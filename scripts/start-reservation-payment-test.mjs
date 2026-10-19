@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { parseEnv } from 'node:util';
 import { spawn, execFileSync } from 'node:child_process';
 import { join } from 'node:path';
@@ -10,7 +10,7 @@ const saved = parseEnv(readFileSync('.env.reservation-test.local', 'utf8'));
 assert.equal(saved.PUBLIC_SUPABASE_URL, 'https://joicpkgvggfxzrdazisx.supabase.co');
 assert.equal(saved.RESERVATION_MODE, 'true');
 assert.equal(saved.STRIPE_LIVE_CHECKOUT_ENABLED, 'false');
-assert.match(saved.STRIPE_SECRET_KEY, /^(sk|rk)_test_/);
+assert.ok(/^(sk|rk)_test_/.test(saved.STRIPE_SECRET_KEY ?? ''), 'A Stripe Test key is required');
 const stripe = new Stripe(saved.STRIPE_SECRET_KEY);
 assert.equal((await stripe.accounts.retrieve()).id, 'acct_1UCc4cDRITvLIOKF');
 const port = 4325;
@@ -24,9 +24,30 @@ const env = {
   PUBLIC_SITE_URL: `http://127.0.0.1:${port}`,
   RESERVATION_MODE: process.argv.includes('--reservations') ? 'true' : 'false', SHIRT_SALES_APPROVED: 'true',
   STRIPE_LIVE_CHECKOUT_ENABLED: 'false', COMMERCE_EMAIL_MODE: 'disabled',
+  MARKETING_AUTOMATIONS_ENABLED: 'false', MARKETING_AUTOMATION_CAPTURE_ENABLED: 'false',
   ASTRO_DEV_BACKGROUND: '1',
 };
-const events = 'checkout.session.completed,checkout.session.async_payment_succeeded,checkout.session.async_payment_failed,checkout.session.expired,charge.refunded';
+let events = 'checkout.session.completed,checkout.session.async_payment_succeeded,checkout.session.async_payment_failed,checkout.session.expired,charge.refunded';
+if (process.argv.includes('--subscriptions')) {
+  const file = 'tmp/commercial-audit/subscription-payment-test.json';
+  const state = JSON.parse(readFileSync(file, 'utf8'));
+  assert.equal(state.finished, false); assert.ok(state.userId && state.password);
+  const local = parseEnv(readFileSync('.env.local', 'utf8'));
+  const sink = 'earlrititi@gmail.com';
+  env.RESEND_API_KEY = saved.RESEND_API_KEY || local.RESEND_API_KEY;
+  assert.ok(/^re_/.test(env.RESEND_API_KEY ?? ''), 'A local Resend key is required for the approved Test recipient');
+  env.TRANSACTIONAL_EMAIL_TEST_RECIPIENT = sink;
+  env.TRANSACTIONAL_EMAIL_TEST_RUN_ID = state.runId;
+  for (const [key, value] of Object.entries(state.priceEnv)) {
+    assert.match(key, /^STRIPE_PRICE_(ARCABUCERO|MAESTRE_CAMPO)_(MONTHLY|ANNUAL)$/);
+    const price = await stripe.prices.retrieve(value); assert.equal(price.livemode, false);
+    env[key] = value;
+  }
+  assert.equal(Object.keys(state.priceEnv).length, 4);
+  state.testRecipient = sink;
+  writeFileSync(file, JSON.stringify(state, null, 2), { mode: 0o600 });
+  events += ',customer.subscription.created,customer.subscription.updated,customer.subscription.deleted,invoice.paid,invoice.payment_succeeded,invoice.payment_failed';
+}
 // Capture the signing secret in memory; never print it or write it to source files.
 try {
   env.STRIPE_WEBHOOK_SECRET = execFileSync(cli, ['listen', '--print-secret'], {
@@ -34,7 +55,7 @@ try {
     stdio: ['ignore', 'pipe', 'pipe'],
   }).trim();
 } catch { throw new Error('Could not obtain the Test listener secret'); }
-assert.match(env.STRIPE_WEBHOOK_SECRET, /^whsec_\S+$/);
+assert.ok(/^whsec_\S+$/.test(env.STRIPE_WEBHOOK_SECRET ?? ''), 'A Test webhook signing secret is required');
 const children = [];
 let stopping = false;
 function stop(code = 0) {
@@ -68,5 +89,5 @@ process.on('SIGTERM', () => stop());
 process.stdin.resume();
 process.stdin.on('data', (data) => { if (data.toString().trim() === 'q') stop(); });
 start(cli, ['listen', '--events', events, '--forward-to', `${env.PUBLIC_SITE_URL}/api/stripe-webhook`]);
-start(process.execPath, ['node_modules/astro/bin/astro.mjs', 'dev', '--host', '127.0.0.1', '--port', String(port), '--mode', 'reservation-test']);
+start(process.execPath, ['node_modules/astro/bin/astro.mjs', 'dev', '--ignore-lock', '--host', '127.0.0.1', '--port', String(port), '--mode', 'reservation-test']);
 console.log(`Isolated payment Test: ${env.PUBLIC_SITE_URL}; type q to stop. No saved environment changes.`);

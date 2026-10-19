@@ -4,6 +4,7 @@ import Navigation from "../components/Navigation.jsx";
 import Preloader from "../components/Preloader.jsx";
 import ArticlesGrid from "../components/ArticlesGrid.jsx";
 import Services from "../components/Services.jsx";
+import HomeShirt from "../components/HomeShirt.astro";
 import ReaderFaq from "../components/ReaderFaq.astro";
 import { readerFaqSchema } from "../config/reader-faq";
 import { PRELOADER_SESSION_KEY } from "../config/hero";
@@ -39,6 +40,7 @@ const articles = await publishedArticles();
     <Preloader client:load />
     <Navigation />
     <HeroImperio client:load />
+    <HomeShirt />
     <Services client:visible={{ rootMargin: "-20% 0px" }} />
     <ArticlesGrid articles={articles} />
     <ReaderFaq />

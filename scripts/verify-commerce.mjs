@@ -280,6 +280,8 @@ assert.equal((await webhook("checkout.session.completed", completedSession, sess
 assert.equal(subscriptionRows.at(-1).status, "active");
 assert.equal(emailRows.length, 1);
 assert.match(emailRows[0].text, /compartidos por Arcabucero y Maestre de Campo/);
+assert.match(emailRows[0].text, /20%/);
+assert.doesNotMatch(emailRows[0].text, /15%/);
 assert.equal((await webhook("checkout.session.completed", completedSession, sessionEventId)).status, 200);
 assert.equal(emailRows.length, 1, "Completed duplicate must not resend welcome email");
 ledgerFailure = true;

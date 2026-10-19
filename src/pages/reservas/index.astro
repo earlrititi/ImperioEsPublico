@@ -18,11 +18,11 @@ Astro.response.headers.set('Referrer-Policy','no-referrer');
     <aside class="commerce-product" aria-label="Información de la Camiseta Imperial">
       <div class="commerce-product__image"><picture><source type="image/avif" srcset="/images/museo-camiseta-front-640.avif 640w, /images/museo-camiseta-front-960.avif 960w" sizes="(max-width: 760px) calc(100vw - 48px), 42vw" /><img src="/images/museo-camiseta-front-960.webp" srcset="/images/museo-camiseta-front-640.webp 640w, /images/museo-camiseta-front-960.webp 960w" sizes="(max-width: 760px) calc(100vw - 48px), 42vw" alt="Camiseta Imperial, vista delantera" width="1400" height="1150" loading="eager" decoding="async" fetchpriority="high" /></picture></div>
       <span class="commerce-kicker">Edición Imperial</span>
-      <h2>VALENTO BRICKPLUS</h2>
+      <h2>Camiseta Imperial</h2>
       <p class="commerce-product__specs">100 % poliéster · Bird-Eye · 145 g/m²</p>
       <p>{shirt.shippingInformation}</p>
       <a class="commerce-product__link" href="/checkout/camiseta-imperial">Ficha técnica y medidas</a>
     </aside>
-    <ReservationForm client:load initialSize={shirt.variants.some(v=>v===size)?size:'M'} initialCustomer={initialCustomer}/>
+    <ReservationForm client:load initialSize={shirt.variants.some(v=>v===size)?size:'M'} initialCustomer={initialCustomer} fromCart={Astro.url.searchParams.get('cart')==='1'} initialSales={!reservationMode()}/>
   </div>
 </PageShell>

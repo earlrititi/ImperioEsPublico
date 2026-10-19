@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import { RESERVATION_STATUS } from "../../config/commerce";
 import { isMainlandAddress } from "../../lib/reservation-validation";
 import {trackFunnel} from "../../lib/funnel-client";
+import { trackConfirmedGooglePurchase } from "../../lib/google-analytics";
+import { changeCart, readCart, saveCart, SHIRT_SIZES, type ShirtSize } from "../../lib/cart";
 import { LEGAL_BUSINESS, LEGAL_LINKS } from "../../config/legal";
 import {
   AddressFields,
@@ -21,13 +23,34 @@ export default function ReservationManager({ paymentReturn = false }: { paymentR
   const [customer, setCustomer] = useState({ name: "", email: "" });
   const [editing, setEditing] = useState(false);
   const [confirmationDelayed, setConfirmationDelayed] = useState(false);
+  const [analyticsPurchase, setAnalyticsPurchase] = useState<unknown>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const editButton = useRef<HTMLButtonElement>(null);
   const submitting = useRef(false);
   const notifiedPaid = useRef(false);
   useEffect(() => {
+    if (!paymentReturn || r?.status !== "CONVERTED_TO_ORDER" || !analyticsPurchase) return;
+    const measure = () => { trackConfirmedGooglePurchase(analyticsPurchase); };
+    measure();
+    window.addEventListener("imperio:cookie-consent", measure);
+    return () => window.removeEventListener("imperio:cookie-consent", measure);
+  }, [paymentReturn, r?.status, analyticsPurchase]);
+  useEffect(() => {
     if (paymentReturn && r?.status === "CONVERTED_TO_ORDER" && !notifiedPaid.current) {
       notifiedPaid.current = true;
+      try {
+        if (sessionStorage.getItem("imperio-cart-reservation") === r.id) {
+        let cart = readCart();
+        for (const item of r.reservation_items ?? []) {
+          const size = item.size as ShirtSize;
+          if (!SHIRT_SIZES.includes(size)) continue;
+          const current = cart.find(line => line.size === size);
+          if (current) cart = changeCart(cart, size, Math.max(0, current.quantity - item.quantity));
+        }
+        saveCart(cart);
+        sessionStorage.removeItem("imperio-cart-reservation");
+        }
+      } catch { /* A confirmed order must remain visible when browser storage is blocked. */ }
       heading.current?.focus();
     }
   }, [paymentReturn, r?.status]);
@@ -66,6 +89,7 @@ export default function ReservationManager({ paymentReturn = false }: { paymentR
         });
         if (active) {
           setR(data.reservation);
+          setAnalyticsPurchase(data.analyticsPurchase ?? null);
           setMode(data.reservationMode);
           if (!initialized) {
             setCustomer({ name: data.reservation.customer_name, email: data.reservation.customer_email });

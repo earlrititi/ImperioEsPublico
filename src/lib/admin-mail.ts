@@ -2,6 +2,7 @@ import { SITE } from "../config/site";
 import { getRequiredEnv } from "./env";
 import { database, hash, optionalEnv, rpc, safeEqual, sign } from "./reservations";
 import { renderAdminMail, type MailContent } from "./admin-mail-template";
+import { assertMailRecipient } from "./mail-delivery";
 
 export function mailApproval(actor: string, payload: unknown, expires: number) {
   return sign(`admin-mail:${actor}:${expires}:${hash(JSON.stringify(payload))}`);
@@ -64,6 +65,7 @@ export async function drainAdminMail(limit = 10) {
         const saved = await db.from("email_logs").update({provider_payload:payload}).eq("id",job.id).eq("claim_id",job.claim_id).is("provider_payload",null).select("id");
         if (saved.error || saved.data?.length !== 1) throw new Error("EMAIL_SNAPSHOT_UNAVAILABLE");
       }
+      assertMailRecipient(payload, mode, optionalEnv("COMMERCE_TEST_EMAIL"));
       const result = await client.emails.send(payload,{idempotencyKey:`admin-mail-${job.id}`});
       if (result.error || !result.data) throw new Error("EMAIL_PROVIDER_UNAVAILABLE");
       await rpc("finish_admin_mail",{p_id:job.id,p_claim:job.claim_id,p_status:"sent",p_provider_id:result.data.id});

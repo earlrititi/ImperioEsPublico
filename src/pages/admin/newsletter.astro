@@ -5,4 +5,4 @@ import { requireAdmin } from "../../lib/reservations";
 export const prerender=false;
 try { await requireAdmin(Astro); } catch { return Astro.redirect("/login?next=/admin/newsletter"); }
 ---
-<AdminShell title="Newsletter"><MailComposer newsletter client:load /></AdminShell>
+<AdminShell title="Newsletter"><a href="/admin/automatizaciones">Automatizaciones</a><MailComposer newsletter client:load /></AdminShell>

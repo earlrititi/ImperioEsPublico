@@ -2,24 +2,24 @@
 
 Sitio SSR en Astro para `imperioes.com`, desplegado en Vercel e integrado con Supabase, Stripe y Resend. La analitica opcional solo se carga despues del consentimiento.
 
-> Estado: el codigo compila, pero el lanzamiento comercial sigue bloqueado por los datos empresariales, fiscales y de producto descritos en `FINAL-AUDIT.md`.
+> Estado: camisetas y suscripciones tienen configuracion Live. No confundir esa
+> configuracion con una prueba de nuevas modificaciones. La optimizacion comercial
+> iniciada el 16 de octubre de 2026 aun no esta publicada; consulta
+> [el registro de fases](docs/COMMERCIAL-OPTIMIZATION.md).
 
 ## Reservas de camisetas
 
-La fase actual permite reservar sin pago: **29,99 EUR por unidad, IVA y envio
-estandar peninsular incluidos**. Supabase Test esta separado de produccion.
+La camiseta cuesta **26,99 EUR + 3 EUR de envio por unidad**, IVA incluido y solo
+Peninsula. El servidor controla si la campana admite reservas gratuitas o compra.
+Supabase Test esta separado de produccion.
 Con Node >=22.19, `node scripts/start-reservation-test.mjs` inicia el formulario
 en `http://127.0.0.1:4323/reservas` usando el entorno local privado de Test.
 No ejecutar `npm run dev` contra `.env.local` para probar estas migraciones.
 
-Reservas sin pago publicadas en https://imperioes.com/reservas el 2026-09-11.
-Acceso autenticado verificado en https://imperioes.com/admin/comercio.
-Prueba de reserva/cancelacion correcta, correos recibidos en IONOS y 45 unidades
-disponibles tras restaurar el stock. Scheduler activo. Resend mantiene un estado
-de rebote contradictorio con la recepcion real. Los pagos Live siguen bloqueados.
-Consulta el [estado de publicacion](docs/RESERVATION-PRODUCTION-RELEASE.md) y el
-[informe A-Z](docs/RESERVATION-MODE.md). Checkout Test completado con tarjeta ficticia,
-webhook firmado y pedido/stock verificados; no se han habilitado cobros Live.
+Los documentos de reserva de septiembre describen estados historicos, no los
+flags actuales de Live. Antes de cualquier prueba integrada, verifica cuenta,
+modo de Stripe y proyecto Supabase. Si Test esta pausado, restauralo: nunca uses
+produccion como sustituto de pruebas. No se publican cifras de stock al comprador.
 
 ## Stack
 

@@ -69,14 +69,14 @@ export default function Footer({ variant = "light" }) {
         </span>
         <span class="image-footer__legal-utilities">
           <span class="image-footer__cookie-control">
-            <span class="image-footer__cookie-label">Cookies opcionales</span>
+            <span class="image-footer__cookie-label">PREFERENCIAS DE COOKIES</span>
             <label class="image-footer__cookie-switch">
-              <span class="image-footer__sr-only">Permitir cookies opcionales</span>
+              <span class="image-footer__sr-only">Permitir analítica</span>
               <input
                 type="checkbox"
                 role="switch"
                 data-cookie-consent-switch
-                aria-label="Permitir cookies opcionales"
+                aria-label="Permitir analítica"
               />
               <span class="image-footer__cookie-switch-track" aria-hidden="true" />
             </label>

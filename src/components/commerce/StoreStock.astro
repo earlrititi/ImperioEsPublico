@@ -1,12 +1,15 @@
 <script>
   function setupStoreStock() {
-    const form = document.querySelector<HTMLFormElement>(".product-purchase");
-    if (!form || form.dataset.stockBound) return;
+    for (const form of document.querySelectorAll<HTMLFormElement>(".product-purchase")) bindStock(form);
+  }
+  function bindStock(form: HTMLFormElement) {
+    if (form.dataset.stockBound) return;
     form.dataset.stockBound = "true";
     const select = form.querySelector<HTMLSelectElement>("[data-shirt-size]");
     const button = form.querySelector<HTMLButtonElement>("[data-reservation-cta]");
     const status = form.querySelector<HTMLElement>("[data-reservation-stock]");
     const waiting = form.querySelector<HTMLAnchorElement>("[data-waitlist-link]");
+    const cartButton = form.querySelector<HTMLButtonElement>("[data-cart-add]");
     if (!select || !button || !status || !waiting) return;
     let stopped = false;
     const refresh = async () => {
@@ -17,13 +20,14 @@
         if (stopped) return;
         const variant = data.variants.find((v: { name: string }) => v.name === select.value);
         if (!variant) throw new Error();
-        const exhausted = variant.available_stock === 0;
-        button.textContent = exhausted ? "AGOTADO" : data.salesEnabled?"COMPRAR CAMISETA":"RESERVAR \u2014 0 \u20ac";
+        const exhausted = !variant.available;
+        button.textContent = exhausted ? "AGOTADO" : data.salesEnabled?"COMPRAR AHORA":"RESERVAR \u2014 0 \u20ac";
         button.disabled = exhausted || (!data.reservationMode && !data.salesEnabled);
+        if (cartButton) cartButton.disabled = button.disabled;
         waiting.hidden = !exhausted;
         waiting.href = `/reservas?size=${encodeURIComponent(select.value)}`;
-        status.textContent = exhausted ? "Todas las unidades de esta talla estan reservadas o vendidas." : `Quedan ${variant.available_stock} en talla ${select.value}`;
-      } catch { if (!stopped) { button.disabled = true; status.textContent = "No se pudo consultar el stock."; } }
+        status.textContent = exhausted ? "Talla agotada. Puedes apuntarte a la lista de espera." : `Talla ${select.value} disponible`;
+      } catch { if (!stopped) { button.disabled = true; if (cartButton) cartButton.disabled = true; status.textContent = "No se pudo consultar la disponibilidad. Vuelve a intentarlo."; } }
     };
     select.addEventListener("change", refresh);
     void refresh();

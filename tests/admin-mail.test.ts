@@ -13,6 +13,13 @@ test("admin email rejects header injection and offsite CTA", () => {
   assert.throws(() => validateMail({ ...mail, cta_url: "javascript:alert(1)" }));
   assert.deepEqual(validateMail(mail), mail);
 });
+
+test("automation signature uses the actual brand asset without changing manual emails", () => {
+  const rendered = renderAdminMail(mail, "https://imperioes.com/comunicaciones/baja", true);
+  assert.match(rendered.html, /https:\/\/imperioes.com\/images\/logo-redv2.png/);
+  assert.match(rendered.text, /Un abrazo,\nEquipo de Imperio Espa\u00f1ol/);
+  assert.doesNotMatch(renderAdminMail(mail).html, /<img/);
+});
 test("audiences normalize and deduplicate, excluding only invalid emails and explicit suppression", () => {
   assert.deepEqual(filterAudience([" A@example.com ", "a@example.com", "bad", "b@example.com"], new Set(["b@example.com"])), {
     original: 4, invalid: 1, duplicates: 1, unsubscribed: 1, recipients: ["a@example.com"],

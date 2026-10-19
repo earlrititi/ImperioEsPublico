@@ -1,6 +1,6 @@
 import { NAV_ITEMS } from "../config/navigation";
 import { withBase } from "../utils/basePath";
-import { UserRound } from "lucide";
+import { UserRound, ShoppingBag } from "lucide";
 
 /** @param {{ persistent?: boolean, userEmail?: string | null }} props */
 export default function Navigation({ persistent = false, userEmail = null }) {
@@ -65,6 +65,11 @@ export default function Navigation({ persistent = false, userEmail = null }) {
           </div>
 
           <div class="main-nav__actions">
+          <a href={withBase("/carrito")} class="menu-button" aria-label="Ver carrito" title="Ver carrito">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              {ShoppingBag.map(([Tag, attrs], index) => <Tag key={index} {...attrs} />)}
+            </svg>
+          </a>
           <a href={withBase("/cuenta")} data-account-button class={`menu-button account-button${sessionEmail ? " account-button--email" : ""}`} aria-label={sessionEmail ? `Mi cuenta: ${sessionEmail}` : "Mi cuenta / Iniciar sesion"} title={sessionEmail ?? "Mi cuenta / Iniciar sesion"}>
             {sessionEmail ? <span class="account-button__email">{sessionEmail}</span> : <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               {UserRound.map(([Tag, attrs], index) => <Tag key={index} {...attrs} />)}

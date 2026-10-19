@@ -17,7 +17,7 @@ const initial=await call('/api/reservations/inventory');
 assert.equal(initial.status,200);assert.equal(initial.data.reservationMode,true);assert.equal(initial.data.unitPrice,2999);
 assert.equal((await call('/api/commerce-admin')).status,403);
 if(!process.argv.includes('--apply')){console.log('Production inventory and payment mode verified; no reservation created.');process.exit(0);}
-const sku='IE-CAMISETA-IMPERIAL-M';assert.ok(initial.data.variants.find(v=>v.sku===sku).available_stock>0);
+const sku='IE-CAMISETA-IMPERIAL-M';assert.equal(initial.data.variants.find(v=>v.sku===sku).available,true);
 const {data:proof}=await call('/api/reservations/challenge');assert.ok(proof.challenge);
 let nonce=0;while(!createHash('sha256').update(`${proof.challenge}:${nonce}`).digest('hex').startsWith('000'))nonce++;
 await new Promise(r=>setTimeout(r,1100));

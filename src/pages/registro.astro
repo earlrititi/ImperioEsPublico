@@ -20,6 +20,7 @@ if (Astro.request.method === "POST") {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const acceptedTerms = formData.get("terms") === "on";
   const acknowledgedPrivacy = formData.get("privacy") === "on";
+  const marketingConsent = formData.get("newsletter") === "on";
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const password = formData.get("password") ?? "";
   if (!validNewPassword(password) || password !== formData.get("password_confirmation")) {
@@ -47,6 +48,8 @@ if (Astro.request.method === "POST") {
         accepted: true,
         source: "registration",
       },
+      ...(marketingConsent ? [{ anonymousId, consentType: "marketing_email" as const,
+        documentVersion: LEGAL_DOCUMENT_VERSIONS.privacy, accepted: true, source: "registration" }] : []),
       {
         anonymousId,
         consentType: "privacy_acknowledgement",
@@ -81,6 +84,11 @@ if (Astro.request.method === "POST") {
   }
 
   if (signUpData.user && signUpData.user.identities?.length) {
+    // Persist proof on the genuinely new identity before email confirmation,
+    // including confirmation on another device. Unverified identities cannot send.
+    const { linkAnonymousConsents } = await import("../lib/legal-consents");
+    await linkAnonymousConsents({ anonymousId, userId: signUpData.user.id })
+      .catch(() => console.error("Registration consent link failed"));
     const { notifyLead } = await import("../lib/lead-notifications");
     await notifyLead({ kind: "registration", reference: signUpData.user.id, email })
       .catch(() => console.error("Registration owner notification failed"));
@@ -147,6 +155,10 @@ if (Astro.request.method === "POST") {
             He leido la <a href="/legal/privacidad" target="_self">politica de privacidad</a>
             {" "}(version {LEGAL_DOCUMENT_VERSIONS.privacy}).
           </span>
+        </label>
+        <label class="registration-check">
+          <input type="checkbox" name="newsletter" />
+          <span>Quiero recibir historias, novedades y ofertas por correo. Puedo darme de baja cuando quiera.</span>
         </label>
         <button class="btn btn-primary" type="submit">Crear cuenta PIQUERO</button>
       </form>

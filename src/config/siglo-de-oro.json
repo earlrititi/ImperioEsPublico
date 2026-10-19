@@ -1,0 +1,78 @@
+{
+  "title": "7 historias del Siglo de Oro que casi nunca te cuentan",
+  "edition": "Octubre de 2026",
+  "intro": "Siete puertas de entrada a la cultura de los siglos XVI y XVII: libros, viajes, talleres y personas. No son secretos ni descubrimientos in\u00e9ditos. Son historias documentadas que invitan a mirar m\u00e1s all\u00e1 de los nombres habituales y a seguir leyendo las fuentes.",
+  "note": "Usamos Siglo de Oro como marco cultural amplio, no como una frontera cronol\u00f3gica exacta. Distinguimos los hechos documentados de nuestra propuesta de lectura. Los enlaces permiten contrastar y ampliar cada historia.",
+  "stories": [
+    {
+      "id": "beatriz-bernal",
+      "title": "Una autora entre caballeros de papel",
+      "place": "Valladolid, 1545",
+      "paragraphs": [
+        "En 1545 se public\u00f3 en Valladolid el Cristali\u00e1n de Espa\u00f1a, un libro de caballer\u00edas escrito por Beatriz Bernal. Su lugar en esta historia no es el de un personaje rescatado por otro escritor: ella construy\u00f3 la ficci\u00f3n. En el mundo de la imprenta, una autora tambi\u00e9n pod\u00eda imaginar aventuras, dinast\u00edas y h\u00e9roes.",
+        "La Biblioteca Nacional documenta una nueva edici\u00f3n de 1587 promovida por su hija, Juana de Gatos, y traducciones al italiano. La vida de un libro continuaba despu\u00e9s de su primera salida del taller. Nuestra propuesta: leer su circulaci\u00f3n como una historia de autor\u00eda, trabajo editorial y memoria familiar, no solo como una curiosidad excepcional."
+      ],
+      "source": { "institution": "Biblioteca Nacional de Espa\u00f1a", "title": "Beatriz Bernal: autora y obra", "url": "https://www.bne.es/es/autores/bernal-beatriz" }
+    },
+    {
+      "id": "juan-latino",
+      "title": "El maestro que escribi\u00f3 Lepanto en lat\u00edn",
+      "place": "Granada, 1573",
+      "paragraphs": [
+        "La Biblioteca Universitaria de Granada conserva un volumen de 1573 con poemas de Juan Latino y su Austrias Carmen, dedicado a la victoria de Lepanto. Su trayectoria enlaza dos realidades que conviene no separar: lleg\u00f3 a la casa del duque de Sessa en condici\u00f3n de esclavitud y, despu\u00e9s de obtener la libertad, ense\u00f1\u00f3 gram\u00e1tica en Granada.",
+        "La propia biblioteca advierte de las incertidumbres sobre sus primeros a\u00f1os. El cuidado con esas lagunas forma parte de la historia. Nuestra propuesta: acercarse al humanismo a trav\u00e9s de este maestro, sin convertir su ascenso en prueba de que las barreras sociales no exist\u00edan. Un libro conservado permite conocer una voz, pero no borra las condiciones que tuvo que atravesar."
+      ],
+      "source": { "institution": "Biblioteca de la Universidad de Granada", "title": "Legados personales: Juan Latino", "url": "https://biblioteca.ugr.es/informacion/presentacion/bibliotesoros/colecciones/legados-personales/libros-representativos" }
+    },
+    {
+      "id": "andres-laguna",
+      "title": "Un libro antiguo para discutir el saber",
+      "place": "Amberes, 1555",
+      "paragraphs": [
+        "Andr\u00e9s Laguna public\u00f3 en Amberes en 1555 su versi\u00f3n comentada de la Materia m\u00e9dica de Diosc\u00f3rides. Un trabajo de investigaci\u00f3n del CSIC examina c\u00f3mo esa obra incorpor\u00f3 materia m\u00e9dica americana y se\u00f1ala sus numerosas reediciones hasta el siglo XVIII. La herencia cl\u00e1sica segu\u00eda circulando mientras cambiaba el mundo conocido por sus lectores.",
+        "Nuestra propuesta: mirar una traducci\u00f3n como un lugar de encuentro entre texto, comentario y nuevos conocimientos, no como una copia inm\u00f3vil de la Antig\u00fcedad. La historia de la ciencia tambi\u00e9n ocurre en los m\u00e1rgenes de un libro. Atenci\u00f3n: se trata de historia de la medicina; las prescripciones antiguas no son recomendaciones sanitarias actuales."
+      ],
+      "source": { "institution": "CSIC, revista Asclepio", "title": "Terap\u00e9utica y materia m\u00e9dica americana de la obra de Andr\u00e9s Laguna (1555)", "url": "https://asclepio.revistas.csic.es/index.php/asclepio/article/view/904" }
+    },
+    {
+      "id": "tornaviaje",
+      "title": "La otra mitad del viaje era volver",
+      "place": "Pac\u00edfico, 1565",
+      "paragraphs": [
+        "Cruzar un oc\u00e9ano no bastaba para sostener una ruta. Hab\u00eda que encontrar el regreso. El Archivo General de Indias presenta el tornaviaje de 1565 de Andr\u00e9s de Urdaneta como una pieza decisiva de la conexi\u00f3n entre Filipinas y Am\u00e9rica: navegar hacia el norte permit\u00eda aprovechar una circulaci\u00f3n de vientos y corrientes distinta de la del viaje de ida.",
+        "Nuestra propuesta: cambiar la pregunta de qui\u00e9n lleg\u00f3 a un lugar por c\u00f3mo se hizo posible volver y repetir el trayecto. No atribuimos aqu\u00ed una primac\u00eda absoluta sobre todos los regresos de 1565. Importa la construcci\u00f3n de una ruta practicable: observaciones, experiencia y decisiones que transformaron un cruce en una comunicaci\u00f3n sostenida."
+      ],
+      "source": { "institution": "Archivo General de Indias, Ministerio de Cultura", "title": "Navegar por el oc\u00e9ano Pac\u00edfico: el tornaviaje de 1565", "url": "https://www.cultura.gob.es/ca/cultura/areas/archivos/mc/archivos/agi/exposiciones-y-actividades/exposiciones/exposicion-pacifico/exposicion/exploracion/navegar.html" }
+    },
+    {
+      "id": "maria-de-zayas",
+      "title": "Un sarao para contar lo que incomoda",
+      "place": "Zaragoza, 1637",
+      "paragraphs": [
+        "Mar\u00eda de Zayas public\u00f3 sus Novelas amorosas y ejemplares en 1637. En su ficci\u00f3n, un grupo de damas y caballeros se re\u00fane y cuenta historias. La conversaci\u00f3n compartida organiza los relatos, pero lo que se cuenta puede resultar mucho menos c\u00f3modo que la reuni\u00f3n que lo enmarca.",
+        "La Biblioteca Nacional destaca en su narrativa las tensiones entre amor, honra y violencia, as\u00ed como la cr\u00edtica del trato recibido por las mujeres. Nuestra propuesta: escuchar qui\u00e9n narra, qui\u00e9n decide lo aceptable y qu\u00e9 consecuencias recaen sobre cada personaje. La literatura no es un acta literal de la sociedad; tambi\u00e9n es una forma de discutir sus reglas desde dentro."
+      ],
+      "source": { "institution": "Biblioteca Nacional de Espa\u00f1a", "title": "Mar\u00eda de Zayas y Sotomayor", "url": "https://www.bne.es/es/autores/zayas-sotomayor-maria" }
+    },
+    {
+      "id": "luisa-roldan",
+      "title": "Una firma en la peana del poder",
+      "place": "Madrid, 1692",
+      "paragraphs": [
+        "La escultura de San Miguel venciendo al demonio, realizada por Luisa Rold\u00e1n en 1692, conserva una afirmaci\u00f3n de autor\u00eda: una inscripci\u00f3n en la peana identifica a la artista como escultora de c\u00e1mara de Carlos II. Patrimonio Nacional explica c\u00f3mo la restauraci\u00f3n recuper\u00f3 esa inscripci\u00f3n y detalles de la expresividad original de la talla.",
+        "Nuestra propuesta: detenerse en el nombre escrito sobre la obra, adem\u00e1s de admirar la figura. La historia del arte tambi\u00e9n se escribe con encargos, talleres, materiales y reconocimiento profesional. Una restauraci\u00f3n no solo limpia una superficie: puede devolver informaci\u00f3n con la que revisar la trayectoria de quien la hizo."
+      ],
+      "source": { "institution": "Patrimonio Nacional, Galer\u00eda de las Colecciones Reales", "title": "Restauraci\u00f3n de la obra de Luisa Rold\u00e1n", "url": "https://www.galeriadelascoleccionesreales.es/noticia/la-galeria-presenta-la-restauracion-de-la-obra/e82057fb-87ff-813a-c656-878ae17cff39" }
+    },
+    {
+      "id": "sor-juana",
+      "title": "Un libro que tambi\u00e9n cruz\u00f3 el Atl\u00e1ntico",
+      "place": "M\u00e9xico, Madrid y Sevilla, 1689-1692",
+      "paragraphs": [
+        "En 1689 se public\u00f3 en Espa\u00f1a Inundaci\u00f3n cast\u00e1lida, una colecci\u00f3n de poes\u00edas de sor Juana In\u00e9s de la Cruz. En 1692 apareci\u00f3 en Sevilla un segundo volumen de sus obras. La cronolog\u00eda de la Biblioteca Nacional permite seguir a una autora de Nueva Espa\u00f1a cuya escritura circulaba tambi\u00e9n al otro lado del oc\u00e9ano.",
+        "Su producci\u00f3n incluye poes\u00eda, teatro y villancicos; su Respuesta a sor Filotea defiende la capacidad intelectual de las mujeres. Nuestra propuesta: leer el Siglo de Oro como una cultura de conexiones, sin borrar las diferencias entre sus territorios. No viajaban solo mercanc\u00edas o disposiciones oficiales: tambi\u00e9n libros, reputaciones y discusiones sobre qui\u00e9n pod\u00eda aprender y escribir."
+      ],
+      "source": { "institution": "Biblioteca Nacional de Espa\u00f1a", "title": "Sor Juana In\u00e9s de la Cruz: obra y cronolog\u00eda", "url": "https://www.bne.es/es/autores/juana-ines-cruz-sor" }
+    }
+  ]
+}

@@ -13,6 +13,7 @@ import {
 } from "../../../lib/reservations";
 import { drainCommerceMail } from "../../../lib/commerce-mail";
 import { closeOpenReservationPayment } from "../../../lib/reservation-payment";
+import { confirmedShirtPurchase } from "../../../lib/purchase-analytics";
 export const prerender = false;
 export const POST: APIRoute = async (context) => {
   try {
@@ -43,6 +44,7 @@ export const POST: APIRoute = async (context) => {
     return privateJson({
       reservation: publicReservation(r),
       reservationMode: reservationMode(),
+      analyticsPurchase: body.action === "view" ? confirmedShirtPurchase(r) : null,
     });
   } catch (error) {
     return failure(error);

@@ -3,8 +3,10 @@ import { formatMoney, SHIRT_FINAL_PRICE_CENTS, SHIRT_PRICE_COPY } from "../../co
 import { AddressFields, emptyAddress, api } from "./shared";
 import { attributedPath, socialEvent } from "../../lib/social-attribution";
 import {trackFunnel} from "../../lib/funnel-client";
+import { readCart, type CartItem } from "../../lib/cart";
+import { trackGoogleCommerce } from "../../lib/google-analytics";
 
-export default function ReservationForm({ initialSize = "M", initialCustomer = { name: "", email: "" } }: { initialSize?: string; initialCustomer?: { name: string; email: string } }) {
+export default function ReservationForm({ initialSize = "M", initialCustomer = { name: "", email: "" }, fromCart = false, initialSales = false }: { initialSize?: string; initialCustomer?: { name: string; email: string }; fromCart?: boolean; initialSales?: boolean }) {
   const [inventory, setInventory] = useState<any[]>([]);
   const [size, setSize] = useState(initialSize), [quantity, setQuantity] = useState(1);
   const [customer, setCustomer] = useState(initialCustomer);
@@ -16,8 +18,11 @@ export default function ReservationForm({ initialSize = "M", initialCustomer = {
   const [accepted, setAccepted] = useState(false), [marketing, setMarketing] = useState(false);
   const [website, setWebsite] = useState(""), [campaign, setCampaign] = useState<any>(null);
   const [expirationHours, setExpirationHours] = useState(0), [waitlist, setWaitlist] = useState(false);
-  const [sales,setSales]=useState(false);
+  const [sales,setSales]=useState(initialSales);
+  const [inventoryState, setInventoryState] = useState<"loading" | "ready" | "error">("loading");
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
   useEffect(() => {
+    if (fromCart) setCartItems(readCart());
     let active = true;
     const refresh = async () => {
       try {
@@ -25,8 +30,9 @@ export default function ReservationForm({ initialSize = "M", initialCustomer = {
         if (active) {
           setInventory(data.variants); setAvailable(data.reservationMode||data.salesEnabled);setSales(Boolean(data.salesEnabled));
           setExpirationHours(data.expirationHours); setCampaign(data.campaign);
+          setInventoryState("ready");
         }
-      } catch { if (active) setAvailable(false); }
+      } catch { if (active) { setAvailable(false); setInventoryState("error"); } }
     };
     void refresh();
     const timer = setInterval(() => { if (!document.hidden) void refresh(); }, 5000);
@@ -35,13 +41,15 @@ export default function ReservationForm({ initialSize = "M", initialCustomer = {
     return () => { active = false; clearInterval(timer); };
   }, []);
   const variant = inventory.find((v) => v.name === size);
-  const soldOut = variant?.available_stock === 0;
-  const maximum = Math.min(campaign?.max_reservation_quantity ?? Infinity, variant?.available_stock ?? 0);
+  const soldOut = fromCart ? cartItems.some(item => inventory.find(v => v.name === item.size)?.available === false) : variant?.available === false;
+  const maximum = variant?.available ? campaign?.max_reservation_quantity ?? Infinity : 0;
+  const units = fromCart ? cartItems.reduce((sum, item) => sum + item.quantity, 0) : quantity;
   const canWait = Boolean(campaign && (!campaign.reservations_open_at || Date.parse(campaign.reservations_open_at) <= Date.now()));
   async function submit(event: SubmitEvent) {
     event.preventDefault();
-    if (submitting.current || busy || !variant) return;
-    if ((!waitlist && (!Number.isInteger(quantity) || quantity < 1 || quantity > maximum)) || (waitlist && !soldOut)) {
+    if (submitting.current || busy || !variant || inventoryState !== "ready") return;
+    if (fromCart && (!cartItems.length || soldOut)) { setMessage("Revisa las tallas y cantidades en tu carrito."); return; }
+    if (!fromCart && ((!waitlist && (!Number.isInteger(quantity) || quantity < 1 || quantity > maximum)) || (waitlist && !soldOut))) {
       setMessage("La disponibilidad ha cambiado. Revisa talla y cantidad."); return;
     }
     submitting.current = true;
@@ -57,45 +65,48 @@ export default function ReservationForm({ initialSize = "M", initialCustomer = {
       }
       const result = await api("/api/reservations", {
         requestId: challenge.split(".")[0], challenge, nonce: String(nonce), customer,
-        items: [{ sku: variant.sku, quantity: waitlist ? 1 : quantity }],
+        items: fromCart ? cartItems.map(item => ({ sku: `IE-CAMISETA-IMPERIAL-${item.size}`, quantity: item.quantity })) : [{ sku: variant.sku, quantity: waitlist ? 1 : quantity }],
         accepted, marketing, website, expirationHours, waitlist,
         address: waitlist ? undefined : { ...address, name: differentRecipient ? address.name : customer.name },
       });
       if (!waitlist) socialEvent("reservation_completed", { sku: variant.sku, quantity });
+      if (!waitlist) trackGoogleCommerce("add_shipping_info", fromCart ? cartItems : [{ size: variant.name, quantity }]);
       if(!waitlist)await trackFunnel("shirts",4);
+      if (fromCart) try { sessionStorage.setItem("imperio-cart-reservation", result.id); } catch { /* Optional cart cleanup must not block checkout. */ }
       window.location.assign(attributedPath(result.url));
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "No se pudo confirmar la solicitud."); setBusy(false); submitting.current = false;
     }
   }
   return (
-    <form class="reservation-form" data-funnel-flow="shirts" onSubmit={submit} aria-busy={busy} aria-describedby="reservation-feedback">
+    <form class="reservation-form" data-funnel-flow="shirts" onSubmit={submit} aria-busy={busy || inventoryState === "loading"} aria-describedby="reservation-feedback">
       <header class="reservation-form__header">
         <span class="commerce-kicker">{sales?"Compra de camiseta":"Solicitud de reserva"}</span>
         <h2>{waitlist ? "Lista de espera" : sales?"Camiseta Imperial":"Pre-reserva gratuita"}</h2>
-        <p class="reservation-total">{sales&&!waitlist?formatMoney(SHIRT_FINAL_PRICE_CENTS*quantity):formatMoney(0)}{!sales&&" ahora"}</p>
+        {inventoryState === "loading" ? <p role="status">Comprobando disponibilidad y precio...</p> : <p class="reservation-total">{sales&&!waitlist?formatMoney(SHIRT_FINAL_PRICE_CENTS*units):formatMoney(0)}{!sales&&" ahora"}</p>}
         <p>{SHIRT_PRICE_COPY}.</p>
-        <p>{sales?"Precio":"Compra posterior"}: {formatMoney(SHIRT_FINAL_PRICE_CENTS)} por unidad. Total para {quantity} {quantity === 1 ? "camiseta" : "camisetas"}: {formatMoney(SHIRT_FINAL_PRICE_CENTS * quantity)}.</p>
+        {inventoryState !== "loading" && <p>{sales?"Precio":"Compra posterior"}: {formatMoney(SHIRT_FINAL_PRICE_CENTS)} por unidad. Total para {units} {units === 1 ? "camiseta" : "camisetas"}: {formatMoney(SHIRT_FINAL_PRICE_CENTS * units)}.</p>}
       </header>
       <fieldset disabled={busy}>
         <legend>Talla y cantidad</legend>
-        <div class="reservation-fields">
+        {fromCart ? <><ul>{cartItems.map(item => <li key={item.size}>Talla {item.size} · {item.quantity} {item.quantity === 1 ? "camiseta" : "camisetas"}</li>)}</ul><a href="/carrito">Modificar carrito</a>{inventoryState !== "loading" && !cartItems.length && <p>Tu carrito está vacío.</p>}</> : <><div class="reservation-fields">
           <label>Talla
             <select value={size} onChange={(e) => { setSize(e.currentTarget.value); setWaitlist(false); setQuantity(1); }}>
               {["S", "M", "L", "XL", "XXL"].map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </label>
           {!waitlist && !soldOut && <label>Cantidad
-            <input type="number" min="1" max={maximum} step="1" required value={quantity}
+            <input type="number" min="1" max={Number.isFinite(maximum) ? maximum : undefined} step="1" required value={quantity}
               onInput={(e) => setQuantity(Number(e.currentTarget.value))} />
           </label>}
         </div>
-        <p class="reservation-stock" role="status" aria-live="polite">{variant ? soldOut ? "AGOTADO" : `Quedan ${variant.available_stock} unidades en talla ${size}` : "Consultando stock..."}</p>
+        <p class="reservation-stock" role="status" aria-live="polite">{variant ? soldOut ? "AGOTADO" : `Talla ${size} disponible` : "Consultando disponibilidad..."}</p>
+        </>}
         {!waitlist && typeof campaign?.max_reservation_quantity === "number" && <p class="reservation-note">Máximo {campaign.max_reservation_quantity} unidades por pre-reserva.</p>}
       </fieldset>
       {soldOut && !waitlist && <>
         <p>Todas las unidades de esta talla estan actualmente reservadas o vendidas.</p>
-        <button type="button" class="btn btn-ghost" disabled={busy || !canWait} onClick={() => setWaitlist(true)}>APUNTARME A LA LISTA DE ESPERA</button>
+        {fromCart ? <a href="/carrito">Revisar mi carrito</a> : <button type="button" class="btn btn-ghost" disabled={busy || !canWait} onClick={() => setWaitlist(true)}>APUNTARME A LA LISTA DE ESPERA</button>}
       </>}
       {(!soldOut || waitlist) && <>
         <fieldset disabled={busy}>
@@ -134,11 +145,11 @@ export default function ReservationForm({ initialSize = "M", initialCustomer = {
           <input type="checkbox" checked={marketing} disabled={busy} onChange={(e) => setMarketing(e.currentTarget.checked)} />
           <span>Quiero recibir novedades y comunicaciones comerciales de Imperio E.</span>
         </label>
-        <button class="btn btn-primary" type="submit" disabled={busy || !challenge || (waitlist ? !canWait : !available || maximum < 1)}>
-          {busy ? "Guardando..." : waitlist ? "Confirmar lista de espera" : sales?"Revisar y continuar al pago":"RESERVAR \u2014 0 \u20ac"}
+        <button class="btn btn-primary" type="submit" disabled={busy || !challenge || (waitlist ? !canWait : !available || (fromCart ? !cartItems.length : maximum < 1))}>
+          {busy ? "Guardando..." : inventoryState === "loading" ? "Comprobando disponibilidad..." : waitlist ? "Confirmar lista de espera" : sales?"Revisar y continuar al pago":"RESERVAR \u2014 0 \u20ac"}
         </button>
       </>}
-      {!available && !soldOut && <p role="status">Las compras no estan disponibles temporalmente.</p>}
+      {inventoryState !== "loading" && !available && !soldOut && <p role="status">Las compras no estan disponibles temporalmente.</p>}
       <p id="reservation-feedback" role="status" aria-live="polite" aria-atomic="true">{message}</p>
     </form>
   );

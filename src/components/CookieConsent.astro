@@ -19,21 +19,21 @@ import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
   >
     <span class="cookie-banner__info" aria-hidden="true">i</span>
     <div class="cookie-banner__body">
-      <h2 id="cookie-banner-title" class="cookie-banner__title">Uso de cookies</h2>
+      <h2 id="cookie-banner-title" class="cookie-banner__title">TU PRIVACIDAD IMPORTA</h2>
       <p id="cookie-banner-description">
-        Usamos cookies para mejorar tu experiencia y con fines comerciales. Lee
-        nuestra <a href="/legal/cookies">politica de cookies</a> o
-        <button class="cookie-banner__configure" type="button" data-cookie-configure>
-          gestiona las cookies
-        </button>.
+        Usamos Google Analytics 4{ANALYTICS.gtmId ? " y Google Tag Manager" : ""} para conocer qué páginas se visitan y cómo se llega a nuestra web, solo si aceptas analítica.
+        Si rechazas, no cargamos estas herramientas ni les enviamos datos de navegación.
+        Marketing de Meta requiere una elección independiente en Configurar. Puedes cambiar tu elección desde el pie de página.
+        {" "}<a href="/legal/cookies">Política de cookies</a>.
       </p>
       <div class="cookie-banner__actions">
         <button class="cookie-banner__accept" type="button" data-cookie-accept>
-          Aceptar todo
+          ACEPTAR
         </button>
         <button class="cookie-banner__reject" type="button" data-cookie-reject>
-          Rechazar todo
+          RECHAZAR
         </button>
+        <button type="button" data-cookie-configure>CONFIGURAR</button>
       </div>
     </div>
   </section>
@@ -55,14 +55,6 @@ import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
           <small>Sesion, seguridad y conservacion de tu eleccion.</small>
         </span>
         <input type="checkbox" checked disabled />
-      </label>
-
-      <label class="cookie-choice">
-        <span>
-          <strong>Preferencias</strong>
-          <small>Opciones funcionales no imprescindibles.</small>
-        </span>
-        <input type="checkbox" data-cookie-preferences />
       </label>
 
       <label class="cookie-choice">
@@ -93,7 +85,7 @@ import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
   // @ts-nocheck
   import { CONSENT_KEY, readSavedConsent, saveConsent } from "../lib/cookie-consent";
   import { applyMetaConsent } from "../lib/meta-pixel";
-  import { applyGoogleConsent, canTrackGooglePage } from "../lib/google-analytics";
+  import { applyGoogleConsent, PURCHASE_STORAGE_KEY } from "../lib/google-analytics";
   (() => {
     const root = document.querySelector("[data-cookie-consent]");
     if (!(root instanceof HTMLElement)) return;
@@ -173,38 +165,15 @@ import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
     const readConsent = () => readSavedConsent(version);
 
     const setGoogleConsent = (granted) => {
-      if (!gtmId) {
-        applyGoogleConsent(granted, googleTagId);
-        return;
-      }
-      window.dataLayer = window.dataLayer || [];
-      window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
-      window.gtag("consent", "update", {
-        analytics_storage: granted ? "granted" : "denied",
-        ad_storage: "denied",
-        ad_user_data: "denied",
-        ad_personalization: "denied",
-      });
+      applyGoogleConsent(granted, googleTagId, gtmId);
     };
 
     const loadAnalytics = () => {
-      if (document.documentElement.dataset.analyticsLoaded === "true") return;
-      if (!gtmId || !canTrackGooglePage(window.location.href)) return;
-
-      document.documentElement.dataset.analyticsLoaded = "true";
-      window.dataLayer = window.dataLayer || [];
       setGoogleConsent(true);
-
-      const script = document.createElement("script");
-      script.async = true;
-
-      window.dataLayer.push({ "gtm.start": Date.now(), event: "gtm.js" });
-      script.src = `https://www.googletagmanager.com/gtm.js?id=${encodeURIComponent(gtmId)}`;
-
-      document.head.appendChild(script);
     };
 
     const deleteAnalyticsCookies = () => {
+      try { window.localStorage.removeItem(PURCHASE_STORAGE_KEY); } catch {}
       const hostname = window.location.hostname;
       const names = document.cookie
         .split(";")
@@ -221,17 +190,14 @@ import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
       });
     };
 
-    const hasOptionalConsent = (consent) =>
-      Boolean(consent?.preferences || consent?.analytics || consent?.marketing);
-
     const syncConsentSwitches = () => {
-      const enabled = hasOptionalConsent(currentConsent);
+      const enabled = Boolean(currentConsent?.analytics);
 
       consentSwitches.forEach((control) => {
         control.checked = enabled;
         control.title = enabled
-          ? "Desactivar todas las cookies opcionales"
-          : "Activar o configurar cookies opcionales";
+          ? "Desactivar analitica"
+          : "Activar analitica";
       });
     };
 
@@ -258,9 +224,9 @@ import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
     const applyConsent = (consent) => {
       applyMetaConsent(Boolean(consent.marketing));
       if (consent.analytics) {
-        setGoogleConsent(true);
         loadAnalytics();
       } else {
+        deleteAnalyticsCookies();
         setGoogleConsent(false);
       }
       syncConsentSwitches();
@@ -290,8 +256,7 @@ import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
 
       if ((previousAnalytics && !consent.analytics) || (previousMarketing && !consent.marketing)) {
         applyMetaConsent(Boolean(consent.marketing));
-        deleteAnalyticsCookies();
-        setGoogleConsent(false);
+        if (previousAnalytics && !consent.analytics) { deleteAnalyticsCookies(); setGoogleConsent(false); }
         window.location.reload();
         return;
       }
@@ -319,7 +284,7 @@ import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
     };
 
     root.querySelector("[data-cookie-accept]")?.addEventListener("click", () => {
-      persistConsent({ preferences: true, analytics: true, marketing: true }, "cookie_banner");
+      persistConsent({ preferences: false, analytics: true, marketing: false }, "cookie_banner");
     });
 
     root.querySelector("[data-cookie-reject]")?.addEventListener("click", () => {
@@ -353,14 +318,8 @@ import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
 
     consentSwitches.forEach((control) => {
       control.addEventListener("change", () => {
-        if (control.checked) {
-          syncConsentSwitches();
-          openSettings("cookie_settings");
-          return;
-        }
-
         persistConsent(
-          { preferences: false, analytics: false, marketing: false },
+          { preferences: Boolean(currentConsent?.preferences), analytics: control.checked, marketing: Boolean(currentConsent?.marketing) },
           "cookie_settings"
         );
       });
@@ -386,7 +345,7 @@ import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
         revealBannerWhenReady();
       }
       if (revokedAnalytics || revokedMarketing) {
-        deleteAnalyticsCookies();
+        if (revokedAnalytics) deleteAnalyticsCookies();
         window.location.reload();
       }
     };
@@ -427,12 +386,12 @@ import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
     width: min(calc(100vw - 2rem), 536px);
     max-height: calc(100dvh - 2rem);
     overflow-y: auto;
-    border: 1px solid #ccc7c2;
+    border: 1px solid rgb(255 255 255 / 24%);
     border-top: 3px solid #a92317;
     border-radius: 6px;
     padding: 1.35rem 1.2rem;
-    color: #171717;
-    background: #fbfbfa;
+    color: #fff;
+    background: rgb(14 14 14 / 96%);
     box-shadow: 0 12px 36px rgb(25 39 60 / 12%);
     backdrop-filter: blur(18px) saturate(115%);
     -webkit-backdrop-filter: blur(18px) saturate(115%);
@@ -450,8 +409,8 @@ import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
 
   .cookie-banner__title {
     margin:0 0 0.75rem;
-    color:#171717;
-    font-size:1.5rem;
+    color:#fff;
+    font-size:1.1rem;
     line-height:1.2;
   }
 
@@ -461,21 +420,21 @@ import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
     width: 16px;
     height: 16px;
     margin-top: 0.18rem;
-    border: 1.5px solid #536780;
+    border: 1.5px solid #ff6b55;
     border-radius: 50%;
-    color: #536780;
+    color: #ff6b55;
     font: 700 0.68rem/1 var(--font-body);
   }
 
   .cookie-banner p {
-    color: #12233d;
+    color: #eee;
     font-family: var(--font-body);
-    font-size: 1rem;
+    font-size: 0.88rem;
     line-height: 1.55;
   }
 
   .cookie-banner a {
-    color: #12233d;
+    color: #fff;
     font-family: var(--font-body);
     text-decoration: underline;
     text-underline-offset: 0.14em;
@@ -491,7 +450,7 @@ import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
   .cookie-banner__actions {
     display: flex;
     gap: 0.5rem;
-    margin-top: 0.45rem;
+    margin-top: 1rem;
   }
 
   .cookie-banner__actions button,

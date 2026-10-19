@@ -12,6 +12,7 @@ import { drainAdminMail,reconcileAdminDelivery } from "../../lib/admin-mail";
 import { closeOpenReservationPayment, shirtPaymentConfiguration } from "../../lib/reservation-payment";
 import { readCampaign } from "../../lib/reservation-campaign";
 import { drainPaidOrderAdminMail, reconcilePaidOrderAdminDelivery } from "../../lib/paid-order-admin-mail";
+import { automationDeliveryReceipts, runMarketingAutomations } from "../../lib/automation-worker";
 export const prerender = false;
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -58,7 +59,12 @@ export const POST: APIRoute = async ({ request }) => {
       for (const r of pending ?? []) if (await rpc("open_shirt_purchase", { p_id: r.id })) opened++;
     }
     const adminDelivery=await reconcileAdminDelivery(10);
-    return privateJson({ expired, opened, paidOrderAdminMail, paidOrderAdminDelivery, ...(await drainCommerceMail(20)), adminMail: await drainAdminMail(10),adminDelivery });
+    const commerceMail = await drainCommerceMail(20), adminMail = await drainAdminMail(10);
+    // Marketing runs after transactional work and cannot fail the order-mail maintenance.
+    let marketing;
+    try { marketing = { ...(await runMarketingAutomations(3)), delivery: await automationDeliveryReceipts(3) }; }
+    catch { marketing = { failed: true }; console.error("MARKETING_MAINTENANCE_FAILED"); }
+    return privateJson({ expired, opened, paidOrderAdminMail, paidOrderAdminDelivery, ...commerceMail, adminMail, adminDelivery, marketing });
   } catch (error) {
     return failure(error);
   }

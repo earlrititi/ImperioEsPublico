@@ -8,14 +8,14 @@ Astro.response.headers.set("Cache-Control", "no-store");
 Astro.response.headers.set("Referrer-Policy", "strict-origin");
 const inventory = await readPublicInventory().catch(() => null);
 inventory?.variants.sort((a, b) => ["S", "M", "L", "XL", "XXL"].indexOf(a.name) - ["S", "M", "L", "XL", "XXL"].indexOf(b.name));
-const stock = inventory?.variants.reduce((sum, variant) => sum + variant.available_stock, 0) ?? null;
+const stock = inventory ? inventory.variants.some(variant => variant.available) : null;
 const params = campaignParameters(Astro.url.search);
 const requestedSize = Astro.url.searchParams.get("size");
-const selected = inventory?.variants.find(v => v.name === requestedSize) ?? inventory?.variants.find(v => v.available_stock > 0);
+const selected = inventory?.variants.find(v => v.name === requestedSize) ?? inventory?.variants.find(v => v.available);
 if (selected) params.set("size", selected.name);
 const reserveUrl = `/reservas?${params}`;
 const buying = Boolean(inventory?.salesEnabled);
-const open = Boolean((inventory?.reservationMode || buying) && stock && stock > 0);
+const open = Boolean((inventory?.reservationMode || buying) && stock);
 ---
 <Layout exactTitle title="NON SUFFICIT ORBIS | Imperio E" description="Primera edición de Imperio E. Una camiseta inspirada en los símbolos de la Monarquía Hispánica." ogImage="/images/camiseta-imperio-frontal.webp" navigation="home" footerVariant="dark">
   <main class="instagram" data-home-mark-surface="black">
@@ -23,10 +23,10 @@ const open = Boolean((inventory?.reservationMode || buying) && stock && stock > 
       <div class="ig-heading"><p>Primera edición de Imperio E</p><h1 id="ig-title">NON SUFFICIT ORBIS</h1></div>
       <figure class="ig-photo"><picture><source type="image/avif" srcset="/images/camiseta-imperio-frontal-640.avif" /><img src="/images/camiseta-imperio-frontal-640.webp" alt="Camiseta NON SUFFICIT ORBIS, vista frontal" width="944" height="1181" loading="eager" decoding="async" fetchpriority="high" /></picture></figure>
       <div class="ig-buy">
-        <p class="ig-stock" data-stock aria-live="polite">{stock === null ? "No se pudo consultar el stock" : stock === 0 ? "Edición agotada" : `SOLO QUEDAN ${stock} UNIDADES`}</p>
+        <p class="ig-stock" data-stock aria-live="polite">{stock === null ? "No se pudo consultar la disponibilidad" : stock ? "Disponible" : "Edición agotada"}</p>
         <p class="ig-price" data-price>{inventory ? formatMoney(inventory.unitPrice) : "Precio no disponible"}</p>
         <p class="ig-small">{buying ? "Pago seguro en Stripe. IVA incluido." : "Reserva gratuita. Sin cobro ni obligacion de compra."}</p>
-        <label class="ig-size">Talla <select id="ig-size" disabled={!inventory}>{inventory?.variants.map(v => <option value={v.name} selected={v.name === selected?.name} disabled={v.available_stock === 0}>{v.name}{v.available_stock === 0 ? " · agotada" : ""}</option>)}</select></label>
+        <label class="ig-size">Talla <select id="ig-size" disabled={!inventory}>{inventory?.variants.map(v => <option value={v.name} selected={v.name === selected?.name} disabled={!v.available}>{v.name}{!v.available ? " · agotada" : ""}</option>)}</select></label>
         <div class="ig-actions">
           <a class="ig-cta ig-cta--primary" data-reserve aria-disabled={!open} href={open ? reserveUrl : undefined}>{open ? buying ? "COMPRAR CAMISETA" : "RESERVAR YA" : "NO DISPONIBLE"}</a>
           <a class="ig-cta ig-cta--discount" href="/suscribirse#arcabucero" data-community data-attribution>QUIERO DESCUENTO</a>
@@ -82,10 +82,9 @@ const open = Boolean((inventory?.reservationMode || buying) && stock && stock > 
       const response = await fetch("/api/reservations/inventory", { cache: "no-store" });
       if (!response.ok) throw new Error();
       const data = await response.json();
-      const total = data.variants.reduce((sum: number, v: { available_stock: number }) => sum + v.available_stock, 0);
-      stock.textContent = total > 0 ? `SOLO QUEDAN ${total} UNIDADES` : "Edición agotada";
-      for (const option of size.options) option.disabled = !data.variants.some((v: { name: string; available_stock: number }) => v.name === option.value && v.available_stock > 0);
-      available = (data.reservationMode || data.salesEnabled) && data.variants.some((v: { name: string; available_stock: number }) => v.name === size.value && v.available_stock > 0);
+      stock.textContent = data.variants.some((v: { available: boolean }) => v.available) ? "Disponible" : "Edición agotada";
+      for (const option of size.options) option.disabled = !data.variants.some((v: { name: string; available: boolean }) => v.name === option.value && v.available);
+      available = (data.reservationMode || data.salesEnabled) && data.variants.some((v: { name: string; available: boolean }) => v.name === size.value && v.available);
       document.querySelectorAll("[data-price]").forEach(el => el.textContent = formatMoney(data.unitPrice));
     } catch { available = false; stock.textContent = "No se pudo consultar el stock. Vuelve a intentarlo."; }
     updateLinks(); syncSticky();

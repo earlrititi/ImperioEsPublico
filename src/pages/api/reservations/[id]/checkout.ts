@@ -19,7 +19,8 @@ import {
   shirtPaymentConfiguration,
 } from "../../../../lib/reservation-payment";
 import { findActiveTshirtPromotion } from "../../../../lib/tshirt-promotion";
-import { ownsShirtDiscount, shirtCheckoutLines } from "../../../../lib/shirt-checkout-lines";
+import { ownsShirtDiscount, shirtCheckoutLines, shirtCheckoutMessage } from "../../../../lib/shirt-checkout-lines";
+import { captureAutomationActivity } from "../../../../lib/automation-worker";
 export const prerender = false;
 export const POST: APIRoute = async (context) => {
   try {
@@ -98,8 +99,7 @@ export const POST: APIRoute = async (context) => {
             cancel_url: `${site}/reservas/gestionar`,
             custom_text: {
               submit: {
-                message:
-                  "Camiseta: 26,99 EUR. Envio: 3 EUR por unidad. IVA incluido. Los descuentos no reducen el envio. Se utilizara la direccion confirmada en tu reserva.",
+                message: shirtCheckoutMessage(r.reservation_items),
               },
             },
           },
@@ -136,6 +136,9 @@ export const POST: APIRoute = async (context) => {
       );
     if (!session.url || session.amount_total + discountAmount !== r.total_price_snapshot)
       throw new Error("PAYMENT_TOTAL_MISMATCH");
+    if (user?.email_confirmed_at && user.email?.toLowerCase() === customer.email.trim().toLowerCase()) {
+      await captureAutomationActivity(user.id, "checkout").catch(() => {});
+    }
     return privateJson({ url: session.url });
   } catch (error) {
     return failure(error);

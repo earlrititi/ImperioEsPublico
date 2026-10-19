@@ -1,7 +1,7 @@
 import { getRequiredEnv } from "./env";
 import { resend } from "./resend";
 import { SITE } from "../config/site";
-import { TSHIRT_OFFER_COPY } from "../config/tshirt-offer";
+import { shirtOfferCopy } from "../config/tshirt-offer";
 
 const from = `Imperio Espanol <${SITE.contactEmail}>`;
 
@@ -18,13 +18,14 @@ export async function sendTshirtDiscountEmail(params: { to: string; name: string
   const name = escapeHtml(params.name);
   const code = escapeHtml(params.code);
   const plan = params.percent === 20 ? "Maestre de Campo" : "Arcabucero";
+  const offer = shirtOfferCopy(params.percent === 20 ? "maestre_campo" : "arcabucero");
   return resend.emails.send({
     from,
     replyTo: SITE.contactEmail,
     to: params.to,
     subject: `Tu ${params.percent}% para la Camiseta Imperial`,
-    html: `<div style="font-family:Georgia,serif;line-height:1.6;color:#111"><h1>Una pieza de nuestra historia</h1><p>Hola ${name},</p><p>Tu suscripción ${plan} está activa. Tu descuento del ${params.percent}% para la Camiseta Imperial está preparado.</p><p><strong>Código: ${code}</strong></p><p>${TSHIRT_OFFER_COPY} Se aplica automáticamente al confirmar la compra, no al reservar. La compra se confirma en Stripe desde la tienda.</p><p><a href="${siteUrl}/tienda">Ver la Camiseta Imperial</a></p><p><strong>Plus Ultra.</strong></p></div>`,
-    text: `Hola ${params.name}. Tu suscripción ${plan} está activa. Código: ${params.code}. ${TSHIRT_OFFER_COPY} Se aplica automáticamente al confirmar la compra, no al reservar. La compra se confirma en Stripe desde la tienda. ${siteUrl}/tienda`,
+    html: `<div style="font-family:Georgia,serif;line-height:1.6;color:#111"><h1>Una pieza de nuestra historia</h1><p>Hola ${name},</p><p>Tu suscripción ${plan} está activa. Tu descuento del ${params.percent}% para la Camiseta Imperial está preparado.</p><p><strong>Código: ${code}</strong></p><p>${offer} Se aplica automáticamente al confirmar la compra, no al reservar. La compra se confirma en Stripe desde la tienda.</p><p><a href="${siteUrl}/tienda">Ver la Camiseta Imperial</a></p><p><strong>Plus Ultra.</strong></p></div>`,
+    text: `Hola ${params.name}. Tu suscripción ${plan} está activa. Código: ${params.code}. ${offer} Se aplica automáticamente al confirmar la compra, no al reservar. La compra se confirma en Stripe desde la tienda. ${siteUrl}/tienda`,
   }, { idempotencyKey: `arcabucero-discount-${params.reference}` });
 }
 
@@ -61,7 +62,7 @@ export async function sendPaidWelcomeEmail(params: {
   const { to, name, planName, priceSummary, termsVersion } = params;
   const siteUrl = getRequiredEnv("PUBLIC_SITE_URL").replace(/\/$/, "");
   const copy = "Ya puedes leer todos los articulos para suscriptores, compartidos por Arcabucero y Maestre de Campo.";
-  const offer = params.planName === "MAESTRE DE CAMPO" ? "20% de descuento de un solo uso en la camiseta, sin acumular y sin descontar el envio." : "15% de descuento de un solo uso en la camiseta, sin acumular y sin descontar el envio.";
+  const offer = shirtOfferCopy(params.planName === "MAESTRE DE CAMPO" ? "maestre_campo" : "arcabucero");
 
   return resend.emails.send({
     from,

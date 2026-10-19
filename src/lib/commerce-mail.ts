@@ -15,6 +15,8 @@ import {
 import { getRequiredEnv } from "./env";
 import { SITE } from "../config/site";
 import { ADMIN_NOTIFICATION_EMAIL, reservationNotification } from "./admin-notifications";
+import { assertMailRecipient } from "./mail-delivery";
+import { UUID } from "./reservation-validation";
 import {
   createCipheriv,
   createDecipheriv,
@@ -84,7 +86,7 @@ export function reservationMailText(r: any, kind: string, url: string) {
     a ? `${a.postalCode} ${a.city}, ${PROVINCES.find(([code]) => code === a.province)?.[1] ?? a.province}, Espana` : null,
     r.customer_phone ? `Telefono: ${r.customer_phone}` : null,
     paid
-      ? "Tu compra se ha realizado correctamente. Comenzaremos a tramitar tu env\u00edo a partir del 13 de octubre de 2026. Esta fecha corresponde al inicio de la tramitaci\u00f3n, no a la entrega."
+      ? "Tu compra se ha realizado correctamente. Preparacion en un maximo de 48 horas y entrega en un maximo de 7 dias laborables. Solo Espana peninsular."
       : ["PAYMENT_PENDING", "PAYMENT_FAILED"].includes(r.status)
         ? "El pago no se ha confirmado todavia."
         : "NO SE HA REALIZADO NINGUN COBRO.",
@@ -104,15 +106,18 @@ export function reservationMailText(r: any, kind: string, url: string) {
     .filter(Boolean)
     .join("\n");
 }
-export async function drainCommerceMail(limit = 10) {
+export async function drainCommerceMail(limit = 10, jobId?: string) {
   const mode = optionalEnv("COMMERCE_EMAIL_MODE");
   if (!["test", "live"].includes(mode)) return { sent: 0, disabled: true };
   if (mode === "test" && !optionalEnv("COMMERCE_TEST_EMAIL"))
     throw new Error("EMAIL_TEST_RECIPIENT_REQUIRED");
+  if (jobId && !UUID.test(jobId)) throw new Error("INVALID_INPUT");
   const db = await database();
   let sent = 0;
   for (let n = 0; n < limit; n++) {
-    const jobs = await rpc("claim_commerce_mail");
+    const jobs = jobId
+      ? await rpc("claim_commerce_mail_by_id", { p_id: jobId })
+      : await rpc("claim_commerce_mail");
     const job = jobs?.[0];
     if (!job) break;
     try {
@@ -154,6 +159,8 @@ export async function drainCommerceMail(limit = 10) {
           throw new Error("EMAIL_SNAPSHOT_UNAVAILABLE");
       }
       const { adminNotification, ...customerMessage } = message;
+      assertMailRecipient(customerMessage, mode, optionalEnv("COMMERCE_TEST_EMAIL"));
+      if (adminNotification) assertMailRecipient(adminNotification, mode, optionalEnv("COMMERCE_TEST_EMAIL"));
       const response = await client.emails.send(customerMessage, {
         idempotencyKey: `commerce-mail-${job.id}`,
       });

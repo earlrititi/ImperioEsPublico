@@ -43,7 +43,7 @@ export async function readPublicInventory() {
     )
       throw new Error("INVALID_CONFIGURATION");
     return {
-      variants: data,
+      variants: data.map(({ available_stock, ...variant }) => ({ ...variant, available: available_stock > 0 })),
       unitPrice: price.amount,
       reservationMode: reservationMode() && campaignAcceptsReservations(campaign),
       salesEnabled: !reservationMode() && optionalEnv("SHIRT_SALES_APPROVED")==="true" && campaignAcceptsPurchases(campaign),

@@ -20,6 +20,7 @@ const session = { access_token: `${encode({alg:'HS256',typ:'JWT'})}.${encode({su
 const project = new URL(env.PUBLIC_SUPABASE_URL).hostname.split('.')[0];
 const cookie = `sb-${project}-auth-token=base64-${encode(session)}`;
 let status = 'active', fail = false, subscriptionReads = 0;
+let purchaseMode = 'live';
 const fixtureToken = 'c'.repeat(64);
 const address = { name:'Cliente Prueba',line1:'Calle Pruebas 12',line2:'',postalCode:'28001',city:'Madrid',province:'28',country:'ES' };
 globalThis.fetch = async (input, init) => {
@@ -30,11 +31,18 @@ globalThis.fetch = async (input, init) => {
   if (url.pathname === '/rest/v1/reservations') {
     const id = url.searchParams.get('id')?.replace(/^eq\./, '') ?? '';
     const pending = id.endsWith('2'), paid = id.endsWith('3');
+    const orderId = '00000000-0000-4000-8000-000000000004';
+    const sessionId = purchaseMode === 'test' ? 'cs_test_fixture' : 'cs_live_fixture';
     return Response.json({id,user_id:null,number:'PRUEBA-SIN-COBRO',status:paid?'CONVERTED_TO_ORDER':pending?'PAYMENT_PENDING':'PURCHASE_AVAILABLE',
       token_hash:createHash('sha256').update(fixtureToken).digest('hex'),customer_name:address.name,customer_email:'fixture@example.invalid',
       total_price_snapshot:2999,shipping_address:address,reservation_payment_attempts:[],marketing_consent:false,
       reservation_items:[{sku:'IE-CAMISETA-IMPERIAL-M',size:'M',quantity:1,unit_price_snapshot:2999}],
-      commerce_orders:paid?{number:'PEDIDO-PRUEBA',status:'PAID',shipping_address:address}:null});
+      order_id:paid?orderId:null,stripe_checkout_session_id:sessionId,stripe_payment_intent_id:'pi_fixture',
+      commerce_orders:paid?{id:orderId,reservation_id:id,number:'PEDIDO-PRUEBA',status:'PAID',shipping_address:address,
+        total_quantity:1,subtotal:2999,total:2999,vat_amount:520,discount_amount:0,currency:'eur',
+        paid_at:new Date(Date.now()-(purchaseMode==='old'?25*3600000:0)).toISOString(),refunded_amount:purchaseMode==='refunded'?2999:0,
+        stripe_checkout_session_id:sessionId,stripe_payment_intent_id:'pi_fixture',commerce_order_items:[{
+          sku:'IE-CAMISETA-IMPERIAL-M',size:'M',quantity:1,unit_price:2999,line_total:2999,currency:'eur'}]}:null});
   }
   if (url.pathname === '/rest/v1/subscriptions') {
     assert.equal(url.searchParams.get('user_id'), `eq.${user.id}`);
@@ -62,7 +70,24 @@ assert.equal(response.headers.get('cache-control'), 'private, no-store');
 const html = await response.text();
 assert.match(html, /Estamos comprobando tu acceso/);
 assert.doesNotMatch(html, /Acceso premium activado/);
-console.log('9 payment-confirmation scenarios passed. No Stripe charges, network or real emails.');
+const view = (suffix, token = fixtureToken) => app.fetch(new Request(`https://imperioes.com/api/reservations/00000000-0000-4000-8000-00000000000${suffix}`, {
+  method:'POST',headers:{Origin:'https://imperioes.com','Content-Type':'application/json'},body:JSON.stringify({action:'view',token}) }));
+for (const suffix of ['1','2']) {
+  response = await view(suffix); assert.equal(response.status,200); assert.equal((await response.json()).analyticsPurchase,null);
+}
+response = await view('3', 'wrong-token'); assert.equal(response.status,404);
+assert.equal((await response.json()).analyticsPurchase,undefined);
+response = await view('3'); assert.equal(response.status,200); assert.equal(response.headers.get('cache-control'),'no-store');
+const purchase = (await response.json()).analyticsPurchase;
+assert.match(purchase.transaction_id,/^ie_[a-f0-9]{64}$/);
+assert.equal(purchase.value,22.31); assert.equal(purchase.tax,5.2); assert.equal(purchase.shipping,2.48);
+assert.doesNotMatch(JSON.stringify(purchase),/Cliente|fixture@example|Calle|28001|cs_live|pi_fixture/);
+response = await view('3'); assert.deepEqual((await response.json()).analyticsPurchase,purchase);
+for (purchaseMode of ['test','old','refunded']) {
+  response = await view('3'); assert.equal(response.status,200); assert.equal((await response.json()).analyticsPurchase,null);
+}
+purchaseMode = 'live';
+console.log('Payment confirmation and 8 purchase-receipt API scenarios passed. No Stripe charges, network or real emails.');
 if (process.argv.includes('--browser')) {
   fail = false; status = 'active';
   const root = resolve('.vercel/output/static');

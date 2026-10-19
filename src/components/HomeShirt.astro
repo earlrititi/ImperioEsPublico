@@ -1,0 +1,62 @@
+---
+import { PRODUCTS } from "../config/products";
+import { formatMoney, SHIRT_PRODUCT_PRICE_CENTS } from "../config/commerce";
+import StoreStock from "./commerce/StoreStock.astro";
+import CartControls from "./CartControls.astro";
+const shirt = PRODUCTS["camiseta-imperial"];
+---
+<section class="home-shirt" aria-labelledby="home-shirt-title" data-home-mark-surface="black" data-shirt-product data-funnel-shirts>
+  <div class="home-shirt__inner">
+    <a class="home-shirt__photo" href="/tienda#camiseta" aria-label="Ver la Camiseta Imperial">
+      <picture>
+        <source type="image/avif" srcset="/images/camiseta-imperio-frontal-640.avif" />
+        <img src="/images/camiseta-imperio-frontal-640.webp" alt="Camiseta Imperial, vista frontal del diseño" width="944" height="1181" loading="lazy" decoding="async" />
+      </picture>
+    </a>
+    <div class="home-shirt__copy">
+      <p class="home-shirt__eyebrow">NON SUFFICIT ORBIS · Primera edición</p>
+      <h2 id="home-shirt-title">Camiseta Imperial</h2>
+      <p class="home-shirt__price">{formatMoney(SHIRT_PRODUCT_PRICE_CENTS)} <span>+ 3 € de envío por unidad</span></p>
+      <p>La cruz de Borgoña, el escudo y la nave: una historia en cada símbolo. El legado de la Monarquía Hispánica, llevado a una camiseta técnica ligera y transpirable.</p>
+      <form class="product-purchase" action="/reservas" method="get">
+        <label>Talla
+          <select data-shirt-size name="size" aria-label="Talla de Camiseta Imperial">
+            {shirt.variants.map(size => <option value={size} selected={size === "M"}>{size}</option>)}
+          </select>
+        </label>
+        <button type="submit" data-reservation-cta>COMPRAR AHORA</button>
+        <button type="button" data-cart-add disabled>Añadir al carrito</button>
+        <p data-cart-feedback hidden role="status">Añadida al carrito. <a href="/carrito">Ver carrito</a></p>
+        <p data-reservation-stock role="status" aria-live="polite">Consultando disponibilidad...</p>
+        <a href="/reservas" data-waitlist-link hidden>Apuntarme a la lista de espera</a>
+      </form>
+      <a class="home-shirt__story" href="/tienda#shirt-story-title">DESCUBRIR SU HISTORIA</a>
+      <ul class="home-shirt__trust">
+        <li>Pago seguro en Stripe. Sin necesidad de crear una cuenta.</li>
+        <li>IVA incluido. Envíos por Correos, solo Península.</li>
+        <li>Preparación máxima de 48 h y entrega máxima de 7 días laborables.</li>
+      </ul>
+      <p class="home-shirt__legal"><a href="/legal/envios">Envíos</a> · <a href="/legal/devoluciones">Devoluciones y desistimiento</a> · <a href="/contacto">Contacto</a></p>
+    </div>
+  </div>
+  <StoreStock />
+  <CartControls />
+</section>
+<style>
+  .home-shirt{padding:64px 24px;background:#101010;color:#fff;background-image:radial-gradient(ellipse at bottom right,rgba(153,22,10,.32),transparent 65%),var(--imperio-dot-pattern);background-size:auto,var(--imperio-dot-pattern-size);letter-spacing:0}
+  .home-shirt__inner{max-width:1160px;margin:auto;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center;gap:56px}
+  .home-shirt__photo{display:block;min-width:0;background:#f5f5f5;aspect-ratio:4/5}
+  .home-shirt__photo picture{display:contents}.home-shirt__photo img{display:block;width:100%;height:100%;object-fit:contain}
+  .home-shirt__copy{min-width:0}.home-shirt__copy p,.home-shirt__copy li{color:inherit;line-height:1.65}
+  .home-shirt__eyebrow{font-size:12px;text-transform:uppercase}.home-shirt h2{color:#fff;font-size:42px;line-height:1.1;letter-spacing:0;margin:16px 0}
+  .home-shirt__price{font-size:28px;font-weight:700}.home-shirt__price span{display:block;font-size:15px;font-weight:400;color:#ddd}
+  .product-purchase{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:end;margin-top:24px}
+  .product-purchase label{display:grid;gap:6px;font-size:14px}.product-purchase select{height:50px;min-width:84px;background:#fff;color:#111;border:1px solid #aaa;border-radius:4px;padding:8px}
+  .product-purchase button{min-height:50px;background:#c72b19;border:1px solid #ff6b55;border-radius:4px;color:#fff;font-size:16px;font-weight:700;padding:12px 20px;cursor:pointer}
+  .product-purchase button:disabled{opacity:.5;cursor:not-allowed}.product-purchase button:hover:not(:disabled){background:#e43b25}
+  .product-purchase p,.product-purchase>a{grid-column:1/-1;margin:0;font-size:13px}
+  .home-shirt__story{display:inline-block;margin-top:18px;padding:12px 0;color:#fff;text-underline-offset:5px;font-size:14px;font-weight:700}
+  .home-shirt__trust{padding-left:18px;margin-top:24px;font-size:13px}.home-shirt__trust li+li{margin-top:8px}.home-shirt__legal{font-size:12px}.home-shirt__legal a{color:#ddd}
+  .home-shirt :is(a,button,select):focus-visible{outline:3px solid #fff;outline-offset:4px}
+  @media(max-width:760px){.home-shirt{padding:36px 20px}.home-shirt__inner{grid-template-columns:minmax(0,1fr);gap:24px}.home-shirt__photo{aspect-ratio:1;max-height:460px}.home-shirt h2{font-size:32px}.product-purchase{grid-template-columns:88px minmax(0,1fr)}}
+</style>

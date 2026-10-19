@@ -38,6 +38,7 @@ public/*.pdf
 
 # Local tool state and generated inspection artifacts
 tmp/
+output/pdf/
 supabase/.temp/
 production-environment/supabase/.temp/
 test-environment/supabase/.temp/

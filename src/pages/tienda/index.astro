@@ -1,8 +1,10 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import StoreStock from "../../components/commerce/StoreStock.astro";
+import CartControls from "../../components/CartControls.astro";
 import { PRODUCTS } from "../../config/products";
 import { SHIRT_PRICE_COPY } from "../../config/commerce";
+import { ZoomIn as ZoomInNodes } from "lucide";
 
 const shirt = PRODUCTS["camiseta-imperial"];
 const shirtPrice = new Intl.NumberFormat("es-ES", {
@@ -18,16 +20,19 @@ const shirtPrice = new Intl.NumberFormat("es-ES", {
 >
   <main class="storefront">
     <StoreStock />
+    <CartControls />
     <section class="store-catalog" id="catalogo">
       <div class="catalog-heading">
         <p>CASA DE MERCADERIAS</p>
-        <h1>TIENDA</h1>
+        <h1>Camiseta Imperial</h1>
       </div>
 
       <div class="product-grid" id="mercancias">
         <article
           class="product-card product-card--shirt"
           data-shirt-card
+          data-shirt-product
+          data-funnel-shirts
           id="camiseta"
         >
           <div class="product-meta">
@@ -35,13 +40,8 @@ const shirtPrice = new Intl.NumberFormat("es-ES", {
           </div>
           <div
             class="product-visual product-visual--shirt"
-            role="button"
-            tabindex="0"
-            aria-haspopup="dialog"
-            aria-controls="camiseta-imperial-detalle"
-            aria-label="Ampliar Camiseta Imperial"
-            data-shirt-detail-open
           >
+            <button class="product-zoom-open" type="button" aria-haspopup="dialog" aria-controls="camiseta-imperial-detalle" aria-label="Ampliar Camiseta Imperial" title="Ampliar Camiseta Imperial" data-shirt-detail-open disabled><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{ZoomInNodes.map(([name, attrs]) => { const Element = name; return <Element {...attrs} />; })}</svg></button>
             <div class="product-shirt-placeholder" aria-hidden="true">
               <img
                 src="/images/logo-redv2-480.webp"
@@ -52,7 +52,7 @@ const shirtPrice = new Intl.NumberFormat("es-ES", {
                 decoding="async"
               />
             </div>
-            <div class="product-shirt-scene" aria-hidden="true">
+            <div class="product-shirt-scene">
               <div class="product-shirt-scene__frame">
                 <img
                   class="product-shirt-scene__start"
@@ -87,30 +87,28 @@ const shirtPrice = new Intl.NumberFormat("es-ES", {
               </div>
               <div class="product-shirt-final" data-shirt-gallery>
                 <picture class="product-shirt-final__picture">
-                  <source type="image/avif" srcset="/images/museo-camiseta-front-640.avif 640w, /images/museo-camiseta-front-960.avif 960w" sizes="(max-width: 760px) calc(100vw - 32px), 50vw" />
+                  <source type="image/avif" srcset="/images/camiseta-imperio-frontal-640.avif" />
                   <img
                     class="product-shirt-final__image product-shirt-final__image--front"
-                    src="/images/museo-camiseta-front-960.webp"
-                    srcset="/images/museo-camiseta-front-640.webp 640w, /images/museo-camiseta-front-960.webp 960w"
+                    src="/images/camiseta-imperio-frontal.webp"
                     sizes="(max-width: 760px) calc(100vw - 32px), 50vw"
                     alt="Camiseta Imperial vista por delante"
-                    width="1400"
-                    height="1150"
+                    width="944"
+                    height="1181"
                     loading="lazy"
                     decoding="async"
                     fetchpriority="low"
                   />
                 </picture>
                 <picture class="product-shirt-final__picture">
-                  <source type="image/avif" srcset="/images/museo-camiseta-back-640.avif 640w, /images/museo-camiseta-back-960.avif 960w" sizes="(max-width: 760px) calc(100vw - 32px), 50vw" />
+                  <source type="image/avif" srcset="/images/camiseta-imperio-atras-640.avif" />
                   <img
                     class="product-shirt-final__image product-shirt-final__image--back"
-                    src="/images/museo-camiseta-back-960.webp"
-                    srcset="/images/museo-camiseta-back-640.webp 640w, /images/museo-camiseta-back-960.webp 960w"
+                    src="/images/camiseta-imperio-atras.webp"
                     sizes="(max-width: 760px) calc(100vw - 32px), 50vw"
                     alt="Camiseta Imperial vista por detras"
-                    width="1400"
-                    height="1150"
+                    width="944"
+                    height="1181"
                     loading="lazy"
                     decoding="async"
                     fetchpriority="low"
@@ -130,6 +128,7 @@ const shirtPrice = new Intl.NumberFormat("es-ES", {
           </div>
           <form class="product-purchase" action="/reservas" method="get">
             <p class="product-price">{shirtPrice}</p>
+            <p class="product-legal-status">NON SUFFICIT ORBIS. La cruz de Borgoña, el escudo y la nave en una camiseta técnica ligera y transpirable.</p>
             <label class="size-field">
               <span>Talla</span>
               <select data-shirt-size name="size">
@@ -149,9 +148,14 @@ const shirtPrice = new Intl.NumberFormat("es-ES", {
             </button>
             <p class="product-legal-status">{SHIRT_PRICE_COPY}</p>
             <p class="product-legal-status" data-reservation-stock role="status" aria-live="polite">Consultando disponibilidad...</p>
+            <button class="store-button" type="button" data-cart-add disabled>Añadir al carrito</button>
+            <p class="product-legal-status" data-cart-feedback hidden role="status">Añadida al carrito. <a href="/carrito">Ver carrito</a></p>
             <a href="/reservas" data-waitlist-link hidden>APUNTARME A LA LISTA DE ESPERA</a>
             <p class="product-legal-status">100 % poliéster. {shirt.fabricWeightGsm} g/m².</p>
             <p class="product-legal-status">Revisa el resumen y confirma el pago en Stripe.</p>
+            <p class="product-legal-status"><a href="/checkout/camiseta-imperial">Guía de tallas, materiales y cuidados</a></p>
+            <p class="product-legal-status">Preparación máxima de 48 h y entrega máxima de 7 días laborables. <a href="/legal/envios">Envíos</a> · <a href="/legal/devoluciones">Devoluciones</a></p>
+            <p class="product-legal-status"><a href="#shirt-story-title">Descubrir su historia</a></p>
           </form>
         </article>
       </div>
@@ -730,11 +734,7 @@ const shirtPrice = new Intl.NumberFormat("es-ES", {
     shirtDetail.close();
   }
 
-  shirtDetailOpen?.addEventListener("click", (event) => {
-    if (!(event.target instanceof Element)) return;
-    if (event.target.closest("button, a, input, select, label")) return;
-    openShirtDetail();
-  });
+  shirtDetailOpen?.addEventListener("click", openShirtDetail);
 
   shirtDetailOpen?.addEventListener("keydown", (event) => {
     if (!(event instanceof KeyboardEvent)) return;
@@ -742,6 +742,7 @@ const shirtPrice = new Intl.NumberFormat("es-ES", {
     event.preventDefault();
     openShirtDetail();
   });
+  if (shirtDetailOpen instanceof HTMLButtonElement) shirtDetailOpen.disabled = false;
 
   shirtDetailToggle?.addEventListener("click", () => {
     shirtDetailShowingBack = !shirtDetailShowingBack;
@@ -1843,6 +1844,24 @@ const shirtPrice = new Intl.NumberFormat("es-ES", {
 
   }
 
+  .product-shirt-placeholder,.product-shirt-scene__frame{display:none}
+  .product-zoom-open{position:absolute;top:12px;right:12px;z-index:5;display:grid;place-items:center;width:44px;height:44px;border:1px solid #bbb;border-radius:4px;background:#fff;color:#111;cursor:zoom-in}
+  .product-zoom-open:focus-visible{outline:3px solid #b32b20;outline-offset:3px}
+  .product-shirt-scene,.product-shirt-final{opacity:1;transition:none}
+  .product-shirt-final{background:#eee}
+  .product-shirt-final__image{transform:none;object-fit:contain;transition:opacity 180ms ease}
+  .product-shirt-gallery-next{opacity:1;visibility:visible;pointer-events:auto;transform:translate(0,-50%);transition:none}
+  .product-card--shirt:is(:hover,:focus-within) .product-shirt-final{transition:none}
+  .product-card--shirt:is(:hover,:focus-within) .product-shirt-final__image{transform:none;transition:opacity 180ms ease}
+  .product-purchase>[data-cart-add]{grid-column:1/-1;background:transparent;color:#fff}
+  .store-catalog{min-height:0;max-width:1240px;margin:auto;padding:96px 24px 48px}
+  .catalog-heading{display:block;padding:0 0 28px}.catalog-heading p{margin:0 0 12px;font-size:12px}.catalog-heading h1{font-size:38px;line-height:1.1;text-align:left}
+  .product-grid{display:block}.product-card--shirt{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);column-gap:48px;align-items:center}
+  .product-meta{grid-column:1/-1;min-height:0;margin-bottom:16px}.product-meta strong{font-size:13px}
+  .product-visual{grid-column:1;aspect-ratio:1;max-height:540px}.product-purchase{grid-column:2;align-self:center;min-width:0;gap:12px;padding-top:0}
+  .product-price{font-size:30px;grid-column:1/-1}.product-purchase .store-button--light{grid-row:auto;grid-column:2;min-height:48px}
+  .product-purchase .product-legal-status{font-size:14px;line-height:1.5}.size-field{grid-row:3}.product-purchase .store-button--light{grid-row:3}.product-purchase a{color:inherit;text-underline-offset:3px}
+  @media(max-width:700px){.store-catalog{padding:80px 20px 32px}.catalog-heading{padding:0 0 20px}.catalog-heading h1{font-size:28px;text-align:left}.product-card--shirt{grid-template-columns:minmax(0,1fr);gap:16px}.product-meta,.product-visual,.product-purchase{grid-column:1}.product-meta{margin:0}.product-visual{height:260px;aspect-ratio:auto}.product-purchase{padding:4px 0 0}.product-price{font-size:26px}.product-meta strong{font-size:12px}.product-purchase .product-legal-status{font-size:13px}}
   @media (prefers-reduced-motion: reduce) {
     .product-shirt-placeholder,
     .product-shirt-scene,

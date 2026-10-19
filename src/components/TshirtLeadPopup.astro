@@ -2,7 +2,7 @@
 import { TSHIRT_DISCOUNT_PERCENT, TSHIRT_OFFER_COPY } from "../config/tshirt-offer";
 import { reservationMode } from "../lib/reservations";
 const reserving = reservationMode();
-const excluded = /^\/(?:login|registro|recuperar-contrasena|confirmar-correo|cuenta(?:\/|$)|checkout|reservas(?:\/|$)|reserva(?:\/|$)|compra(?:\/|$)|gracias(?:\/|$)|admin(?:\/|$))/;
+const excluded = /^\/(?:login|registro|recuperar-contrasena|confirmar-correo|cuenta(?:\/|$)|checkout|tienda(?:\/|$)|carrito(?:\/|$)|recursos(?:\/|$)|legal(?:\/|$)|reservas(?:\/|$)|reserva(?:\/|$)|compra(?:\/|$)|gracias(?:\/|$)|admin(?:\/|$))/;
 const enabled = !excluded.test(Astro.url.pathname) && Astro.url.pathname.replace(/\/$/, "") !== "/instagram";
 ---
 
@@ -21,7 +21,7 @@ const enabled = !excluded.test(Astro.url.pathname) && Astro.url.pathname.replace
         <span class="tshirt-lead__eyebrow">{TSHIRT_DISCOUNT_PERCENT}% de descuento</span>
         <h2 id="tshirt-lead-title">Una pieza de nuestra historia.</h2>
         <p id="tshirt-lead-copy">{TSHIRT_OFFER_COPY}</p>
-        <p>Artículos para suscriptores por 1,99 € al mes o 17,99 € al año. IVA incluido. Renovación automática hasta cancelación.</p>
+        <p>Artículos para suscriptores: 1,99 €/mes o 17,99 €/año. IVA incluido. Renovación automática; cancela cuando quieras.</p>
         <div class="tshirt-lead__actions">
           <a class="btn btn-primary tshirt-lead__submit tshirt-lead__submit--reserve" href="/reservas" data-tshirt-reserve>{reserving ? "Reservar ya" : "Comprar camiseta"}</a>
           <a class="btn tshirt-lead__submit tshirt-lead__submit--discount" href="/suscribirse#arcabucero" data-tshirt-offer>Quiero descuento</a>
@@ -69,6 +69,7 @@ const enabled = !excluded.test(Astro.url.pathname) && Astro.url.pathname.replace
     let previousOverflow = '';
     let lastFocus: Element | null = null;
     let dismissedForSession = false;
+    let waitingForCookies = false;
     try {
       localStorage.removeItem(legacyStorageKey);
       dismissedForSession = Boolean(sessionStorage.getItem(storageKey));
@@ -106,8 +107,15 @@ const enabled = !excluded.test(Astro.url.pathname) && Astro.url.pathname.replace
     const scheduleOpen = (delay: number) => window.setTimeout(() => {
       let dismissed = dismissedForSession;
       try { dismissed = Boolean(sessionStorage.getItem(storageKey)); } catch {}
-      if (!dismissed && root.hidden) open();
+      if (dismissed || !root.hidden) return;
+      if (document.querySelector('[data-cookie-banner]:not([hidden]),[data-cookie-settings][open]')) {
+        waitingForCookies = true;
+        return;
+      }
+      waitingForCookies = false;
+      open();
     }, delay);
+    window.addEventListener('imperio:cookie-consent', () => { if (waitingForCookies) scheduleOpen(1500); });
     if (!dismissedForSession) {
       const preloader = document.getElementById('preloader');
       if (preloader && !document.body.classList.contains('preloader-done')) {

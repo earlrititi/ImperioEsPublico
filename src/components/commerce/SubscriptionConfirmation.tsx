@@ -1,10 +1,54 @@
 import { useEffect, useRef, useState } from "preact/hooks";
+import { LEGAL_DOCUMENT_VERSIONS } from "../../config/legal";
+import { readSavedConsent } from "../../lib/cookie-consent";
+import { trackConfirmedGooglePurchase } from "../../lib/google-analytics";
 
-export default function SubscriptionConfirmation() {
+export default function SubscriptionConfirmation({ sessionId = "" }: { sessionId?: string }) {
   const [state, setState] = useState("checking");
   const [retry, setRetry] = useState(0);
   const [message, setMessage] = useState("Estamos comprobando tu acceso. No necesitas volver a pagar.");
   const heading = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    // Keep the receipt capability only in this page's memory. A refresh of the
+    // clean URL cannot turn an existing subscription into a fresh purchase.
+    if (window.location.search || window.location.hash) window.history.replaceState(null, "", window.location.pathname);
+    if (!/^cs_live_[A-Za-z0-9]{1,190}$/.test(sessionId)) return;
+    let active = true, running = false;
+    let receipt: unknown = null;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const started = Date.now();
+    const measure = async () => {
+      if (!active || running || !readSavedConsent(LEGAL_DOCUMENT_VERSIONS.cookies)?.analytics) return;
+      if (receipt) { trackConfirmedGooglePurchase(receipt); return; }
+      running = true;
+      try {
+        const response = await fetch("/api/subscriptions/purchase", { method: "POST", cache: "no-store", credentials: "same-origin",
+          referrerPolicy: "no-referrer", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sessionId }),
+          signal: AbortSignal.timeout(10000) });
+        if (!active) return;
+        if (response.ok) {
+          const result = await response.json();
+          if (!active || !readSavedConsent(LEGAL_DOCUMENT_VERSIONS.cookies)?.analytics) return;
+          receipt = result.analyticsPurchase ?? null;
+          if (receipt) { trackConfirmedGooglePurchase(receipt); return; }
+        }
+      } catch { /* Analytics failure must never block access or suggest another payment. */ }
+      finally {
+        running = false;
+        if (active && !receipt && Date.now() - started < 120000 && readSavedConsent(LEGAL_DOCUMENT_VERSIONS.cookies)?.analytics) {
+          clearTimeout(timer);
+          timer = setTimeout(() => { void measure(); }, 5000);
+        }
+      }
+    };
+    const consent = () => {
+      if (!readSavedConsent(LEGAL_DOCUMENT_VERSIONS.cookies)?.analytics) { receipt = null; clearTimeout(timer); return; }
+      void measure();
+    };
+    window.addEventListener("imperio:cookie-consent", consent);
+    void measure();
+    return () => { active = false; clearTimeout(timer); window.removeEventListener("imperio:cookie-consent", consent); };
+  }, [sessionId]);
   useEffect(() => {
     let active = true;
     let timer: ReturnType<typeof setTimeout>;

@@ -15,8 +15,17 @@ test("funnel attrition uses one cohort, ignores incomplete stage paths and exclu
   const row=(id:string,stages:number[],recent=false):FunnelRun=>({id,flow:"subscriptions",stages,created_at:"2026-10-09T10:00:00Z",last_seen_at:recent?"2026-10-09T11:59:00Z":"2026-10-09T10:30:00Z"});
   const f=summarizeFunnel([row("a",[0]),row("b",[0,1]),row("c",[0,1,2,3,4]),row("d",[0,1],true),row("e",[0,4])],now).find(f=>f.flow==="subscriptions")!;
   assert.deepEqual(f.stages.map(s=>s.count),[5,3,1,1,1]);
-  assert.equal(f.inProgress,1);assert.equal(f.stages[0].lost,2);assert.equal(f.stages[1].lost,1);
+  assert.equal(f.inProgress,1);assert.equal(f.stages[0].lost,1);assert.equal(f.stages[1].lost,1);
+  assert.equal(f.incompletePaths,1);
   assert.equal(f.stages[4].count,1);assert.equal(f.largest?.label,"Entrada");
+});
+
+test("noindex is not a consent or funnel exclusion and tall forms can become visible",()=>{
+  const layout=readFileSync(new URL("../src/layouts/Layout.astro",import.meta.url),"utf8");
+  const tracker=readFileSync(new URL("../src/components/FunnelTracker.astro",import.meta.url),"utf8");
+  assert.doesNotMatch(layout,/!noindex\s*&&\s*<FunnelTracker/);
+  assert.match(tracker,/threshold:0\.01/);
+  assert.match(tracker,/FUNNEL_PAGES\.test\(location.pathname\)/);
 });
 test("newsletter scheduler includes mail-only queues and analytics retention",()=>{
   const sql=readFileSync(new URL("../supabase/migrations/028_funnel_newsletter.sql",import.meta.url),"utf8");

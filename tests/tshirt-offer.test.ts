@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { qualifiesForTshirtOffer, shirtDiscountPercent, shirtOfferCopy } from "../src/config/tshirt-offer";
 import { PLAN_COMPARISON_LABELS, SERVICES_ITEMS } from "../src/config/home";
+import { readFileSync } from "node:fs";
 
 test("Active paid plans grant their non-stacking shirt benefit", () => {
   assert.equal(qualifiesForTshirtOffer({ plan: "arcabucero", status: "active" }), true);
@@ -12,6 +13,15 @@ test("Active paid plans grant their non-stacking shirt benefit", () => {
   assert.equal(shirtDiscountPercent({ plan: "maestre_campo", status: "active" }), 20);
   assert.equal(shirtDiscountPercent({ plan: "maestre_campo", status: "canceled" }), 0);
   assert.equal(qualifiesForTshirtOffer(null), false);
+});
+
+test("personal discount emails use only the subscriber's tier copy, never the mixed public offer", () => {
+  assert.doesNotMatch(shirtOfferCopy("maestre_campo"), /15%/);
+  assert.doesNotMatch(shirtOfferCopy("arcabucero"), /20%/);
+  const source = readFileSync("src/lib/emails.ts", "utf8");
+  assert.doesNotMatch(source, /TSHIRT_OFFER_COPY/);
+  assert.match(source, /const offer = shirtOfferCopy\(params\.percent === 20/);
+  assert.match(source, /const offer = shirtOfferCopy\(params\.planName === "MAESTRE DE CAMPO"/);
 });
 
 test("The subscription comparison has matching rows and only the forum is forthcoming", () => {

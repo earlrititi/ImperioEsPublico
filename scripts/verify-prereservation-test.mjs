@@ -29,7 +29,10 @@ const keep = (result) => {
 try {
   const initial = await call('/api/reservations/inventory');
   assert.equal(initial.data.reservationMode, true); assert.equal(initial.data.campaign.max_reservation_quantity, 2); checks++;
-  const available = initial.data.variants.find((v) => v.name === 'S').available_stock;
+  assert.equal(initial.data.variants.find((v) => v.name === 'S').available, true);
+  const { data: stockRow, error: stockError } = await db.from('product_variants').select('available_stock').eq('sku','IE-CAMISETA-IMPERIAL-S').single();
+  assert.ifError(stockError);
+  const available = stockRow.available_stock;
   assert.ok(available >= 1 && available <= 3, 'Run requires the expected isolated S inventory');
   if (available > 1) { const held = await call('/api/reservations', await body(available - 1)); keep(held); assert.equal(held.status, 201); }
   const a = await body(), b = await body();
@@ -47,7 +50,7 @@ try {
   const waiter = keep(wait); assert.equal(wait.status, 201);
   const w = await call(`/api/reservations/${waiter.id}`, { action: 'view', token: waiter.token });
   assert.equal(w.data.reservation.status, 'WAITLIST'); assert.equal(w.data.reservation.marketing_consent, true); checks++;
-  const inv = await call('/api/reservations/inventory'); assert.equal(inv.data.variants.find((v) => v.name === 'S').available_stock, 0); checks++;
+  const inv = await call('/api/reservations/inventory'); assert.equal(inv.data.variants.find((v) => v.name === 'S').available, false); checks++;
   const withdrawn = await call(`/api/reservations/${waiter.id}`, { action: 'marketing-withdraw', token: waiter.token });
   assert.equal(withdrawn.data.reservation.marketing_consent, false); checks++;
   const max = await call('/api/reservations', await body(3)); assert.equal(max.data.code, 'MAX_RESERVATION_QUANTITY'); checks++;

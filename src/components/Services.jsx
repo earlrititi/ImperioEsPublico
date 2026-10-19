@@ -17,7 +17,7 @@ const FOUNDATION_CARDS = [
   {
     title: "Forma parte",
     description:
-      "Descarga el manifiesto del Imperio Español y descubre nuestras publicaciones de historia y divulgación. Con Arcabucero accedes a los artículos para suscriptores y obtienes un 15% de descuento de un solo uso en la Camiseta Imperial. El foro estará disponible próximamente.",
+      "Descarga el manifiesto del Imperio Español y descubre nuestras publicaciones de historia y divulgación. Con Arcabucero accedes a los artículos para suscriptores y obtienes un 15% de descuento en la Camiseta Imperial para cada lanzamiento. El foro estará disponible próximamente.",
   },
 ];
 

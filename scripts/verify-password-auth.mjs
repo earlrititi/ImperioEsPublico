@@ -7,6 +7,7 @@ process.env.PUBLIC_SUPABASE_URL = env.PUBLIC_SUPABASE_URL;
 process.env.PUBLIC_SUPABASE_ANON_KEY = 'fixture-anon';
 process.env.SUPABASE_SERVICE_ROLE_KEY = 'fixture-service';
 process.env.RATE_LIMIT_SECRET = 'fixture-rate-limit-secret-long-enough';
+process.env.COMMERCE_EMAIL_MODE = 'disabled';
 const user = { id:'00000000-0000-4000-8000-000000000011', email:'fixture@example.invalid', email_confirmed_at:'2026-09-15T00:00:00Z', aud:'authenticated', role:'authenticated', app_metadata:{}, user_metadata:{} };
 const encode = v => Buffer.from(JSON.stringify(v)).toString('base64url');
 const exp = Math.floor(Date.now()/1000)+3600;
@@ -14,7 +15,7 @@ const token = `${encode({alg:'HS256',typ:'JWT'})}.${encode({sub:user.id,exp,role
 const session = { access_token:token, refresh_token:'fixture-refresh',token_type:'bearer',expires_in:3600,expires_at:exp,user };
 const project = new URL(env.PUBLIC_SUPABASE_URL).hostname.split('.')[0];
 const cookie = `sb-${project}-auth-token=base64-${encode(session)}`;
-let allowed = true, denyPassword = false, denyCode = false, updateFail = false;
+let allowed = true, denyPassword = false, denyCode = false, updateFail = false, genuinelyNew = false;
 const calls = [];
 globalThis.fetch = async (input, options = {}) => {
   const url = new URL(typeof input === 'string' || input instanceof URL ? input : input.url);
@@ -32,7 +33,7 @@ globalThis.fetch = async (input, options = {}) => {
     if (body.token_hash === 'expired') return json({msg:'Token has expired',error_code:'otp_expired'},403);
     return json(session);
   }
-  if (url.pathname === '/auth/v1/signup') return json({user:{...user,email_confirmed_at:null},session:null});
+  if (url.pathname === '/auth/v1/signup') return json({user:{...user,email_confirmed_at:null,identities:genuinelyNew?[{id:'fixture-identity'}]:[]},session:null});
   if (url.pathname === '/auth/v1/user') return updateFail && method==='PUT' ? json({msg:'Invalid password'},422) : json(user);
   if (['/auth/v1/recover','/auth/v1/resend','/auth/v1/otp','/auth/v1/logout'].includes(url.pathname)) return json({});
   throw Error(`Unexpected fixture request ${url.pathname}`);
@@ -55,6 +56,18 @@ allowed=false;r=await request('/login',credentials);assert.match(r.headers.get('
 r=await request('/registro',{...credentials,password_confirmation:'different',terms:'on',privacy:'on'});assert.match(r.headers.get('location'),/password/);checks++;
 r=await request('/registro',{...credentials,password_confirmation:credentials.password});assert.match(r.headers.get('location'),/validation/);checks++;
 r=await request('/registro',{...credentials,password_confirmation:credentials.password,terms:'on',privacy:'on'});assert.match(r.headers.get('location'),/sent=1/);assert.equal(calls.find(c=>c.path==='/auth/v1/signup').body.password,credentials.password);checks++;
+before=calls.length;genuinelyNew=true;
+r=await request('/registro',{...credentials,password_confirmation:credentials.password,terms:'on',privacy:'on',newsletter:'on'});
+assert.match(r.headers.get('location'),/sent=1/);
+let consentCalls=calls.slice(before).filter(c=>c.path==='/rest/v1/legal_consents');
+assert.ok(consentCalls.some(c=>c.method==='POST'&&c.body.some(row=>row.consent_type==='marketing_email'&&row.accepted===true)));
+assert.ok(consentCalls.some(c=>c.method==='PATCH'&&c.body.user_id===user.id));checks++;
+before=calls.length;genuinelyNew=false;
+await request('/registro',{...credentials,password_confirmation:credentials.password,terms:'on',privacy:'on',newsletter:'on'});
+assert.equal(calls.slice(before).some(c=>c.path==='/rest/v1/legal_consents'&&c.method==='PATCH'),false,'existing/obfuscated signup identities cannot acquire someone else\'s consent');checks++;
+before=calls.length;
+await request('/registro',{...credentials,password_confirmation:credentials.password,terms:'on',privacy:'on'});
+assert.equal(calls.slice(before).filter(c=>c.path==='/rest/v1/legal_consents'&&c.method==='POST').flatMap(c=>c.body).some(row=>row.consent_type==='marketing_email'),false);checks++;
 r=await request('/recuperar-contrasena',{email:user.email});assert.equal(r.headers.get('location'),'/recuperar-contrasena?sent=1');assert.ok(calls.some(c=>c.path==='/auth/v1/recover'));checks++;
 r=await request('/confirmar-correo',{email:user.email});assert.equal(r.headers.get('location'),'/confirmar-correo?sent=1');checks++;
 r=await request('/cuenta/contrasena');assert.match(r.headers.get('location'),/^\/login/);checks++;

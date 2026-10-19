@@ -1,0 +1,35 @@
+---
+import PageShell from "../../layouts/PageShell.astro";
+import booklet from "../../config/siglo-de-oro.json";
+---
+<PageShell title={booklet.title} eyebrow="Cuaderno de lectura" heading={booklet.title} summary={booklet.intro} noindex mainClass="reading-page">
+  <div class="reading-booklet">
+    <a class="download" href="/recursos/7-historias-del-siglo-de-oro.pdf" download>Descargar PDF</a>
+    <p class="editorial-note">{booklet.note}</p>
+    <ol class="contents" aria-label="Historias del cuaderno">
+      {booklet.stories.map(story => <li><a href={`#${story.id}`}>{story.title}</a></li>)}
+    </ol>
+    {booklet.stories.map((story, index) => <section aria-labelledby={story.id}>
+      <p class="dateline">{String(index + 1).padStart(2, "0")} / {story.place}</p>
+      <h2 id={story.id}>{story.title}</h2>
+      {story.paragraphs.map(text => <p>{text}</p>)}
+      <p class="source">Fuente: <a href={story.source.url} rel="noreferrer">{story.source.institution}. {story.source.title}</a>.</p>
+    </section>)}
+    <p class="editorial-note">Texto editorial de Imperio E. Referencias institucionales consultadas el 18 de octubre de 2026.</p>
+    <a href="/archivo">Seguir leyendo en el archivo</a>
+  </div>
+</PageShell>
+<style>
+  :global(.reading-page .page-shell__intro){max-width:760px;margin:0 auto;padding-bottom:32px}
+  :global(.reading-page .pill){display:inline-block;background:none;border:0;border-radius:0;padding:0;color:#9c1e2c;font:600 12px/1.5 Arial,sans-serif}
+  :global(.reading-page h1){font-size:36px;line-height:1.2;margin:16px 0 24px;font-weight:700;overflow-wrap:anywhere}
+  .reading-booklet{max-width:760px;margin:0 auto;overflow-wrap:anywhere}
+  .reading-booklet p{line-height:1.8;margin:0 0 1.2rem}
+  .reading-booklet section{padding:2rem 0;border-top:1px solid #11111130}
+  .reading-booklet h2{font-size:28px;line-height:1.3;margin:0 0 1.2rem;scroll-margin-top:110px}
+  .reading-booklet a{text-decoration:underline;text-underline-offset:4px}
+  .reading-booklet .dateline{color:#9c1e2c;font:600 14px/1.5 Arial,sans-serif}
+  .reading-booklet .source,.reading-booklet .editorial-note{font-size:15px;color:#4b4b50}
+  .contents{padding-left:1.4rem;margin:2rem 0;line-height:2}
+  .download{display:inline-block;border:1px solid #11111160;background:#11111108;padding:12px 20px;margin-bottom:1.5rem;border-radius:4px}
+</style>

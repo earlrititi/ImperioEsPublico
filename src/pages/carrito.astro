@@ -1,0 +1,14 @@
+---
+import PageShell from "../layouts/PageShell.astro";
+import Cart from "../components/commerce/Cart";
+import "../styles/commerce.css";
+---
+<PageShell title="Carrito" heading="Tu carrito" summary="Camiseta Imperial" noindex>
+  <Cart client:load />
+</PageShell>
+<style is:global>
+  .cart-content{max-width:900px;margin:auto}.cart-line{display:grid;grid-template-columns:80px minmax(0,1fr) auto;gap:20px;align-items:start;padding:24px 0;border-bottom:1px solid #777}
+  .cart-line h2{font-size:22px;line-height:1.2;margin:0}.cart-line p{font-size:14px}.cart-line input{max-width:90px;min-height:44px}.cart-line label{display:inline-flex;align-items:center;gap:10px}.cart-line img{width:80px;height:100px;object-fit:contain;background:#eee}
+  .cart-totals{margin:32px 0}.cart-totals>div{display:flex;justify-content:space-between;gap:20px;padding:12px 0;border-bottom:1px solid #777}.cart-totals dd{margin:0;font-weight:700}.cart-actions{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
+  @media(max-width:600px){.cart-line{grid-template-columns:64px minmax(0,1fr);gap:14px}.cart-line img{width:64px;height:80px}.cart-line>strong{grid-column:2}.cart-line label{display:flex}.cart-line .btn{margin-top:8px}.cart-actions>a{width:100%}}
+</style>

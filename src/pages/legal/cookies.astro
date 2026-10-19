@@ -1,6 +1,7 @@
 ---
 import LegalDocument from "../../components/LegalDocument.astro";
 import { LEGAL_DOCUMENT_VERSIONS } from "../../config/legal";
+import { ANALYTICS } from "../../config/analytics";
 ---
 
 <LegalDocument
@@ -22,13 +23,14 @@ import { LEGAL_DOCUMENT_VERSIONS } from "../../config/legal";
     <ul>
       <li><strong>Necesarias:</strong> sesion de Supabase, seguridad y almacenamiento de la preferencia de cookies.</li>
       <li><strong>Preferencias:</strong> opciones funcionales no imprescindibles. Actualmente no hay proveedores activos en esta categoria.</li>
-      <li><strong>Analitica:</strong> Google Analytics o Google Tag Manager, solo si estan configurados y aceptados.</li>
+      <li><strong>Analitica:</strong> Google Analytics 4, solo tras aceptar esta finalidad. {ANALYTICS.gtmId ? "Se administra mediante Google Tag Manager, que tambien permanece bloqueado hasta aceptar analitica." : "La etiqueta se instala directamente; Google Tag Manager no esta activo en esta version."}</li>
       <li><strong>Marketing:</strong> Pixel de Meta, solo tras aceptar esta finalidad, para medir visitas a la camiseta e inicio y finalizacion de reservas gratuitas. Una reserva no se registra como compra.</li>
     </ul>
   </section>
 
   <section>
     <h2>3. Tecnologias identificadas</h2>
+    <p>El carrito utiliza la cookie tecnica <code>imperio_cart</code> solo cuando anades productos: conserva tallas y cantidades durante siete dias desde el ultimo cambio, compartida entre imperioes.com y www.imperioes.com. No contiene datos de contacto y no reserva unidades. Es independiente de la analitica opcional.</p>
     <p>
       La autenticacion puede utilizar cookies tecnicas de Supabase. La eleccion del
       banner se guarda localmente bajo la clave <code>imperio_cookie_consent</code>.
@@ -37,10 +39,19 @@ import { LEGAL_DOCUMENT_VERSIONS } from "../../config/legal";
       Se recuerda entre visitas y sesiones del mismo navegador y dispositivo.
       Si borras los datos del sitio o cambia la version del consentimiento,
       volveremos a solicitar tu eleccion.
-      Si se acepta analitica, Google puede crear identificadores como <code>_ga</code>
-      y <code>_ga_*</code>, con una duracion configurada de hasta un ano.
+      Si se acepta analitica, Google Analytics 4 puede crear <code>_ga</code>
+      y <code>_ga_*</code>, con una duracion configurada de hasta un ano, sin ampliarla automaticamente en cada visita.
+      Google Tag Manager es un gestor de etiquetas: no atribuimos a GTM las cookies que instala Google Analytics.
+      Con consentimiento analitico, guardamos en almacenamiento local
+      <code>imperio_ga4_purchases</code>: hasta 40 identificadores opacos de compras
+      medidas, sin nombre, email ni direccion, para evitar repetirlas al recargar.
+      Cada entrada caduca a los 30 dias y se elimina al retirar analitica.
       Google Analytics 4 mide visitas a paginas publicas solo tras aceptar analitica.
-      No se carga en cuenta, administracion, autenticacion, pagos o gestion privada.
+      No se carga en cuenta, administracion, autenticacion, checkout o gestion privada.
+      Como excepcion, en el retorno limpio de una compra confirmada por el servidor
+      puede cargarse para medir ese pago, solo con consentimiento vigente y sin
+      registrar otra visita. Se utiliza la ruta publica de tienda o suscripciones
+      como contexto, nunca la URL privada ni sus referencias de pago.
       No enviamos nombres, correos, datos de formularios, direcciones de entrega ni
       parametros o tokens de enlaces privados. La medicion automatica de formularios,
       Google Signals y la personalizacion publicitaria estan desactivadas.
@@ -51,6 +62,8 @@ import { LEGAL_DOCUMENT_VERSIONS } from "../../config/legal";
 
   <section>
     <h2>4. Cambiar o retirar el consentimiento</h2>
+    <p>Aplicamos la modalidad basica de Consent Mode: antes de aceptar analitica no cargamos GA4 ni GTM ni enviamos pings sin cookies a estas herramientas. Rechazar o seguir navegando no activa la analitica. Los permisos publicitarios de Google permanecen denegados.</p>
+    <p>El interruptor de analitica del pie de pagina cambia solo esa finalidad. El boton Modificar permite cambiar por separado marketing. Al revocar analitica detenemos eventos, eliminamos las cookies propias de GA4 que podemos controlar y recargamos la pagina para descargar las herramientas previamente cargadas. La compra y el inicio de sesion no dependen de esa eleccion.</p>
     <p>Meta puede recibir la URL publica visitada, identificadores del navegador, direccion IP y eventos de producto. No enviamos campos de formularios, correos, direcciones de entrega ni enlaces privados. El pixel se limita a las paginas publicas de camiseta y reserva; no se carga en cuenta, administracion o gestion privada. La coincidencia avanzada y la captura automatica de formularios no se habilitan.</p>
     <p>Las cookies propias <code>_fbp</code> y <code>_fbc</code> de Meta pueden conservarse hasta 90 dias. Se eliminan del dominio al retirar marketing y se bloquean nuevos eventos. Consulta la <a href="https://www.facebook.com/privacy/policies/cookies/" rel="noopener noreferrer">politica de cookies de Meta</a>.</p>
     <p>

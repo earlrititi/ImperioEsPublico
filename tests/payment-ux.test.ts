@@ -20,7 +20,7 @@ test("Shirt contact is collected once and a separate recipient is optional", () 
 });
 
 test("Payment return never claims success before a server-side confirmation", () => {
-  const html = render(h(SubscriptionConfirmation, {}));
+  const html = render(h(SubscriptionConfirmation, { sessionId: "cs_live_fixture" }));
   assert.match(html, /Estamos comprobando tu acceso/);
   assert.doesNotMatch(html, /Acceso premium activado/);
   const manager = readFileSync(new URL("../src/components/commerce/ReservationManager.tsx", import.meta.url), "utf8");
@@ -29,4 +29,20 @@ test("Payment return never claims success before a server-side confirmation", ()
   assert.match(manager, /\{editing &&/);
   assert.match(manager, /submitting\.current \|\| busy \|\| editing/);
   assert.match(manager, /history\.replaceState\(null, "", window\.location\.pathname\)/);
+});
+
+test("Purchase loading never flashes a free reservation or an empty cart", () => {
+  const html = render(h(ReservationForm, { initialSales: true, fromCart: true }));
+  assert.match(html, /Compra de camiseta/);
+  assert.match(html, /Comprobando disponibilidad y precio/);
+  assert.match(html, /aria-busy="true"/);
+  assert.doesNotMatch(html, /Pre-reserva gratuita|RESERVAR|0,00|Tu carrito est/);
+});
+
+test("offer never interrupts store, cart or cookie choices", () => {
+  const popup = readFileSync(new URL("../src/components/TshirtLeadPopup.astro", import.meta.url), "utf8");
+  assert.match(popup, /\|tienda\(/);
+  assert.match(popup, /\|carrito\(/);
+  assert.match(popup, /data-cookie-banner\]:not\(\[hidden\]\)/);
+  assert.match(popup, /waitingForCookies/);
 });

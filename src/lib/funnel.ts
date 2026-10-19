@@ -20,13 +20,14 @@ export function summarizeFunnel(runs:FunnelRun[],now=Date.now()){
     const cohort=runs.filter(r=>r.flow===flow);
     const mature=cohort.filter(r=>now-Date.parse(r.last_seen_at)>=30*60*1000);
     const reached=(r:FunnelRun,step:number)=>Array.from({length:step+1},(_,i)=>i).every(i=>r.stages.includes(i));
+    const incompletePaths=cohort.filter(r=>r.stages.some(step=>!reached(r,step))).length;
     const stages=labels.map((label,step)=>{
       const count=cohort.filter(r=>reached(r,step)).length;
       const settled=mature.filter(r=>reached(r,step)).length;
-      const lost=step<labels.length-1?mature.filter(r=>reached(r,step)&&!reached(r,step+1)).length:0;
+      const lost=step<labels.length-1?mature.filter(r=>reached(r,step)&&!r.stages.some(s=>s>step)).length:0;
       return {label,count,settled,lost,lossRate:settled?lost/settled:null};
     });
     const largest=stages.slice(0,-1).filter(s=>s.lost>0).sort((a,b)=>b.lost-a.lost)[0]??null;
-    return {flow,stages,inProgress:cohort.length-mature.length,largest};
+    return {flow,stages,inProgress:cohort.length-mature.length,incompletePaths,largest};
   });
 }

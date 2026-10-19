@@ -9,13 +9,14 @@ const reservation = {
     line_total_snapshot: 2999 }],
 };
 
-test("Paid orders confirm payment and the shipping processing date without reservation warnings", () => {
+test("Paid orders confirm payment and actual fulfilment windows without outdated launch dates", () => {
   const text = reservationMailText({ ...reservation, status: "CONVERTED_TO_ORDER",
     expires_at: "2026-10-11T00:00:00Z", commerce_orders: { shipping_address: null },
   }, "ORDER_PAID", "https://example.invalid/manage");
   assert.match(text, /Tu compra se ha realizado correctamente/);
-  assert.match(text, /13 de octubre de 2026/);
-  assert.match(text, /no a la entrega/);
+  assert.match(text, /maximo de 48 horas/);
+  assert.match(text, /maximo de 7 dias laborables/);
+  assert.doesNotMatch(text, /13 de octubre de 2026/);
   assert.doesNotMatch(text, /Reserva valida hasta|No tienes obligacion|La reserva no autoriza|NO SE HA REALIZADO/);
 });
 

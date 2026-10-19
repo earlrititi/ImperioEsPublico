@@ -20,8 +20,11 @@ begin
     exception when others then if sqlerrm<>'ARTICLE_CONFLICT' then raise; end if;end;
   a:=public.transition_article(aid,actor,a.revision,'publish');
   if a.published_body<>'<p>Changed draft</p>' then raise exception 'Publication did not update';end if;
-  begin perform public.transition_article(aid,actor,a.revision,'delete');raise exception 'Published delete allowed';
-    exception when others then if sqlerrm<>'INVALID_STATE' then raise;end if;end;
+  a:=public.transition_article(aid,actor,a.revision,'delete');
+  if a.status<>'deleted' then raise exception 'Published soft delete failed';end if;
+  a:=public.transition_article(aid,actor,a.revision,'restore');
+  if a.status<>'withdrawn' then raise exception 'Restore republished the article';end if;
+  a:=public.transition_article(aid,actor,a.revision,'publish');
   a:=public.transition_article(aid,actor,a.revision,'withdraw');
   if a.status<>'withdrawn' then raise exception 'Withdrawal failed';end if;
   a:=public.transition_article(aid,actor,a.revision,'delete');

@@ -17,3 +17,15 @@ export function ownsShirtDiscount(user: { email?: string; email_confirmed_at?: s
   const normalize=(email:string)=>email.trim().toLowerCase();
   return Boolean(user?.email_confirmed_at && user.email && normalize(user.email)===normalize(reservationEmail) && normalize(user.email)===normalize(purchaseEmail));
 }
+
+export function shirtCheckoutMessage(items: { sku: string; quantity: number }[]) {
+  if (!items.length || items.length > 5) throw Error("INVALID_VARIANT");
+  const seen = new Set<string>();
+  const sizes = items.map(item => {
+    const size = /^IE-CAMISETA-IMPERIAL-(S|M|L|XL|XXL)$/.exec(item.sku)?.[1];
+    if (!size || seen.has(size) || !Number.isSafeInteger(item.quantity) || item.quantity < 1) throw Error("INVALID_VARIANT");
+    seen.add(size);
+    return `${size} (${item.quantity})`;
+  });
+  return `Tallas: ${sizes.join(", ")}. Camiseta: 26,99 EUR. Envio: 3 EUR por unidad, desglosado por separado. IVA incluido. Los descuentos no reducen el envio. Se utilizara la direccion confirmada en tu reserva.`;
+}

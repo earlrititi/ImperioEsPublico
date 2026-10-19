@@ -25,7 +25,12 @@ for (const name of readdirSync('supabase/migrations').filter(n=>n.endsWith('.sql
   const sql = readFileSync(join('supabase/migrations',name),'utf8');
   const checksum = createHash('sha256').update(sql).digest('hex');
   const previous = applied.find(m=>m.name===name);
-  if (previous) { if (previous.checksum !== checksum) throw new Error(`Applied migration changed: ${name}`); continue; }
+  if (previous) {
+    const lf = sql.replace(/\r\n/g, '\n');
+    const lineEndingHashes = [checksum, ...[lf, lf.replace(/\n/g, '\r\n')].map(value => createHash('sha256').update(value).digest('hex'))];
+    if (!lineEndingHashes.includes(previous.checksum)) throw new Error(`Applied migration changed: ${name}`);
+    continue;
+  }
   run(`begin; ${sql}\ninsert into private.test_applied_migrations values('${name}','${checksum}'); commit;`);
   console.log(`Applied ${name} to ImperioE Test`);
 }

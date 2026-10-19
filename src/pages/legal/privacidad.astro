@@ -1,6 +1,7 @@
 ---
 import LegalDocument from "../../components/LegalDocument.astro";
 import { LEGAL_BUSINESS, LEGAL_DOCUMENT_VERSIONS } from "../../config/legal";
+import { ANALYTICS } from "../../config/analytics";
 ---
 
 <LegalDocument
@@ -32,7 +33,7 @@ import { LEGAL_BUSINESS, LEGAL_DOCUMENT_VERSIONS } from "../../config/legal";
       <li>Atencion y manifiesto: nombre, email y contenido del mensaje; atender la solicitud.</li>
       <li>Consentimientos: version, eleccion, fecha y origen; acreditar y gestionar preferencias.</li>
       <li>Seguridad: registros tecnicos estrictamente necesarios; interes legitimo en proteger el servicio.</li>
-      <li>Analitica: identificadores y datos de uso, unicamente si se presta consentimiento.</li>
+      <li>Analitica: Google Analytics 4 mide paginas publicas, fuentes de trafico y eventos reales de producto, carrito y compras confirmadas, unicamente con consentimiento de analitica. Una compra medida incluye un identificador opaco de transaccion, tallas y cantidades de camisetas o plan y periodicidad de la suscripcion, e importes de producto, impuestos y envio. Solo se mide el primer pago de la suscripcion; una renovacion, una reserva, una cuenta activa o un pago Test no generan una nueva compra en este recorrido. No enviamos nombres, correos, direcciones, contrasenas ni valores de formularios. Las URL se reducen a rutas publicas sin parametros privados; la confirmacion de compra usa la ruta publica de tienda o suscripciones como contexto, sin registrar otra visita. La captura automatica de datos proporcionados por usuarios no se habilita.</li>
       <li>Marketing por email: unicamente si existe consentimiento separado y revocable.</li>
       <li>Medicion de marketing con Meta: visitas a la camiseta e inicio y finalizacion de reservas gratuitas, solo con consentimiento de cookies de marketing. No se envian datos de formularios ni se habilita la coincidencia avanzada. Puedes retirarlo desde el footer.</li>
     </ul>
@@ -43,8 +44,8 @@ import { LEGAL_BUSINESS, LEGAL_DOCUMENT_VERSIONS } from "../../config/legal";
     <p>
       Se utilizan Supabase para autenticacion y base de datos, Stripe para pagos y
       facturacion, Vercel para alojamiento y entrega, y Resend para correos
-      transaccionales. Google Analytics o Google Tag Manager solo se cargan tras
-      consentimiento. La logistica solo recibira los datos necesarios cuando se
+      transaccionales. Google Analytics 4{ANALYTICS.gtmId ? " y Google Tag Manager" : ""} solo se cargan tras
+      consentimiento de analitica, independiente del email marketing. La logistica solo recibira los datos necesarios cuando se
       habiliten envios. Discord y las redes sociales se abren como servicios externos.
       Meta Platforms Ireland Limited recibe los eventos de marketing consentidos,
       datos tecnicos del navegador, direccion IP e identificadores de cookies;
@@ -56,14 +57,14 @@ import { LEGAL_BUSINESS, LEGAL_DOCUMENT_VERSIONS } from "../../config/legal";
     <h2>4. Transferencias internacionales</h2>
     <p>
       Algunos proveedores pueden tratar datos fuera del Espacio Economico Europeo.
-      El responsable debe verificar sus ubicaciones, contratos de encargo y
-      mecanismos de transferencia aplicables antes del lanzamiento.
+      Puedes solicitar informacion sobre los destinos y las garantias aplicables
+      escribiendo a <a href={`mailto:${LEGAL_BUSINESS.legalEmail}`}>{LEGAL_BUSINESS.legalEmail}</a>.
     </p>
-    <p><strong>REQUIERE VERIFICACION EMPRESARIAL/LEGAL EXTERNA.</strong></p>
   </section>
 
   <section>
     <h2>5. Conservacion</h2>
+    <p>Las duraciones tecnicas de las cookies del carrito, consentimiento y analitica se describen en la <a href="/legal/cookies">politica de cookies</a>. No equivalen al plazo de conservacion de todos los datos tratados por Google. La propiedad de GA4 tiene configurados 2 meses para datos de eventos y 14 meses para datos de usuario, con reinicio del periodo de datos de usuario cuando existe nueva actividad. Estos controles no afectan a la mayoria de los informes estandar basados en datos agregados.</p>
     <p>Los datos de reservas se conservan mientras sea necesario gestionarlas y atender las responsabilidades aplicables. Una cancelacion no crea un registro fiscal de venta. No se registran direcciones completas ni enlaces privados en los logs de la aplicacion. Los datos no se incorporan automaticamente a listas de marketing.</p>
     <p>
       Los datos de cuenta se conservan mientras esta permanezca activa; los datos
@@ -84,11 +85,9 @@ import { LEGAL_BUSINESS, LEGAL_DOCUMENT_VERSIONS } from "../../config/legal";
   </section>
 
   <section>
-    <h2>7. Decisiones automatizadas y menores</h2>
+    <h2>7. Decisiones automatizadas</h2>
     <p>
-      No se han identificado decisiones automatizadas con efectos juridicos. El
-      servicio no se dirige especificamente a menores; debe definirse la edad minima
-      contractual antes de comercializar suscripciones o productos.
+      No se han identificado decisiones automatizadas con efectos juridicos.
     </p>
   </section>
 </LegalDocument>

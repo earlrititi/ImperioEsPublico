@@ -1,14 +1,17 @@
 import { readSavedConsent } from "./cookie-consent";
 import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
 import { INDEXABLE_STATIC_ROUTES } from "./seo";
+import { ecommercePayload, googlePurchasePayload, type CommerceEvent, type GooglePurchase } from "./ecommerce";
+import type { CartItem } from "./cart";
 
 const hosts = ["imperioes.com", "www.imperioes.com"];
 const publicPaths = new Set([
   ...INDEXABLE_STATIC_ROUTES,
-  "/", "/instagram", "/reservas", "/tienda", "/precios", "/comunidad",
+  "/", "/instagram", "/reservas", "/carrito", "/tienda", "/precios", "/comunidad",
   "/manifiesto", "/contacto", "/sobre-nosotros", "/archivo", "/ensayos",
   "/presente", "/efemerides", "/papeles-y-tratados", "/biblioteca", "/libreria",
   "/rutas", "/foro", "/legal", "/privacidad", "/cookies",
+  "/recursos/7-historias-del-siglo-de-oro",
 ]);
 
 export function canTrackGooglePage(href: string): boolean {
@@ -21,6 +24,7 @@ export function canTrackGooglePage(href: string): boolean {
     for (const [key, value] of url.searchParams) {
       if (/^utm_(source|medium|campaign|content|term)$/.test(key) && /^[a-zA-Z0-9_-]{1,100}$/.test(value)) continue;
       if (key === "size" && ["S", "M", "L", "XL", "XXL"].includes(value)) continue;
+      if (key === "cart" && value === "1" && path === "/reservas") continue;
       if (key === "fbclid" && /^[a-zA-Z0-9_-]{1,500}$/.test(value)) continue;
       return false;
     }
@@ -53,8 +57,27 @@ export function googlePageFields(href: string, referrer = "", title = "Imperio E
 type AnalyticsWindow = Window & { dataLayer?: unknown[]; gtag?: (...args: unknown[]) => void };
 let measurementId = "";
 let installed = false;
+let ready = false;
 let viewed = false;
 let initialized = false;
+let configuredGtmId = "";
+let purchaseContext = false;
+let pendingPurchase: GooglePurchase | null = null;
+const queuedPurchases = new Set<string>();
+export const PURCHASE_STORAGE_KEY = "imperio_ga4_purchases";
+const purchaseRetention = 30 * 24 * 60 * 60 * 1000;
+
+export function googlePurchasePageFields(href: string) {
+  try {
+    const url = new URL(href);
+    if (url.protocol !== "https:" || !hosts.includes(url.hostname) || url.port || url.username || url.password ||
+      !["/compra/completada", "/gracias"].includes(url.pathname) || url.search || url.hash) return null;
+    // The private return URL/referrer/title is never supplied to Google.
+    return url.pathname === "/gracias"
+      ? { page_location: `${url.origin}/suscribirse`, page_referrer: "", page_title: "Suscripciones | Imperio E" }
+      : { page_location: `${url.origin}/tienda`, page_referrer: "", page_title: "Camiseta Imperial | Imperio E" };
+  } catch { return null; }
+}
 
 function allowed() {
   return typeof window !== "undefined" && Boolean(readSavedConsent(LEGAL_DOCUMENT_VERSIONS.cookies)?.analytics) &&
@@ -62,20 +85,68 @@ function allowed() {
 }
 
 function pageFields() {
-  return googlePageFields(window.location.href, document.referrer, document.title)!;
+  return googlePageFields(window.location.href, document.referrer, document.title) ?? googlePurchasePageFields(window.location.href)!;
+}
+
+function loaderAllowed() {
+  return typeof window !== "undefined" && Boolean(readSavedConsent(LEGAL_DOCUMENT_VERSIONS.cookies)?.analytics) &&
+    (canTrackGooglePage(window.location.href) || (purchaseContext && Boolean(googlePurchasePageFields(window.location.href))));
+}
+
+function purchaseLedger(): { id: string; at: number }[] {
+  try {
+    const saved = JSON.parse(window.localStorage.getItem(PURCHASE_STORAGE_KEY) ?? "[]");
+    return Array.isArray(saved) ? saved.filter(e => /^ie_[a-f0-9]{64}$/.test(e?.id) &&
+      Number.isSafeInteger(e.at) && e.at <= Date.now() && Date.now() - e.at < purchaseRetention).slice(-40) : [];
+  } catch { return []; }
+}
+
+function flushPurchase() {
+  if (!ready || !installed || !pendingPurchase || !loaderAllowed() || !googlePurchasePageFields(window.location.href)) return;
+  if ((window.location.pathname === "/gracias") !== (pendingPurchase.items[0].item_category === "Suscripciones")) return;
+  const receipt = pendingPurchase;
+  pendingPurchase = null;
+  const ledger = purchaseLedger();
+  if (queuedPurchases.has(receipt.transaction_id) || ledger.some(e => e.id === receipt.transaction_id)) return;
+  queuedPurchases.add(receipt.transaction_id);
+  (window as AnalyticsWindow).gtag?.("event", "purchase", { ...pageFields(), ...receipt, send_to: measurementId });
+  try {
+    window.localStorage.setItem(PURCHASE_STORAGE_KEY, JSON.stringify([...ledger, { id: receipt.transaction_id, at: Date.now() }].slice(-40)));
+  } catch { /* GA4 can also deduplicate the stable transaction_id for the same web user. */ }
+}
+
+export function trackConfirmedGooglePurchase(input: unknown): boolean {
+  const receipt = googlePurchasePayload(input);
+  if (!receipt || typeof window === "undefined" || !googlePurchasePageFields(window.location.href) ||
+    !readSavedConsent(LEGAL_DOCUMENT_VERSIONS.cookies)?.analytics) return false;
+  if ((window.location.pathname === "/gracias") !== (receipt.items[0].item_category === "Suscripciones")) return false;
+  if (queuedPurchases.has(receipt.transaction_id) || purchaseLedger().some(e => e.id === receipt.transaction_id)) return false;
+  pendingPurchase = receipt;
+  purchaseContext = true;
+  applyGoogleConsent(true, measurementId, configuredGtmId);
+  return true;
 }
 
 function recordPageView() {
   if (!installed || viewed || !allowed()) return;
   viewed = true;
   (window as AnalyticsWindow).gtag?.("event", "page_view", { ...pageFields(), send_to: measurementId });
+  trackAutomationActivity("site");
 }
 
-export function applyGoogleConsent(granted: boolean, id: string) {
+export function trackAutomationActivity(kind: "site" | "viewed_product" | "cart" | "cart_cleared") {
+  if (!allowed()) return;
+  // Identity, email opt-in and activation are checked independently on our server.
+  void fetch("/api/marketing/activity", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ kind }), keepalive: true }).catch(() => {});
+}
+
+export function applyGoogleConsent(granted: boolean, id: string, gtmId = "") {
   if (typeof window === "undefined" || !/^G-[A-Z0-9]+$/.test(id)) return;
   measurementId = id;
+  configuredGtmId = gtmId;
   const target = window as AnalyticsWindow;
-  const active = granted && allowed();
+  const active = granted && loaderAllowed();
   Reflect.set(target, `ga-disable-${id}`, !active);
   // Basic consent mode: no Google SDK or network requests before opt-in.
   if (!initialized) {
@@ -87,16 +158,18 @@ export function applyGoogleConsent(granted: boolean, id: string) {
     window.addEventListener("pageshow", event => {
       if (!event.persisted) return;
       viewed = false;
-      applyGoogleConsent(Boolean(readSavedConsent(LEGAL_DOCUMENT_VERSIONS.cookies)?.analytics), id);
+      applyGoogleConsent(Boolean(readSavedConsent(LEGAL_DOCUMENT_VERSIONS.cookies)?.analytics), id, gtmId);
     });
   }
   if (!active) {
+    pendingPurchase = null;
+    purchaseContext = false;
     if (installed) target.gtag!("consent", "update", { analytics_storage: "denied", ad_storage: "denied", ad_user_data: "denied", ad_personalization: "denied" });
     document.documentElement.dataset.googleAnalyticsState = "blocked";
     return;
   }
   target.gtag!("consent", "update", { analytics_storage: "granted", ad_storage: "denied", ad_user_data: "denied", ad_personalization: "denied" });
-  if (installed) { recordPageView(); return; }
+  if (installed) { if (ready) document.documentElement.dataset.googleAnalyticsState = "active"; recordPageView(); flushPurchase(); return; }
   installed = true;
   const campaign: Record<string, string> = {};
   const parameters = new URL(window.location.href).searchParams;
@@ -110,17 +183,26 @@ export function applyGoogleConsent(granted: boolean, id: string) {
     allow_google_signals: false, allow_ad_personalization_signals: false,
     cookie_domain: "imperioes.com", cookie_expires: 60 * 60 * 24 * 365, cookie_update: false,
   };
-  target.gtag!("js", new Date());
-  target.gtag!("config", id, options);
+  const useGtm = /^GTM-[A-Z0-9]+$/.test(gtmId);
+  if (useGtm) {
+    // The container owns the single Google tag; page views remain explicit.
+    target.gtag!("set", options);
+    target.dataLayer!.push({ "gtm.start": Date.now(), event: "gtm.js" });
+  } else {
+    target.gtag!("js", new Date());
+    target.gtag!("config", id, options);
+  }
   recordPageView();
   const script = document.createElement("script");
   script.async = true;
   script.referrerPolicy = "no-referrer";
-  script.src = `https://www.googletagmanager.com/gtag/js?id=${id}`;
+  script.src = useGtm ? `https://www.googletagmanager.com/gtm.js?id=${gtmId}` : `https://www.googletagmanager.com/gtag/js?id=${id}`;
   script.dataset.googleAnalytics = id;
   script.onload = () => {
-    if (!allowed()) { applyGoogleConsent(false, id); return; }
+    ready = true;
+    if (!loaderAllowed()) { applyGoogleConsent(false, id, gtmId); return; }
     document.documentElement.dataset.googleAnalyticsState = "active";
+    flushPurchase();
   };
   script.onerror = () => { document.documentElement.dataset.googleAnalyticsState = "unavailable"; };
   document.documentElement.dataset.googleAnalyticsState = "loading";
@@ -136,4 +218,13 @@ export function trackGoogleEvent(event: string, details: Record<string, string |
   };
   if (["S", "M", "L", "XL", "XXL"].includes(String(details.size))) payload.size = String(details.size);
   (window as AnalyticsWindow).gtag?.("event", event, payload);
+}
+
+export function trackGoogleCommerce(event: CommerceEvent, items: CartItem[]): boolean {
+  const payload = ecommercePayload(event, items);
+  if (!payload || !installed || !allowed()) return false;
+  (window as AnalyticsWindow).gtag?.("event", event, { ...pageFields(), ...payload, send_to: measurementId });
+  if (event === "view_item") trackAutomationActivity("viewed_product");
+  if (event === "add_to_cart") trackAutomationActivity("cart");
+  return true;
 }

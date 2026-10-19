@@ -2,8 +2,8 @@ import { SITE } from "./site";
 
 export const LEGAL_DOCUMENT_VERSIONS = {
   terms: "2026-10-04",
-  privacy: "2026-10-05",
-  cookies: "2026-10-13",
+  privacy: "2026-10-16",
+  cookies: "2026-10-16",
   returns: "2026-09-10",
 } as const;
 

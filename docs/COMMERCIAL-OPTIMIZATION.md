@@ -46,7 +46,17 @@ masivo retrospectivo ni nuevos cargos Live.
 - El historial de envio esta en Resend: usar contacto@imperioes.com como From y
   Reply-To no crea una copia en Enviados del buzon IONOS.
 
-Publicacion del conjunto y comprobacion de artefactos Live: EN CURSO.
+Publicacion funcional: commit 7fb0c9e, preview READY y Production READY,
+deployment dpl_3jCmrrMLfqmsu2FgXEofgRtwQdzD. La API de promocion confirma que ya
+es el despliegue actual de produccion. 24 comprobaciones HTTP correctas entre
+imperioes.com y www.imperioes.com, incluida la version servida
+ArticleEditor.6A0m-MIg.js, registro con opt-in desmarcado, recurso/PDF, logo y
+denegaciones anonimas de las API privadas. POST autenticado del worker Live:
+disabled=false, queued=0, sent=0, suppressed=0, failed=0; entrega activa con
+cero recibos pendientes. Cero errores/fatales en los logs consultados de ese
+despliegue. No se ha enviado ninguna campana retrospectiva ni creado cargos.
+Reproduccion: node scripts/verify-commercial-production.mjs; --maintenance
+comprueba tambien el worker y se niega a despachar si ya hay trabajos pendientes.
 No hay navegador conectado en esta sesion; no se afirma QA visual ni recepcion
 de los nuevos eventos en GA4 Real-time. Los estados anteriores de este registro
 se conservan como historial, no como estado actual de las migraciones.

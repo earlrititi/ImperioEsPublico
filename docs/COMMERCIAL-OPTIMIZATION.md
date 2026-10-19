@@ -3,6 +3,43 @@
 Solicitud: prompt maestro recibido el 2026-10-16. Este registro distingue codigo
 implementado, pruebas realizadas y servicios realmente activados.
 
+## Revision autenticada y correo IONOS, 2026-10-19
+
+- Editor real: listado e importacion disponibles; apertura del borrador existente,
+  previsualizacion en iframe sandbox y vuelta a un articulo nuevo comprobadas sin
+  guardar, publicar, retirar o eliminar articulos de produccion.
+- Corregido un falso estado de cambios: Tiptap setEditable emite update por defecto.
+  El bloqueo de campos usa emitUpdate=false para no ensuciar borradores al cargar,
+  guardar o previsualizar. Una prueba ejecuta el hook real con el metodo instalado.
+- Corregido el resumen: paid_order_admin_outbox tiene clave order_id, no id.
+  SELECT Live confirma error 42703 con id y lectura correcta con order_id; nueva
+  regresion ejecuta la consulta real y su paginacion contra una fixture de esquema.
+- Ambos ajustes publicados en 4ffd43d, Production READY, deployment
+  dpl_9mABg7bsZZtrDygg8chUUZWByPmS. 159 unitarias, check sin errores/warnings
+  (6 hints previos), build y lint correctos. 28 verificaciones HTTP Live en ambos
+  hosts; bundle servido ArticleEditor.Qgp7zx0W.js y API overview privada/no-store.
+- Resumen autenticado recuperado: 511 cuentas, 46 correos confirmados, 168 avisos,
+  6 pedidos pagados, 179,94 EUR, cero avisos de pedidos pendientes y 3 suscripciones
+  historicas archivadas. Es una instantanea de la revision, no un contador fijo.
+- GA4 real en el dashboard: 76 usuarios activos, 92 sesiones y 157 vistas. Periodos
+  7/30/365 consultados; un fallo temporal del semanal se recupera al volver a pedirlo.
+- Newsletter y automatizaciones revisadas: nuevos registros desde el corte de
+  activacion, correo verificado y opt-in. Bienvenida previsualizada con CTA, firma,
+  logo y baja; pedido pagado conserva el canal transaccional. Sin envios masivos.
+- QA movil del CMS detecta que el selector de articulos ensancha el documento a
+  624 px en un viewport de 390 px. Se restringe el ancho minimo/maximo de las
+  etiquetas y controles del toolbar sin ocultar el contenido ni cambiar el diseno.
+- Correo: seis avisos de pedidos constan entregados al destinatario administrativo
+  configurado. Remitente y Reply-To son contacto@imperioes.com; no son copias al
+  buzon IONOS. La aplicacion envia por Resend y no archiva automaticamente por IMAP.
+- MX del dominio: mx00.ionos.es y mx01.ionos.es; DKIM y SPF de Resend verificados.
+  Un unico mensaje tecnico sin datos de clientes a contacto@imperioes.com figura
+  delivered y despues Transient/General en Resend. El titular confirma su recepcion
+  a las 21:42 y Chrome verifica el mensaje en Entrada, que pasa de 14 a 15 mensajes.
+  Por tanto, ese ultimo evento no prueba que el correo no llegara. Una pestana
+  anterior falla temporalmente al autenticar; la nueva sesion abierta por el
+  titular permite verificar el buzon. No se cambian DNS, contrasenas o permisos.
+
 ## Verificacion visual y GA4, 2026-10-19
 
 Chrome vuelve a estar conectado. Comprobaciones reales sobre imperioes.com y
@@ -40,8 +77,8 @@ La tarjeta permanece bloqueada abierta mientras sigue visible; al desplazarse
 fuera del viewport se quitan locked-open y morph-active de las tres tarjetas.
 Al abrir de nuevo, animationName pasa de none a service-card-morph-cycle (1,08 s).
 No se cambiaron precios, stock, suscripciones, flags o secretos en este bloque.
-Revision visual autenticada del editor/dashboard: pendiente del inicio de sesion
-del administrador; no se solicita ni se extrae su contrasena.
+La revision visual autenticada posterior del editor/dashboard figura arriba;
+no se solicita ni se extrae la contrasena del administrador.
 
 ## Actualizacion de activacion y CMS, 2026-10-19
 
@@ -130,8 +167,8 @@ se conservan como historial, no como estado actual de las migraciones.
 | 6 | GA4, GTM y ecommerce sin duplicados | Recepcion real de page_view/view_item confirmada; purchase validado tecnicamente sin crear nuevos cobros Live |
 | 7 | Automatizaciones de email | Activadas para nuevos registros verificados con opt-in; scheduler HTTP 200; historicos excluidos y atribucion no inventada |
 | 8 | Roles, seguridad y bots | Roles y permisos probados en parte; auditoria Piquero sin borrados |
-| 9 | Responsive y rendimiento | Recorridos publicos desktop/movil revisados; editor visual autenticado, rendimiento y otros navegadores pendientes |
-| 10 | Regresion, informe y bloqueos externos | 157 unitarias, integracion, CMS, SQL Test, HTTP Live y GA4 de navegacion correctos; falta QA autenticada |
+| 9 | Responsive y rendimiento | Recorridos publicos desktop/movil y editor autenticado revisados; ajuste movil del selector; rendimiento y otros navegadores pendientes |
+| 10 | Regresion, informe y bloqueos externos | 159 unitarias, integracion, CMS, SQL Test, 28 HTTP Live y QA autenticada; prueba real recibida en IONOS, historial de enviados en Resend |
 
 ## Hechos tecnicos y cambios
 

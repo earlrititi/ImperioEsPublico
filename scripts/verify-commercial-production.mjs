@@ -23,7 +23,7 @@ for(const host of ["imperioes.com","www.imperioes.com"]){
   const visit=node=>{if(node.attrs?.some(attr=>attr.name==="data-tshirt-lead"))popup=true;for(const child of node.childNodes??[])visit(child);};
   visit(subscriptions);assert.equal(popup,false,"The offer must not interrupt plan selection");
   for(const path of ["/tienda","/carrito","/recursos/7-historias-del-siglo-de-oro"]){await(await get(origin+path)).arrayBuffer();}
-  for(const path of ["/api/admin/articles","/api/admin/automations","/api/admin/automation-stats"]){
+  for(const path of ["/api/admin/articles","/api/admin/automations","/api/admin/automation-stats","/api/admin/overview"]){
     const response=await get(origin+path,403);assert.match(response.headers.get("cache-control"),/no-store/);await response.arrayBuffer();
   }
   await get(origin+"/api/admin/article-media",403,{method:"POST",headers:{Origin:origin,"Content-Type":"application/json"},body:"{}"});

@@ -8,7 +8,7 @@ assert.ok(workdir);
 assert.equal(readFileSync(join(workdir,"supabase/.temp/project-ref"),"utf8").trim(),"joicpkgvggfxzrdazisx");
 const cli=join(process.env.LOCALAPPDATA,"npm-cache/_npx/aa8e5c70f9d8d161/node_modules/@supabase/cli-windows-x64/bin/supabase.exe");
 const file=join(mkdtempSync(join(tmpdir(),"imperio-commercial-test-")),"test.sql");
-for(const name of ["035_article_media_and_trash","036_marketing_prospective_activation","032_marketing_automation_worker"]){
+for(const name of ["035_article_media_and_trash","036_marketing_prospective_activation","037_marketing_scheduler","032_marketing_automation_worker"]){
   const source=readFileSync(`supabase/tests/${name}.sql`,"utf8");
   writeFileSync(file,name.startsWith("032")?`begin;${source}\nrollback;select true as verified;`:source);
   try{const output=JSON.parse(execFileSync(cli,["db","query","--linked","--project-ref","joicpkgvggfxzrdazisx","--workdir",workdir,"--file",file,"--output","json"],

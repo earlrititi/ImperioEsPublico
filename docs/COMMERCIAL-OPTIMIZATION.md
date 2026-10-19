@@ -32,6 +32,12 @@ masivo retrospectivo ni nuevos cargos Live.
 - Dos flags de marketing configurados exclusivamente en Production. El nuevo
   codigo aprovecha el mantenimiento existente cada cinco minutos, despues de
   los avisos transaccionales. Un error de marketing no bloquea estos avisos.
+- Migracion 037 verificada con rollback en Test y aplicada a produccion: el
+  scheduler ya no depende de que aparezca un pedido pendiente para ejecutar
+  marketing. Conserva el job, Vault, avisos de pedidos, colas de newsletter y
+  retencion del embudo. Comprobacion previa: cero mensajes pendientes en las
+  cuatro colas. Invocacion real de la funcion del scheduler, respuesta pg_net
+  HTTP 200 a las 12:19:24 UTC: marketing activo, queued/sent/failed=0.
 - CMS: crear, buscar, editar borradores, previsualizar, publicar, retirar,
   papelera y restauracion sin republicacion. Imagenes de portada y cuerpo con
   subida autenticada, limite real de 3 MB, re-encoding WebP y bucket privado.
@@ -41,7 +47,7 @@ masivo retrospectivo ni nuevos cargos Live.
   mas breves en el popup.
 - Verificado: 156 unitarias, check sin errores ni warnings (6 hints previos),
   build, 15 suites compiladas generales y suite CMS. SQL Test 032/035/036 y
-  publicacion con rollback. Subida real de imagen sintetica en Supabase Test,
+  publicacion y scheduler 037 con rollback. Subida real de imagen sintetica en Supabase Test,
   lectura por proxy y limpieza verificadas. Lint de modulos editados correcto.
 - El historial de envio esta en Resend: usar contacto@imperioes.com como From y
   Reply-To no crea una copia en Enviados del buzon IONOS.
@@ -78,14 +84,14 @@ se conservan como historial, no como estado actual de las migraciones.
 | 0 | Ventas, embudo, inventario y bloqueos de compra | VERIFICADA EN PARTE; informe privado en tmp/commercial-audit |
 | 1 | Home: camiseta despues del HERO | IMPLEMENTADA; orden probado en ruta compilada |
 | 2 | Producto, disponibilidad, carrito y checkout | Camisetas: recorrido frontal completo, pago Stripe Test y retorno verificados |
-| 3 | Dashboard y CMS | CMS probado con rollback en Test; informes GA4 publicados y verificados en produccion |
+| 3 | Dashboard y CMS | CRUD completo e imagenes publicados; APIs protegidas y artefacto servido comprobados; informes GA4 publicados |
 | 4 | Integridad Supabase y Stripe; pruebas aisladas | Camisetas y Maestre anual pagados en Test; webhooks, acceso, correo y deduplicacion verificados |
-| 5 | Consentimiento y textos legales verificables | Borradores validados por el asesor, segun confirmacion del titular el 18 de octubre; publicacion pendiente |
-| 6 | GA4, GTM y ecommerce sin duplicados | Contenedor GTM publicado; purchase de camisetas y suscripciones implementado; cambio de la web no publicado |
-| 7 | Automatizaciones de email; envios desactivados | Worker probado en Test y cuaderno de bienvenida preparado; activacion y atribucion pendientes |
+| 5 | Consentimiento y textos legales verificables | Publicados tras validacion por el asesor declarada por el titular; no es certificacion juridica independiente |
+| 6 | GA4, GTM y ecommerce sin duplicados | Loader y purchase de camisetas/suscripciones publicados y probados; recepcion en GA4 Real-time pendiente |
+| 7 | Automatizaciones de email | Activadas para nuevos registros verificados con opt-in; scheduler HTTP 200; historicos excluidos y atribucion no inventada |
 | 8 | Roles, seguridad y bots | Roles y permisos probados en parte; auditoria Piquero sin borrados |
 | 9 | Responsive y rendimiento | Desktop/movil comprobados en parte; rendimiento y otros navegadores pendientes |
-| 10 | Regresion, informe y bloqueos externos | Correo, camiseta y suscripcion anual Test verificados; GA4 real y regresion final pendientes |
+| 10 | Regresion, informe y bloqueos externos | 156 unitarias, integracion, CMS, SQL Test y HTTP Live correctos; QA visual actual y GA4 real pendientes |
 
 ## Hechos tecnicos y cambios
 

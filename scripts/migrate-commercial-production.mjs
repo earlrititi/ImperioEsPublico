@@ -17,7 +17,7 @@ function query(sql){
 const applied=query("select version from supabase_migrations.schema_migrations order by version");
 for(const version of ["018","020","028","029","033"])assert.ok(applied.some(row=>row.version===version),`Missing prerequisite ${version}`);
 const names=["030_marketing_automation_drafts.sql","031_targeted_commerce_mail.sql","032_marketing_automation_worker.sql",
-  "034_legal_consent_privileges.sql","035_article_media_and_trash.sql","036_marketing_prospective_activation.sql"];
+  "034_legal_consent_privileges.sql","035_article_media_and_trash.sql","036_marketing_prospective_activation.sql","037_marketing_scheduler.sql"];
 const pending=names.filter(name=>!applied.some(row=>row.version===name.slice(0,3)));
 console.log(JSON.stringify({project,pending,apply:process.argv.includes("--apply")}));
 if(!process.argv.includes("--apply")||!pending.length)process.exit(0);

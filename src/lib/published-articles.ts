@@ -15,7 +15,8 @@ export async function publishedArticles(): Promise<PublishedArticle[]> {
     records.push(...data);
     if(data.length<500)break;
   }
-  const articles:PublishedArticle[]=ARTICLES_ITEMS.filter(a=>!records.some(r=>r.slug===a.slug && r.published_meta));
+  const articles:PublishedArticle[]=ARTICLES_ITEMS.filter(a=>!records.some(r=>r.slug===a.slug &&
+    (r.published_meta || r.status==="deleted" || r.status==="withdrawn")));
   for(const row of records){
     if(row.status!=="published" || !row.published_meta)continue;
     const meta=row.published_meta;

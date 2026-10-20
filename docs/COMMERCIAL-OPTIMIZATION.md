@@ -3,6 +3,14 @@
 Solicitud: prompt maestro recibido el 2026-10-16. Este registro distingue codigo
 implementado, pruebas realizadas y servicios realmente activados.
 
+## Cierre del 20 de octubre de 2026
+
+Estado actualizado por fases y entrega de 18 puntos en
+[COMMERCIAL-CLOSURE-2026-10-20.md](COMMERCIAL-CLOSURE-2026-10-20.md).
+La revision actual incorpora biblioteca y editor separados, busqueda unificada,
+papelera recuperable y correccion del ciclo de archivos antiguos. Las anotaciones
+inferiores son historial; no sustituyen este cierre ni la evidencia de despliegue.
+
 ## Revision autenticada y correo IONOS, 2026-10-19
 
 - Editor real: listado e importacion disponibles; apertura del borrador existente,

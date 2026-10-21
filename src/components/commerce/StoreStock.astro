@@ -26,7 +26,7 @@
         if (cartButton) cartButton.disabled = button.disabled;
         waiting.hidden = !exhausted;
         waiting.href = `/reservas?size=${encodeURIComponent(select.value)}`;
-        status.textContent = exhausted ? "Talla agotada. Puedes apuntarte a la lista de espera." : `Talla ${select.value} disponible`;
+        status.textContent = exhausted ? "AGOTADO" : "DISPONIBLE";
       } catch { if (!stopped) { button.disabled = true; if (cartButton) cartButton.disabled = true; status.textContent = "No se pudo consultar la disponibilidad. Vuelve a intentarlo."; } }
     };
     select.addEventListener("change", refresh);

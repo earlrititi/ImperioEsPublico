@@ -1,3 +1,4 @@
+import { LEGAL_BUSINESS } from "../config/legal";
 export type MailContent = { subject: string; preheader: string; content: string; cta_label: string; cta_url: string };
 const escape = (s: string) => s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;");
 export function validateMail(input: Record<string, unknown>): MailContent {
@@ -18,8 +19,9 @@ export function validateMail(input: Record<string, unknown>): MailContent {
   return result;
 }
 export function renderAdminMail(mail: MailContent, unsubscribe?: string, signature = false) {
-  const body = mail.content.split(/\n\s*\n/).map(p => `<p>${escape(p).replaceAll("\n", "<br>")}</p>`).join("");
+  const identity = `${LEGAL_BUSINESS.ownerName} — ${LEGAL_BUSINESS.tradeName}. NIF ${LEGAL_BUSINESS.taxId}. ${LEGAL_BUSINESS.registeredAddress}`;
+  const body = mail.content.split(/\n\s*\n/).map(p => `<p>${escape(p).replaceAll("\n", "<br>")}</p>`).join("") + `<p style="font-size:12px">${escape(identity)}</p>`;
   const signoff = signature ? '<p style="margin-top:28px">Un abrazo,<br><strong>Equipo de Imperio Espa&#241;ol</strong></p><img src="https://imperioes.com/images/logo-redv2.png" width="56" height="56" alt="Cruz de Borgo&#241;a de Imperio Espa&#241;ol" style="display:block;object-fit:contain;margin:12px 0 24px">' : "";
   const html = `<!doctype html><html lang="es"><body style="margin:0;background:#111114;color:#eeeeef;font:16px Arial,sans-serif;line-height:1.6"><div style="display:none;max-height:0;overflow:hidden">${escape(mail.preheader)}</div><div style="max-width:620px;margin:auto;padding:36px 24px;border-top:3px solid #be333d"><p style="font:700 28px Georgia,serif">IMPERIO E</p>${body}${mail.cta_url ? `<p><a href="${escape(mail.cta_url)}" style="display:inline-block;padding:14px 22px;border:1px solid #d95560;border-radius:4px;color:#fff;text-decoration:none">${escape(mail.cta_label)}</a></p>` : ""}${signoff}<hr style="border:0;border-top:1px solid #444"><p style="font-size:13px">contacto@imperioes.com${unsubscribe ? `<br><a style="color:#ddd" href="${escape(unsubscribe)}">Dar de baja estas comunicaciones</a>` : ""}</p></div></body></html>`;
-  return { html, text: `${mail.content}${mail.cta_url ? `\n\n${mail.cta_label}: ${mail.cta_url}` : ""}${signature ? "\n\nUn abrazo,\nEquipo de Imperio Espa\u00f1ol" : ""}\n\ncontacto@imperioes.com${unsubscribe ? `\nBaja: ${unsubscribe}` : ""}` };
+  return { html, text: `${mail.content}${mail.cta_url ? `\n\n${mail.cta_label}: ${mail.cta_url}` : ""}${signature ? "\n\nUn abrazo,\nEquipo de Imperio Espa\u00f1ol" : ""}\n\n${identity}\ncontacto@imperioes.com${unsubscribe ? `\nBaja: ${unsubscribe}` : ""}` };
 }

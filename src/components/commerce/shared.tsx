@@ -1,6 +1,6 @@
 import {
   PROVINCES,
-  SHIRT_PRICE_COPY,
+  SHIRT_SHIPPING_PRICE_CENTS,
   formatMoney,
 } from "../../config/commerce";
 import type { ShippingAddress } from "../../lib/reservation-validation";
@@ -112,10 +112,15 @@ export function AddressFields({
 export function ItemsSummary({
   items,
   total,
+  discount = 0,
+  vat,
 }: {
   items: any[];
   total: number;
+  discount?: number;
+  vat?: number;
 }) {
+  const shipping = items.reduce((sum, item) => sum + item.quantity * SHIRT_SHIPPING_PRICE_CENTS, 0);
   return (
     <div class="reservation-summary">
       <div class="commerce-table-wrap" role="region" aria-label="Resumen de camisetas" tabIndex={0}>
@@ -139,16 +144,18 @@ export function ItemsSummary({
                   </small>
                 </th>
                 <td>{i.quantity}</td>
-                <td>{formatMoney(i.unit_price_snapshot)}</td>
-                <td>{formatMoney(i.quantity * i.unit_price_snapshot)}</td>
+                <td>{formatMoney(i.unit_price_snapshot - SHIRT_SHIPPING_PRICE_CENTS)}</td>
+                <td>{formatMoney(i.quantity * (i.unit_price_snapshot - SHIRT_SHIPPING_PRICE_CENTS))}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      <p>IVA: incluido · Envio estandar a Peninsula: incluido</p>
+      <p>Camisetas: {formatMoney(total + discount - shipping)}</p>
+      <p>Envío a Península: {formatMoney(shipping)}</p>
+      {discount > 0 && <p>Descuento: −{formatMoney(discount)}</p>}
       <p class="reservation-total">Total: {formatMoney(total)}</p>
-      <p>{SHIRT_PRICE_COPY}</p>
+      <p>IVA incluido{typeof vat === "number" ? `: ${formatMoney(vat)}` : ""}. El importe final con el descuento aplicable se muestra en Stripe antes de pagar.</p>
     </div>
   );
 }

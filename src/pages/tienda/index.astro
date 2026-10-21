@@ -3,7 +3,6 @@ import Layout from "../../layouts/Layout.astro";
 import StoreStock from "../../components/commerce/StoreStock.astro";
 import CartControls from "../../components/CartControls.astro";
 import { PRODUCTS } from "../../config/products";
-import { SHIRT_PRICE_COPY } from "../../config/commerce";
 import { ZoomIn as ZoomInNodes } from "lucide";
 
 const shirt = PRODUCTS["camiseta-imperial"];
@@ -144,9 +143,9 @@ const shirtPrice = new Intl.NumberFormat("es-ES", {
               data-reservation-cta
               type="submit"
             >
-              {"COMPRAR CAMISETA"}
+              {"COMPRAR AHORA"}
             </button>
-            <p class="product-legal-status">{SHIRT_PRICE_COPY}</p>
+            <p class="product-legal-status">IVA incluido. Envío a Península: 3 € por camiseta, añadido en el checkout.</p>
             <p class="product-legal-status" data-reservation-stock role="status" aria-live="polite">Consultando disponibilidad...</p>
             <button class="store-button" type="button" data-cart-add disabled>Añadir al carrito</button>
             <p class="product-legal-status" data-cart-feedback hidden role="status">Añadida al carrito. <a href="/carrito">Ver carrito</a></p>

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "preact/hooks";
-import { formatMoney, SHIRT_FINAL_PRICE_CENTS, SHIRT_PRICE_COPY } from "../../config/commerce";
+import { formatMoney, SHIRT_PRODUCT_PRICE_CENTS } from "../../config/commerce";
 import { AddressFields, emptyAddress, api } from "./shared";
 import { attributedPath, socialEvent } from "../../lib/social-attribution";
 import {trackFunnel} from "../../lib/funnel-client";
@@ -83,9 +83,8 @@ export default function ReservationForm({ initialSize = "M", initialCustomer = {
       <header class="reservation-form__header">
         <span class="commerce-kicker">{sales?"Compra de camiseta":"Solicitud de reserva"}</span>
         <h2>{waitlist ? "Lista de espera" : sales?"Camiseta Imperial":"Pre-reserva gratuita"}</h2>
-        {inventoryState === "loading" ? <p role="status">Comprobando disponibilidad y precio...</p> : <p class="reservation-total">{sales&&!waitlist?formatMoney(SHIRT_FINAL_PRICE_CENTS*units):formatMoney(0)}{!sales&&" ahora"}</p>}
-        <p>{SHIRT_PRICE_COPY}.</p>
-        {inventoryState !== "loading" && <p>{sales?"Precio":"Compra posterior"}: {formatMoney(SHIRT_FINAL_PRICE_CENTS)} por unidad. Total para {units} {units === 1 ? "camiseta" : "camisetas"}: {formatMoney(SHIRT_FINAL_PRICE_CENTS * units)}.</p>}
+        {inventoryState === "loading" ? <p role="status">Comprobando disponibilidad y precio...</p> : <p class="reservation-total">{sales&&!waitlist?formatMoney(SHIRT_PRODUCT_PRICE_CENTS*units):formatMoney(0)}{!sales&&" ahora"}</p>}
+        <p>{formatMoney(SHIRT_PRODUCT_PRICE_CENTS)} por camiseta. IVA incluido. Envío a Península: 3 € por camiseta, añadido al revisar el pago.</p>
       </header>
       <fieldset disabled={busy}>
         <legend>Talla y cantidad</legend>
@@ -100,12 +99,12 @@ export default function ReservationForm({ initialSize = "M", initialCustomer = {
               onInput={(e) => setQuantity(Number(e.currentTarget.value))} />
           </label>}
         </div>
-        <p class="reservation-stock" role="status" aria-live="polite">{variant ? soldOut ? "AGOTADO" : `Talla ${size} disponible` : "Consultando disponibilidad..."}</p>
+        <p class="reservation-stock" role="status" aria-live="polite">{variant ? soldOut ? "AGOTADO" : "DISPONIBLE" : "Consultando disponibilidad..."}</p>
         </>}
         {!waitlist && typeof campaign?.max_reservation_quantity === "number" && <p class="reservation-note">Máximo {campaign.max_reservation_quantity} unidades por pre-reserva.</p>}
       </fieldset>
       {soldOut && !waitlist && <>
-        <p>Todas las unidades de esta talla estan actualmente reservadas o vendidas.</p>
+        <p>Esta talla está agotada.</p>
         {fromCart ? <a href="/carrito">Revisar mi carrito</a> : <button type="button" class="btn btn-ghost" disabled={busy || !canWait} onClick={() => setWaitlist(true)}>APUNTARME A LA LISTA DE ESPERA</button>}
       </>}
       {(!soldOut || waitlist) && <>
@@ -131,7 +130,7 @@ export default function ReservationForm({ initialSize = "M", initialCustomer = {
           <input tabIndex={-1} autoComplete="off" value={website} onInput={(e) => setWebsite(e.currentTarget.value)} />
         </label>
         <div class="reservation-conditions">
-          <p>{waitlist ? "La lista de espera no asigna stock ni obliga a comprar. Te avisaremos por orden de entrada si se libera una unidad." : sales ? "Las unidades quedan asignadas temporalmente mientras completas el pago. Revisa la direccion y confirma tu compra en Stripe." : "Pre-reserva gratuita. No se realiza ningún cobro y la pre-reserva no implica obligación de compra. La unidad quedará temporalmente asignada hasta que finalice el periodo indicado para completar la compra."}</p>
+          <p>{waitlist ? "La lista de espera no obliga a comprar. Te avisaremos si vuelve a estar disponible tu talla." : sales ? "Revisa tu dirección y continúa al pago seguro." : "Pre-reserva gratuita. No se realiza ningún cobro y la pre-reserva no implica obligación de compra. La unidad quedará temporalmente asignada hasta que finalice el periodo indicado para completar la compra."}</p>
           {sales&&!waitlist&&<p>Revisa el resumen y confirma el pago en Stripe. El descuento de tu suscripcion activa se comprueba al pagar.</p>}
           {!sales&&campaign?.purchase_open_at && <p><strong>Compra prioritaria prevista:</strong> {new Date(campaign.purchase_open_at).toLocaleString("es-ES", { timeZone: "Europe/Madrid" })} (hora peninsular).</p>}
           {!waitlist && !sales && <p>Dispones de {campaign?.purchase_window_hours ?? 24} horas para completarla.</p>}

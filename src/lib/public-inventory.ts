@@ -3,7 +3,7 @@ import {
   optionalEnv,
   reservationMode,
 } from "./reservations";
-import { SHIRT_FINAL_PRICE_CENTS } from "../config/commerce";
+import { SHIRT_FINAL_PRICE_CENTS, SHIRT_PRODUCT_PRICE_CENTS, SHIRT_SHIPPING_PRICE_CENTS } from "../config/commerce";
 import { readCampaign, campaignAcceptsReservations, campaignAcceptsPurchases } from "./reservation-campaign";
 export async function readPublicInventory() {
     const db = await database();
@@ -44,10 +44,16 @@ export async function readPublicInventory() {
       throw new Error("INVALID_CONFIGURATION");
     return {
       variants: data.map(({ available_stock, ...variant }) => ({ ...variant, available: available_stock > 0 })),
-      unitPrice: price.amount,
+      unitPrice: SHIRT_PRODUCT_PRICE_CENTS,
+      shippingPerUnit: SHIRT_SHIPPING_PRICE_CENTS,
       reservationMode: reservationMode() && campaignAcceptsReservations(campaign),
       salesEnabled: !reservationMode() && optionalEnv("SHIRT_SALES_APPROVED")==="true" && campaignAcceptsPurchases(campaign),
-      campaign,
+      campaign: {
+        reservations_open_at: campaign.reservations_open_at,
+        purchase_open_at: campaign.purchase_open_at,
+        purchase_window_hours: campaign.purchase_window_hours,
+        max_reservation_quantity: campaign.max_reservation_quantity,
+      },
       expirationHours,
     };
 }

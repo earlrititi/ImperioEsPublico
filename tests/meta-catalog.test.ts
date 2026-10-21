@@ -4,12 +4,13 @@ import { metaCatalogXml } from "../src/lib/meta-catalog";
 import { campaignParameters } from "../src/lib/social-attribution";
 
 test("Meta feed uses actual variants, price and stock with preorder availability", () => {
-  const xml = metaCatalogXml({ unitPrice: 2999, reservationMode: true, variants: [
+  const xml = metaCatalogXml({ unitPrice: 2699, reservationMode: true, variants: [
     { sku: "IE-S", name: "S", color: "Blanco & negro", available: true },
     { sku: "IE-M", name: "M", color: "Blanco", available: false },
   ] });
   assert.equal((xml.match(/<item>/g) || []).length, 2);
-  assert.match(xml, /29.99 EUR/);
+  assert.match(xml, /26.99 EUR/);
+  assert.match(xml, /3 EUR por camiseta/);
   assert.match(xml, /<g:availability>preorder/);
   assert.match(xml, /<g:availability>out of stock/);
   assert.match(xml, /Blanco &amp; negro/);

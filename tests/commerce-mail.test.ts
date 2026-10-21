@@ -36,3 +36,17 @@ test("Other mail states do not promise a future purchase invitation", () => {
     assert.doesNotMatch(text, /12 de octubre|este no es el enlace de compra/);
   }
 });
+
+test("Paid mail uses the actual discounted charge and separates postage", () => {
+  const text = reservationMailText({ ...reservation, status: "CONVERTED_TO_ORDER",
+    commerce_orders: { total: 2459, discount_amount: 540, vat_amount: 427,
+      product_subtotal: 2699, shipping_amount: 300, shipping_address: null },
+  }, "ORDER_PAID", "https://example.invalid/manage");
+  assert.match(text, /Camisetas \(IVA incluido\): 26,99/);
+  assert.match(text, /Envio: 3,00/);
+  assert.match(text, /Descuento en camisetas: -5,40/);
+  assert.match(text, /Total pagado: 24,59/);
+  assert.match(text, /44067163Z/);
+  assert.match(text, /11160 Barbate/);
+  assert.doesNotMatch(text, /Total pagado: 29,99/);
+});

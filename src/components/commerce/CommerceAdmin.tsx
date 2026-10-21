@@ -315,12 +315,15 @@ export default function CommerceAdmin() {
                     ) : (
                       <>
                         <p>Reserva: {r.reservation_number}</p>
+                        <p>Camisetas antes de descuentos: {formatMoney(r.product_subtotal ?? r.subtotal - r.total_quantity * 300)}</p>
+                        <p>Envío: {formatMoney(r.shipping_amount ?? r.total_quantity * 300)}</p>
+                        <p>Descuento: {formatMoney(r.discount_amount ?? 0)} · Total cobrado: {formatMoney(r.total)}</p>
                         <p>Reembolsado: {formatMoney(r.refunded_amount)}</p>
                         <ul>
                           {r.commerce_order_items.map((i: any) => (
                             <li key={i.id}>
                               {i.sku} · {i.quantity} x{" "}
-                              {formatMoney(i.unit_price)}
+                              {formatMoney(i.unit_price - 300)} de camiseta
                             </li>
                           ))}
                         </ul>

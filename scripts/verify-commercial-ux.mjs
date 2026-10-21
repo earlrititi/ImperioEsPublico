@@ -30,6 +30,9 @@ const page = async path => {
 };
 const inventory = await (await app.fetch(new Request("https://imperioes.com/api/reservations/inventory"))).json();
 assert.equal(inventory.salesEnabled,true);
+assert.equal(inventory.unitPrice,2699);
+assert.equal(inventory.shippingPerUnit,300);
+assert.equal(inventory.campaign.edition_total,undefined);
 assert.equal(inventory.variants.find(v=>v.name==="XL").available,false);
 assert.equal(inventory.variants.find(v=>v.name==="M").available,true);
 assert.doesNotMatch(JSON.stringify(inventory.variants),/stock|quantity|physical|sold/);
@@ -43,6 +46,17 @@ assert.ok(index("hero-imperio")>=0);
 assert.ok(index("home-shirt")>index("hero-imperio"));
 assert.ok(index("services-section")>index("home-shirt"));
 assert.ok(home.includes("COMPRAR AHORA"));
+for (const path of ["/legal/aviso-legal", "/legal/privacidad", "/legal/cookies", "/legal/terminos", "/legal/envios", "/legal/devoluciones", "/legal/desistimiento"]) {
+  const html = await page(path);
+  assert.match(html, /Adrian Lopez Oliva/);
+  assert.match(html, /44067163Z/);
+  assert.match(html, /11160 Barbate/);
+  assert.doesNotMatch(html, /Version 2026-09-10|44061972K|San Antonio Abad/);
+}
+const store = await page("/tienda");
+assert.match(store, /COMPRAR AHORA/);
+assert.match(store, /26,99/);
+assert.doesNotMatch(store, /available_stock|physical_stock|reserved_stock/);
 for (const path of ["/tienda","/carrito","/suscribirse","/reservas?cart=1","/recursos/7-historias-del-siglo-de-oro"]) {
   const html=await page(path);
   const containsPopup=node=>node.attrs?.some(a=>a.name==="data-tshirt-lead") || (node.childNodes??[]).some(containsPopup);

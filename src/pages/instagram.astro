@@ -28,7 +28,7 @@ const open = Boolean((inventory?.reservationMode || buying) && stock);
         <p class="ig-small">{buying ? "Pago seguro en Stripe. IVA incluido." : "Reserva gratuita. Sin cobro ni obligacion de compra."}</p>
         <label class="ig-size">Talla <select id="ig-size" disabled={!inventory}>{inventory?.variants.map(v => <option value={v.name} selected={v.name === selected?.name} disabled={!v.available}>{v.name}{!v.available ? " · agotada" : ""}</option>)}</select></label>
         <div class="ig-actions">
-          <a class="ig-cta ig-cta--primary" data-reserve aria-disabled={!open} href={open ? reserveUrl : undefined}>{open ? buying ? "COMPRAR CAMISETA" : "RESERVAR YA" : "NO DISPONIBLE"}</a>
+          <a class="ig-cta ig-cta--primary" data-reserve aria-disabled={!open} href={open ? reserveUrl : undefined}>{open ? buying ? "COMPRAR AHORA" : "RESERVAR YA" : "NO DISPONIBLE"}</a>
           <a class="ig-cta ig-cta--discount" href="/suscribirse#arcabucero" data-community data-attribution>QUIERO DESCUENTO</a>
         </div>
         <p class="ig-small">Primera edición limitada.</p>

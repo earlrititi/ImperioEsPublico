@@ -4,7 +4,9 @@ import {
   RESERVATION_STATUS,
   RESERVATION_PURCHASE_NOTICE,
   SHIRT_PRICE_COPY,
+  SHIRT_SHIPPING_PRICE_CENTS,
 } from "../config/commerce";
+import { LEGAL_BUSINESS } from "../config/legal";
 import {
   database,
   managementLink,
@@ -57,6 +59,12 @@ export function reservationMailText(r: any, kind: string, url: string) {
   const paid = Boolean(r.commerce_orders);
   const a = paid ? r.commerce_orders.shipping_address : r.shipping_address;
   const isInitialReservation = kind === "RESERVED" && r.status === "RESERVED";
+  const order = r.commerce_orders;
+  const units = r.reservation_items.reduce((sum: number, item: any) => sum + item.quantity, 0);
+  const shipping = order?.shipping_amount ?? units * SHIRT_SHIPPING_PRICE_CENTS;
+  const discount = order?.discount_amount ?? 0;
+  const total = order?.total ?? r.total_price_snapshot;
+  const productSubtotal = order?.product_subtotal ?? r.total_price_snapshot - shipping;
   return [
     isInitialReservation
       ? "¡Gracias por reservar tu pedacito de historia!"
@@ -75,11 +83,13 @@ export function reservationMailText(r: any, kind: string, url: string) {
     `Estado: ${RESERVATION_STATUS[r.status] ?? r.status}`,
     ...r.reservation_items.map(
       (i: any) =>
-        `${i.product_name}, ${i.sku}, talla ${i.size}, ${i.color}: ${i.quantity} x ${formatMoney(i.unit_price_snapshot)} = ${formatMoney(i.line_total_snapshot)}`,
+        `${i.product_name}, ${i.sku}, talla ${i.size}, ${i.color}: ${i.quantity} x ${formatMoney(i.unit_price_snapshot - SHIRT_SHIPPING_PRICE_CENTS)} = ${formatMoney(i.quantity * (i.unit_price_snapshot - SHIRT_SHIPPING_PRICE_CENTS))}`,
     ),
-    `Precio final por camiseta: ${formatMoney(r.reservation_items[0].unit_price_snapshot)}`,
-    SHIRT_PRICE_COPY,
-    `Total ${paid ? "pagado" : "informativo reservado"}: ${formatMoney(r.total_price_snapshot)}`,
+    `Camisetas (IVA incluido): ${formatMoney(productSubtotal)}`,
+    `Envio: ${formatMoney(shipping)}`,
+    discount ? `Descuento en camisetas: -${formatMoney(discount)}` : null,
+    `Total ${paid ? "pagado" : "informativo reservado"}: ${formatMoney(total)}`,
+    typeof order?.vat_amount === "number" ? `IVA incluido: ${formatMoney(order.vat_amount)}` : SHIRT_PRICE_COPY,
     a?.name,
     a?.line1,
     a?.line2,
@@ -102,6 +112,8 @@ export function reservationMailText(r: any, kind: string, url: string) {
       ? `Consultar o gestionar tu reserva (este no es el enlace de compra): ${url}`
       : `Consultar o gestionar: ${url}`,
     `Soporte: ${SITE.contactEmail}`,
+    `Vendedor: ${LEGAL_BUSINESS.ownerName} — ${LEGAL_BUSINESS.tradeName}. NIF ${LEGAL_BUSINESS.taxId}. ${LEGAL_BUSINESS.registeredAddress}`,
+    `Devoluciones: ${LEGAL_BUSINESS.returnsAddress}`,
   ]
     .filter(Boolean)
     .join("\n");

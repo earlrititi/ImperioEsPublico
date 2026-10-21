@@ -1,5 +1,6 @@
 ---
 import PageShell from "../layouts/PageShell.astro";
+import { LEGAL_BUSINESS } from "../config/legal";
 
 interface Props {
   title: string;
@@ -12,7 +13,6 @@ const {
   title,
   description,
   heading,
-  version,
 } = Astro.props as Props;
 ---
 
@@ -21,12 +21,16 @@ const {
   description={description}
   eyebrow="Informacion legal"
   heading={heading}
-  summary={`Version ${version}`}
   mainClass="legal-page"
   narrow
 >
   <section class="section legal-document">
     <slot />
+    <section aria-label="Datos del prestador">
+      <p>{LEGAL_BUSINESS.ownerName} — {LEGAL_BUSINESS.tradeName}. NIF {LEGAL_BUSINESS.taxId}.</p>
+      <p>{LEGAL_BUSINESS.registeredAddress}</p>
+      <p><a href={`mailto:${LEGAL_BUSINESS.legalEmail}`}>{LEGAL_BUSINESS.legalEmail}</a></p>
+    </section>
   </section>
 </PageShell>
 

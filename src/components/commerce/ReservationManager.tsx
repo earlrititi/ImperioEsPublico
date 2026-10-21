@@ -218,7 +218,9 @@ export default function ReservationManager({ paymentReturn = false }: { paymentR
       {!canPay && <p>Estado: {RESERVATION_STATUS[r.status]}</p>}
       <ItemsSummary
         items={r.reservation_items}
-        total={r.total_price_snapshot}
+        total={order?.total ?? r.total_price_snapshot}
+        discount={order?.discount_amount ?? 0}
+        vat={order?.vat_amount}
       />
       {(canPay || order?.shipping_address || r.paymentAddress || r.shipping_address) && <h3>Contacto y entrega</h3>}
       <AddressSummary

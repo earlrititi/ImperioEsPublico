@@ -20,7 +20,7 @@ const open = Boolean((inventory?.reservationMode || buying) && stock);
 <Layout exactTitle title="NON SUFFICIT ORBIS | Imperio E" description="Primera edición de Imperio E. Una camiseta inspirada en los símbolos de la Monarquía Hispánica." ogImage="/images/camiseta-imperio-frontal.webp" navigation="home" footerVariant="dark">
   <main class="instagram" data-home-mark-surface="black">
     <section class="ig-first" aria-labelledby="ig-title">
-      <div class="ig-heading"><p>Primera edición de Imperio E</p><h1 id="ig-title">NON SUFFICIT ORBIS</h1></div>
+      <div class="ig-heading"><p>Camiseta Imperial · Primera edición de Imperio Español</p><h1 id="ig-title">NON SUFFICIT ORBIS</h1></div>
       <figure class="ig-photo"><picture><source type="image/avif" srcset="/images/camiseta-imperio-frontal-640.avif" /><img src="/images/camiseta-imperio-frontal-640.webp" alt="Camiseta NON SUFFICIT ORBIS, vista frontal" width="944" height="1181" loading="eager" decoding="async" fetchpriority="high" /></picture></figure>
       <div class="ig-buy">
         <p class="ig-stock" data-stock aria-live="polite">{stock === null ? "No se pudo consultar la disponibilidad" : stock ? "Disponible" : "Edición agotada"}</p>
@@ -32,7 +32,7 @@ const open = Boolean((inventory?.reservationMode || buying) && stock);
           <a class="ig-cta ig-cta--discount" href="/suscribirse#arcabucero" data-community data-attribution>QUIERO DESCUENTO</a>
         </div>
         <p class="ig-small">Primera edición limitada.</p>
-        <p class="ig-fine">{SHIRT_PRICE_COPY}.</p>
+        <p class="ig-fine">{SHIRT_PRICE_COPY}. <a href="/legal/devoluciones">Envíos y devoluciones</a>.</p>
       </div>
     </section>
     <section class="ig-story">

@@ -18,12 +18,14 @@ export function metaCatalogXml(inventory: CatalogInventory) {
       description: `Primera edicion de Imperio E inspirada en los simbolos de la Monarquia Hispanica. ${inventory.salesEnabled ? "Compra con pago seguro en Stripe." : "Reserva gratuita, sin obligacion de compra."} IVA incluido. Envio a Peninsula: 3 EUR por camiseta, anadido en el checkout antes del pago.`,
       availability: variant.available ? inventory.salesEnabled ? "in stock" : inventory.reservationMode ? "preorder" : "out of stock" : "out of stock",
       condition: "new", price: `${(inventory.unitPrice / 100).toFixed(2)} EUR`,
-      link: `https://www.imperioes.com/instagram?${params}`,
+      link: `https://imperioes.com/instagram?${params}`,
       image_link: "https://imperioes.com/images/camiseta-imperio-frontal.webp",
       additional_image_link: "https://imperioes.com/images/camiseta-imperio-atras.webp",
-      brand: "Imperio E", size: variant.name, color: variant.color,
+      brand: "IMPERIO ESPA\u00d1OL",
+      google_product_category: "Apparel & Accessories > Clothing > Shirts & Tops",
+      size: variant.name, color: variant.color,
     };
     return `<item>${Object.entries(fields).map(([key, value]) => `<g:${key}>${escapeXml(value)}</g:${key}>`).join("")}</item>`;
   });
-  return `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0" xmlns:g="http://base.google.com/ns/1.0"><channel><title>Imperio E</title><link>https://imperioes.com/instagram</link><description>Primera edicion NON SUFFICIT ORBIS</description>${items.join("")}</channel></rss>`;
+  return `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0" xmlns:g="http://base.google.com/ns/1.0"><channel><title>Imperio Espa\u00f1ol</title><link>https://imperioes.com/instagram</link><description>Primera edicion NON SUFFICIT ORBIS</description>${items.join("")}</channel></rss>`;
 }

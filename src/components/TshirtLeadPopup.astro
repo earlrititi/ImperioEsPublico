@@ -1,5 +1,4 @@
 ---
-import { TSHIRT_DISCOUNT_PERCENT, TSHIRT_OFFER_COPY } from "../config/tshirt-offer";
 import { reservationMode } from "../lib/reservations";
 const reserving = reservationMode();
 const excluded = /^\/(?:login|registro|recuperar-contrasena|confirmar-correo|cuenta(?:\/|$)|checkout|suscribirse(?:\/|$)|tienda(?:\/|$)|carrito(?:\/|$)|recursos(?:\/|$)|legal(?:\/|$)|reservas(?:\/|$)|reserva(?:\/|$)|compra(?:\/|$)|gracias(?:\/|$)|admin(?:\/|$))/;
@@ -18,15 +17,14 @@ const enabled = !excluded.test(Astro.url.pathname) && Astro.url.pathname.replace
         </picture>
       </div>
       <div class="tshirt-lead__content">
-        <span class="tshirt-lead__eyebrow">{TSHIRT_DISCOUNT_PERCENT}% de descuento</span>
-        <h2 id="tshirt-lead-title">Una pieza de nuestra historia.</h2>
-        <p id="tshirt-lead-copy">{TSHIRT_OFFER_COPY}</p>
-        <p>Artículos para suscriptores: 1,99 €/mes o 17,99 €/año. IVA incluido. Renovación automática; cancela cuando quieras.</p>
+        <span class="tshirt-lead__eyebrow">Hasta un 20% de descuento</span>
+        <h2 id="tshirt-lead-title">Compra ya tu Camiseta Imperial</h2>
+        <p id="tshirt-lead-copy">¡Consigue ya tu camiseta imperial!, nuestra primera y única tirada producida en conmemoración del éxito conseguido en el mundial. Con la suscripción Arcabucero tienes un 15% de descuento y con la suscripción Maestre de Campo un 20%. ¡Aprovecha, nos quedan pocas unidades!</p>
         <div class="tshirt-lead__actions">
           <a class="btn btn-primary tshirt-lead__submit tshirt-lead__submit--reserve" href="/reservas" data-tshirt-reserve>{reserving ? "Reservar ya" : "Comprar camiseta"}</a>
           <a class="btn tshirt-lead__submit tshirt-lead__submit--discount" href="/suscribirse#arcabucero" data-tshirt-offer>Quiero descuento</a>
         </div>
-        <p class="tshirt-lead__fineprint">{reserving ? "La reserva no realiza ningun cobro. Recibiras la invitacion de compra por correo cuando el pago este disponible." : "26,99 EUR de camiseta + 3 EUR de envio por unidad. IVA incluido. Pago seguro en Stripe. Solo Peninsula."} <a href="/legal/terminos">Condiciones de la oferta</a>.</p>
+        <p class="tshirt-lead__fineprint">26,99 EUR IVA incluido + 3 EUR de envio por unidad. Pago seguro en Stripe. Solo Peninsula.<a href="/legal/terminos">Condiciones de la oferta</a>.</p>
       </div>
     </section>
   </div>

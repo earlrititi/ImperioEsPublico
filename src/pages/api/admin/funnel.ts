@@ -11,10 +11,11 @@ export const GET:APIRoute=async context=>{
     if(![7,30,90].includes(days))throw Error("INVALID_INPUT");
     const since=Date.now()-days*86400000;
     const [runs,manifesto,orders,consents,analytics]=await Promise.all([
-      readAll("funnel_runs","id,flow,stages,created_at,last_seen_at"),readAll("manifesto_requests","id,status,marketing_consent,created_at,source"),
+      readAll("funnel_runs","id,flow,stages,created_at,last_seen_at"),readAll("manifesto_requests","id,resource,status,marketing_consent,created_at,source"),
       readAll("commerce_orders","id,status,total,created_at"),readAll("legal_consents","id,source,context_id,context_type,consent_type,accepted,created_at"),rpc("admin_analytics_summary",{p_days:days}),
     ]);
-    const current=manifesto.filter(r=>Date.parse(r.created_at)>=since);
+    const current=manifesto.filter(r=>r.resource!=="seven_stories"&&Date.parse(r.created_at)>=since);
+    const newsletter=manifesto.filter(r=>r.resource==="seven_stories"&&Date.parse(r.created_at)>=since);
     const legacy=new Set(consents.filter(r=>r.source==="manifesto"&&r.consent_type==="privacy_acknowledgement"&&r.accepted===true&&r.context_type==="resource_request"&&r.context_id&&Date.parse(r.created_at)>=since&&!manifesto.some(m=>m.id===r.context_id)).map(r=>r.context_id));
     const {stripe}=await import("../../../lib/stripe");
     const site=getRequiredEnv("PUBLIC_SITE_URL").replace(/\/$/,"");
@@ -33,6 +34,7 @@ export const GET:APIRoute=async context=>{
     return privateJson({days,funnels:summarizeFunnel(runs.filter(r=>Date.parse(r.created_at)>=since) as FunnelRun[]),checkout,
       manifesto:{requests:current.length,accepted:current.filter(r=>r.status==="accepted").length,failed:current.filter(r=>r.status==="failed").length,
         optIns:current.filter(r=>r.marketing_consent).length,legacyRequests:legacy.size},
+      newsletter:{requests:newsletter.length,accepted:newsletter.filter(r=>r.status==="accepted").length,failed:newsletter.filter(r=>r.status==="failed").length},
       paidOrders:orders.filter(r=>Date.parse(r.created_at)>=since&&!['CANCELLED','REFUNDED'].includes(r.status)).length,
       clicks:analytics.interactions.filter((r:{event:string})=>r.event==="click").slice(0,30),
     });

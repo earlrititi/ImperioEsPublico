@@ -3,7 +3,7 @@ import {readdirSync} from 'node:fs';
 import {Socket} from 'node:net';
 import {randomUUID} from 'node:crypto';
 Socket.prototype.connect=()=>{throw Error('Real network prohibited');};
-Object.assign(process.env,{PUBLIC_SITE_URL:'https://imperioes.com',PUBLIC_SUPABASE_URL:'https://fixture.supabase.co',SUPABASE_SERVICE_ROLE_KEY:'fixture',RESEND_API_KEY:'fixture',RATE_LIMIT_SECRET:'fixture',COMMERCE_EMAIL_MODE:'test',COMMERCE_TEST_EMAIL:'sink@example.invalid'});
+Object.assign(process.env,{PUBLIC_SITE_URL:'https://imperioes.com',PUBLIC_SUPABASE_URL:'https://fixture.supabase.co',SUPABASE_SERVICE_ROLE_KEY:'fixture',RESEND_API_KEY:'fixture',RESERVATION_TOKEN_SECRET:'fixture',RATE_LIMIT_SECRET:'fixture',COMMERCE_EMAIL_MODE:'test',COMMERCE_TEST_EMAIL:'sink@example.invalid'});
 const rows=new Map(),consents=[],sends=[];let fail=false,noticeFailed=false;
 const json=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json'}});
 globalThis.fetch=async(input,options)=>{
@@ -41,6 +41,17 @@ assert.equal((await post(marketing)).status,502);assert.equal(rows.get(marketing
 assert.ok(consents.some(c=>c.context_id===marketing.requestId&&c.consent_type==='marketing_email'));
 fail=false;noticeFailed=true;assert.equal((await post(marketing)).status,500);assert.equal(rows.get(marketing.requestId).status,'accepted');
 const count=resources();noticeFailed=false;assert.equal((await post(marketing)).status,200);assert.equal(resources(),count,'Owner-notice retry cannot resend the resource');
+const news={email:'newsletter@example.invalid',requestId:randomUUID(),anonymousId:randomUUID(),resource:'seven_stories',consentAction:'newsletter_pdf',privacyAcknowledged:true,marketingConsent:true};
+assert.equal((await post({...news,marketingConsent:false})).status,400);
+assert.equal((await post({...news,consentAction:'download'})).status,400);
+assert.equal((await post({...news,resource:'untrusted'})).status,400);
+assert.equal((await post(news)).status,200);assert.equal(rows.get(news.requestId).resource,'seven_stories');
+const proof=consents.find(c=>c.context_id===news.requestId&&c.consent_type==='marketing_email');assert.equal(proof.source,'newsletter_pdf');assert.ok(proof.metadata.consent_text.includes('ofertas'));assert.equal(proof.metadata.action,'Suscribirme y recibir el PDF');
+const pdf=sends.find(s=>s.subject==='Tus 7 historias del Siglo de Oro');assert.ok(pdf.attachments[0].path.endsWith('/recursos/7-historias-del-siglo-de-oro.pdf'));assert.ok(pdf.text.includes('/comunicaciones/baja?token='));
+const native=new URLSearchParams({email:'native@example.invalid',requestId:randomUUID(),anonymousId:randomUUID(),intent:'newsletter_pdf'});
+const nativeResult=await page.POST({request:new Request('https://imperioes.com/api/manifesto.php',{method:'POST',headers:{Origin:'https://imperioes.com'},body:native})});
+assert.equal(nativeResult.status,303);assert.equal(nativeResult.headers.get('location'),'/newsletter?sent=1');
+assert.equal((await post({...payload,requestId:randomUUID(),email:'a'.repeat(260)+'@example.invalid'})).status,400);
 process.env.COMMERCE_EMAIL_MODE='disabled';const before=sends.length;
 assert.equal((await post({...payload,requestId:randomUUID()})).status,503);assert.equal(sends.length,before);
 console.log('Manifesto resource/marketing separation, immutable requests, provider failure, owner retry and Test isolation passed. No real email.');

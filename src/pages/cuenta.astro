@@ -8,6 +8,8 @@ import { hasEditorialAccess } from "../lib/editorial-access";
 import { isImperioAdmin } from "../lib/admin-identity";
 import { privateAuthHeaders } from "../lib/auth-forms";
 import { qualifiesForTshirtOffer, TSHIRT_OFFER_COPY } from "../config/tshirt-offer";
+import { getEmailPreference } from "../lib/email-preferences";
+import { EMAIL_MARKETING_CONSENT, EMAIL_MARKETING_NOTE } from "../config/email-marketing";
 privateAuthHeaders(Astro.response.headers);
 
 const supabase = createSupabaseServerClient({
@@ -33,6 +35,8 @@ const accessLabel = editorialAccess ? "ADMINISTRADOR EDITORIAL" : hasPaidAccess
     ? "MAESTRE DE CAMPO"
     : "ARCABUCERO"
   : "PIQUERO";
+const emailPreference = await getEmailPreference(user.id).catch(() => null);
+const preferenceResult = Astro.url.searchParams.get("comunicaciones");
 ---
 
 <PageShell
@@ -79,9 +83,39 @@ const accessLabel = editorialAccess ? "ADMINISTRADOR EDITORIAL" : hasPaidAccess
       <p id="shirt-discount-status" role="status" aria-live="polite"></p>
     </div>}
   </Fragment>
+  <section class="email-preference" id="comunicaciones" aria-labelledby="email-preference-title">
+    <h2 id="email-preference-title">Historias y novedades por correo</h2>
+    <p>{EMAIL_MARKETING_CONSENT}</p>
+    <p class="muted">{EMAIL_MARKETING_NOTE}</p>
+    {preferenceResult === "error" && <p role="alert">No se pudo guardar el cambio. Tu preferencia anterior se conserva.</p>}
+    {preferenceResult && ["on", "off"].includes(preferenceResult) && emailPreference && <p role="status">{emailPreference.active ? "Comunicaciones activadas." : "Comunicaciones desactivadas."}</p>}
+    {emailPreference ? <form method="post" action="/api/account/email-preference">
+      <input type="hidden" name="enabled" value={emailPreference.active ? "no" : "yes"} />
+      <button class="email-preference-switch" type="submit" role="switch" aria-checked={emailPreference.active}
+        aria-label="Recibir historias, novedades, lanzamientos y ofertas por email"
+        disabled={!emailPreference.verified || emailPreference.blocked}>
+        <span class="email-preference-track" aria-hidden="true"><span /></span>
+        <span>{emailPreference.active ? "Activadas" : "Desactivadas"}</span>
+      </button>
+      {!emailPreference.verified && <p>Confirma tu correo para activar las comunicaciones. <a href="/confirmar-correo">Reenviar confirmacion</a></p>}
+      {emailPreference.blocked && <p>No podemos enviar a esta direccion por una incidencia de entrega. <a href="mailto:contacto@imperioes.com">Contactar con soporte</a></p>}
+    </form> : <p role="status">No se pueden consultar las preferencias en este momento. Intentalo de nuevo mas tarde.</p>}
+    <p class="muted">Los avisos necesarios de cuenta, pagos y pedidos se mantienen aparte. <a href="/legal/privacidad">Privacidad</a></p>
+  </section>
   <MyReservations client:load />
   {isImperioAdmin(user) && <p><a href="/admin">Administrar Imperio E</a></p>}
 </PageShell>
+
+<style>
+  .email-preference{padding:28px 0;border-block:1px solid var(--line);margin:24px 0;scroll-margin-top:120px;max-width:760px}
+  .email-preference h2{font-size:24px;margin:0 0 16px}.email-preference p{line-height:1.6;overflow-wrap:anywhere}
+  .email-preference-switch{display:inline-flex;align-items:center;gap:12px;border:0;padding:8px 0;background:transparent;color:inherit;cursor:pointer;min-height:48px;font:inherit}
+  .email-preference-switch:disabled{opacity:.5;cursor:not-allowed}.email-preference-switch:focus-visible{outline:2px solid #ee5b57;outline-offset:4px}
+  .email-preference-track{box-sizing:border-box;display:inline-flex;align-items:center;width:56px;height:32px;padding:4px;border-radius:20px;background:#696969;flex:none}
+  .email-preference-track>span{width:24px;height:24px;border-radius:50%;background:white;transition:transform .15s}
+  [aria-checked=true] .email-preference-track{background:#ba2838}[aria-checked=true] .email-preference-track>span{transform:translateX(24px)}
+  @media(prefers-reduced-motion:reduce){.email-preference-track>span{transition:none}}
+</style>
 
 <script>
   const discountButton = document.getElementById("shirt-discount-button");

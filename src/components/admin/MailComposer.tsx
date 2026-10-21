@@ -2,7 +2,7 @@ import { useEffect, useState } from "preact/hooks";
 const blank={subject:"",preheader:"",content:"",cta_label:"",cta_url:""};
 type Preview={html:string;expires:number;token:string;revision?:number;recipient?:string;audience?:{recipients:string[];invalid:number;duplicates:number;unsubscribed:number}};
 type Log={id:string;subject:string;preheader?:string;content?:string;cta_label?:string;cta_url?:string;segment?:string;revision?:number;recipient?:string;status:string;created_at:string;recipient_count?:number;delivery_status?:string;delivery?:{accepted:number;delivered:number;bounced:number;failed:number}};
-const segments=[["shirts","Camisetas con consentimiento"],["subscriptions","Suscriptores con consentimiento"],["arcabucero","Arcabucero"],["maestre_campo","Maestre de Campo"],["both","Camiseta y suscripcion"],["manifesto","Manifiesto con consentimiento"],["leads","Leads con consentimiento"],["all","Todas las audiencias consentidas"]];
+const segments=[["community","Cuentas verificadas con consentimiento"],["newsletter","Newsletter y PDF con consentimiento"],["shirts","Camisetas con consentimiento"],["subscriptions","Suscriptores con consentimiento"],["arcabucero","Arcabucero"],["maestre_campo","Maestre de Campo"],["both","Camiseta y suscripcion"],["manifesto","Manifiesto con consentimiento"],["leads","Leads con consentimiento"],["all","Todas las audiencias consentidas"]];
 export default function MailComposer({newsletter=false}:{newsletter?:boolean}) {
   const [content,setContent]=useState(blank);
   const [recipient,setRecipient]=useState("");

@@ -25,21 +25,9 @@ export function readUnsubscribeToken(token: string) {
 
 export async function isMailSuppressed(db: Awaited<ReturnType<typeof database>>, email: string) {
   const recipient = email.trim().toLowerCase();
-  const emailPattern = recipient.replace(/[\\%_]/g,"\\$&");
-  const suppression = await db.from("email_suppressions").select("email").eq("email",recipient).limit(1);
+  const suppression = await db.from("marketing_suppressed_contacts").select("email").eq("email",recipient).limit(1);
   if (suppression.error) throw new Error("SUPPRESSION_LOOKUP_FAILED");
-  if (suppression.data?.length) return true;
-  const reservation = await db.from("reservations").select("id").ilike("customer_email",emailPattern)
-    .not("marketing_withdrawn_at","is",null).limit(1);
-  if (reservation.error) throw new Error("SUPPRESSION_LOOKUP_FAILED");
-  if (reservation.data?.length) return true;
-  const profiles = await db.from("profiles").select("id").ilike("email",emailPattern);
-  if (profiles.error) throw new Error("SUPPRESSION_LOOKUP_FAILED");
-  if (!profiles.data?.length) return false;
-  const consent = await db.from("legal_consents").select("id").in("user_id",profiles.data.map(p=>p.id))
-    .eq("consent_type","marketing_email").not("withdrawn_at","is",null).limit(1);
-  if (consent.error) throw new Error("SUPPRESSION_LOOKUP_FAILED");
-  return Boolean(consent.data?.length);
+  return Boolean(suppression.data?.length);
 }
 
 export async function drainAdminMail(limit = 10) {
@@ -96,8 +84,7 @@ export async function reconcileAdminDelivery(limit=10){
     const updated=await db.from("email_logs").update({delivery_status:state,provider_checked_at:now}).eq("id",row.id).eq("provider_message_id",row.provider_message_id);
     if(updated.error)throw Error("DATABASE_UNAVAILABLE");
     if(["bounced","complained"].includes(state)){
-      const saved=await db.from("email_suppressions").upsert({email:row.recipient.toLowerCase(),reason:`provider_${state}`},{onConflict:"email",ignoreDuplicates:true});
-      if(saved.error)throw Error("DATABASE_UNAVAILABLE");
+      await rpc("suppress_marketing_email",{p_email:row.recipient.toLowerCase(),p_reason:`provider_${state}`});
     }
     checked++;await new Promise(resolve=>{setTimeout(resolve,600);});
   }

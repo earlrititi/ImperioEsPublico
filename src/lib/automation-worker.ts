@@ -157,8 +157,7 @@ export async function automationDeliveryReceipts(limit = 10) {
     if (["bounced", "complained"].includes(status)) {
       const recipient = response.data.to?.[0]?.trim().toLowerCase();
       if (approved.mode === "live" && recipient && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient)) {
-        const suppression = await db.from("email_suppressions").upsert({ email: recipient, reason: `provider_${status}` }, { onConflict: "email", ignoreDuplicates: true });
-        if (suppression.error) throw Error("DATABASE_UNAVAILABLE");
+        await rpc("suppress_marketing_email", { p_email: recipient, p_reason: `provider_${status}` });
       }
     }
     checked++;

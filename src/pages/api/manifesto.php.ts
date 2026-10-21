@@ -7,6 +7,8 @@ import { consumeRateLimit } from "../../lib/rate-limit";
 import { isAllowedRequestOrigin } from "../../lib/request-security";
 import { notifyLead } from "../../lib/lead-notifications";
 import {database,optionalEnv} from "../../lib/reservations";
+import { EMAIL_MARKETING_CONSENT, EMAIL_MARKETING_COPY_VERSION, NEWSLETTER_PDF_PATH } from "../../config/email-marketing";
+import { unsubscribeToken } from "../../lib/admin-mail";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -50,17 +52,21 @@ function escapeHtml(value: string) {
 }
 
 export const POST: APIRoute = async ({ request }) => {
+  const nativeForm = request.headers.get("content-type")?.startsWith("application/x-www-form-urlencoded");
+  const respond = (body: Record<string, unknown>, status = 200) => nativeForm && !request.headers.get("accept")?.includes("application/json")
+    ? new Response(null, {status:303,headers:{Location:body.ok ? "/newsletter?sent=1" : "/newsletter?error=1","Cache-Control":"no-store"}})
+    : jsonResponse(body,status);
   try {
     const publicSiteUrl = siteUrl();
 
     if (!isAllowedRequestOrigin(request, publicSiteUrl)) {
-      return jsonResponse({ ok: false, error: "Origen no permitido." }, 403);
+      return respond({ ok: false, error: "Origen no permitido." }, 403);
     }
 
     const contentLength = Number(request.headers.get("content-length") || 0);
 
     if (contentLength > 8192) {
-      return jsonResponse({ ok: false, error: "Solicitud demasiado grande." }, 413);
+      return respond({ ok: false, error: "Solicitud demasiado grande." }, 413);
     }
 
     const allowed = await consumeRateLimit({
@@ -71,23 +77,31 @@ export const POST: APIRoute = async ({ request }) => {
     });
 
     if (!allowed) {
-      return jsonResponse(
+      return respond(
         { ok: false, error: "Demasiadas solicitudes. Intentalo mas tarde." },
         429
       );
     }
 
-    const body = await request.json().catch(() => null);
+    if (!nativeForm && !request.headers.get("content-type")?.startsWith("application/json")) return respond({ok:false,error:"Formato no permitido."},415);
+    // Enforce the limit even when Content-Length is missing or inaccurate.
+    const reader=request.body?.getReader();let size=0;let raw="";const decoder=new TextDecoder();
+    if(reader){while(true){const {value,done}=await reader.read();if(done)break;size+=value.byteLength;
+      if(size>8192){await reader.cancel();return respond({ok:false,error:"Solicitud demasiado grande."},413);}raw+=decoder.decode(value,{stream:true});}raw+=decoder.decode();}
+    const form = nativeForm ? new URLSearchParams(raw) : null;
+    const body = form ? {...Object.fromEntries(form),resource:"seven_stories",source:"newsletter_page",
+      privacyAcknowledged:form.get("intent")==="newsletter_pdf",marketingConsent:form.get("intent")==="newsletter_pdf",consentAction:form.get("intent")}
+      : (()=>{try{return JSON.parse(raw);}catch{return null;}})();
 
     if (!body || typeof body !== "object") {
-      return jsonResponse({ ok: false, error: "Solicitud invalida." }, 400);
+      return respond({ ok: false, error: "Solicitud invalida." }, 400);
     }
 
     const payload = body as Record<string, unknown>;
     const honeypot = safeName(payload.company);
 
     if (honeypot) {
-      return jsonResponse({ ok: true });
+      return respond({ ok: true });
     }
 
     const email =
@@ -95,8 +109,8 @@ export const POST: APIRoute = async ({ request }) => {
         ? payload.email.trim().toLowerCase()
         : "";
 
-    if (!EMAIL_PATTERN.test(email)) {
-      return jsonResponse({ ok: false, error: "Introduce un correo valido." }, 400);
+    if (!EMAIL_PATTERN.test(email) || email.length>254) {
+      return respond({ ok: false, error: "Introduce un correo valido." }, 400);
     }
 
     const firstName = safeName(payload.firstName);
@@ -105,30 +119,35 @@ export const POST: APIRoute = async ({ request }) => {
     const requestId = safeName(payload.requestId) || anonymousId;
     const privacyAcknowledged = payload.privacyAcknowledged === true;
     const marketingConsent = payload.marketingConsent === true;
+    const resource = payload.resource ?? "manifesto";
+    if(resource!=="manifesto" && resource!=="seven_stories")return respond({ok:false,error:"Recurso no valido."},400);
+    const newsletter = resource==="seven_stories";
+    if(newsletter && (!marketingConsent || payload.consentAction!=="newsletter_pdf"))return respond({ok:false,error:"Confirma la suscripcion a la newsletter."},400);
+    const name = `${firstName} ${lastName}`.trim();
+    const kind = newsletter ? "newsletter" : "manifesto";
 
     if (
-      !firstName ||
-      !lastName ||
+      (!newsletter && (!firstName || !lastName)) ||
       !UUID_PATTERN.test(anonymousId) ||
       !UUID_PATTERN.test(requestId) ||
       !privacyAcknowledged
     ) {
-      return jsonResponse(
+      return respond(
         { ok: false, error: "Completa los datos y revisa la informacion de privacidad." },
         400
       );
     }
 
-    if(optionalEnv("COMMERCE_EMAIL_MODE")==="disabled")return jsonResponse({ok:false,error:"Envio desactivado en este entorno de pruebas."},503);
+    if(optionalEnv("COMMERCE_EMAIL_MODE")==="disabled")return respond({ok:false,error:"Envio desactivado en este entorno de pruebas."},503);
     const db=await database();
-    const saved=await db.from("manifesto_requests").upsert({id:requestId,email,name:`${firstName} ${lastName}`,source:safeSource(payload.source),marketing_consent:marketingConsent},{onConflict:"id",ignoreDuplicates:true});
+    const saved=await db.from("manifesto_requests").upsert({id:requestId,email,name,resource,source:safeSource(payload.source),marketing_consent:marketingConsent},{onConflict:"id",ignoreDuplicates:true});
     if(saved.error)throw Error("DATABASE_UNAVAILABLE");
-    const existing=await db.from("manifesto_requests").select("email,name,marketing_consent,status").eq("id",requestId).single();
+    const existing=await db.from("manifesto_requests").select("email,name,resource,marketing_consent,status").eq("id",requestId).single();
     if(existing.error)throw Error("DATABASE_UNAVAILABLE");
-    if(existing.data.email!==email || existing.data.name!==`${firstName} ${lastName}` || existing.data.marketing_consent!==marketingConsent)return jsonResponse({ok:false,error:"La solicitud ha cambiado. Recarga el formulario."},409);
+    if(existing.data.email!==email || existing.data.name!==name || existing.data.resource!==resource || existing.data.marketing_consent!==marketingConsent)return respond({ok:false,error:"La solicitud ha cambiado. Recarga el formulario."},409);
     if(existing.data.status==="accepted"){
-      await notifyLead({kind:"manifesto",reference:requestId,email,name:`${firstName} ${lastName}`});
-      return jsonResponse({ok:true,message:"Tu manifiesto ya ha sido enviado por correo."});
+      await notifyLead({kind,reference:requestId,email,name});
+      return respond({ok:true,message:"El PDF ya ha sido enviado por correo."});
     }
     await recordLegalConsents([
       {
@@ -136,18 +155,18 @@ export const POST: APIRoute = async ({ request }) => {
         consentType: "privacy_acknowledgement",
         documentVersion: LEGAL_DOCUMENT_VERSIONS.privacy,
         accepted: true,
-        source: "manifesto",
+        source: newsletter ? "newsletter_pdf" : "manifesto",
         contextType: "resource_request",
         contextId: requestId,
-        metadata: { resource: "manifesto" },
+        metadata: { resource },
       },
-      ...(marketingConsent?[{anonymousId,consentType:"marketing_email" as const,documentVersion:LEGAL_DOCUMENT_VERSIONS.privacy,accepted:true,source:"manifesto",contextType:"resource_request",contextId:requestId,metadata:{resource:"newsletter"}}]:[]),
+      ...(marketingConsent?[{anonymousId,consentType:"marketing_email" as const,documentVersion:LEGAL_DOCUMENT_VERSIONS.privacy,accepted:true,source:newsletter?"newsletter_pdf":"manifesto",contextType:"resource_request",contextId:requestId,metadata:{resource,copy_version:EMAIL_MARKETING_COPY_VERSION,consent_text:EMAIL_MARKETING_CONSENT,action:newsletter?"Suscribirme y recibir el PDF":"optional_checkbox"}}]:[]),
     ]);
 
-    const greetingName = `${firstName} ${lastName}`;
+    const greeting = name ? `Hola ${name},` : "Hola,";
     const source = safeSource(payload.source);
     const from = `Imperio Espanol <${SITE.contactEmail}>`;
-    const attachmentPath =
+    const attachmentPath = newsletter ? NEWSLETTER_PDF_PATH :
       import.meta.env.MANIFESTO_ATTACHMENT_URL?.trim() ||
       import.meta.env.MANIFESTO_PDF_URL?.trim() ||
       import.meta.env.MANIFESTO_ATTACHMENT_PATH?.trim() ||
@@ -156,8 +175,12 @@ export const POST: APIRoute = async ({ request }) => {
     const attachmentUrl = attachmentPath.startsWith("http")
       ? attachmentPath
       : `${publicSiteUrl}/${attachmentPath.replace(/^\/+/, "")}`;
-    const subject = "Tu manifiesto de Imperio Espanol";
-    const text = `Hola ${greetingName},\n\nGracias por pedir el manifiesto. Te lo dejamos adjunto a este correo.\n\nImperio Espanol`;
+    const subject = newsletter ? "Tus 7 historias del Siglo de Oro" : "Tu manifiesto de Imperio Espanol";
+    const message = newsletter ? "Gracias por acercarte a Imperio Español. Aquí tienes tus 7 historias del Siglo de Oro, adjuntas en PDF. Ojalá disfrutes leyéndolas tanto como nosotros al prepararlas."
+      : "Gracias por pedir el manifiesto. Te lo dejamos adjunto a este correo.";
+    const unsubscribe = marketingConsent ? `${publicSiteUrl}/comunicaciones/baja?token=${unsubscribeToken(email)}` : "";
+    const marketingNote = marketingConsent ? "También has pedido recibir historias, novedades, lanzamientos y ofertas por email. Puedes darte de baja cuando quieras." : "";
+    const text = [greeting,message,marketingNote,unsubscribe?`Darme de baja: ${unsubscribe}`:"","Un abrazo,\nEquipo de Imperio Español"].filter(Boolean).join("\n\n");
     const { resend } = await import("../../lib/resend");
     const result = await resend.emails.send({
       from,
@@ -166,15 +189,16 @@ export const POST: APIRoute = async ({ request }) => {
       subject,
       html: `
         <div style="font-family: Georgia, serif; line-height: 1.6; color: #111;">
-          <p>Hola ${escapeHtml(greetingName)},</p>
-          <p>Gracias por pedir el manifiesto. Te lo dejamos adjunto a este correo.</p>
-          <p><strong>Imperio Espanol</strong></p>
+          <p>${escapeHtml(greeting)}</p>
+          <p>${escapeHtml(message)}</p>
+          ${marketingConsent?`<p>${marketingNote} <a href="${escapeHtml(unsubscribe)}">Darme de baja</a></p>`:""}
+          <p>Un abrazo,<br><strong>Equipo de Imperio Español</strong></p>
         </div>
       `,
       text,
       attachments: [
         {
-          filename: "Manifiesto Imperio Espanol.pdf",
+          filename: newsletter ? "7 historias del Siglo de Oro.pdf" : "Manifiesto Imperio Espanol.pdf",
           path: attachmentUrl,
         },
       ],
@@ -189,7 +213,7 @@ export const POST: APIRoute = async ({ request }) => {
     if (result.error) {
       await db.from("manifesto_requests").update({status:"failed"}).eq("id",requestId);
       console.error("Resend manifesto email failed:", result.error);
-      return jsonResponse(
+      return respond(
         { ok: false, error: "No se pudo enviar el correo. Intentalo de nuevo." },
         502
       );
@@ -198,15 +222,15 @@ export const POST: APIRoute = async ({ request }) => {
     if(!result.data)throw Error("EMAIL_PROVIDER_UNAVAILABLE");
     const accepted=await db.from("manifesto_requests").update({status:"accepted",provider_id:result.data.id,accepted_at:new Date().toISOString()}).eq("id",requestId);
     if(accepted.error)throw Error("DATABASE_UNAVAILABLE");
-    await notifyLead({ kind: "manifesto", reference: requestId, email, name: greetingName });
+    await notifyLead({ kind, reference: requestId, email, name });
 
-    return jsonResponse({
+    return respond({
       ok: true,
-      message: "Te hemos enviado el manifiesto por correo.",
+      message: "Te hemos enviado el PDF por correo.",
     });
   } catch (error) {
     console.error("manifesto endpoint error:", error);
-    return jsonResponse(
+    return respond(
       { ok: false, error: "No se pudo enviar el correo. Intentalo de nuevo." },
       500
     );

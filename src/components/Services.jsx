@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "preact/hooks";
+import { EMAIL_MARKETING_CONSENT } from "../config/email-marketing";
 import {
   PLAN_COMPARISON_INTRO,
   PLAN_COMPARISON_LABELS,
@@ -481,13 +482,13 @@ export default function Services() {
                       <input type="checkbox" checked={manifestPrivacy} required onChange={(event) => setManifestPrivacy(event.currentTarget.checked)} />
                       <span>He leído la <a href="/legal/privacidad">política de privacidad</a> para recibir el manifiesto.</span>
                     </label>
-                    <label class="services-manifest-modal__privacy"><input type="checkbox" checked={manifestMarketing} onChange={e=>setManifestMarketing(e.currentTarget.checked)}/><span>Quiero recibir la newsletter de Imperio E. Opcional; puedo darme de baja cuando quiera.</span></label>
+                    <label class="services-manifest-modal__privacy"><input type="checkbox" checked={manifestMarketing} onChange={e=>setManifestMarketing(e.currentTarget.checked)}/><span>{EMAIL_MARKETING_CONSENT} Opcional; baja en cualquier momento.</span></label>
                     <button
                       class="services-manifest-modal__submit"
                       type="submit"
                       disabled={!isManifestFormReady || manifestStatus === "submitting"}
                     >
-                      {manifestStatus === "submitting" ? "Enviando..." : "Recibir manifiesto"}
+                      {manifestStatus === "submitting" ? "Enviando..." : manifestMarketing ? "Recibir manifiesto y newsletter" : "Recibir manifiesto"}
                     </button>
                     <button
                       class="services-manifest-modal__close"

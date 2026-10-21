@@ -18,18 +18,10 @@ test("send-time suppression honors late withdrawals and fails closed",async()=>{
     return query;
   }} as unknown as Parameters<typeof isMailSuppressed>[0];
   assert.equal(await isMailSuppressed(db," A_B@example.com "),false);
-  assert.ok(filters.some(f=>f[1]==="ilike" && f[3]==="a\\_b@example.com"));
-  results.email_suppressions={data:[{email:"a_b@example.com"}]};
+  assert.ok(filters.some(f=>f[0]==="marketing_suppressed_contacts" && f[1]==="eq" && f[3]==="a_b@example.com"));
+  results.marketing_suppressed_contacts={data:[{email:"a_b@example.com"}]};
   assert.equal(await isMailSuppressed(db,"a_b@example.com"),true);
-  results.email_suppressions={data:[]};
-  results.reservations={data:[{id:"late-reservation-withdrawal"}]};
-  assert.equal(await isMailSuppressed(db,"a_b@example.com"),true);
-  results.reservations={data:[]};
-  results.profiles={data:[{id:"profile"}]};
-  results.legal_consents={data:[{id:"late-email-withdrawal"}]};
-  assert.equal(await isMailSuppressed(db,"a_b@example.com"),true);
-  assert.ok(filters.some(f=>f[0]==="legal_consents" && f[2]==="consent_type" && f[3]==="marketing_email"));
-  results.legal_consents={data:[],error:{message:"unavailable"}};
+  results.marketing_suppressed_contacts={data:[],error:{message:"unavailable"}};
   await assert.rejects(isMailSuppressed(db,"a_b@example.com"),/SUPPRESSION_LOOKUP_FAILED/);
 });
 test("email send approval binds the actor, exact payload and expiration",()=>{

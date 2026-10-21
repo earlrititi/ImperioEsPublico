@@ -5,6 +5,7 @@ import { recordLegalConsents } from "../lib/legal-consents";
 import PasswordField from "../components/PasswordField.astro";
 import { authError, privateAuthHeaders, readAuthForm, validNewPassword } from "../lib/auth-forms";
 import { safeInternalPath } from "../lib/redirects";
+import { EMAIL_MARKETING_CONSENT, EMAIL_MARKETING_NOTE, EMAIL_MARKETING_COPY_VERSION } from "../config/email-marketing";
 
 privateAuthHeaders(Astro.response.headers);
 const error = Astro.url.searchParams.get("error");
@@ -49,7 +50,8 @@ if (Astro.request.method === "POST") {
         source: "registration",
       },
       ...(marketingConsent ? [{ anonymousId, consentType: "marketing_email" as const,
-        documentVersion: LEGAL_DOCUMENT_VERSIONS.privacy, accepted: true, source: "registration" }] : []),
+        documentVersion: LEGAL_DOCUMENT_VERSIONS.privacy, accepted: true, source: "registration",
+        metadata: { copy_version: EMAIL_MARKETING_COPY_VERSION, consent_text: EMAIL_MARKETING_CONSENT } }] : []),
       {
         anonymousId,
         consentType: "privacy_acknowledgement",
@@ -158,9 +160,10 @@ if (Astro.request.method === "POST") {
         </label>
         <label class="registration-check">
           <input type="checkbox" name="newsletter" />
-          <span>Quiero recibir historias, novedades y ofertas por correo. Puedo darme de baja cuando quiera.</span>
+          <span>{EMAIL_MARKETING_CONSENT} <small>{EMAIL_MARKETING_NOTE}</small></span>
         </label>
         <button class="btn btn-primary" type="submit">Crear cuenta PIQUERO</button>
+        <p class="muted">El alta y la newsletter son independientes. Tambien puedes <a href="/newsletter">recibir las 7 historias del Siglo de Oro sin crear una cuenta</a>.</p>
       </form>
     )}
     <p class="muted">¿Ya tienes cuenta? <a href={loginHref}>Inicia sesion</a>.</p>

@@ -21,7 +21,7 @@ for (const size of ["S", "M", "L", "XL", "XXL"]) {
 }
 assert.match(storefront, /<option[^>]*value="M"[^>]*selected/);
 assert.match(storefront, /IVA incluido/);
-assert.match(storefront, /COMPRAR CAMISETA/);
+assert.match(storefront, /COMPRAR AHORA/);
 
 for (const size of ["S", "M", "L", "XL", "XXL"]) {
   const html = await page(`/checkout/camiseta-imperial?size=${size}`);

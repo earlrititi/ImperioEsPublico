@@ -5,6 +5,7 @@ import { attributedPath, socialEvent } from "../../lib/social-attribution";
 import {trackFunnel} from "../../lib/funnel-client";
 import { readCart, type CartItem } from "../../lib/cart";
 import { trackGoogleCommerce } from "../../lib/google-analytics";
+import { EMAIL_MARKETING_CONSENT } from "../../config/email-marketing";
 
 export default function ReservationForm({ initialSize = "M", initialCustomer = { name: "", email: "" }, fromCart = false, initialSales = false }: { initialSize?: string; initialCustomer?: { name: string; email: string }; fromCart?: boolean; initialSales?: boolean }) {
   const [inventory, setInventory] = useState<any[]>([]);
@@ -142,7 +143,7 @@ export default function ReservationForm({ initialSize = "M", initialCustomer = {
         </label>
         <label class="reservation-consent">
           <input type="checkbox" checked={marketing} disabled={busy} onChange={(e) => setMarketing(e.currentTarget.checked)} />
-          <span>Quiero recibir novedades y comunicaciones comerciales de Imperio E.</span>
+          <span>{EMAIL_MARKETING_CONSENT} Opcional; baja en cualquier momento.</span>
         </label>
         <button class="btn btn-primary" type="submit" disabled={busy || !challenge || (waitlist ? !canWait : !available || (fromCart ? !cartItems.length : maximum < 1))}>
           {busy ? "Guardando..." : inventoryState === "loading" ? "Comprobando disponibilidad..." : waitlist ? "Confirmar lista de espera" : sales?"Revisar y continuar al pago":"RESERVAR \u2014 0 \u20ac"}

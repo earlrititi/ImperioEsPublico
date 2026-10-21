@@ -5,6 +5,7 @@ import booklet from "../../config/siglo-de-oro.json";
 <PageShell title={booklet.title} eyebrow="Cuaderno de lectura" heading={booklet.title} summary={booklet.intro} noindex mainClass="reading-page">
   <div class="reading-booklet">
     <a class="download" href="/recursos/7-historias-del-siglo-de-oro.pdf" download>Descargar PDF</a>
+    <p>¿Seguimos leyendo? <a href="/newsletter">Recibe historias, novedades y lanzamientos por correo</a>.</p>
     <p class="editorial-note">{booklet.note}</p>
     <ol class="contents" aria-label="Historias del cuaderno">
       {booklet.stories.map(story => <li><a href={`#${story.id}`}>{story.title}</a></li>)}

@@ -5,7 +5,7 @@ import { claimStripeEvent, completeStripeEvent, failStripeEvent } from "./stripe
 import { optionalEnv, database } from "./reservations";
 
 export async function notifyLead(params: {
-  kind: "registration" | "manifesto" | "subscription_interest";
+  kind: "registration" | "manifesto" | "newsletter" | "subscription_interest";
   reference: string;
   email: string;
   name?: string;

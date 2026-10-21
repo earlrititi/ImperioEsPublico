@@ -32,10 +32,10 @@ export function paidOrderNotification(order: {
 }
 
 export function leadNotification(params: {
-  kind: "registration" | "manifesto" | "subscription_interest";
+  kind: "registration" | "manifesto" | "newsletter" | "subscription_interest";
   email: string; name?: string; plan?: string;
 }) {
-  const label = params.kind === "manifesto" ? "Solicitud del manifiesto"
+  const label = params.kind === "newsletter" ? "Solicitud de newsletter y PDF" : params.kind === "manifesto" ? "Solicitud del manifiesto"
     : params.kind === "subscription_interest" ? "Checkout de suscripción pendiente de pago" : "Registro gratuito PIQUERO (no es una suscripción de pago)";
   return {
     subject: `${label}: Imperio Español`,

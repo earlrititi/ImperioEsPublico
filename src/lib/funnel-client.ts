@@ -31,5 +31,5 @@ export async function trackFunnel(flow:FunnelFlow,step:number,page=location.path
 }
 export function clearFunnel(){
   if(readSavedConsent(LEGAL_DOCUMENT_VERSIONS.cookies)?.analytics)return;
-  for(const flow of ["manifesto","subscriptions","shirts"])try{sessionStorage.removeItem(`imperio-funnel-${flow}`);}catch{}
+  for(const flow of ["manifesto","newsletter","subscriptions","shirts"])try{sessionStorage.removeItem(`imperio-funnel-${flow}`);}catch{}
 }

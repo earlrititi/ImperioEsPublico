@@ -1,4 +1,4 @@
-const publicPages = /^\/(?:$|(?:instagram|tienda|reservas|suscribirse|precios|manifiesto|papeles-y-tratados|archivo|ensayos|efemerides|presente|sobre-nosotros|contacto|comunidad|foro|rutas|biblioteca|autores|legal)(?:\/[a-z0-9-]+)?\/?$)/;
+const publicPages = /^\/(?:$|(?:newsletter|instagram|tienda|reservas|suscribirse|precios|manifiesto|papeles-y-tratados|archivo|ensayos|efemerides|presente|sobre-nosotros|contacto|comunidad|foro|rutas|biblioteca|autores|legal)(?:\/[a-z0-9-]+)?\/?$)/;
 export function validInteraction(value: unknown): value is { page: string; target: string; event: string } {
   if (!value || typeof value !== "object") return false;
   const v = value as Record<string, unknown>;

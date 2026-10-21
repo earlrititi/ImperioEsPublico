@@ -4,7 +4,7 @@
   if(FUNNEL_PAGES.test(location.pathname)){
     const watched=new WeakSet<Element>();
     const forms="[data-funnel-flow],form[data-checkout-contract]";
-    const targets=`${forms},[data-funnel-manifesto],[data-funnel-shirts],a[href*='/checkout/arcabucero-'],a[href*='/checkout/maestre-campo-'],a[href*='/suscribirse'],a[href='/reservas'],a[data-reserve]`;
+    const targets=`${forms},[data-funnel-newsletter],[data-funnel-manifesto],[data-funnel-shirts],a[href*='/checkout/arcabucero-'],a[href*='/checkout/maestre-campo-'],a[href*='/suscribirse'],a[href='/reservas'],a[data-reserve]`;
     const flowOf=(el:Element):FunnelFlow=>el.hasAttribute("data-checkout-contract")?"subscriptions":el.getAttribute("data-funnel-flow") as FunnelFlow;
     const observer=new IntersectionObserver(entries=>{for(const e of entries){if(!e.isIntersecting)continue;
       const element=e.target;
@@ -13,7 +13,7 @@
         void trackFunnel(flowOf(element),1);
       }else{
         const href=element.getAttribute("href")??"";
-        const flow=element.hasAttribute("data-funnel-manifesto")?"manifesto":href.includes("/reservas")||element.hasAttribute("data-reserve")||element.hasAttribute("data-funnel-shirts")?"shirts":"subscriptions";
+        const flow=element.hasAttribute("data-funnel-newsletter")?"newsletter":element.hasAttribute("data-funnel-manifesto")?"manifesto":href.includes("/reservas")||element.hasAttribute("data-reserve")||element.hasAttribute("data-funnel-shirts")?"shirts":"subscriptions";
         void trackFunnel(flow,0);
       }
     }},{threshold:0.01});

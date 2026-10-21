@@ -151,6 +151,27 @@ const jsonLd = {
     <TshirtLeadPopup />
     {showCookieConsent && <CookieConsent />}
     <script>
+      import { readCart } from "../lib/cart";
+
+      const cartButtons = document.querySelectorAll<HTMLAnchorElement>("[data-cart-button]");
+      const updateCartCount = () => {
+        const units = readCart().reduce((total, item) => total + item.quantity, 0);
+        const label = units ? `Ver carrito: ${units} ${units === 1 ? "unidad" : "unidades"}` : "Ver carrito";
+        cartButtons.forEach((button) => {
+          const badge = button.querySelector<HTMLElement>("[data-cart-count]");
+          if (badge) {
+            badge.textContent = String(units);
+            badge.hidden = units === 0;
+          }
+          button.setAttribute("aria-label", label);
+          button.title = label;
+        });
+      };
+      updateCartCount();
+      window.addEventListener("imperio:cart", updateCartCount);
+      window.addEventListener("pageshow", updateCartCount);
+      window.addEventListener("focus", updateCartCount);
+
       const accountButtons = Array.from(document.querySelectorAll("[data-account-button]"));
       if (accountButtons.length) {
         const cacheKey = "imperio:account-label:v1";

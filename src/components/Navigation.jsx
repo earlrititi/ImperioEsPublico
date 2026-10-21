@@ -65,10 +65,11 @@ export default function Navigation({ persistent = false, userEmail = null }) {
           </div>
 
           <div class="main-nav__actions">
-          <a href={withBase("/carrito")} class="menu-button" aria-label="Ver carrito" title="Ver carrito">
+          <a href={withBase("/carrito")} class="menu-button cart-button" data-cart-button aria-label="Ver carrito" title="Ver carrito">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               {ShoppingBag.map(([Tag, attrs], index) => <Tag key={index} {...attrs} />)}
             </svg>
+            <span class="cart-button__count" data-cart-count hidden aria-hidden="true"></span>
           </a>
           <a href={withBase("/cuenta")} data-account-button class={`menu-button account-button${sessionEmail ? " account-button--email" : ""}`} aria-label={sessionEmail ? `Mi cuenta: ${sessionEmail}` : "Mi cuenta / Iniciar sesion"} title={sessionEmail ?? "Mi cuenta / Iniciar sesion"}>
             {sessionEmail ? <span class="account-button__email">{sessionEmail}</span> : <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -312,6 +313,34 @@ export default function Navigation({ persistent = false, userEmail = null }) {
           justify-content: center;
           mix-blend-mode: difference;
           transition: color 0.18s linear, mix-blend-mode 0s linear 0.18s;
+        }
+
+        .cart-button {
+          mix-blend-mode: normal;
+        }
+
+        .cart-button__count {
+          position: absolute;
+          bottom: -3px;
+          left: 50%;
+          transform: translateX(-50%);
+          display: grid;
+          place-items: center;
+          min-width: 18px;
+          height: 18px;
+          padding: 0 4px;
+          border-radius: 999px;
+          background: var(--color-red-accent);
+          color: #fff;
+          font-family: var(--font-sans, sans-serif);
+          font-size: 10px;
+          font-weight: 700;
+          line-height: 1;
+          pointer-events: none;
+        }
+
+        .cart-button__count[hidden] {
+          display: none;
         }
 
         #main-nav.main-nav--hamburger-dark .menu-button {

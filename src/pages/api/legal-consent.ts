@@ -4,6 +4,7 @@ import { recordLegalConsents } from "../../lib/legal-consents";
 import { consumeRateLimit } from "../../lib/rate-limit";
 import { isAllowedRequestOrigin } from "../../lib/request-security";
 import { createSupabaseServerClient } from "../../lib/supabase/server";
+import { clearAuthAnalytics } from "../../lib/auth-analytics";
 
 export const prerender = false;
 
@@ -65,6 +66,7 @@ export const POST: APIRoute = async ({ cookies, request }) => {
     return json({ error: "Preferencias no validas" }, 400);
   }
 
+  if (!choices.analytics) clearAuthAnalytics({ cookies, request });
   const supabase = createSupabaseServerClient({ cookies, request });
   const {
     data: { user },

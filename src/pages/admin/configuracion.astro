@@ -1,0 +1,66 @@
+---
+import AdminShell from "../../layouts/AdminShell.astro";
+import { requireAdmin, optionalEnv, reservationMode } from "../../lib/reservations";
+import { ANALYTICS } from "../../config/analytics";
+import { SITE } from "../../config/site";
+import { LEGAL_DOCUMENT_VERSIONS } from "../../config/legal";
+import { SHIRT_PRICE_COPY } from "../../config/commerce";
+
+export const prerender = false;
+Astro.response.headers.set("Cache-Control", "private, no-store");
+try { await requireAdmin(Astro); } catch { return Astro.redirect("/login?next=/admin/configuracion"); }
+const configured = (name: string) => Boolean(optionalEnv(name)) ? "Configurada" : "No configurada";
+const enabled = (name: string) => optionalEnv(name) === "true" ? "Activado" : "Desactivado";
+---
+<AdminShell title="Configuracion">
+  <h1>Configuracion</h1>
+  <section class="settings-section" aria-labelledby="settings-commerce">
+    <h2 id="settings-commerce">Comercio</h2>
+    <dl>
+      <dt>Modalidad de camisetas</dt><dd>{reservationMode() ? "Reserva sin pago" : "Compra"}</dd>
+      <dt>Pagos Live</dt><dd>{enabled("STRIPE_LIVE_CHECKOUT_ENABLED")}</dd>
+      <dt>Venta de camisetas aprobada</dt><dd>{enabled("SHIRT_SALES_APPROVED")}</dd>
+      <dt>Precio publicado</dt><dd>{SHIRT_PRICE_COPY}</dd>
+      <dt>Conexion con Stripe</dt><dd>{configured("STRIPE_SECRET_KEY")}</dd>
+    </dl>
+    <a href="/admin/comercio">Pedidos e inventario</a>
+    <a href="/admin/suscripciones">Suscripciones</a>
+  </section>
+  <section class="settings-section" aria-labelledby="settings-mail">
+    <h2 id="settings-mail">Correo</h2>
+    <dl>
+      <dt>Contacto y respuesta</dt><dd>{SITE.contactEmail}</dd>
+      <dt>Proveedor de la web</dt><dd>Resend</dd>
+      <dt>Conexion con Resend</dt><dd>{configured("RESEND_API_KEY")}</dd>
+      <dt>Canal transaccional</dt><dd>{optionalEnv("COMMERCE_EMAIL_MODE") || "Desactivado"}</dd>
+      <dt>Interruptor de automatizaciones</dt><dd>{enabled("MARKETING_AUTOMATIONS_ENABLED")}</dd>
+    </dl>
+    <p>La aprobacion de plantillas y la elegibilidad de los destinatarios se comprueban tambien antes de enviar. Los mensajes enviados por Resend no se archivan automaticamente en Enviados de IONOS.</p>
+    <a href="/admin/automatizaciones">Automatizaciones y metricas</a>
+    <a href="/admin/correos">Historial de correo</a>
+  </section>
+  <section class="settings-section" aria-labelledby="settings-analytics">
+    <h2 id="settings-analytics">Analitica y privacidad</h2>
+    <dl>
+      <dt>Google Analytics 4</dt><dd>{ANALYTICS.googleTagId || "No configurado"}</dd>
+      <dt>Google Tag Manager</dt><dd>{ANALYTICS.gtmId || "No configurado"}</dd>
+      <dt>Acceso de lectura a informes GA4</dt><dd>{process.env.GA4_SERVICE_ACCOUNT_JSON ? "Configurado" : "No configurado"}</dd>
+      <dt>Modalidad de consentimiento</dt><dd>Basica: Google bloqueado hasta aceptar analitica</dd>
+      <dt>Version de cookies</dt><dd>{LEGAL_DOCUMENT_VERSIONS.cookies}</dd>
+      <dt>Version de privacidad</dt><dd>{LEGAL_DOCUMENT_VERSIONS.privacy}</dd>
+      <dt>Version contractual</dt><dd>{LEGAL_DOCUMENT_VERSIONS.terms}</dd>
+    </dl>
+    <a href="/admin/interacciones">Informes de analitica</a>
+    <a href="/legal/cookies">Politica de cookies</a>
+  </section>
+</AdminShell>
+<style>
+  .settings-section { padding-block:1.5rem; border-top:1px solid #ffffff26; }
+  .settings-section h2 { margin-top:0; font-size:1.2rem; }
+  .settings-section dl { display:grid; grid-template-columns:minmax(160px,1fr) minmax(0,2fr); gap:0.75rem 1.5rem; }
+  .settings-section dt { color:#c8c8cc; }
+  .settings-section dd { margin:0; overflow-wrap:anywhere; }
+  .settings-section a { display:inline-block; margin:0.5rem 1.25rem 0 0; text-decoration:underline; text-underline-offset:3px; }
+  .settings-section p { max-width:74ch; color:#c8c8cc; }
+  @media(max-width:600px) { .settings-section dl { grid-template-columns:minmax(0,1fr); gap:0.25rem; } .settings-section dd { margin-bottom:0.75rem; } }
+</style>

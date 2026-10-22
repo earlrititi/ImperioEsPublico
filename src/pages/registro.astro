@@ -6,6 +6,7 @@ import PasswordField from "../components/PasswordField.astro";
 import { authError, privateAuthHeaders, readAuthForm, validNewPassword } from "../lib/auth-forms";
 import { safeInternalPath } from "../lib/redirects";
 import { EMAIL_MARKETING_CONSENT, EMAIL_MARKETING_NOTE, EMAIL_MARKETING_COPY_VERSION } from "../config/email-marketing";
+import { recordAuthAnalytics } from "../lib/auth-analytics";
 
 privateAuthHeaders(Astro.response.headers);
 const error = Astro.url.searchParams.get("error");
@@ -86,6 +87,7 @@ if (Astro.request.method === "POST") {
   }
 
   if (signUpData.user && signUpData.user.identities?.length) {
+    recordAuthAnalytics({ cookies: Astro.cookies, request: Astro.request }, "sign_up", "password");
     // Persist proof on the genuinely new identity before email confirmation,
     // including confirmation on another device. Unverified identities cannot send.
     const { linkAnonymousConsents } = await import("../lib/legal-consents");

@@ -1,5 +1,10 @@
 # Resumen
 
+**Estado vigente, 22 de octubre de 2026:** consultar
+[el cierre consolidado del prompt maestro](docs/CIERRE-PROMPT-MAESTRO-2026-10-22.md).
+Los apartados inferiores son historial de septiembre: no describen el estado
+actual de los pagos Live, el inventario o la auditoria de dependencias.
+
 **Actualizacion 2026-09-10:** implementado modo reserva sin pago, stock
 transaccional, direccion, panel y conversion futura a pedido, verificados en
 Supabase Test aislado. Politica vigente: **29,99 EUR finales POR UNIDAD, IVA y

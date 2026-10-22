@@ -1,6 +1,7 @@
 import { useEffect, useState } from "preact/hooks";
 import { AUTOMATION_DEFAULTS, type AutomationDraft } from "../../lib/email-automations";
 import type { MailContent } from "../../lib/admin-mail-template";
+import type { AutomationRevenue } from "../../lib/ga4-reports";
 type AutomationStats = { key: string; pending: number; accepted: number; delivered: number; suppressed: number; review: number };
 
 export default function Automations() {
@@ -14,7 +15,8 @@ export default function Automations() {
   const [message, setMessage] = useState("");
   const [preview, setPreview] = useState("");
   const [stats, setStats] = useState<AutomationStats[] | null>(null);
-  const [sending, setSending] = useState(false);
+  const [revenue, setRevenue] = useState<AutomationRevenue | null>(null);
+  const [sending, setSending] = useState<boolean | null>(null);
   const [enrollmentStartsAt,setEnrollmentStartsAt]=useState<string|null>(null);
   useEffect(() => {
     const controller = new AbortController();
@@ -29,11 +31,13 @@ export default function Automations() {
       const result = await response.json(); setStats(result.runtimeReady ? result.items : null);
       setSending(result.sendsEnabled === true);
       setEnrollmentStartsAt(result.enrollmentStartsAt??null);
+      setRevenue(result.attributedRevenue??null);
     }).catch(() => {});
     return () => controller.abort();
   }, []);
   const draft = items.find(item => item.key === selected)!;
   const counters = stats?.find(item => item.key === selected);
+  const measured = revenue?.items.find(item => item.key === selected);
   function select(key: string) {
     if (dirty && !confirm("Descartar los cambios sin guardar?")) return;
     if (dirty) setItems(savedItems);
@@ -59,13 +63,16 @@ export default function Automations() {
   }
   return <section>
     <div class="admin-toolbar"><h1>Automatizaciones</h1><a href="/admin/newsletter">Newsletter</a></div>
-    <p class="admin-status">{sending ? "Envios comerciales autorizados" : "Envios comerciales desactivados"}</p>
+    <p class="admin-status" role="status">{sending === null ? (loading ? "Comprobando estado de los envios..." : "Estado de envios no disponible") : sending ? "Envios comerciales autorizados" : "Envios comerciales desactivados"}</p>
     {enrollmentStartsAt&&<p>Audiencia: cuentas nuevas desde {new Date(enrollmentStartsAt).toLocaleString("es-ES",{timeZone:"Europe/Madrid"})}, con correo verificado y consentimiento.</p>}
     <label>Secuencia <select disabled={busy || loading} value={selected} onChange={event => select(event.currentTarget.value)}>
       {items.map(item => <option key={item.key} value={item.key}>{item.name}</option>)}
     </select></label>
     {selected !== "placed_order" && <div class="admin-table-wrap"><table><thead><tr><th>Pendientes</th><th>Aceptados</th><th>Entregados</th><th>Cancelados</th><th>Revision</th></tr></thead>
-      <tbody><tr>{(["pending", "accepted", "delivered", "suppressed", "review"] as const).map(key => <td key={key}>{stats === null ? "No disponible" : counters?.[key] ?? 0}</td>)}</tr></tbody></table><p>Ingresos atribuidos: no medidos</p></div>}
+      <tbody><tr>{(["pending", "accepted", "delivered", "suppressed", "review"] as const).map(key => <td key={key}>{stats === null ? "No disponible" : counters?.[key] ?? 0}</td>)}</tr></tbody></table>
+      {revenue?.status === "available" && measured ? <dl><dt>Sesiones desde esta serie</dt><dd>{measured.sessions.toLocaleString("es-ES")}</dd><dt>Compras medidas</dt><dd>{measured.purchases.toLocaleString("es-ES")}</dd><dt>Ingresos atribuidos por GA4</dt><dd>{measured.revenue.toLocaleString("es-ES",{style:"currency",currency:"EUR"})}</dd></dl> : <p>Ingresos atribuidos: {revenue?.status === "available" ? "sin datos medidos para esta serie" : "GA4 no disponible"}.</p>}
+      <p>GA4: últimos 30 días completos, solo con consentimiento. No reconstruye atribución anterior al etiquetado ni representa todas las ventas de Stripe. Importes sin IVA ni envío.</p>
+      {revenue?.limited && <p role="note">Atribución parcial por límites o umbrales de privacidad de Google.</p>}</div>}
     {selected === "placed_order" ? <><dl><dt>Canal</dt><dd>Transaccional</dd><dt>Momento</dt><dd>Pago confirmado</dd></dl><a href="/admin/comercio">Ver pedidos</a></> :
       <form class="admin-mail-form" onSubmit={event => { event.preventDefault(); void submit("save"); }}>
         <fieldset disabled={busy || loading} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>

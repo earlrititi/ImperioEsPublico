@@ -7,6 +7,11 @@ type Summary = { interactions: Interaction[]; consents: Consent[]; daily: { day:
   ga4?: { status: string; totals: Ga4Row[]; traffic: Ga4Row[]; devices: Ga4Row[]; pages: Ga4Row[]; events: Ga4Row[]; truncated: boolean; thresholded: boolean } };
 const eventLabel: Record<string, string> = { page_view: "Visita", click: "Clic", scroll_50: "Scroll 50%", scroll_90: "Scroll 90%" };
 const consentLabel: Record<string, string> = { cookies_analytics: "Analitica", cookies_marketing: "Marketing", cookies_preferences: "Preferencias" };
+export function formatAnalyticsMetric(value: number | undefined, format: "number" | "currency" | "percent" = "number") {
+  if (value === undefined || !Number.isFinite(value)) return "No disponible";
+  return value.toLocaleString("es-ES", format === "currency" ? { style: "currency", currency: "EUR" }
+    : format === "percent" ? { style: "percent", maximumFractionDigits: 2 } : { maximumFractionDigits: 2 });
+}
 export default function Analytics() {
   const [days, setDays] = useState(30);
   const [data, setData] = useState<Summary | null>(null);
@@ -33,9 +38,10 @@ export default function Analytics() {
     {data && <>
       <h2>Datos medidos por GA4</h2><p>Solo visitas con consentimiento. Informes hasta ayer; pueden incluir retrasos de procesamiento. Las compras medidas no sustituyen a las ventas reales de Stripe.</p>
       {data.ga4?.status === "available" ? <>
-        <div class="admin-metrics">{["Usuarios activos", "Sesiones", "Vistas", "Compras medidas", "Ingresos medidos (EUR)"].map((label,i)=><div key={label}><span>{label}</span><strong>{(data.ga4?.totals[0]?.metrics[i] ?? 0).toLocaleString("es-ES",{maximumFractionDigits:2})}</strong></div>)}</div>
+        <div class="admin-metrics">{["Usuarios activos", "Sesiones", "Vistas", "Compras medidas", "Ingresos medidos", "Usuarios que compran"].map((label,i)=><div key={label}><span>{label}</span><strong>{formatAnalyticsMetric(data.ga4?.totals[0]?.metrics[i] ?? (data.ga4?.totals.length === 0 ? 0 : undefined), i === 4 ? "currency" : i === 5 ? "percent" : "number")}</strong></div>)}</div>
+        <p>Conversión: porcentaje de usuarios activos medidos que compraron. Los ingresos de GA4 excluyen el IVA y el envío registrados aparte; no equivalen al importe cobrado por Stripe.</p>
         {(data.ga4.truncated || data.ga4.thresholded) && <p role="note">Resultados limitados o sujetos a umbrales de privacidad de Google.</p>}
-        {([["Fuentes y campañas", data.ga4.traffic, ["Fuente / medio", "Campaña", "Sesiones", "Usuarios", "Compras medidas"]], ["Dispositivos", data.ga4.devices, ["Dispositivo", "Sesiones", "Usuarios", "Compras medidas"]], ["Páginas", data.ga4.pages, ["Ruta", "Título", "Vistas", "Usuarios"]], ["Eventos ecommerce y actividad", data.ga4.events, ["Evento", "Veces", "Usuarios"]]] as [string,Ga4Row[],string[]][]).map(([title,values,labels])=><div key={title}><h3>{title}</h3><div class="admin-table-wrap"><table><thead><tr>{labels.map(label=><th key={label}>{label}</th>)}</tr></thead><tbody>{values.map((row,i)=><tr key={i}>{[...row.dimensions,...row.metrics].map((value,j)=><td key={j}>{value}</td>)}</tr>)}{!values.length&&<tr><td colSpan={labels.length}>Sin datos medidos en este periodo.</td></tr>}</tbody></table></div></div>)}
+        {([["Fuentes y campañas", data.ga4.traffic, ["Fuente / medio", "Campaña", "Sesiones", "Usuarios", "Compras medidas", "Ingresos medidos", "Usuarios que compran"]], ["Dispositivos", data.ga4.devices, ["Dispositivo", "Sesiones", "Usuarios", "Compras medidas", "Ingresos medidos", "Usuarios que compran"]], ["Páginas", data.ga4.pages, ["Ruta", "Título", "Vistas", "Usuarios"]], ["Eventos ecommerce y actividad", data.ga4.events, ["Evento", "Veces", "Usuarios"]]] as [string,Ga4Row[],string[]][]).map(([title,values,labels])=><div key={title}><h3>{title}</h3><div class="admin-table-wrap"><table><thead><tr>{labels.map(label=><th key={label}>{label}</th>)}</tr></thead><tbody>{values.map((row,i)=><tr key={i}>{row.dimensions.map((value,j)=><td key={`dimension-${j}`}>{value}</td>)}{labels.slice(row.dimensions.length).map((label,j)=><td key={`metric-${j}`}>{formatAnalyticsMetric(row.metrics[j], label === "Ingresos medidos" ? "currency" : label === "Usuarios que compran" ? "percent" : "number")}</td>)}</tr>)}{!values.length&&<tr><td colSpan={labels.length}>Sin datos medidos en este periodo.</td></tr>}</tbody></table></div></div>)}
       </> : <p role="status">{data.ga4?.status === "not_configured" ? "Conexión de servidor a GA4 pendiente de credenciales de lectura." : "Los informes de GA4 no están disponibles. La actividad local sigue accesible."}</p>}
       <h2>Interacciones locales consentidas</h2>
       <div class="admin-metrics">{[["Visitas registradas", "page_view"], ["Clics", "click"], ["Scroll 50%", "scroll_50"], ["Scroll 90%", "scroll_90"]].map(([label, name]) => <div key={name}><span>{label}</span><strong>{totals(name).toLocaleString("es-ES")}</strong></div>)}</div>

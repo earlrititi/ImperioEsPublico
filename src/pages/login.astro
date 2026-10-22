@@ -4,6 +4,7 @@ import PasswordField from "../components/PasswordField.astro";
 import { authError, privateAuthHeaders, readAuthForm, validEmail } from "../lib/auth-forms";
 import { safeInternalPath } from "../lib/redirects";
 import { createSupabaseServerClient } from "../lib/supabase/server";
+import { recordAuthAnalytics } from "../lib/auth-analytics";
 privateAuthHeaders(Astro.response.headers);
 const error = Astro.url.searchParams.get("error");
 const updated = Astro.url.searchParams.get("updated") === "1";
@@ -25,6 +26,7 @@ if (Astro.request.method === "POST") {
     if (!password || password.length > 256) return fail("credentials");
     const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
     if (signInError || !data.user) return fail("credentials");
+    recordAuthAnalytics({ cookies: Astro.cookies, request: Astro.request }, "login", "password");
     return Astro.redirect(next, 303);
   } catch (e) { return fail(authError(e)); }
 }

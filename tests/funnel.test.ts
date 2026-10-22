@@ -18,6 +18,19 @@ test("funnel attrition uses one cohort, ignores incomplete stage paths and exclu
   assert.equal(f.inProgress,1);assert.equal(f.stages[0].lost,1);assert.equal(f.stages[1].lost,1);
   assert.equal(f.incompletePaths,1);
   assert.equal(f.stages[4].count,1);assert.equal(f.largest?.label,"Entrada");
+  assert.equal(f.stages[4].lost,0,"The terminal step is never an abandonment");
+});
+
+test("commercial diagnosis reuses cohort rules and includes newsletter without inventing missing stages",()=>{
+  const script=readFileSync(new URL("../scripts/audit-commercial.mjs",import.meta.url),"utf8");
+  assert.match(script,/summarizeFunnel\(flows, asOf\)/);
+  const now=Date.parse("2026-10-22T12:00:00Z");
+  const results=summarizeFunnel([{id:"a",flow:"newsletter",stages:[0,4],created_at:"2026-10-22T10:00:00Z",last_seen_at:"2026-10-22T10:00:00Z"}],now);
+  const newsletter=results.find(item=>item.flow==="newsletter")!;
+  assert.equal(newsletter.incompletePaths,1);
+  assert.equal(newsletter.largest,null);
+  assert.equal(newsletter.stages[4].lost,0);
+  assert.equal(newsletter.stages[4].count,0);
 });
 
 test("noindex is not a consent or funnel exclusion and tall forms can become visible",()=>{

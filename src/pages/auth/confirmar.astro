@@ -4,6 +4,7 @@ import PageShell from "../../layouts/PageShell.astro";
 import { authError, privateAuthHeaders, readAuthForm } from "../../lib/auth-forms";
 import { safeInternalPath } from "../../lib/redirects";
 import { createSupabaseServerClient } from "../../lib/supabase/server";
+import { recordAuthAnalytics } from "../../lib/auth-analytics";
 
 privateAuthHeaders(Astro.response.headers);
 
@@ -27,6 +28,9 @@ if (Astro.request.method === "POST") {
     const supabase = createSupabaseServerClient({ cookies: Astro.cookies, request: Astro.request });
     const result = await supabase.auth.verifyOtp({ token_hash: tokenHash, type });
     if (result.error) throw new Error("invalid_token");
+    if (result.data.user && ["magiclink", "email"].includes(type)) {
+      recordAuthAnalytics({ cookies: Astro.cookies, request: Astro.request }, "login", "magic_link");
+    }
 
     return Astro.redirect(next, 303);
   } catch (confirmationError) {

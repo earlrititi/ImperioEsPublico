@@ -60,11 +60,13 @@ let installed = false;
 let ready = false;
 let viewed = false;
 let initialized = false;
+let authEventTracked = false;
 let configuredGtmId = "";
 let purchaseContext = false;
 let pendingPurchase: GooglePurchase | null = null;
 const queuedPurchases = new Set<string>();
 export const PURCHASE_STORAGE_KEY = "imperio_ga4_purchases";
+export const AUTH_EVENT_STORAGE_KEY = "imperio_ga4_auth_events";
 const purchaseRetention = 30 * 24 * 60 * 60 * 1000;
 
 export function googlePurchasePageFields(href: string) {
@@ -210,6 +212,23 @@ export function applyGoogleConsent(granted: boolean, id: string, gtmId = "") {
 }
 
 const publicEvents = new Set(["instagram_reserve_click", "instagram_subscription_click", "instagram_landing_view", "instagram_product_view", "meta_product_click", "reservation_started", "reservation_completed"]);
+
+export function trackConfirmedGoogleAuthEvent(event: unknown, method: unknown, consentAt: unknown, id: unknown, expiresAt: number): boolean {
+  if (authEventTracked || !installed || !allowed() || typeof event !== "string" || !["login", "sign_up"].includes(event) ||
+    typeof method !== "string" || !["password", "magic_link"].includes(method) || typeof id !== "string" || !/^[a-f0-9]{64}$/.test(id) ||
+    !Number.isSafeInteger(expiresAt) || expiresAt <= Date.now() || expiresAt > Date.now() + 5 * 60 * 1000 ||
+    readSavedConsent(LEGAL_DOCUMENT_VERSIONS.cookies)?.updatedAt !== consentAt) return false;
+  authEventTracked = true;
+  try {
+    const saved = JSON.parse(window.localStorage.getItem(AUTH_EVENT_STORAGE_KEY) ?? "[]");
+    const ledger = Array.isArray(saved) ? saved.filter(entry => /^[a-f0-9]{64}$/.test(entry?.id) &&
+      Number.isSafeInteger(entry.expiresAt) && entry.expiresAt > Date.now() && entry.expiresAt <= Date.now() + 5 * 60 * 1000).slice(-10) : [];
+    if (ledger.some(entry => entry.id === id)) return false;
+    window.localStorage.setItem(AUTH_EVENT_STORAGE_KEY, JSON.stringify([...ledger, { id, expiresAt }].slice(-10)));
+  } catch { /* In-memory deduplication still prevents repeats within this page. */ }
+  (window as AnalyticsWindow).gtag?.("event", event, { ...pageFields(), method, send_to: measurementId });
+  return true;
+}
 
 export function trackGoogleEvent(event: string, details: Record<string, string | number> = {}) {
   if (!installed || !allowed() || !publicEvents.has(event)) return;

@@ -3,6 +3,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { parseEnv } from "node:util";
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
+import { summarizeFunnel } from "../src/lib/funnel.ts";
 
 const env = parseEnv(readFileSync(".env.reservation-production.local", "utf8"));
 assert.equal(env.PUBLIC_SUPABASE_URL, "https://pjrqozlyrjgugdraoght.supabase.co");
@@ -56,7 +57,7 @@ const fixture = row => row.metadata?.readiness_check || row.metadata?.test_only 
 const realSessions = sessions.filter(row => !fixture(row));
 const reservations = await select("reservations", "created_at,status,total_quantity,total_price_snapshot,stripe_checkout_session_id,order_id");
 const attempts = await select("reservation_payment_attempts", "created_at,status,stripe_session_id");
-const orders = await select("commerce_orders", "created_at,status,total_quantity,total,currency,refunded_amount,stripe_checkout_session_id,stripe_payment_intent_id");
+const orders = await select("commerce_orders", "id,created_at,status,total_quantity,total,currency,refunded_amount,stripe_checkout_session_id,stripe_payment_intent_id");
 const variants = await select("product_variants", "sku,physical_stock,reserved_stock,sold_stock,available_stock,active", "sku");
 const runs = await select("funnel_runs", "created_at,last_seen_at,flow,stages,page");
 const interactions = await select("site_interactions", "hour,page,event,target,count", "hour");
@@ -65,6 +66,12 @@ const ledger = (await select("stripe_webhook_events", "received_at,status,event_
   .map(row => ({ ...row, created_at: row.received_at }));
 const outbox = await select("commerce_outbox", "created_at,status,kind");
 const publicSubs = await select("subscriptions", "created_at,status,user_id,stripe_subscription_id");
+const ownerNotices = await select("paid_order_admin_outbox", "order_id,status,delivery_status", "order_id");
+const automationJobs = await select("marketing_automation_jobs", "created_at,key,status,delivery_status");
+const automationRuntime = await db.from("marketing_automation_runtime").select("enabled,approved_at,enrollment_starts_at").eq("id", true).single();
+if (automationRuntime.error) throw Error(`SELECT_FAILED:marketing_automation_runtime:${automationRuntime.error.code}`);
+const eligible = await db.from("marketing_automation_enrolled_subjects").select("user_id", { head: true, count: "exact" });
+if (eligible.error) throw Error(`SELECT_FAILED:marketing_automation_enrolled_subjects:${eligible.error.code}`);
 const paidSessionIds = new Set(realSessions.filter(s => s.mode === "payment" && s.payment_status === "paid").map(s => s.id));
 const orderSessionIds = new Set(orders.map(o => o.stripe_checkout_session_id));
 const reportPeriod = since => {
@@ -73,7 +80,6 @@ const reportPeriod = since => {
   const successful = period(charges, since).filter(c => c.paid && c.status === "succeeded");
   const paidOrders = period(orders, since, "created_at");
   const flows = period(runs, since, "created_at");
-  const settled = flows.filter(r => asOf - Date.parse(r.last_seen_at) >= 1800000);
   return {
     stripe: {
       sessions: countBy(checkout, s => `${s.mode}:${s.status}:${s.payment_status}`),
@@ -98,12 +104,14 @@ const reportPeriod = since => {
       webhookEvents: countBy(period(ledger, since, "created_at"), "status"),
       transactionalOutbox: countBy(period(outbox, since, "created_at"), o => `${o.kind}:${o.status}`),
     },
-    measuredFunnel: Object.fromEntries(["shirts", "subscriptions", "manifesto"].map(flow => [flow, {
-      runs: flows.filter(r => r.flow === flow).length,
-      settledRuns: settled.filter(r => r.flow === flow).length,
-      stagesObserved: Array.from({ length: flow === "shirts" ? 6 : 5 }, (_, step) => ({ step,
-        reached: flows.filter(r => r.flow === flow && r.stages.includes(step)).length,
-        settledWithoutNextObserved: settled.filter(r => r.flow === flow && r.stages.includes(step) && !r.stages.includes(step + 1)).length,
+    measuredFunnel: Object.fromEntries(summarizeFunnel(flows, asOf).map(summary => [summary.flow, {
+      runs: flows.filter(r => r.flow === summary.flow).length,
+      inProgress: summary.inProgress,
+      incompletePaths: summary.incompletePaths,
+      largestObservedLoss: summary.largest,
+      stagesObserved: summary.stages.map((stage, step) => ({ step, label: stage.label,
+        observed: flows.filter(r => r.flow === summary.flow && r.stages.includes(step)).length,
+        reachedWithPreviousSteps: stage.count, settled: stage.settled, lost: stage.lost, lossRate: stage.lossRate,
       })),
     }])),
     measuredPageViews: interactions.filter(r => Date.parse(r.hour) >= since && r.event === "page_view")
@@ -129,6 +137,15 @@ const report = {
     firstMeasuredInteraction: interactions[0]?.hour ?? null, firstMeasuredFunnel: runs[0]?.created_at ?? null,
     excludedExplicitTestSessions: sessions.length - realSessions.length },
   last30Days: reportPeriod(cutoff), allTime: reportPeriod(0), inventory: variants,
+  notifications: {
+    ownerPaidOrders: { total: ownerNotices.length, accepted: ownerNotices.filter(row => row.status === "SENT").length,
+      delivered: ownerNotices.filter(row => row.delivery_status === "delivered").length,
+      pendingOrFailed: ownerNotices.filter(row => row.status !== "SENT").length,
+      paidOrdersWithoutNotice: orders.filter(order => !ownerNotices.some(notice => notice.order_id === order.id)).length },
+    marketing: { databaseApproval: automationRuntime.data, eligibleAccounts: eligible.count,
+      jobs: countBy(automationJobs, row => `${row.key}:${row.status}:${row.delivery_status ?? "not_sent"}`),
+      limit: "Database approval is not proof of current server flags, template approval or actual delivery." },
+  },
   reconciliation: {
     paidShirtSessionsWithoutOrder: [...paidSessionIds].filter(id => !orderSessionIds.has(id)).length,
     ordersWithoutPaidStripeSession: orders.filter(o => !paidSessionIds.has(o.stripe_checkout_session_id)).length,
@@ -141,4 +158,4 @@ mkdirSync("tmp/commercial-audit", { recursive: true });
 const path = `tmp/commercial-audit/${report.asOf.slice(0, 10)}.json`;
 writeFileSync(path, JSON.stringify(report, null, 2), { mode: 0o600 });
 console.log(JSON.stringify({ path, configuration: report.configuration, history: report.history,
-  last30Days: report.last30Days, allTime: report.allTime, reconciliation: report.reconciliation }, null, 2));
+  last30Days: report.last30Days, allTime: report.allTime, reconciliation: report.reconciliation, notifications: report.notifications }, null, 2));

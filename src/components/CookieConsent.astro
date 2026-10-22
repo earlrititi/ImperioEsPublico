@@ -1,6 +1,14 @@
 ---
 import { ANALYTICS } from "../config/analytics";
 import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
+import { AUTH_ANALYTICS_COOKIE, consumeAuthAnalytics } from "../lib/auth-analytics";
+const hasAuthMarker = !Astro.isPrerendered && Astro.cookies.has(AUTH_ANALYTICS_COOKIE);
+const authAction = hasAuthMarker ? consumeAuthAnalytics({ cookies: Astro.cookies, request: Astro.request }) : null;
+if (hasAuthMarker) {
+  Astro.response.headers.set("Cache-Control", "private, no-store");
+  Astro.response.headers.set("CDN-Cache-Control", "no-store");
+  Astro.response.headers.set("Vercel-CDN-Cache-Control", "no-store");
+}
 ---
 
 <div
@@ -9,6 +17,11 @@ import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
   data-version={LEGAL_DOCUMENT_VERSIONS.cookies}
   data-gtm-id={ANALYTICS.gtmId}
   data-google-tag-id={ANALYTICS.googleTagId}
+  data-auth-event={authAction?.event}
+  data-auth-method={authAction?.method}
+  data-auth-consent-at={authAction?.consentAt}
+  data-auth-event-id={authAction?.id}
+  data-auth-expires-at={authAction?.expiresAt}
 >
   <section
     class="cookie-banner"
@@ -85,7 +98,7 @@ import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
   // @ts-nocheck
   import { CONSENT_KEY, readSavedConsent, saveConsent } from "../lib/cookie-consent";
   import { applyMetaConsent } from "../lib/meta-pixel";
-  import { applyGoogleConsent, PURCHASE_STORAGE_KEY } from "../lib/google-analytics";
+  import { applyGoogleConsent, PURCHASE_STORAGE_KEY, AUTH_EVENT_STORAGE_KEY, trackConfirmedGoogleAuthEvent } from "../lib/google-analytics";
   (() => {
     const root = document.querySelector("[data-cookie-consent]");
     if (!(root instanceof HTMLElement)) return;
@@ -166,6 +179,7 @@ import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
 
     const setGoogleConsent = (granted) => {
       applyGoogleConsent(granted, googleTagId, gtmId);
+      if (granted) trackConfirmedGoogleAuthEvent(root.dataset.authEvent, root.dataset.authMethod, root.dataset.authConsentAt, root.dataset.authEventId, Number(root.dataset.authExpiresAt));
     };
 
     const loadAnalytics = () => {
@@ -174,6 +188,7 @@ import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
 
     const deleteAnalyticsCookies = () => {
       try { window.localStorage.removeItem(PURCHASE_STORAGE_KEY); } catch {}
+      try { window.localStorage.removeItem(AUTH_EVENT_STORAGE_KEY); } catch {}
       const hostname = window.location.hostname;
       const names = document.cookie
         .split(";")

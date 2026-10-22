@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import { database, failure, limited, privateJson, requestBody, requireAdmin, rpc } from "../../../lib/reservations";
-import { AUTOMATION_DEFAULTS, personalizeAutomation, validateAutomationDraft } from "../../../lib/email-automations";
+import { AUTOMATION_DEFAULTS, campaignAutomationMail, personalizeAutomation, validateAutomationDraft } from "../../../lib/email-automations";
 import { renderAdminMail } from "../../../lib/admin-mail-template";
 import { automationRuntimeActive } from "../../../lib/automation-worker";
 export const prerender = false;
@@ -24,7 +24,8 @@ export const POST: APIRoute = async context => {
     const steps = validateAutomationDraft(body.key, body.steps);
     if (body.action === "preview") {
       if (!Number.isInteger(body.step) || !steps[body.step]) throw Error("INVALID_INPUT");
-      return privateJson(renderAdminMail(personalizeAutomation(steps[body.step].mail, "Lector"), "https://imperioes.com/comunicaciones/baja", true));
+      const mail = campaignAutomationMail(personalizeAutomation(steps[body.step].mail, "Lector"), body.key, steps[body.step].id);
+      return privateJson(renderAdminMail(mail, "https://imperioes.com/comunicaciones/baja", true));
     }
     if (body.action !== "save" || !Number.isInteger(body.revision) || body.revision < 0) throw Error("INVALID_INPUT");
     const revision = await rpc("save_marketing_automation_draft", { p_key: body.key, p_actor: user.id, p_revision: body.revision, p_steps: steps });

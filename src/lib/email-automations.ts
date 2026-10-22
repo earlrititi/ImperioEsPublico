@@ -1,4 +1,5 @@
 import { validateMail, type MailContent } from "./admin-mail-template";
+import { canTrackGooglePage } from "./google-analytics";
 
 export const AUTOMATION_KEYS = ["welcome", "checkout", "viewed_product", "site", "placed_order", "cart"] as const;
 export type AutomationKey = typeof AUTOMATION_KEYS[number];
@@ -54,6 +55,17 @@ export function validateAutomationDraft(key: unknown, input: unknown): Automatio
 export function personalizeAutomation(content: MailContent, name: string): MailContent {
   const safeName = name.replace(/[\r\n\u0000-\u001f\u007f]/g, " ").trim().slice(0, 100) || "lector";
   return validateMail(Object.fromEntries(Object.entries(content).map(([key, value]) => [key, value.replaceAll("{{nombre}}", safeName)])));
+}
+
+export function campaignAutomationMail(content: MailContent, key: unknown, stepId: unknown): MailContent {
+  const definition = AUTOMATION_DEFAULTS.find(item => item.key === key && item.key !== "placed_order");
+  if (!definition?.steps.some(item => item.id === stepId) || !canTrackGooglePage(content.cta_url)) return content;
+  const url = new URL(content.cta_url);
+  url.searchParams.set("utm_source", "imperio_newsletter");
+  url.searchParams.set("utm_medium", "email");
+  url.searchParams.set("utm_campaign", `imperio_${definition.key}`);
+  url.searchParams.set("utm_content", String(stepId));
+  return url.href.length <= 500 ? { ...content, cta_url: url.href } : content;
 }
 
 // Server-verified facts only. Browser events must never establish identity or a purchase.

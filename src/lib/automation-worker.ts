@@ -2,7 +2,7 @@ import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
 import { SITE } from "../config/site";
 import { getRequiredEnv } from "./env";
 import { database, hash, optionalEnv, rpc } from "./reservations";
-import { AUTOMATION_DEFAULTS, personalizeAutomation, planAutomation, validateAutomationDraft, type AutomationFacts, type AutomationSent } from "./email-automations";
+import { AUTOMATION_DEFAULTS, campaignAutomationMail, personalizeAutomation, planAutomation, validateAutomationDraft, type AutomationFacts, type AutomationSent } from "./email-automations";
 import { renderAdminMail } from "./admin-mail-template";
 import { unsubscribeToken } from "./admin-mail";
 import { assertMailRecipient } from "./mail-delivery";
@@ -109,7 +109,8 @@ export async function runMarketingAutomations(limit = 10) {
       const recipient = mode === "test" ? getRequiredEnv("COMMERCE_TEST_EMAIL") : subject.email;
       let payload = job.provider_payload;
       if (!payload) {
-        const mail = personalizeAutomation(step.mail, subject.name), unsubscribe = `${SITE.url}/comunicaciones/baja?token=${unsubscribeToken(subject.email)}`;
+        const mail = campaignAutomationMail(personalizeAutomation(step.mail, subject.name), job.key, job.step);
+        const unsubscribe = `${SITE.url}/comunicaciones/baja?token=${unsubscribeToken(subject.email)}`;
         payload = { from: `Imperio E <${SITE.contactEmail}>`, replyTo: SITE.contactEmail, to: recipient, subject: mail.subject,
           ...renderAdminMail(mail, unsubscribe, true), headers: { "List-Unsubscribe": `<${unsubscribe}>` } };
         const saved = await db.from("marketing_automation_jobs").update({ provider_payload: payload }).eq("id", job.id).eq("claim_id", job.claim_id)

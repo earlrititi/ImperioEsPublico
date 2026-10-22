@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import { database, failure, limited, privateJson, requireAdmin } from "../../../lib/reservations";
 import { automationRuntimeActive } from "../../../lib/automation-worker";
+import { automationRevenue, ga4Summary } from "../../../lib/ga4-reports";
 export const prerender = false;
 export const GET: APIRoute = async context => {
   try {
@@ -10,6 +11,6 @@ export const GET: APIRoute = async context => {
     if (result.error) throw Error("DATABASE_UNAVAILABLE");
     const runtime=await (await database()).from("marketing_automation_runtime").select("enrollment_starts_at").eq("id",true).single();
     return privateJson({ runtimeReady: true, sendsEnabled: await automationRuntimeActive(), items: result.data,
-      enrollmentStartsAt:runtime.error?null:runtime.data.enrollment_starts_at,attributedRevenue: null });
+      enrollmentStartsAt:runtime.error?null:runtime.data.enrollment_starts_at,attributedRevenue: automationRevenue(await ga4Summary(30)) });
   } catch (error) { return failure(error); }
 };

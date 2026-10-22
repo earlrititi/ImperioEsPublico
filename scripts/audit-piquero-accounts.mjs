@@ -43,6 +43,6 @@ const summary = { checkedAt: new Date().toISOString(), readOnly: true, authUsers
     'Unconfirmed email can reflect delivery trouble, not abuse.', 'No IP, device fingerprint, CAPTCHA verdict or external Auth logs inspected.',
     'free_plan=piquero is a profile field, not evidence about paid subscription status.'] };
 mkdirSync('tmp/commercial-audit', { recursive: true });
-const path = 'tmp/commercial-audit/piquero-review-2026-10-17.json';
+const path = `tmp/commercial-audit/piquero-review-${summary.checkedAt.slice(0, 10)}.json`;
 writeFileSync(path, JSON.stringify({ ...summary, accounts }, null, 2), { mode: 0o600 });
 console.log(JSON.stringify({ path, ...summary }));

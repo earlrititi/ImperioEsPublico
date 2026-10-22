@@ -46,6 +46,13 @@ import { ANALYTICS } from "../../config/analytics";
       <code>imperio_ga4_purchases</code>: hasta 40 identificadores opacos de compras
       medidas, sin nombre, email ni direccion, para evitar repetirlas al recargar.
       Cada entrada caduca a los 30 dias y se elimina al retirar analitica.
+      Con consentimiento analitico previo, <code>imperio_auth_analytics</code>
+      conserva durante un maximo de cinco minutos el tipo de alta o acceso confirmado,
+      sin identificar a la persona. Es una cookie propia, firmada y HttpOnly.
+      Se consume al volver a una pagina publica para medir una sola accion,
+      y se descarta si el consentimiento ha cambiado. No activa Google en paginas privadas.
+      <code>imperio_ga4_auth_events</code> guarda localmente hasta diez referencias
+      opacas durante esos cinco minutos para evitar repeticiones; se elimina al retirar analitica.
       Google Analytics 4 mide visitas a paginas publicas solo tras aceptar analitica.
       No se carga en cuenta, administracion, autenticacion, checkout o gestion privada.
       Como excepcion, en el retorno limpio de una compra confirmada por el servidor
@@ -63,7 +70,7 @@ import { ANALYTICS } from "../../config/analytics";
   <section>
     <h2>4. Cambiar o retirar el consentimiento</h2>
     <p>Aplicamos la modalidad basica de Consent Mode: antes de aceptar analitica no cargamos GA4 ni GTM ni enviamos pings sin cookies a estas herramientas. Rechazar o seguir navegando no activa la analitica. Los permisos publicitarios de Google permanecen denegados.</p>
-    <p>El interruptor de analitica del pie de pagina cambia solo esa finalidad. El boton Modificar permite cambiar por separado marketing. Al revocar analitica detenemos eventos, eliminamos las cookies propias de GA4 que podemos controlar y recargamos la pagina para descargar las herramientas previamente cargadas. La compra y el inicio de sesion no dependen de esa eleccion.</p>
+    <p>El interruptor de analitica del pie de pagina cambia solo esa finalidad. El boton Modificar permite cambiar por separado marketing. Al revocar analitica detenemos eventos, eliminamos las cookies propias de GA4 que podemos controlar y recargamos la pagina para descargar las herramientas previamente cargadas. El marcador temporal de acceso se descarta al registrar la retirada o al volver a una pagina publica y, en cualquier caso, caduca en cinco minutos. La compra y el inicio de sesion no dependen de esa eleccion.</p>
     <p>Meta puede recibir la URL publica visitada, identificadores del navegador, direccion IP y eventos de producto. No enviamos campos de formularios, correos, direcciones de entrega ni enlaces privados. El pixel se limita a las paginas publicas de camiseta y reserva; no se carga en cuenta, administracion o gestion privada. La coincidencia avanzada y la captura automatica de formularios no se habilitan.</p>
     <p>Las cookies propias <code>_fbp</code> y <code>_fbc</code> de Meta pueden conservarse hasta 90 dias. Se eliminan del dominio al retirar marketing y se bloquean nuevos eventos. Consulta la <a href="https://www.facebook.com/privacy/policies/cookies/" rel="noopener noreferrer">politica de cookies de Meta</a>.</p>
     <p>

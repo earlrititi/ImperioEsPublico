@@ -127,7 +127,7 @@ export const POST: APIRoute = async ({ request }) => {
     const kind = newsletter ? "newsletter" : "manifesto";
 
     if (
-      (!newsletter && (!firstName || !lastName)) ||
+      (!newsletter && !firstName) ||
       !UUID_PATTERN.test(anonymousId) ||
       !UUID_PATTERN.test(requestId) ||
       !privacyAcknowledged

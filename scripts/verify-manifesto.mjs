@@ -28,9 +28,10 @@ globalThis.fetch=async(input,options)=>{
 const dir=new URL('../.vercel/output/functions/_render.func/dist/server/chunks/',import.meta.url);
 const file=readdirSync(dir).find(n=>n.startsWith('manifesto_')&&n.endsWith('.mjs'));assert.ok(file);
 const {page:load}=await import(new URL(file,dir));const page=load();
-const payload={firstName:'Test',lastName:'Only',email:'test@example.invalid',anonymousId:randomUUID(),requestId:randomUUID(),privacyAcknowledged:true,source:'fixture'};
+const payload={firstName:'Test',email:'test@example.invalid',anonymousId:randomUUID(),requestId:randomUUID(),privacyAcknowledged:true,source:'fixture'};
 const post=body=>page.POST({request:new Request('https://imperioes.com/api/manifesto.php',{method:'POST',headers:{'Content-Type':'application/json',Origin:'https://imperioes.com'},body:JSON.stringify(body)})});
 assert.equal((await post(payload)).status,200);assert.equal(rows.get(payload.requestId).status,'accepted');
+assert.equal(rows.get(payload.requestId).name,'Test');assert.ok(sends.find(s=>s.subject==='Tu manifiesto de Imperio Espanol').text.startsWith('Hola Test,'));
 assert.equal(consents.length,1);assert.equal(consents[0].context_id,payload.requestId);assert.equal(consents[0].consent_type,'privacy_acknowledgement');
 assert.ok(sends.every(s=>s.to.includes('sink@example.invalid')));
 const resources=()=>sends.filter(s=>s.subject==='Tu manifiesto de Imperio Espanol').length;
@@ -41,6 +42,9 @@ assert.equal((await post(marketing)).status,502);assert.equal(rows.get(marketing
 assert.ok(consents.some(c=>c.context_id===marketing.requestId&&c.consent_type==='marketing_email'));
 fail=false;noticeFailed=true;assert.equal((await post(marketing)).status,500);assert.equal(rows.get(marketing.requestId).status,'accepted');
 const count=resources();noticeFailed=false;assert.equal((await post(marketing)).status,200);assert.equal(resources(),count,'Owner-notice retry cannot resend the resource');
+assert.equal((await post({...payload,requestId:randomUUID(),firstName:'   '})).status,400,'Manifesto still requires a name');
+const legacy={...payload,requestId:randomUUID(),lastName:'Optional'};
+assert.equal((await post(legacy)).status,200);assert.equal(rows.get(legacy.requestId).name,'Test Optional','Cached older forms remain compatible');
 const news={email:'newsletter@example.invalid',requestId:randomUUID(),anonymousId:randomUUID(),resource:'seven_stories',consentAction:'newsletter_pdf',privacyAcknowledged:true,marketingConsent:true};
 assert.equal((await post({...news,marketingConsent:false})).status,400);
 assert.equal((await post({...news,consentAction:'download'})).status,400);

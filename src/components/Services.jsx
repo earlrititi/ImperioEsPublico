@@ -45,7 +45,6 @@ const SERVICE_CARD_MEDIA = {
 export default function Services() {
   const [isManifestFormOpen, setIsManifestFormOpen] = useState(false);
   const [manifestFirstName, setManifestFirstName] = useState("");
-  const [manifestLastName, setManifestLastName] = useState("");
   const [manifestEmail, setManifestEmail] = useState("");
   const [manifestCompany, setManifestCompany] = useState("");
   const [manifestPrivacy, setManifestPrivacy] = useState(false);
@@ -57,7 +56,6 @@ export default function Services() {
   const manifestFirstNameInputRef = useRef(null);
   const isManifestFormReady = Boolean(
     manifestPrivacy && manifestFirstName.trim() &&
-      manifestLastName.trim() &&
       /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(manifestEmail.trim())
   );
 
@@ -229,7 +227,6 @@ export default function Services() {
         },
         body: JSON.stringify({
           firstName: manifestFirstName,
-          lastName: manifestLastName,
           email: manifestEmail,
           company: manifestCompany,
           source: "home",
@@ -249,7 +246,6 @@ export default function Services() {
       void trackFunnel("manifesto",4);
       manifestRequestIdRef.current = null;
       setManifestFirstName("");
-      setManifestLastName("");
       setManifestEmail("");
       setManifestCompany("");
       setManifestMarketing(false);
@@ -438,18 +434,6 @@ export default function Services() {
                       maxlength={80}
                       value={manifestFirstName}
                       onInput={(event) => setManifestFirstName(event.currentTarget.value)}
-                      required
-                    />
-                    <input
-                      class="services-manifest-modal__field"
-                      type="text"
-                      name="lastName"
-                      placeholder="Apellidos"
-                      aria-label="Apellidos"
-                      autocomplete="family-name"
-                      maxlength={80}
-                      value={manifestLastName}
-                      onInput={(event) => setManifestLastName(event.currentTarget.value)}
                       required
                     />
                     <input

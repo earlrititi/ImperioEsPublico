@@ -1,15 +1,23 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import { parseEnv } from "node:util";
 import { parse } from "parse5";
 
 // No live authentication, payment, analytics or database calls are permitted.
-const local = fs.existsSync(".env.local") ? parseEnv(fs.readFileSync(".env.local", "utf8")) : {};
-process.env.PUBLIC_SUPABASE_URL = local.PUBLIC_SUPABASE_URL || "https://fixture.supabase.co";
+process.env.PUBLIC_SUPABASE_URL = "https://fixture.supabase.co";
 process.env.PUBLIC_SUPABASE_ANON_KEY = "fixture-anon";
 process.env.SUPABASE_SERVICE_ROLE_KEY = "fixture-service-role";
-globalThis.fetch = async () => { throw new Error("Unexpected network call in SEO fixture"); };
+globalThis.fetch = async (input, init) => {
+  const request = input instanceof Request ? input : new Request(input, init);
+  const url = new URL(request.url);
+  if (url.pathname === "/rest/v1/cms_articles" && request.method === "GET") {
+    return new Response("[]", {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+  throw new Error(`Unexpected network call in SEO fixture: ${request.method} ${url.origin}${url.pathname}`);
+};
 const { default: app } = await import("../.vercel/output/functions/_render.func/dist/server/entry.mjs");
 const origin = "https://imperioes.com";
 const report = { pages: [], editorialPending: [], checkedAssets: 0 };
@@ -93,6 +101,18 @@ for (const route of ["/archivo", "/foro", "/comunidad", "/biblioteca", "/ensayos
 }
 assert.ok(locations.includes(`${origin}/politica-editorial`));
 assert.ok(locations.includes(`${origin}/autores/imperio-espanol`));
+assert.ok(locations.includes(`${origin}/imperio-espanol`));
+const pillar = await request("/imperio-espanol");
+const pillarDoc = parse(pillar.body);
+assert.equal(text(find(pillarDoc, "title")[0]).trim(), "Imperio español: historia, mapa, territorios y legado | Imperio E");
+assert.equal(text(find(pillarDoc, "h1")[0]).trim(), "Imperio español: historia, territorios y legado");
+for (const id of ["definicion", "formacion", "territorios", "gobierno", "economia", "conflictos", "crisis", "cronologia", "preguntas", "fuentes"]) {
+  assert.equal(find(pillarDoc, "section", "id", id).length, 1, `Pillar section missing: ${id}`);
+}
+assert.ok(pillar.body.includes("Monarquía compuesta"));
+assert.ok(pillar.body.includes("Ministerio de Cultura"));
+assert.ok(pillar.body.includes("FAQPage"));
+assert.equal(find(pillarDoc, "div", "data-tshirt-lead", "").length, 0, "Commercial popup must not interrupt the pillar");
 const policy = await request("/politica-editorial");
 assert.ok(policy.body.includes("No se pueden garantizar las citas de una IA"));
 assert.ok(policy.body.includes("https://developers.google.com/search/docs/appearance/ai-features"));

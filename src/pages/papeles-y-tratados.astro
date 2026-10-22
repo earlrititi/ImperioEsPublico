@@ -20,7 +20,10 @@ const imageSizes = "(max-width: 720px) calc(100vw - 32px), (max-width: 1100px) 4
     <div class="papers-page__dots" aria-hidden="true"></div>
 
     <header class="papers-head">
-      <h1>Papeles y<br />tratados</h1>
+      <div class="papers-head__title">
+        <h1>Papeles y<br />tratados</h1>
+        <a href="/imperio-espanol">Guía del Imperio español</a>
+      </div>
 
       <div class="papers-tools" id="papers-filters">
         <div class="papers-filters" role="group" aria-label="Filtrar artículos por categoría">
@@ -254,6 +257,20 @@ const imageSizes = "(max-width: 720px) calc(100vw - 32px), (max-width: 1100px) 4
     font: 600 clamp(2.45rem, 4vw, 4.1rem) / 0.94 var(--font-body);
     letter-spacing: 0;
     text-transform: uppercase;
+  }
+
+  .papers-head__title a {
+    display: inline-block;
+    margin-top: 1.4rem;
+    color: #a2a4a3;
+    font: 600 0.82rem/1.4 var(--font-body);
+    text-decoration-color: #f2381e;
+    text-underline-offset: 5px;
+  }
+
+  .papers-head__title a:hover,
+  .papers-head__title a:focus-visible {
+    color: #f2381e;
   }
 
   .papers-tools {

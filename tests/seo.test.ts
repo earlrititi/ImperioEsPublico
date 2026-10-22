@@ -71,6 +71,10 @@ test("unfinished and private destinations are not in the static sitemap allowlis
   }
 });
 
+test("the Imperio español pillar is an approved indexable destination", () => {
+  assert.ok(INDEXABLE_STATIC_ROUTES.includes("/imperio-espanol"));
+});
+
 test("reference pages only link existing catalogue entries and do not replace existing routes", () => {
   const slugs = new Set(ARTICLES_ITEMS.map(article => article.slug));
   const reserved = readdirSync("src/pages").filter(name => !name.startsWith("[")).map(name => name.replace(/\.astro$/, ""));

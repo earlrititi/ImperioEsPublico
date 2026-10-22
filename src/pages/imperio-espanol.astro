@@ -1,0 +1,279 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { SITE } from "../config/site";
+import {
+  IMPERIO_ESPANOL_CHRONOLOGY,
+  IMPERIO_ESPANOL_FAQ,
+  IMPERIO_ESPANOL_META,
+  IMPERIO_ESPANOL_RELATED,
+  IMPERIO_ESPANOL_SOURCES,
+} from "../config/imperio-espanol";
+import { breadcrumbs, canonicalUrl } from "../lib/seo";
+
+const pageUrl = canonicalUrl(IMPERIO_ESPANOL_META.canonicalPath);
+const historicalEntityId = `${pageUrl}#entidad-historica`;
+const structuredData = [
+  breadcrumbs([
+    { name: "Inicio", path: "/" },
+    { name: "Imperio español", path: IMPERIO_ESPANOL_META.canonicalPath },
+  ]),
+  {
+    "@type": "DefinedTerm",
+    "@id": historicalEntityId,
+    name: "Imperio español",
+    description: "Monarquía compuesta y conjunto histórico cambiante de reinos, territorios y dominios vinculados a la Corona española.",
+    url: pageUrl,
+    inLanguage: "es",
+  },
+  {
+    "@type": "FAQPage",
+    "@id": `${pageUrl}#preguntas`,
+    mainEntity: IMPERIO_ESPANOL_FAQ.map(item => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: { "@type": "Answer", text: item.answer },
+    })),
+  },
+];
+---
+
+<Layout
+  title={IMPERIO_ESPANOL_META.title}
+  description={IMPERIO_ESPANOL_META.description}
+  exactTitle
+  footerVariant="dark"
+  ogImage="/images/articulos/PRINCIPAL - El imperio donde nunca se pone el sol-1408.webp"
+  structuredData={structuredData}
+>
+  <main class="empire-pillar" data-home-mark-surface="black">
+    <header class="empire-hero">
+      <picture class="empire-hero__media">
+        <source media="(max-width: 720px)" type="image/avif" srcset="/images/articulos/PRINCIPAL - El imperio donde nunca se pone el sol-768.avif" />
+        <source type="image/avif" srcset="/images/articulos/PRINCIPAL - El imperio donde nunca se pone el sol-1408.avif" />
+        <img src="/images/articulos/PRINCIPAL - El imperio donde nunca se pone el sol-1408.webp" alt="Representación del alcance global de la Monarquía Hispánica" width="1408" height="768" fetchpriority="high" decoding="async" />
+      </picture>
+      <div class="empire-hero__shade" aria-hidden="true"></div>
+      <div class="empire-hero__content">
+        <nav class="empire-breadcrumbs" aria-label="Migas de pan"><a href="/">Inicio</a><span aria-hidden="true">/</span><span aria-current="page">Imperio español</span></nav>
+        <p class="empire-kicker">Guía histórica de referencia</p>
+        <h1>{IMPERIO_ESPANOL_META.heading}</h1>
+        <p class="empire-hero__lead">Una síntesis documentada para entender qué fue, cómo se organizó, hasta dónde llegó y por qué su legado continúa siendo objeto de estudio y debate.</p>
+        <p class="empire-byline">Edición: <a href="/autores/imperio-espanol">{SITE.name}</a></p>
+      </div>
+    </header>
+
+    <div class="empire-layout">
+      <aside class="empire-index" aria-label="Índice de la guía">
+        <p>En esta guía</p>
+        <ol>
+          <li><a href="#definicion">Qué fue</a></li>
+          <li><a href="#formacion">Formación y expansión</a></li>
+          <li><a href="#territorios">Territorios y mapas</a></li>
+          <li><a href="#gobierno">Gobierno y sociedad</a></li>
+          <li><a href="#economia">Comercio y cultura</a></li>
+          <li><a href="#conflictos">Ejército y controversias</a></li>
+          <li><a href="#crisis">Crisis e independencias</a></li>
+          <li><a href="#cronologia">Cronología</a></li>
+          <li><a href="#preguntas">Preguntas frecuentes</a></li>
+          <li><a href="#fuentes">Fuentes</a></li>
+        </ol>
+      </aside>
+
+      <article class="empire-article">
+        <section id="definicion" class="empire-section empire-section--answer" aria-labelledby="definicion-title">
+          <p class="empire-section__label">Respuesta breve</p>
+          <h2 id="definicion-title">¿Qué fue el Imperio español?</h2>
+          <p><strong>El Imperio español fue un conjunto cambiante de reinos, territorios y dominios vinculados a la Monarquía Hispánica entre finales del siglo XV y la Edad Contemporánea.</strong> Se extendió por Europa, América, Asia-Pacífico y África, pero no funcionó como un Estado uniforme: sus territorios conservaron diferentes leyes, instituciones y relaciones con la Corona.</p>
+          <div class="empire-facts" aria-label="Datos esenciales">
+            <div><span>Periodo</span><strong>c. 1492-1898</strong><small>Convención útil, no frontera indiscutida</small></div>
+            <div><span>Forma política</span><strong>Monarquía compuesta</strong><small>Reinos y dominios bajo un soberano</small></div>
+            <div><span>Dinastías</span><strong>Trastámara, Austria y Borbón</strong><small>Con cambios institucionales profundos</small></div>
+            <div><span>Escala</span><strong>Intercontinental</strong><small>Territorios no simultáneos</small></div>
+          </div>
+        </section>
+
+        <section id="formacion" class="empire-section" aria-labelledby="formacion-title">
+          <p class="empire-section__label">Orígenes</p>
+          <h2 id="formacion-title">Formación, expansión y monarcas</h2>
+          <p>La unión dinástica de Isabel de Castilla y Fernando de Aragón no fusionó sus coronas. La conquista de Granada y el viaje colombino de 1492 abrieron una nueva etapa, mientras el Tratado de Tordesillas de 1494 trató de ordenar la expansión atlántica de Castilla y Portugal.</p>
+          <p>Con Carlos I, las herencias peninsulares, borgoñonas y centroeuropeas quedaron reunidas en una misma persona. Felipe II añadió Portugal y sus dominios entre 1580 y 1640. Los Austrias gobernaron mediante consejos y virreyes; con los Borbones aumentó la centralización y se desarrollaron reformas administrativas y comerciales.</p>
+          <p>El llamado Siglo de Oro no fue una fecha única, sino un periodo cultural amplio, asociado a los siglos XVI y XVII, en el que convivieron expansión política, creación literaria y artística, conflictos militares, desigualdad y crisis.</p>
+          <a class="empire-text-link" href="/papeles-y-tratados/tratado-de-tordesillas-division-del-mundo">Leer el análisis del Tratado de Tordesillas</a>
+        </section>
+
+        <section id="territorios" class="empire-section" aria-labelledby="territorios-title">
+          <p class="empire-section__label">Geografía histórica</p>
+          <h2 id="territorios-title">Territorios y cómo leer sus mapas</h2>
+          <p>La Monarquía gobernó, en momentos distintos, territorios de la Península Ibérica, Italia y los Países Bajos; virreinatos y capitanías en América; Filipinas y otras posiciones del Pacífico; y enclaves y posesiones africanas. La composición cambió con guerras, tratados, sucesiones e independencias.</p>
+          <div class="empire-note"><strong>Regla cartográfica:</strong> ningún mapa de máxima extensión debe interpretarse como una fotografía permanente. Para comparar territorios hay que comprobar la fecha representada, la categoría jurídica y si se incluyen uniones dinásticas, áreas reclamadas o espacios efectivamente administrados.</div>
+          <figure class="empire-figure">
+            <picture>
+              <source type="image/avif" srcset="/images/articulos/magallanes-elcano-640.avif 640w, /images/articulos/magallanes-elcano-1024.avif 1024w" sizes="(max-width: 800px) 100vw, 800px" />
+              <img src="/images/articulos/magallanes-elcano-1024.webp" alt="Mapa de la ruta de la primera circunnavegación de Magallanes y Elcano" width="1024" height="519" loading="lazy" decoding="async" />
+            </picture>
+            <figcaption>Ruta de la expedición de Magallanes y Elcano, 1519-1522. Sémhur y Armando-Martin, Wikimedia Commons, CC BY-SA 3.0.</figcaption>
+          </figure>
+        </section>
+
+        <section id="gobierno" class="empire-section" aria-labelledby="gobierno-title">
+          <p class="empire-section__label">Instituciones</p>
+          <h2 id="gobierno-title">Gobierno, leyes y sociedad</h2>
+          <p>La Monarquía Hispánica se articuló mediante una corte, consejos territoriales y temáticos, virreinatos, audiencias y autoridades locales. El Consejo de Indias asesoraba al monarca y la Casa de la Contratación regulaba aspectos de la navegación y el comercio americano. La distancia obligaba a delegar y negociar de forma constante.</p>
+          <p>Los habitantes no compartían una condición jurídica idéntica. Había diferencias de reino, corporación, estamento, origen y situación personal. Las leyes indianas reconocieron derechos y obligaciones, pero su aplicación fue desigual y coexistió con conquista, trabajo forzado, esclavitud, violencia y litigios.</p>
+          <figure class="empire-figure">
+            <picture>
+              <source type="image/avif" srcset="/images/articulos/monarquia-de-reinos-640.avif 640w, /images/articulos/monarquia-de-reinos-1024.avif 1024w" sizes="(max-width: 800px) 100vw, 800px" />
+              <img src="/images/articulos/monarquia-de-reinos-1024.webp" alt="Mapa de los reinos de la Península Ibérica durante el Antiguo Régimen" width="1024" height="751" loading="lazy" decoding="async" />
+            </picture>
+            <figcaption>División territorial peninsular durante el Antiguo Régimen. Tyk, Ángel Luis Alfaro y Milenioscuro, Wikimedia Commons, CC BY-SA 4.0.</figcaption>
+          </figure>
+          <a class="empire-text-link" href="/papeles-y-tratados/una-monarquia-de-reinos-espana-siglos-xvi-xvii">Cómo funcionaba una Monarquía de reinos</a>
+        </section>
+
+        <section id="economia" class="empire-section" aria-labelledby="economia-title">
+          <p class="empire-section__label">Conexiones</p>
+          <h2 id="economia-title">Comercio, navegación, lengua y cultura</h2>
+          <p>Las flotas atlánticas, el puerto de Sevilla y después Cádiz, y el galeón de Manila conectaron circuitos europeos, americanos y asiáticos. Plata, tintes, alimentos, textiles y manufacturas circularon junto con personas, conocimientos, enfermedades y prácticas culturales. El sistema tuvo monopolios legales, contrabando y una fuerte dependencia de redes locales.</p>
+          <p>La expansión del castellano convivió con numerosas lenguas europeas, americanas y asiáticas. La evangelización, las universidades, la imprenta y la administración favorecieron traducciones y gramáticas, al tiempo que transformaron jerarquías y tradiciones. El arte y la literatura del Siglo de Oro formaron parte de intercambios más amplios que una historia exclusivamente peninsular.</p>
+          <a class="empire-text-link" href="/papeles-y-tratados/comercio-entre-espana-y-las-indias">Comercio entre España y las Indias</a>
+        </section>
+
+        <section id="conflictos" class="empire-section" aria-labelledby="conflictos-title">
+          <p class="empire-section__label">Poder y debate</p>
+          <h2 id="conflictos-title">Ejército, armada, conquista y controversias</h2>
+          <p>Los tercios, las armadas, las fortificaciones y las milicias sostuvieron campañas en escenarios muy distintos. Su eficacia dependió tanto de la organización militar como del crédito, la logística, las alianzas y los recursos de cada territorio. Batallas célebres como Lepanto, Rocroi o Cartagena de Indias no explican por sí solas la trayectoria imperial.</p>
+          <p>La conquista y colonización de América produjeron dominación, violencia, epidemias, desplazamientos y explotación, además de nuevas sociedades y marcos jurídicos. Desde el siglo XVI existieron debates sobre la legitimidad de la conquista y la condición de los pueblos indígenas. Estudiarlos exige distinguir las normas, su aplicación efectiva y las interpretaciones historiográficas posteriores.</p>
+          <p>La esclavitud y la trata atlántica también formaron parte de esta historia. Una síntesis responsable no debe ocultarlas ni reducir siglos de relaciones sociales a una sola explicación.</p>
+          <a class="empire-text-link" href="/papeles-y-tratados/carlos-v-y-la-justicia-de-la-conquista">El debate sobre la justicia de la conquista</a>
+        </section>
+
+        <section id="crisis" class="empire-section" aria-labelledby="crisis-title">
+          <p class="empire-section__label">Transformación</p>
+          <h2 id="crisis-title">Crisis, independencias y final</h2>
+          <p>La Monarquía atravesó crisis fiscales, derrotas y pérdidas territoriales sin desaparecer de una sola vez. La separación de Portugal en 1640, la Guerra de Sucesión y los tratados de Utrecht alteraron su configuración. Durante el siglo XVIII, las reformas borbónicas intentaron reforzar la autoridad y mejorar la recaudación.</p>
+          <p>La invasión napoleónica de 1808 y la crisis de legitimidad abrieron juntas, constituciones, guerras y procesos independentistas. La mayor parte de la América continental se separó durante las décadas siguientes. En 1898, la guerra con Estados Unidos terminó con el dominio español sobre Cuba, Puerto Rico y Filipinas. Usar esa fecha como final es práctico, aunque no incluya toda la historia colonial africana posterior.</p>
+        </section>
+
+        <section class="empire-section" aria-labelledby="legado-title">
+          <p class="empire-section__label">Después del imperio</p>
+          <h2 id="legado-title">Legado y memoria</h2>
+          <p>El legado incluye lenguas, instituciones, archivos, ciudades, rutas, tradiciones religiosas, intercambios culturales y desigualdades duraderas. También comprende memorias nacionales enfrentadas. “Leyenda negra” y “leyenda rosa” son marcos polémicos: ninguno sustituye el análisis de documentos, contextos y debates historiográficos.</p>
+          <p>Imperio E presenta esta guía como puerta de entrada, no como versión definitiva. Las afirmaciones deben contrastarse con fuentes primarias, archivos e investigación académica, y revisarse cuando aparezca nueva evidencia.</p>
+        </section>
+
+        <section id="cronologia" class="empire-section" aria-labelledby="cronologia-title">
+          <p class="empire-section__label">Fechas clave</p>
+          <h2 id="cronologia-title">Cronología esencial</h2>
+          <ol class="empire-timeline">
+            {IMPERIO_ESPANOL_CHRONOLOGY.map(item => <li><time>{item.year}</time><p>{item.text}</p></li>)}
+          </ol>
+        </section>
+
+        <section id="preguntas" class="empire-section" aria-labelledby="preguntas-title">
+          <p class="empire-section__label">Consulta rápida</p>
+          <h2 id="preguntas-title">Preguntas frecuentes sobre el Imperio español</h2>
+          <div class="empire-faq">
+            {IMPERIO_ESPANOL_FAQ.map(item => <details><summary>{item.question}</summary><p>{item.answer}</p></details>)}
+          </div>
+        </section>
+
+        <section class="empire-section empire-related" aria-labelledby="relacionados-title">
+          <p class="empire-section__label">Seguir leyendo</p>
+          <h2 id="relacionados-title">Papeles y tratados relacionados</h2>
+          <ul>{IMPERIO_ESPANOL_RELATED.map(item => <li><a href={item.href}><span>{item.topic}</span>{item.title}</a></li>)}</ul>
+        </section>
+
+        <section id="fuentes" class="empire-section empire-sources" aria-labelledby="fuentes-title">
+          <p class="empire-section__label">Documentación</p>
+          <h2 id="fuentes-title">Fuentes y criterio editorial</h2>
+          <p>Esta síntesis se apoya en recursos institucionales y en la bibliografía especializada empleada en los artículos enlazados. Se distingue entre hechos, convenciones cronológicas e interpretaciones. Los enlaces externos se consultaron el 22 de octubre de 2026.</p>
+          <ul>{IMPERIO_ESPANOL_SOURCES.map(source => <li><a href={source.url} rel="noopener noreferrer">{source.title}</a><span>{source.institution}</span></li>)}</ul>
+          <p class="empire-sources__books"><strong>Bibliografía de orientación:</strong> J. H. Elliott, “A Europe of Composite Monarchies” (1992); Feliciano Barrios, <cite>La gobernación de la Monarquía de España</cite> (2015); y Xavier Gil Pujol, estudios sobre la Monarquía Hispánica y la Europa moderna.</p>
+        </section>
+      </article>
+    </div>
+  </main>
+</Layout>
+
+<style>
+  :global(body:has(.empire-pillar)) { background:#0b0c0c; color:#f5f5f3; }
+  .empire-pillar { padding:0; background:#0b0c0c; color:#f5f5f3; }
+  .empire-hero { position:relative; display:grid; align-items:end; min-height:min(75svh,700px); overflow:hidden; isolation:isolate; }
+  .empire-hero__media,.empire-hero__shade { position:absolute; inset:0; z-index:-2; }
+  .empire-hero__media img { width:100%; height:100%; object-fit:cover; object-position:center; filter:grayscale(.35) contrast(1.08); }
+  .empire-hero__shade { z-index:-1; background:linear-gradient(180deg,rgb(11 12 12 / 20%) 0%,rgb(11 12 12 / 52%) 45%,#0b0c0c 100%); }
+  .empire-hero__content { width:min(100% - 2rem,1240px); margin:0 auto; padding:6rem 0 4rem; }
+  .empire-breadcrumbs { display:flex; gap:.65rem; margin-bottom:2rem; color:rgb(255 255 255 / 70%); font:500 .78rem/1.4 var(--font-body); text-transform:uppercase; }
+  .empire-breadcrumbs a { color:inherit; }
+  .empire-kicker,.empire-section__label { margin:0 0 .8rem; color:#f2381e; font:700 .76rem/1.3 var(--font-body); text-transform:uppercase; letter-spacing:.08em; }
+  .empire-hero h1 { max-width:1020px; margin:0; color:#fff; font:700 clamp(3rem,6vw,5.5rem)/.96 var(--font-serif); letter-spacing:0; text-wrap:balance; }
+  .empire-hero__lead { max-width:800px; margin:1.6rem 0 0; color:rgb(255 255 255 / 86%); font:600 clamp(1.15rem,2vw,1.55rem)/1.5 var(--font-serif); }
+  .empire-byline { margin:1.5rem 0 0; color:rgb(255 255 255 / 62%); font:500 .85rem/1.4 var(--font-body); }
+  .empire-byline a { color:#fff; text-decoration:underline; text-underline-offset:3px; }
+  .empire-layout { display:grid; grid-template-columns:220px minmax(0,820px); gap:clamp(3rem,7vw,8rem); width:min(100% - 2rem,1240px); margin:0 auto; padding:clamp(4rem,8vw,8rem) 0; }
+  .empire-index { position:sticky; top:92px; align-self:start; }
+  .empire-index>p { margin:0 0 1rem; color:#fff; font:700 .78rem/1.3 var(--font-body); text-transform:uppercase; }
+  .empire-index ol { display:grid; gap:.55rem; margin:0; padding:0; list-style:none; counter-reset:index; }
+  .empire-index li { counter-increment:index; }
+  .empire-index a { display:grid; grid-template-columns:1.8rem 1fr; color:#777a79; font:500 .83rem/1.4 var(--font-body); text-decoration:none; transition:color 160ms ease; }
+  .empire-index a::before { content:counter(index,decimal-leading-zero); color:#484a49; }
+  .empire-index a:hover,.empire-index a:focus-visible { color:#f2381e; }
+  .empire-section { padding:0 0 clamp(4rem,8vw,7rem); scroll-margin-top:90px; }
+  .empire-section+.empire-section { border-top:1px solid #292b2a; padding-top:clamp(4rem,8vw,7rem); }
+  .empire-section h2 { max-width:760px; margin:0 0 1.5rem; color:#fff; font:700 clamp(2rem,4.5vw,3.55rem)/1.05 var(--font-serif); letter-spacing:0; text-wrap:balance; }
+  .empire-section>p:not(.empire-section__label),.empire-section li p { color:#c8c9c6; font:600 clamp(1.06rem,1.5vw,1.2rem)/1.72 var(--font-serif); }
+  .empire-section>p:not(.empire-section__label) { margin:0 0 1.35rem; }
+  .empire-section--answer>p strong { color:#fff; }
+  .empire-facts { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1px; margin-top:2.5rem; background:#303231; }
+  .empire-facts div { display:grid; min-height:145px; align-content:start; padding:1.4rem; background:#151616; }
+  .empire-facts span,.empire-facts small { color:#777a79; font:500 .74rem/1.35 var(--font-body); text-transform:uppercase; }
+  .empire-facts strong { margin:.8rem 0 .45rem; color:#fff; font:700 1.08rem/1.25 var(--font-body); }
+  .empire-facts small { text-transform:none; }
+  .empire-note { margin:2rem 0; border-left:3px solid #f2381e; padding:1.3rem 1.5rem; color:#b8bab7; background:#151616; font:500 1rem/1.65 var(--font-body); }
+  .empire-note strong { color:#fff; }
+  .empire-figure { margin:2.5rem 0 0; }
+  .empire-figure picture,.empire-figure img { display:block; width:100%; }
+  .empire-figure img { height:auto; max-height:560px; object-fit:contain; background:#151616; filter:grayscale(.7); }
+  .empire-figure figcaption { margin-top:.8rem; color:#747675; font:500 .76rem/1.5 var(--font-body); }
+  .empire-text-link { display:inline-flex; margin-top:.6rem; color:#fff; font:700 .9rem/1.4 var(--font-body); text-decoration-color:#f2381e; text-decoration-thickness:2px; text-underline-offset:5px; }
+  .empire-text-link:hover,.empire-text-link:focus-visible { color:#f2381e; }
+  .empire-timeline { margin:2.5rem 0 0; padding:0; list-style:none; }
+  .empire-timeline li { display:grid; grid-template-columns:110px 1fr; gap:1.5rem; border-top:1px solid #292b2a; padding:1.3rem 0; }
+  .empire-timeline time { color:#f2381e; font:700 .9rem/1.5 var(--font-body); }
+  .empire-timeline p { margin:0; font-size:1rem; }
+  .empire-faq details { border-top:1px solid #292b2a; }
+  .empire-faq details:last-child { border-bottom:1px solid #292b2a; }
+  .empire-faq summary { display:flex; justify-content:space-between; gap:1rem; padding:1.35rem 0; color:#fff; cursor:pointer; font:700 1rem/1.45 var(--font-body); list-style:none; }
+  .empire-faq summary::-webkit-details-marker { display:none; }
+  .empire-faq summary::after { content:"+"; color:#f2381e; font-size:1.4rem; line-height:1; }
+  .empire-faq details[open] summary::after { content:"−"; }
+  .empire-faq p { margin:0 0 1.5rem; color:#b8bab7; font:600 1.02rem/1.65 var(--font-serif); }
+  .empire-related ul,.empire-sources ul { margin:2rem 0 0; padding:0; list-style:none; }
+  .empire-related li { border-top:1px solid #292b2a; }
+  .empire-related li:last-child { border-bottom:1px solid #292b2a; }
+  .empire-related a { display:grid; grid-template-columns:130px 1fr; gap:1rem; padding:1.15rem 0; color:#fff; font:700 1rem/1.4 var(--font-body); text-decoration:none; }
+  .empire-related a span { color:#777a79; font-size:.75rem; text-transform:uppercase; }
+  .empire-related a:hover { color:#f2381e; }
+  .empire-sources li { display:grid; gap:.2rem; border-top:1px solid #292b2a; padding:1rem 0; }
+  .empire-sources li a { color:#fff; font:700 .95rem/1.45 var(--font-body); }
+  .empire-sources li span { color:#777a79; font:500 .78rem/1.4 var(--font-body); }
+  .empire-sources__books { margin-top:2rem !important; font-size:1rem !important; }
+  @media(max-width:820px){
+    .empire-hero { min-height:calc(100svh - 130px); }
+    .empire-hero__content { padding:3rem 0 2.5rem; }
+    .empire-breadcrumbs { margin-bottom:1.5rem; }
+    .empire-layout { grid-template-columns:minmax(0,1fr); padding-top:1.5rem; }
+    .empire-index { position:static; border-bottom:1px solid #292b2a; padding-bottom:2rem; }
+    .empire-index ol { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  }
+  @media(max-width:520px){
+    .empire-hero h1 { font-size:2.5rem; line-height:1; }
+    .empire-hero__lead { margin-top:1rem; font-size:1.02rem; line-height:1.4; }
+    .empire-byline { margin-top:1rem; }
+    .empire-index ol,.empire-facts { grid-template-columns:1fr; }
+    .empire-facts div { min-height:0; }
+    .empire-timeline li,.empire-related a { grid-template-columns:1fr; gap:.35rem; }
+    .empire-timeline time { font-size:1rem; }
+  }
+  @media(prefers-reduced-motion:reduce){.empire-index a{transition:none}}
+</style>

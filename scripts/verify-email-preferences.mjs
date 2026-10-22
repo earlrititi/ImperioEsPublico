@@ -24,6 +24,7 @@ globalThis.fetch=async(input,options)=>{
   }
   if(["/rest/v1/subscriptions","/rest/v1/reservations"].includes(u.pathname))return json([]);
   if(u.pathname==="/rest/v1/profiles")return json({id:user.id,email:user.email});
+  if(u.pathname==="/rest/v1/legal_consents"&&req.method==="POST")return json([]);
   throw Error(`Unexpected fixture ${u.pathname}`);
 };
 const {default:app}=await import("../.vercel/output/functions/_render.func/dist/server/entry.mjs");

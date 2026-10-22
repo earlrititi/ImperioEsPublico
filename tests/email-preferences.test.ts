@@ -21,3 +21,8 @@ test("newsletter funnel is consent-gated, bounded and excludes personal URLs",()
   assert.equal(validInteraction({page:"/newsletter",target:"newsletter-form",event:"click"}),true);
   assert.ok(NEWSLETTER_SEGMENTS.includes("community"));assert.ok(NEWSLETTER_SEGMENTS.includes("newsletter"));
 });
+
+test("newsletter footer text remains readable on its dark background",()=>{
+  const footer=readFileSync("src/components/Footer.jsx","utf8");
+  assert.match(footer,/\.footer-newsletter p\{color:inherit;/);
+});

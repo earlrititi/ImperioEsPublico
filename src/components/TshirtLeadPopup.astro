@@ -1,7 +1,7 @@
 ---
 import { reservationMode } from "../lib/reservations";
 const reserving = reservationMode();
-const excluded = /^\/(?:login|registro|recuperar-contrasena|confirmar-correo|cuenta(?:\/|$)|checkout|suscribirse(?:\/|$)|tienda(?:\/|$)|carrito(?:\/|$)|recursos(?:\/|$)|legal(?:\/|$)|reservas(?:\/|$)|reserva(?:\/|$)|compra(?:\/|$)|gracias(?:\/|$)|admin(?:\/|$))/;
+const excluded = /^\/(?:login|registro|recuperar-contrasena|confirmar-correo|cuenta(?:\/|$)|checkout|newsletter(?:\/|$)|suscribirse(?:\/|$)|tienda(?:\/|$)|carrito(?:\/|$)|recursos(?:\/|$)|legal(?:\/|$)|reservas(?:\/|$)|reserva(?:\/|$)|compra(?:\/|$)|gracias(?:\/|$)|admin(?:\/|$))/;
 const enabled = !excluded.test(Astro.url.pathname) && Astro.url.pathname.replace(/\/$/, "") !== "/instagram";
 ---
 

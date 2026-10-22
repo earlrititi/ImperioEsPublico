@@ -57,7 +57,7 @@ const store = await page("/tienda");
 assert.match(store, /COMPRAR AHORA/);
 assert.match(store, /26,99/);
 assert.doesNotMatch(store, /available_stock|physical_stock|reserved_stock/);
-for (const path of ["/tienda","/carrito","/suscribirse","/reservas?cart=1","/recursos/7-historias-del-siglo-de-oro"]) {
+for (const path of ["/newsletter","/newsletter/","/tienda","/carrito","/suscribirse","/reservas?cart=1","/recursos/7-historias-del-siglo-de-oro"]) {
   const html=await page(path);
   const containsPopup=node=>node.attrs?.some(a=>a.name==="data-tshirt-lead") || (node.childNodes??[]).some(containsPopup);
   assert.equal(containsPopup(parse(html)),false,`${path} must not contain an offer popup`);

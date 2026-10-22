@@ -197,7 +197,7 @@ export default function Footer({ variant = "light" }) {
       <style>{`
         .footer-newsletter{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:32px max(24px,calc((100% - 1200px)/2));background:#111010;color:#fff;font-family:"Inter","Segoe UI",sans-serif}
         .footer-newsletter h2{font:700 24px/1.3 Georgia,serif;margin:0 0 8px;letter-spacing:0}
-        .footer-newsletter p{font-size:15px;line-height:1.6;margin:0;max-width:660px}
+        .footer-newsletter p{color:inherit;font-size:15px;line-height:1.6;margin:0;max-width:660px}
         .footer-newsletter a{flex-shrink:0;color:#fff;background:#ffffff14;border:1px solid #ffffff70;border-radius:6px;padding:14px 20px;font-size:15px;font-weight:700;text-align:center;text-decoration:none}
         .footer-newsletter a:hover{background:#ffffff28}.footer-newsletter a:focus-visible{outline:2px solid #fff;outline-offset:4px}
         @media(max-width:760px){.footer-newsletter{flex-direction:column;align-items:stretch}.footer-newsletter a{white-space:normal;overflow-wrap:anywhere}}

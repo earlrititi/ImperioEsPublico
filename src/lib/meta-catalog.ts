@@ -1,3 +1,5 @@
+import { SHIRT_SHIPPING_PRICE_CENTS } from "../config/commerce";
+
 export interface CatalogInventory {
   unitPrice: number;
   reservationMode: boolean;
@@ -15,7 +17,7 @@ export function metaCatalogXml(inventory: CatalogInventory) {
     const fields: Record<string, string | number> = {
       id: variant.sku, item_group_id: "IE-CAMISETA-IMPERIAL",
       title: `Camiseta Imperial - NON SUFFICIT ORBIS - ${variant.name}`,
-      description: `Primera edicion de Imperio E inspirada en los simbolos de la Monarquia Hispanica. ${inventory.salesEnabled ? "Compra con pago seguro en Stripe." : "Reserva gratuita, sin obligacion de compra."} IVA incluido. Envio a Peninsula: 3 EUR por camiseta, anadido en el checkout antes del pago.`,
+      description: `Primera edicion de Imperio E inspirada en los simbolos de la Monarquia Hispanica. ${inventory.salesEnabled ? "Compra con pago seguro en Stripe, sin crear una cuenta." : inventory.reservationMode ? "Reserva gratuita, sin obligacion de compra." : "Compra no disponible temporalmente."} IVA incluido. Envio a Peninsula: 3 EUR por camiseta. Total con envio: ${((inventory.unitPrice + SHIRT_SHIPPING_PRICE_CENTS) / 100).toFixed(2)} EUR por unidad.`,
       availability: variant.available ? inventory.salesEnabled ? "in stock" : inventory.reservationMode ? "preorder" : "out of stock" : "out of stock",
       condition: "new", price: `${(inventory.unitPrice / 100).toFixed(2)} EUR`,
       link: `https://imperioes.com/instagram?${params}`,

@@ -21,7 +21,7 @@
         const variant = data.variants.find((v: { name: string }) => v.name === select.value);
         if (!variant) throw new Error();
         const exhausted = !variant.available;
-        button.textContent = exhausted ? "AGOTADO" : data.salesEnabled?"COMPRAR AHORA":"RESERVAR \u2014 0 \u20ac";
+        button.textContent = exhausted ? "AGOTADO" : data.salesEnabled ? "COMPRAR AHORA" : data.reservationMode ? "RESERVAR \u2014 0 \u20ac" : "NO DISPONIBLE";
         button.disabled = exhausted || (!data.reservationMode && !data.salesEnabled);
         if (cartButton) cartButton.disabled = button.disabled;
         waiting.hidden = !exhausted;

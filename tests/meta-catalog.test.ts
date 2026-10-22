@@ -24,6 +24,7 @@ test("Closed reservation flow never advertises an available purchase", () => {
     { sku: "IE-S", name: "S", color: "Blanco", available: true },
   ] });
   assert.match(xml, /<g:availability>out of stock/);
+  assert.doesNotMatch(xml, /Reserva gratuita|sin obligacion de compra/);
 });
 
 test("Live purchases are in stock, not advertised as sold out or free reservations", () => {
@@ -32,6 +33,15 @@ test("Live purchases are in stock, not advertised as sold out or free reservatio
   ] });
   assert.match(xml, /<g:availability>in stock/);
   assert.doesNotMatch(xml, /Reserva gratuita|<g:inventory>/);
+});
+
+test("Current Meta product price stays separate from the disclosed delivered total", () => {
+  const xml = metaCatalogXml({ unitPrice: 2699, reservationMode: false, salesEnabled: true, variants: [
+    { sku: "IE-CAMISETA-IMPERIAL-M", name: "M", color: "Blanco", available: true },
+  ] });
+  assert.match(xml, /<g:price>26\.99 EUR<\/g:price>/);
+  assert.match(xml, /Total con envio: 29\.99 EUR por unidad/);
+  assert.match(xml, /sin crear una cuenta/);
 });
 
 test("Meta variants keep stable SKUs, a common group and the official product destination", () => {

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "preact/hooks";
-import { formatMoney, SHIRT_PRODUCT_PRICE_CENTS } from "../../config/commerce";
+import { formatMoney, SHIRT_PRICE_COPY, SHIRT_FINAL_PRICE_CENTS } from "../../config/commerce";
 import { AddressFields, emptyAddress, api } from "./shared";
 import { attributedPath, socialEvent } from "../../lib/social-attribution";
 import {trackFunnel} from "../../lib/funnel-client";
@@ -20,6 +20,7 @@ export default function ReservationForm({ initialSize = "M", initialCustomer = {
   const [website, setWebsite] = useState(""), [campaign, setCampaign] = useState<any>(null);
   const [expirationHours, setExpirationHours] = useState(0), [waitlist, setWaitlist] = useState(false);
   const [sales,setSales]=useState(initialSales);
+  const [reserving, setReserving] = useState(!initialSales);
   const [inventoryState, setInventoryState] = useState<"loading" | "ready" | "error">("loading");
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   useEffect(() => {
@@ -30,6 +31,7 @@ export default function ReservationForm({ initialSize = "M", initialCustomer = {
         const data = await api("/api/reservations/inventory");
         if (active) {
           setInventory(data.variants); setAvailable(data.reservationMode||data.salesEnabled);setSales(Boolean(data.salesEnabled));
+          setReserving(Boolean(data.reservationMode));
           setExpirationHours(data.expirationHours); setCampaign(data.campaign);
           setInventoryState("ready");
         }
@@ -82,10 +84,11 @@ export default function ReservationForm({ initialSize = "M", initialCustomer = {
   return (
     <form class="reservation-form" data-funnel-flow="shirts" onSubmit={submit} aria-busy={busy || inventoryState === "loading"} aria-describedby="reservation-feedback">
       <header class="reservation-form__header">
-        <span class="commerce-kicker">{sales?"Compra de camiseta":"Solicitud de reserva"}</span>
-        <h2>{waitlist ? "Lista de espera" : sales?"Camiseta Imperial":"Pre-reserva gratuita"}</h2>
-        {inventoryState === "loading" ? <p role="status">Comprobando disponibilidad y precio...</p> : <p class="reservation-total">{sales&&!waitlist?formatMoney(SHIRT_PRODUCT_PRICE_CENTS*units):formatMoney(0)}{!sales&&" ahora"}</p>}
-        <p>{formatMoney(SHIRT_PRODUCT_PRICE_CENTS)} por camiseta. IVA incluido. Envío a Península: 3 € por camiseta, añadido al revisar el pago.</p>
+        <span class="commerce-kicker">{sales || !reserving ? "Compra de camiseta" : "Solicitud de reserva"}</span>
+        <h2>{waitlist ? "Lista de espera" : sales || !reserving ? "Camiseta Imperial" : "Pre-reserva gratuita"}</h2>
+        {inventoryState === "loading" ? <p role="status">Comprobando disponibilidad y precio...</p> : <p class="reservation-total">{waitlist ? "Sin pago" : sales ? `${formatMoney(SHIRT_FINAL_PRICE_CENTS*units)} · envío e IVA incluidos` : reserving ? `${formatMoney(0)} ahora` : "Compra no disponible temporalmente"}</p>}
+        <p>{SHIRT_PRICE_COPY}.</p>
+        {sales && !waitlist && <p>Compra como invitado. No necesitas crear una cuenta.</p>}
       </header>
       <fieldset disabled={busy}>
         <legend>Talla y cantidad</legend>
@@ -102,7 +105,7 @@ export default function ReservationForm({ initialSize = "M", initialCustomer = {
         </div>
         <p class="reservation-stock" role="status" aria-live="polite">{variant ? soldOut ? "AGOTADO" : "DISPONIBLE" : "Consultando disponibilidad..."}</p>
         </>}
-        {!waitlist && typeof campaign?.max_reservation_quantity === "number" && <p class="reservation-note">Máximo {campaign.max_reservation_quantity} unidades por pre-reserva.</p>}
+        {!waitlist && typeof campaign?.max_reservation_quantity === "number" && <p class="reservation-note">Máximo {campaign.max_reservation_quantity} unidades por {sales ? "compra" : "pre-reserva"}.</p>}
       </fieldset>
       {soldOut && !waitlist && <>
         <p>Esta talla está agotada.</p>
@@ -131,22 +134,22 @@ export default function ReservationForm({ initialSize = "M", initialCustomer = {
           <input tabIndex={-1} autoComplete="off" value={website} onInput={(e) => setWebsite(e.currentTarget.value)} />
         </label>
         <div class="reservation-conditions">
-          <p>{waitlist ? "La lista de espera no obliga a comprar. Te avisaremos si vuelve a estar disponible tu talla." : sales ? "Revisa tu dirección y continúa al pago seguro." : "Pre-reserva gratuita. No se realiza ningún cobro y la pre-reserva no implica obligación de compra. La unidad quedará temporalmente asignada hasta que finalice el periodo indicado para completar la compra."}</p>
+          <p>{waitlist ? "La lista de espera no obliga a comprar. Te avisaremos si vuelve a estar disponible tu talla." : sales ? "Revisa tu dirección y continúa al pago seguro." : reserving ? "Pre-reserva gratuita. No se realiza ningún cobro y la pre-reserva no implica obligación de compra. La unidad quedará temporalmente asignada hasta que finalice el periodo indicado para completar la compra." : "No se pueden iniciar compras temporalmente. Vuelve a intentarlo más tarde."}</p>
           {sales&&!waitlist&&<p>Revisa el resumen y confirma el pago en Stripe. El descuento de tu suscripcion activa se comprueba al pagar.</p>}
-          {!sales&&campaign?.purchase_open_at && <p><strong>Compra prioritaria prevista:</strong> {new Date(campaign.purchase_open_at).toLocaleString("es-ES", { timeZone: "Europe/Madrid" })} (hora peninsular).</p>}
-          {!waitlist && !sales && <p>Dispones de {campaign?.purchase_window_hours ?? 24} horas para completarla.</p>}
-          {expirationHours > 0 && !waitlist && <p>Esta reserva caduca {expirationHours} horas después de confirmarla.</p>}
+          {reserving && campaign?.purchase_open_at && <p><strong>Compra prioritaria prevista:</strong> {new Date(campaign.purchase_open_at).toLocaleString("es-ES", { timeZone: "Europe/Madrid" })} (hora peninsular).</p>}
+          {!waitlist && reserving && <p>Dispones de {campaign?.purchase_window_hours ?? 24} horas para completarla.</p>}
+          {expirationHours > 0 && !waitlist && !sales && <p>Esta reserva caduca {expirationHours} horas después de confirmarla.</p>}
         </div>
         <label class="reservation-consent">
           <input type="checkbox" checked={accepted} required disabled={busy} onChange={(e) => setAccepted(e.currentTarget.checked)} />
-          <span>He leído la <a href="/legal/privacidad" target="_blank" rel="noreferrer">Política de privacidad</a> y las <a href={sales && !waitlist ? "/legal/terminos" : "/legal/reservas"} target="_blank" rel="noreferrer">{sales && !waitlist ? "condiciones de compra" : "condiciones de la pre-reserva"}</a>.</span>
+          <span>He leído la <a href="/legal/privacidad" target="_blank" rel="noreferrer">Política de privacidad</a> y las <a href={!reserving && !waitlist ? "/legal/terminos" : "/legal/reservas"} target="_blank" rel="noreferrer">{!reserving && !waitlist ? "condiciones de compra" : "condiciones de la pre-reserva"}</a>.</span>
         </label>
         <label class="reservation-consent">
           <input type="checkbox" checked={marketing} disabled={busy} onChange={(e) => setMarketing(e.currentTarget.checked)} />
           <span>{EMAIL_MARKETING_CONSENT} Opcional; baja en cualquier momento.</span>
         </label>
         <button class="btn btn-primary" type="submit" disabled={busy || !challenge || (waitlist ? !canWait : !available || (fromCart ? !cartItems.length : maximum < 1))}>
-          {busy ? "Guardando..." : inventoryState === "loading" ? "Comprobando disponibilidad..." : waitlist ? "Confirmar lista de espera" : sales?"Revisar y continuar al pago":"RESERVAR \u2014 0 \u20ac"}
+          {busy ? "Guardando..." : inventoryState === "loading" ? "Comprobando disponibilidad..." : waitlist ? "Confirmar lista de espera" : sales ? "Revisar y continuar al pago" : reserving ? "RESERVAR \u2014 0 \u20ac" : "Compra no disponible"}
         </button>
       </>}
       {inventoryState !== "loading" && !available && !soldOut && <p role="status">Las compras no estan disponibles temporalmente.</p>}

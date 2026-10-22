@@ -87,3 +87,4 @@
 .commerce-stats strong{display:block;font-size:24px}.commerce-stats span{font-size:14px}
 .commerce-admin details {min-width:220px}.commerce-admin summary{cursor:pointer}.commerce-admin .commerce-actions{display:flex;flex-wrap:wrap;gap:6px}
 @media(max-width:800px){.commerce-layout{grid-template-columns:minmax(0,1fr);gap:28px}.commerce-product{position:static}.commerce-product img{max-height:300px}.reservation-fields{grid-template-columns:1fr}.reservation-variants{grid-template-columns:repeat(3,minmax(0,1fr))}.commerce-layout{padding-bottom:32px}.reservation-form{padding-inline:16px}.reservation-form .btn{width:100%;margin-right:0}}
+@media(max-width:800px){.commerce-layout>.reservation-form{order:1}.commerce-layout>.commerce-product{order:2}.reservation-page .page-shell__intro{padding-block:28px 20px}.reservation-page .page-shell__intro h1{font-size:30px;line-height:1.15}.reservation-page .reservation-form__header h2{font-size:24px}}

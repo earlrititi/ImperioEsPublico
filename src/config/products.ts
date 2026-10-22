@@ -1,5 +1,5 @@
 import { LEGAL_BUSINESS } from "./legal";
-import { SHIRT_PRODUCT_PRICE_CENTS, SHIRT_SHIPPING_PRICE_CENTS } from "./commerce";
+import { SHIRT_PRODUCT_PRICE_CENTS, SHIRT_SHIPPING_PRICE_CENTS, SHIRT_PRICE_COPY } from "./commerce";
 
 const shirtVariants = [
   { size: "S", stock: 3, lengthCm: 66, widthCm: 50 },
@@ -52,7 +52,7 @@ export const PRODUCTS = {
       preparationMaxHours: 48,
       deliveryMaxBusinessDays: 7,
     },
-    shippingInformation: "Camiseta: 26,99 EUR + 3 EUR de envio por unidad, IVA incluido. Envio estandar por Correos, solo a la Peninsula espanola. Tras confirmar el pago: preparacion maxima de 48 horas y entrega maxima de 7 dias laborables.",
+    shippingInformation: `${SHIRT_PRICE_COPY}. Envio estandar por Correos, solo a la Peninsula espanola. Tras confirmar el pago: preparacion maxima de 48 horas y entrega maxima de 7 dias laborables.`,
     tax: { percentage: 21, behavior: "inclusive", confirmedByOwner: true },
     taxInformation: "IVA del 21 % incluido en el precio de la camiseta.",
     packagingType: "Sobre de envio",

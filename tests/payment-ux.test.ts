@@ -6,6 +6,7 @@ import { readFileSync } from "node:fs";
 import ReservationForm from "../src/components/commerce/ReservationForm";
 import { AddressFields, emptyAddress } from "../src/components/commerce/shared";
 import SubscriptionConfirmation from "../src/components/commerce/SubscriptionConfirmation";
+import { SHIRT_PRICE_COPY } from "../src/config/commerce";
 
 test("Shirt contact is collected once and a separate recipient is optional", () => {
   const html = render(h(ReservationForm, { initialCustomer: { name: "Cliente Prueba", email: "fixture@example.invalid" } }));
@@ -37,6 +38,31 @@ test("Purchase loading never flashes a free reservation or an empty cart", () =>
   assert.match(html, /Comprobando disponibilidad y precio/);
   assert.match(html, /aria-busy="true"/);
   assert.doesNotMatch(html, /Pre-reserva gratuita|RESERVAR|0,00|Tu carrito est/);
+  assert.match(html, /29,99/);
+  assert.match(html, /envío peninsular e IVA incluidos/);
+  assert.match(html, /No necesitas crear una cuenta/);
+});
+
+test("All purchase entry points disclose the delivered total before customer details", () => {
+  assert.match(SHIRT_PRICE_COPY, /^29,99/);
+  assert.match(SHIRT_PRICE_COPY, /26,99.*3.*por unidad/);
+  for (const file of ["src/pages/reservas/index.astro", "src/pages/tienda/index.astro", "src/pages/instagram.astro", "src/components/TshirtLeadPopup.astro"]) {
+    assert.match(readFileSync(file, "utf8"), /SHIRT_(?:PRICE|TOTAL)_COPY/);
+  }
+  const instagram = readFileSync("src/pages/instagram.astro", "utf8");
+  assert.match(instagram, /inventory\.unitPrice \+ inventory\.shippingPerUnit/);
+  assert.match(instagram, /data\.unitPrice \+ data\.shippingPerUnit/);
+  assert.doesNotMatch(instagram, /<a[^>]*class="ig-cta[^>]*data-community/);
+  assert.match(instagram, /<details><summary>Descuentos para suscriptores/);
+});
+
+test("Guest shirt checkout is token-authorized and does not require a new user account", () => {
+  const checkout = readFileSync("src/pages/api/reservations/[id]/checkout.ts", "utf8");
+  assert.match(checkout, /authorizedReservation\(/);
+  assert.match(checkout, /customer_creation: "if_required"/);
+  assert.doesNotMatch(checkout, /if\s*\(!user\)|auth\.signUp|\/registro|\/login/);
+  const page = readFileSync("src/pages/reservas/index.astro", "utf8");
+  assert.doesNotMatch(page, /Astro\.redirect|auth\.signUp/);
 });
 
 test("offer never interrupts newsletter, subscriptions, store, cart or cookie choices", () => {

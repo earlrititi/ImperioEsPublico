@@ -2,7 +2,8 @@ export const SHIRT_PRODUCT_PRICE_CENTS = 2699;
 export const SHIRT_SHIPPING_PRICE_CENTS = 300;
 export const SHIRT_FINAL_PRICE_CENTS = SHIRT_PRODUCT_PRICE_CENTS + SHIRT_SHIPPING_PRICE_CENTS;
 export const TSHIRT_DISCOUNT_PERCENT = 15;
-export const SHIRT_PRICE_COPY = "26,99 € de camiseta + 3 € de envío por unidad. IVA incluido. Solo Península";
+export const SHIRT_TOTAL_COPY = "29,99 € por camiseta con envío peninsular e IVA incluidos";
+export const SHIRT_PRICE_COPY = `${SHIRT_TOTAL_COPY}: 26,99 € de camiseta + 3 € de envío por unidad`;
 export const RESERVATION_TERMS_VERSION = "2026-09-22";
 export const RESERVATION_PURCHASE_NOTICE =
   "Recibiras por correo el enlace privado para revisar tu reserva y confirmar la compra cuando el pago este disponible.";

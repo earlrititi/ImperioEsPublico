@@ -1,5 +1,16 @@
 # NON SUFFICIT ORBIS: web y Meta
 
+## Revision de compra del 22 de octubre de 2026
+
+- Total visible desde el principio: 29,99 EUR por camiseta con envio peninsular e IVA incluidos. Se conserva el desglose de camiseta 26,99 EUR y envio 3 EUR por unidad, sin cambiar Stripe ni los descuentos.
+- Compra principal sin una segunda CTA de suscripcion en `/instagram`; descuentos plegados y opcionales. El popup prioriza la compra y el formulario movil precede a la ficha extensa.
+- Las condiciones de pre-reserva se conservan como historicas cuando el modo reserva esta cerrado. Un fallo de inventario o una campana cerrada no se presentan como una reserva gratuita.
+- Prueba de navegador a 390px: `/instagram?size=M` -> formulario -> revision -> Stripe Test. Compra anonima (`user_id=null`), una sesion Test de 2999 centimos, sin pago ni cuenta nueva. Correos desactivados. Sesion caducada al terminar y campana/stock Test restaurados. Produccion no se utilizo para crear pedidos de prueba.
+- Evidencia local: `tmp/commercial-audit/stripe-guest-mobile.jpg`. Script reutilizable `scripts/verify-guest-shirt-flow.mjs prepare|verify|cleanup`, protegido para Supabase Test y claves Stripe Test.
+- Comprobados 320px y 390px sin desbordamiento horizontal. Esta comprobacion de Chrome con viewport movil no equivale a una prueba en dispositivos fisicos ni en los WebView reales de Instagram/X.
+- `npm run verify`: 175 pruebas, diagnosticos sin errores y build correcto; `npm run lint` correcto.
+- El acceso de Facebook se recupero y se abrio el catalogo existente 1742623807029552. La configuracion de Meta queda detenida mientras se completa esta revision de compra; no se ha activado Shopping ni conectado un feed en Meta durante ella.
+
 ## Revision del 21 de octubre de 2026
 
 - Precio vigente en produccion: camiseta 26,99 EUR, IVA incluido; envio 3 EUR por unidad, desglosado antes del pago. Venta habilitada, no una reserva gratuita.

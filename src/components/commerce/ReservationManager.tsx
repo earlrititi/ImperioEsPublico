@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "preact/hooks";
-import { RESERVATION_STATUS } from "../../config/commerce";
+import { RESERVATION_STATUS, SHIRT_PRICE_COPY } from "../../config/commerce";
 import { isMainlandAddress } from "../../lib/reservation-validation";
 import {trackFunnel} from "../../lib/funnel-client";
 import { trackConfirmedGooglePurchase } from "../../lib/google-analytics";
@@ -249,7 +249,7 @@ export default function ReservationManager({ paymentReturn = false }: { paymentR
       {r.status === "WAITLIST" && <p>Estas en la lista de espera. No se ha asignado stock ni existe obligacion de compra.</p>}
       {!paid && r.expires_at && (
         <p>
-          Reserva valida hasta: {new Date(r.expires_at).toLocaleString("es-ES", { timeZone: "Europe/Madrid" })} (hora peninsular)
+          {mode ? "Reserva valida hasta: " : "Completa el pago antes de: "}{new Date(r.expires_at).toLocaleString("es-ES", { timeZone: "Europe/Madrid" })} (hora peninsular)
         </p>
       )}
       {order && (
@@ -285,8 +285,8 @@ export default function ReservationManager({ paymentReturn = false }: { paymentR
               <img src="/images/cuadros-explicativos-camiseta-960.webp" srcSet="/images/cuadros-explicativos-camiseta-640.webp 640w, /images/cuadros-explicativos-camiseta-960.webp 960w" sizes="(max-width: 760px) calc(100vw - 48px), 640px" alt="Camiseta Imperial, modelo y detalles" width="1920" height="1080" loading="lazy" decoding="async" style={{ maxWidth: "100%", height: "auto", objectFit: "contain" }} />
             </picture>
             <p>Vendedor: {LEGAL_BUSINESS.ownerName}, {LEGAL_BUSINESS.tradeName}. NIF {LEGAL_BUSINESS.taxId}. {LEGAL_BUSINESS.registeredAddress}.</p>
-            <p>Camiseta: 26,99 EUR + 3 EUR de envio por unidad. IVA incluido. Solo Peninsula. Preparacion maxima: 48 horas; entrega maxima: 7 dias laborables tras el pago.</p>
-            <p>Descuento de suscriptor: vinculado a la cuenta verificada y al correo de la reserva. No incluye el envio. <a href="/login?next=/reservas/gestionar">Iniciar sesion</a></p>
+            <p>{SHIRT_PRICE_COPY}. Preparacion maxima: 48 horas; entrega maxima: 7 dias laborables tras el pago.</p>
+            <p>Puedes comprar sin crear una cuenta ni contratar una suscripción. Solo si ya eres suscriptor, inicia sesión para comprobar tu descuento; el envío no se descuenta. <a href="/login?next=/reservas/gestionar">Acceso para suscriptores</a></p>
             <p>Desistimiento: 14 dias naturales desde la recepcion. Esta camiseta de diseno fijo no se considera personalizada para el comprador.</p>
             <nav aria-label="Condiciones de compra">{LEGAL_LINKS.map((link) => <p key={link.href}><a href={link.href} target="_blank" rel="noreferrer">{link.label}</a></p>)}</nav>
             </details>
@@ -315,9 +315,9 @@ export default function ReservationManager({ paymentReturn = false }: { paymentR
         )}
       {["WAITLIST", "RESERVED", "PURCHASE_AVAILABLE", "PAYMENT_FAILED", "PAYMENT_PENDING"].includes(r.status) && !confirming && (
         <details class="reservation-purchase-details">
-          <summary>Cancelar la reserva</summary>
+          <summary>{mode || r.status === "WAITLIST" ? "Cancelar la reserva" : "Cancelar la compra pendiente"}</summary>
           <p>Esta opcion libera las unidades. Si hay un pago en curso, antes se comprobara su estado.</p>
-          <button type="button" class="btn btn-ghost" disabled={busy} onClick={cancel}>Cancelar reserva</button>
+          <button type="button" class="btn btn-ghost" disabled={busy} onClick={cancel}>{mode || r.status === "WAITLIST" ? "Cancelar reserva" : "Cancelar compra pendiente"}</button>
         </details>
       )}
       <p id="purchase-feedback" role="status" aria-live="polite" aria-atomic="true">

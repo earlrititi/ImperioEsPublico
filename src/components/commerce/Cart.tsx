@@ -1,6 +1,6 @@
 import { useEffect, useState } from "preact/hooks";
 import { changeCart, readCart, saveCart, type CartItem } from "../../lib/cart";
-import { formatMoney, SHIRT_PRODUCT_PRICE_CENTS } from "../../config/commerce";
+import { formatMoney, SHIRT_PRODUCT_PRICE_CENTS, SHIRT_SHIPPING_PRICE_CENTS, SHIRT_FINAL_PRICE_CENTS } from "../../config/commerce";
 import { trackAutomationActivity, trackGoogleCommerce } from "../../lib/google-analytics";
 
 export default function Cart() {
@@ -33,8 +33,12 @@ export default function Cart() {
         <button class="btn btn-ghost" type="button" onClick={() => update(item, 0)}>Eliminar talla {item.size}</button>
       </div><strong>{formatMoney(SHIRT_PRODUCT_PRICE_CENTS * item.quantity)}</strong>
     </article>)}
-    <dl class="cart-totals"><div><dt>Subtotal · IVA incluido</dt><dd>{formatMoney(SHIRT_PRODUCT_PRICE_CENTS * units)}</dd></div></dl>
-    <p>Envío a Península: 3 € por camiseta. Se añade en el checkout antes del pago.</p>
+    <dl class="cart-totals">
+      <div><dt>Camisetas · IVA incluido</dt><dd>{formatMoney(SHIRT_PRODUCT_PRICE_CENTS * units)}</dd></div>
+      <div><dt>Envío peninsular · {units} {units === 1 ? "unidad" : "unidades"}</dt><dd>{formatMoney(SHIRT_SHIPPING_PRICE_CENTS * units)}</dd></div>
+      <div><dt>Total con envío e IVA incluidos</dt><dd><strong>{formatMoney(SHIRT_FINAL_PRICE_CENTS * units)}</strong></dd></div>
+    </dl>
+    <p>Compra como invitado, sin crear una cuenta. Si ya eres suscriptor, tu descuento se comprueba al pagar.</p>
     {error && <p role="alert">{error}</p>}
     <div class="cart-actions"><a class="btn btn-ghost" href="/tienda">Seguir comprando</a><a class="btn btn-primary" href="/reservas?cart=1" onClick={()=>trackGoogleCommerce("begin_checkout",items)}>Finalizar compra</a></div>
   </section>;

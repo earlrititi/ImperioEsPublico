@@ -3,13 +3,14 @@ import Layout from "../../layouts/Layout.astro";
 import StoreStock from "../../components/commerce/StoreStock.astro";
 import CartControls from "../../components/CartControls.astro";
 import { PRODUCTS } from "../../config/products";
+import { SHIRT_PRICE_COPY } from "../../config/commerce";
 import { ZoomIn as ZoomInNodes } from "lucide";
 
 const shirt = PRODUCTS["camiseta-imperial"];
 const shirtPrice = new Intl.NumberFormat("es-ES", {
   style: "currency",
   currency: shirt.currency.toUpperCase(),
-}).format(shirt.expectedUnitAmount / 100);
+}).format((shirt.expectedUnitAmount + shirt.shipping.amount) / 100);
 ---
 
 <Layout
@@ -126,7 +127,7 @@ const shirtPrice = new Intl.NumberFormat("es-ES", {
             </div>
           </div>
           <form class="product-purchase" action="/reservas" method="get">
-            <p class="product-price">{shirtPrice}</p>
+            <p class="product-price">{shirtPrice} <small>envío peninsular incluido</small></p>
             <p class="product-legal-status">NON SUFFICIT ORBIS. La cruz de Borgoña, el escudo y la nave en una camiseta técnica ligera y transpirable.</p>
             <label class="size-field">
               <span>Talla</span>
@@ -145,7 +146,7 @@ const shirtPrice = new Intl.NumberFormat("es-ES", {
             >
               {"COMPRAR AHORA"}
             </button>
-            <p class="product-legal-status">IVA incluido. Envío a Península: 3 € por camiseta, añadido en el checkout.</p>
+            <p class="product-legal-status">{SHIRT_PRICE_COPY}.</p>
             <p class="product-legal-status" data-reservation-stock role="status" aria-live="polite">Consultando disponibilidad...</p>
             <button class="store-button" type="button" data-cart-add disabled>Añadir al carrito</button>
             <p class="product-legal-status" data-cart-feedback hidden role="status">Añadida al carrito. <a href="/carrito">Ver carrito</a></p>
@@ -1859,6 +1860,7 @@ const shirtPrice = new Intl.NumberFormat("es-ES", {
   .product-meta{grid-column:1/-1;min-height:0;margin-bottom:16px}.product-meta strong{font-size:13px}
   .product-visual{grid-column:1;aspect-ratio:1;max-height:540px}.product-purchase{grid-column:2;align-self:center;min-width:0;gap:12px;padding-top:0}
   .product-price{font-size:30px;grid-column:1/-1}.product-purchase .store-button--light{grid-row:auto;grid-column:2;min-height:48px}
+  .product-price small{display:block;margin-top:6px;font-size:14px;font-weight:400}
   .product-purchase .product-legal-status{font-size:14px;line-height:1.5}.size-field{grid-row:3}.product-purchase .store-button--light{grid-row:3}.product-purchase a{color:inherit;text-underline-offset:3px}
   @media(max-width:700px){.store-catalog{padding:80px 20px 32px}.catalog-heading{padding:0 0 20px}.catalog-heading h1{font-size:28px;text-align:left}.product-card--shirt{grid-template-columns:minmax(0,1fr);gap:16px}.product-meta,.product-visual,.product-purchase{grid-column:1}.product-meta{margin:0}.product-visual{height:260px;aspect-ratio:auto}.product-purchase{padding:4px 0 0}.product-price{font-size:26px}.product-meta strong{font-size:12px}.product-purchase .product-legal-status{font-size:13px}}
   @media (prefers-reduced-motion: reduce) {

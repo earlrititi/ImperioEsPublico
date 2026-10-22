@@ -84,7 +84,7 @@ const pageTitle = selectedPlan
   description="Informacion contractual inmediatamente anterior al pago."
   eyebrow="Pago seguro"
   heading={pageTitle}
-  summary="Revisa el plan y continua al pago seguro en Stripe."
+  summary={product ? `${SHIRT_PRICE_COPY}. Compra sin crear una cuenta.` : "Revisa el plan y continua al pago seguro en Stripe."}
   narrow
   noindex
 >
@@ -185,6 +185,7 @@ const pageTitle = selectedPlan
 
     {product && (
       <>
+        <a class="btn btn-primary" href={`/reservas${productVariant ? `?size=${productVariant.size}` : ''}`}>COMPRAR AHORA</a>
         <dl class="checkout-summary">
           <div><dt>Producto</dt><dd>{product.name}</dd></div>
           <div><dt>SKU</dt><dd>{product.sku}</dd></div>

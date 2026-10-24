@@ -22,11 +22,6 @@ const FOUNDATION_CARDS = [
   },
 ];
 
-const NEXT_BUTTON_STAR_PATH =
-  "M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z";
-
-const NEXT_BUTTON_STARS = [1, 2, 3, 4, 5, 6];
-const NEXT_BUTTON_LABEL = "OBT\u00c9N EL MANIFIESTO";
 const SERVICE_CARD_MEDIA = {
   "01": {
     base: "card-1",
@@ -320,23 +315,7 @@ export default function Services() {
           </div>
           </div>
 
-          <div class="services-next-button-wrap services-next-button-wrap--between-foundation fade-in-up">
-            <svg class="services-next-liquid-filter" aria-hidden="true" focusable="false">
-              <filter id="services-next-liquid-glass" x="-20%" y="-20%" width="140%" height="140%" filterUnits="objectBoundingBox">
-                <feTurbulence type="fractalNoise" baseFrequency="0.001 0.005" numOctaves="1" seed="17" result="turbulence"></feTurbulence>
-                <feComponentTransfer in="turbulence" result="mapped">
-                  <feFuncR type="gamma" amplitude="1" exponent="10" offset="0.5"></feFuncR>
-                  <feFuncG type="gamma" amplitude="0" exponent="1" offset="0"></feFuncG>
-                  <feFuncB type="gamma" amplitude="0" exponent="1" offset="0.5"></feFuncB>
-                </feComponentTransfer>
-                <feGaussianBlur in="turbulence" stdDeviation="3" result="softMap"></feGaussianBlur>
-                <feSpecularLighting in="softMap" surfaceScale="5" specularConstant="1" specularExponent="100" lighting-color="white" result="specLight">
-                  <fePointLight x="-200" y="-200" z="300"></fePointLight>
-                </feSpecularLighting>
-                <feComposite in="specLight" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="litImage"></feComposite>
-                <feDisplacementMap in="SourceGraphic" in2="softMap" scale="42" xChannelSelector="R" yChannelSelector="G"></feDisplacementMap>
-              </filter>
-            </svg>
+          <div class="services-next-button-wrap services-next-button-wrap--between-foundation">
             <button
               class="services-next-button"
               type="button"
@@ -345,38 +324,7 @@ export default function Services() {
               data-funnel-manifesto
               onClick={() => setIsManifestFormOpen(true)}
             >
-              <span class="services-next-liquid-lens" aria-hidden="true"></span>
-              <span class="services-next-glass-outline" aria-hidden="true"></span>
-              <span class="services-next-edge-sheen" aria-hidden="true"></span>
-              <span class="services-next-edge services-next-edge--top" aria-hidden="true"></span>
-              <span class="services-next-edge services-next-edge--left" aria-hidden="true"></span>
-              <span class="services-next-edge services-next-edge--bottom" aria-hidden="true"></span>
-              <span class="services-next-edge services-next-edge--right" aria-hidden="true"></span>
-              <span class="services-next-button-content">
-                <span class="services-next-content-plate" aria-hidden="true"></span>
-                <svg class="services-next-sparkle" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                  <path d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z"></path>
-                </svg>
-                <span class="services-next-button-text">
-                  {Array.from(NEXT_BUTTON_LABEL).map((letter, index) => (
-                    <span class="services-next-letter" style={{ "--letter-index": index }} key={`${letter}-${index}`}>
-                      {letter === " " ? "\u00a0" : letter}
-                    </span>
-                  ))}
-                </span>
-                <svg class="services-next-arrow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 66 43" aria-hidden="true" focusable="false">
-                  <polygon points="39.58,4.46 44.11,0 66,21.5 44.11,43 39.58,38.54 56.94,21.5"></polygon>
-                  <polygon points="19.79,4.46 24.32,0 46.21,21.5 24.32,43 19.79,38.54 37.15,21.5"></polygon>
-                  <polygon points="0,4.46 4.53,0 26.42,21.5 4.53,43 0,38.54 17.36,21.5"></polygon>
-                </svg>
-              </span>
-              {NEXT_BUTTON_STARS.map((star) => (
-                <span class={`services-next-star services-next-star--${star}`} aria-hidden="true" key={star}>
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 784.11 815.53" focusable="false">
-                    <path class="services-next-star-fill" d={NEXT_BUTTON_STAR_PATH}></path>
-                  </svg>
-                </span>
-              ))}
+              RECIBIR MANIFIESTO
             </button>
           </div>
 
@@ -1690,604 +1638,6 @@ export default function Services() {
             rgba(255, 255, 255, 0.82);
         }
 
-        .services-next-button-wrap:has(.services-next-button:active) {
-          transform: rotate3d(1, 0, 0, 12deg);
-        }
-
-        .services-next-liquid-filter {
-          position: absolute;
-          width: 0;
-          height: 0;
-          overflow: hidden;
-          pointer-events: none;
-        }
-
-        .services-next-button {
-          --main-size: clamp(0.98rem, 1.45vw, 1.34rem);
-          --border-width: 0;
-          --color-background: var(--color-red-accent);
-          --color-text: rgba(255, 255, 255, 0.94);
-          --color-outline: rgb(242 56 30 / 28%);
-          --color-shadow: rgba(0, 0, 0, 0.36);
-          --color-star: var(--color-red-accent);
-          --glass-edge: transparent;
-          --glass-highlight: rgba(255, 255, 255, 0.74);
-          --glass-plate: rgba(255, 255, 255, 0.22);
-          position: relative;
-          z-index: 3;
-          isolation: isolate;
-          cursor: pointer;
-          appearance: none;
-          display: inline-flex;
-          justify-content: center;
-          align-items: center;
-          text-decoration: none;
-          border: none;
-          border-radius: 1.5rem;
-          padding: 0;
-          font-family: "Poppins", var(--font-display);
-          font-weight: 600;
-          font-size: var(--main-size);
-          color: var(--color-text);
-          background: transparent;
-          box-shadow:
-            0 6px 6px rgba(0, 0, 0, 0.2),
-            0 0 20px rgba(0, 0, 0, 0.1);
-          transition:
-            color var(--services-next-hover-time) var(--services-next-hover-ease),
-            transform var(--services-next-hover-time) var(--services-next-hover-ease),
-            border-radius var(--services-next-hover-time) var(--services-next-hover-ease),
-            box-shadow var(--services-next-hover-time) var(--services-next-hover-ease);
-        }
-
-        .services-next-button:focus-visible {
-          outline: 2px solid rgba(255, 255, 255, 0.96);
-          outline-offset: 0.22em;
-          box-shadow:
-            inset 0 0 0 1px rgba(255, 255, 255, 0.3),
-            0 0 0 4px rgb(242 56 30 / 32%),
-            0 12px 28px rgba(0, 0, 0, 0.12);
-        }
-
-        .services-next-button:disabled {
-          cursor: not-allowed;
-          opacity: 0.55;
-          filter: saturate(0.65);
-        }
-
-        .services-next-button::after {
-          content: "";
-          position: absolute;
-          left: 10%;
-          right: 10%;
-          bottom: -38%;
-          height: 62%;
-          z-index: -2;
-          border-radius: 999px;
-          background:
-            radial-gradient(ellipse at 50% 26%, rgba(255, 255, 255, 0.42), transparent 26%),
-            radial-gradient(ellipse at 50% 46%, rgb(242 56 30 / 22%), rgb(242 56 30 / 6%) 64%, transparent 78%),
-            linear-gradient(90deg, rgb(242 56 30 / 0%), rgb(242 56 30 / 12%), rgb(242 56 30 / 0%));
-          filter: blur(9px);
-          opacity: 0.58;
-          pointer-events: none;
-          transition: opacity 0.35s ease, transform 0.35s ease;
-        }
-
-        .services-next-liquid-lens {
-          position: absolute;
-          inset: 0;
-          z-index: 0;
-          border-radius: inherit;
-          pointer-events: none;
-          overflow: hidden;
-          isolation: isolate;
-          background: transparent;
-          backdrop-filter: blur(3px);
-          -webkit-backdrop-filter: blur(3px);
-          filter: url(#services-next-liquid-glass);
-          transition: filter var(--services-next-hover-time) var(--services-next-hover-ease);
-        }
-
-        .services-next-liquid-lens::before {
-          display: none;
-        }
-
-        .services-next-liquid-lens::after {
-          display: none;
-        }
-
-        .services-next-glass-outline {
-          position: absolute;
-          z-index: 2;
-          inset: 0;
-          border-radius: inherit;
-          padding: 0;
-          box-sizing: border-box;
-          overflow: hidden;
-          background: transparent;
-          box-shadow:
-            inset 2px 2px 1px rgba(255, 255, 255, 0.5),
-            inset -1px -1px 1px 1px rgba(255, 255, 255, 0.5);
-          pointer-events: none;
-          transition:
-            border-radius var(--services-next-hover-time) var(--services-next-hover-ease),
-            box-shadow var(--services-next-hover-time) var(--services-next-hover-ease);
-        }
-
-        .services-next-button:hover .services-next-glass-outline {
-          --services-next-angle-1: -125deg;
-        }
-
-        .services-next-button:active .services-next-glass-outline {
-          --services-next-angle-1: -75deg;
-        }
-
-        .services-next-edge-sheen {
-          position: absolute;
-          inset: 0;
-          z-index: 2;
-          border-radius: inherit;
-          overflow: hidden;
-          pointer-events: none;
-        }
-
-        .services-next-edge-sheen::before {
-          content: "";
-          position: absolute;
-          top: 58%;
-          left: -34%;
-          width: 34%;
-          height: 36%;
-          border-radius: 999px;
-          background: radial-gradient(ellipse at 50% 50%, rgba(255, 255, 255, 0.58), rgba(255, 255, 255, 0.14) 46%, transparent 74%);
-          filter: blur(3px);
-          opacity: 0;
-          transform: rotate(-18deg) scaleY(0.62);
-        }
-
-        .services-next-button:hover .services-next-edge-sheen::before {
-          animation: services-next-curve-sheen 1.05s cubic-bezier(0.22, 1, 0.36, 1) infinite;
-        }
-
-        .services-next-edge {
-          position: absolute;
-          z-index: 4;
-          display: block;
-          background: rgba(255, 255, 255, 0.58);
-          box-shadow: 0 0 7px rgba(255, 255, 255, 0.42);
-          pointer-events: none;
-          transition: 0.5s ease;
-        }
-
-        .services-next-edge--top {
-          top: 0;
-          left: 0;
-          width: 0;
-          height: 1px;
-        }
-
-        .services-next-button:hover .services-next-edge--top {
-          width: 100%;
-          transform: translateX(100%);
-        }
-
-        .services-next-edge--left {
-          top: 0;
-          left: 0;
-          width: 1px;
-          height: 0;
-        }
-
-        .services-next-button:hover .services-next-edge--left {
-          height: 100%;
-          transform: translateY(100%);
-        }
-
-        .services-next-edge--bottom {
-          right: 0;
-          bottom: 0;
-          width: 0;
-          height: 1px;
-        }
-
-        .services-next-button:hover .services-next-edge--bottom {
-          width: 100%;
-          transform: translateX(-100%);
-        }
-
-        .services-next-edge--right {
-          right: 0;
-          bottom: 0;
-          width: 1px;
-          height: 0;
-        }
-
-        .services-next-button:hover .services-next-edge--right {
-          height: 100%;
-          transform: translateY(-100%);
-        }
-
-        .services-next-button-content {
-          position: relative;
-          z-index: 3;
-          isolation: isolate;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0;
-          width: 100%;
-          padding: 0.86em 1em 0.84em 1.64em;
-          border-radius: inherit;
-          user-select: none;
-          overflow: hidden;
-          transition:
-            color var(--services-next-hover-time) var(--services-next-hover-ease),
-            padding var(--services-next-hover-time) var(--services-next-hover-ease),
-            transform var(--services-next-hover-time) var(--services-next-hover-ease);
-        }
-
-        .services-next-content-plate {
-          position: absolute;
-          inset: 0;
-          z-index: 1;
-          border-radius: inherit;
-          pointer-events: none;
-          background: rgba(255, 255, 255, 0.25);
-          box-shadow: none;
-          backdrop-filter: none;
-          -webkit-backdrop-filter: none;
-          transition:
-            background var(--services-next-hover-time) var(--services-next-hover-ease),
-            transform var(--services-next-hover-time) var(--services-next-hover-ease),
-            border-radius var(--services-next-hover-time) var(--services-next-hover-ease);
-        }
-
-        .services-next-button-content::after {
-          content: "";
-          position: absolute;
-          top: 12%;
-          bottom: 12%;
-          left: -42%;
-          z-index: 5;
-          width: 34%;
-          border-radius: 999px;
-          background: linear-gradient(
-            90deg,
-            rgb(242 56 30 / 0%) 0%,
-            rgb(242 56 30 / 8%) 18%,
-            rgb(242 56 30 / 42%) 48%,
-            rgb(242 56 30 / 8%) 82%,
-            rgb(242 56 30 / 0%) 100%
-          );
-          filter: blur(3px);
-          opacity: 0;
-          mix-blend-mode: screen;
-          pointer-events: none;
-          transform: translateX(0);
-        }
-
-        .services-next-button-content::before {
-          content: "";
-          position: absolute;
-          top: 58%;
-          left: -32%;
-          z-index: 6;
-          width: 30%;
-          height: 34%;
-          border-radius: 999px;
-          background:
-            radial-gradient(ellipse at 50% 50%, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.34) 42%, transparent 72%),
-            linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.75), transparent);
-          filter: blur(1.8px);
-          opacity: 0;
-          pointer-events: none;
-          transform: rotate(-16deg) scaleY(0.58);
-        }
-
-        .services-next-button:active {
-          transform: scale(0.96);
-          border-color: transparent;
-          background-color: rgba(0, 0, 0, 0);
-          box-shadow:
-            inset 0 0.125em 0.125em rgb(242 56 30 / 8%),
-            inset 0 -0.125em 0.125em rgba(255, 255, 255, 0.5),
-            0 0.125em 0.125em -0.125em rgb(242 56 30 / 20%),
-            0 0 0.1em 0.25em inset rgba(255, 255, 255, 0.2),
-            0 0.225em 0.05em rgb(242 56 30 / 5%),
-            0 0.25em 0 rgba(255, 255, 255, 0.65);
-        }
-
-        .services-next-button:active .services-next-content-plate {
-          transform: translateY(1px) scaleX(0.99);
-        }
-
-        .services-next-button:hover {
-          color: var(--color-red-accent);
-          background: transparent;
-          border-color: transparent;
-          outline: 0.1em solid transparent;
-          outline-offset: 0.2em;
-          border-radius: 2rem;
-          box-shadow:
-            0 7px 8px rgba(0, 0, 0, 0.18),
-            0 0 24px rgb(242 56 30 / 14%);
-          animation:
-            services-next-ripple 1s linear infinite;
-          transform: scale(1.03);
-        }
-
-        .services-next-button:hover .services-next-liquid-lens {
-          filter: url(#services-next-liquid-glass) saturate(1.06);
-        }
-
-        .services-next-button:hover .services-next-content-plate {
-          background: rgba(255, 255, 255, 0.28);
-        }
-
-        .services-next-button:hover .services-next-button-content {
-          padding: 0.96em 1.12em 0.94em 1.76em;
-          transform: scale(0.95);
-        }
-
-        .services-next-button:hover:active {
-          transform: scale(0.96);
-        }
-
-        .services-next-button:hover .services-next-button-content::after {
-          opacity: 1;
-          animation: services-next-red-band 1.35s cubic-bezier(0.22, 1, 0.36, 1) infinite;
-        }
-
-        .services-next-button:hover .services-next-button-content::before {
-          animation: services-next-cartoon-shine 1.05s cubic-bezier(0.22, 1, 0.36, 1) infinite;
-        }
-
-        .services-next-button:active .services-next-button-content::before {
-          --services-next-angle-2: -15deg;
-        }
-
-        .services-next-button-text {
-          position: relative;
-          z-index: 7;
-          display: inline-flex;
-          align-items: center;
-          margin-right: 0.3em;
-          text-shadow:
-            0 2px 2px rgba(255, 255, 255, 0.82),
-            0 5px 8px rgba(255, 255, 255, 0.48),
-            0 0 8px rgb(242 56 30 / 32%);
-          transition: 0.5s;
-        }
-
-        .services-next-letter {
-          position: relative;
-          display: inline-block;
-          color: rgba(0, 0, 0, 0.8);
-          animation: services-next-letter-glow 2s ease-in-out infinite;
-          animation-delay: calc(var(--letter-index) * 0.06s);
-          transition:
-            color var(--services-next-hover-time) var(--services-next-hover-ease),
-            text-shadow var(--services-next-hover-time) var(--services-next-hover-ease),
-            transform var(--services-next-hover-time) var(--services-next-hover-ease),
-            filter var(--services-next-hover-time) var(--services-next-hover-ease);
-        }
-
-        .services-next-button:hover .services-next-letter {
-          color: var(--color-red-accent);
-        }
-
-        .services-next-button:focus .services-next-letter {
-          animation:
-            services-next-focused-letter 1s ease-in-out forwards,
-            services-next-letter-glow 1.2s ease-in-out infinite;
-          animation-delay: 0s, 1s;
-        }
-
-        .services-next-button:hover .services-next-button-text {
-          text-shadow:
-            0 0 6px rgba(255, 255, 255, 0.86),
-            0 0 14px rgba(255, 255, 255, 0.62),
-            0 2px 2px rgba(0, 0, 0, 0.58),
-            0 5px 8px rgba(0, 0, 0, 0.34);
-        }
-
-        .services-next-button:active .services-next-button-text {
-          text-shadow:
-            0 1px 1px rgba(0, 0, 0, 0.62),
-            0 3px 5px rgba(0, 0, 0, 0.36);
-        }
-
-        .services-next-arrow {
-          z-index: 7;
-          height: 0.8em;
-          fill: currentColor;
-          margin-right: -0.16em;
-          position: relative;
-          transition: 0.5s;
-        }
-
-        .services-next-sparkle {
-          position: relative;
-          z-index: 7;
-          flex: 0 0 auto;
-          width: 1.08em;
-          height: 1.08em;
-          margin-right: 0.55rem;
-          fill: currentColor;
-          opacity: 0.86;
-          filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.6));
-          animation: services-next-sparkle-flicker 2s linear infinite;
-          animation-delay: 0.5s;
-          transition:
-            fill var(--services-next-hover-time) var(--services-next-hover-ease),
-            filter var(--services-next-hover-time) var(--services-next-hover-ease),
-            opacity var(--services-next-hover-time) var(--services-next-hover-ease);
-        }
-
-        .services-next-button:hover .services-next-sparkle,
-        .services-next-button:focus .services-next-sparkle {
-          opacity: 1;
-          animation-duration: 1.2s;
-          filter:
-            drop-shadow(0 0 3px rgba(255, 255, 255, 0.85))
-            drop-shadow(0 0 7px rgb(242 56 30 / 58%));
-        }
-
-        .services-next-button:hover .services-next-arrow {
-          margin-right: 0.66em;
-          transition: 0.5s;
-          filter:
-            drop-shadow(0 0 5px rgba(255, 255, 255, 0.82))
-            drop-shadow(0 0 12px rgba(255, 255, 255, 0.58));
-        }
-
-        .services-next-button:active .services-next-arrow {
-          filter: none;
-        }
-
-        @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-          .services-next-liquid-lens {
-            background:
-              linear-gradient(145deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.16) 44%, rgb(242 56 30 / 18%)),
-              rgba(255, 255, 255, 0.18);
-          }
-
-          .services-next-content-plate {
-            background: rgba(255, 255, 255, 0.34);
-          }
-        }
-
-        .services-next-arrow polygon:nth-child(1) {
-          transition: 0.4s;
-          transform: translateX(-60%);
-        }
-
-        .services-next-arrow polygon:nth-child(2) {
-          transition: 0.5s;
-          transform: translateX(-30%);
-        }
-
-        .services-next-button:hover .services-next-arrow polygon:nth-child(1) {
-          transform: translateX(0%);
-          animation: services-next-opacity 1s infinite 0.6s;
-        }
-
-        .services-next-button:hover .services-next-arrow polygon:nth-child(2) {
-          transform: translateX(0%);
-          animation: services-next-opacity 1s infinite 0.4s;
-        }
-
-        .services-next-button:hover .services-next-arrow polygon:nth-child(3) {
-          animation: services-next-opacity 1s infinite 0.2s;
-        }
-
-        .services-next-star {
-          position: absolute;
-          display: block;
-          height: auto;
-          opacity: 0;
-          pointer-events: none;
-          filter: drop-shadow(0 0 0 var(--color-star));
-          z-index: -1;
-        }
-
-        .services-next-star svg {
-          display: block;
-          width: 100%;
-          height: auto;
-          margin: 0;
-          fill: none;
-        }
-
-        .services-next-star-fill {
-          fill: var(--color-star);
-        }
-
-        .services-next-star--1 {
-          top: 20%;
-          left: 20%;
-          width: 25px;
-          transition: all 1s cubic-bezier(0.05, 0.83, 0.43, 0.96);
-        }
-
-        .services-next-star--2 {
-          top: 45%;
-          left: 45%;
-          width: 15px;
-          transition: all 1s cubic-bezier(0, 0.4, 0, 1.01);
-        }
-
-        .services-next-star--3 {
-          top: 40%;
-          left: 40%;
-          width: 5px;
-          transition: all 1s cubic-bezier(0, 0.4, 0, 1.01);
-        }
-
-        .services-next-star--4 {
-          top: 20%;
-          left: 40%;
-          width: 8px;
-          transition: all 0.8s cubic-bezier(0, 0.4, 0, 1.01);
-        }
-
-        .services-next-star--5 {
-          top: 25%;
-          left: 45%;
-          width: 15px;
-          transition: all 0.6s cubic-bezier(0, 0.4, 0, 1.01);
-        }
-
-        .services-next-star--6 {
-          top: 5%;
-          left: 50%;
-          width: 5px;
-          transition: all 0.8s ease;
-        }
-
-        .services-next-button:hover .services-next-star {
-          opacity: 1;
-          filter: drop-shadow(0 0 10px var(--color-star));
-          z-index: 2;
-        }
-
-        .services-next-button:hover .services-next-star--1 {
-          top: -80%;
-          left: -30%;
-          width: 25px;
-        }
-
-        .services-next-button:hover .services-next-star--2 {
-          top: -25%;
-          left: 10%;
-          width: 15px;
-        }
-
-        .services-next-button:hover .services-next-star--3 {
-          top: 108%;
-          left: 12%;
-          width: 5px;
-        }
-
-        .services-next-button:hover .services-next-star--4 {
-          top: -42%;
-          left: 78%;
-          width: 8px;
-        }
-
-        .services-next-button:hover .services-next-star--5 {
-          top: 25%;
-          left: 115%;
-          width: 15px;
-        }
-
-        .services-next-button:hover .services-next-star--6 {
-          top: 104%;
-          left: 72%;
-          width: 5px;
-        }
-
         .services-foundation-grid {
           display: grid;
           gap: clamp(var(--space-3), 1.6vw, var(--space-6));
@@ -2805,18 +2155,6 @@ export default function Services() {
           margin: clamp(var(--space-2), 1.8vw, var(--space-4)) 0;
         }
 
-        @keyframes services-next-opacity {
-          0% {
-            opacity: 1;
-          }
-          50% {
-            opacity: 0;
-          }
-          100% {
-            opacity: 1;
-          }
-        }
-
         @keyframes service-card-morph-cycle {
           0%,
           75% {
@@ -2830,134 +2168,98 @@ export default function Services() {
           }
         }
 
-        @keyframes services-next-ripple {
-          0% {
-            outline: 0em solid transparent;
-            outline-offset: -0.1em;
-          }
-          50% {
-            outline: 0.2em solid var(--color-outline);
-            outline-offset: 0.2em;
-          }
-          100% {
-            outline: 0.4em solid transparent;
-            outline-offset: 0.4em;
+        /* Manifesto CTA with restrained hover and pressed feedback. */
+        .services-next-button-wrap,
+        .services-next-button-wrap:has(.services-next-button:active) {
+          transform: none;
+          transition: none;
+        }
+
+        .services-next-button {
+          position: relative;
+          z-index: 3;
+          isolation: isolate;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-width: min(100%, 17.25rem);
+          min-height: 3.6rem;
+          padding: 0.95rem 2.15rem;
+          border: 1px solid rgba(255, 224, 132, 0.82);
+          border-radius: 999px;
+          background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.58) 0%, rgba(255, 255, 255, 0.12) 39%, rgba(74, 0, 0, 0.18) 100%),
+            rgba(182, 15, 28, 0.72);
+          color: #fff;
+          box-shadow:
+            inset 0 2px 5px rgba(255, 247, 204, 0.78),
+            inset 0 -3px 6px rgba(76, 0, 0, 0.28),
+            0 2px 5px rgba(0, 0, 0, 0.22);
+          -webkit-backdrop-filter: blur(8px) saturate(1.14);
+          backdrop-filter: blur(8px) saturate(1.14);
+          appearance: none;
+          cursor: pointer;
+          font: 700 clamp(0.88rem, 1.2vw, 1rem) / 1.1 var(--font-body);
+          letter-spacing: 0.035em;
+          text-decoration: none;
+          text-shadow: 0 1px 2px rgba(70, 0, 0, 0.7);
+          animation: none;
+          transform: none;
+          transition: transform 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+        }
+
+        .services-next-button:hover,
+        .services-next-button:active {
+          border-color: rgba(255, 224, 132, 0.82);
+          border-radius: 999px;
+          background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.58) 0%, rgba(255, 255, 255, 0.12) 39%, rgba(74, 0, 0, 0.18) 100%),
+            rgba(182, 15, 28, 0.72);
+          color: #fff;
+          box-shadow:
+            inset 0 2px 5px rgba(255, 247, 204, 0.78),
+            inset 0 -3px 6px rgba(76, 0, 0, 0.28),
+            0 2px 5px rgba(0, 0, 0, 0.22);
+          animation: none;
+          outline: none;
+          transform: none;
+        }
+
+        @media (hover: hover) {
+          .services-next-button:hover {
+            background-color: rgba(206, 20, 37, 0.82);
+            box-shadow:
+              inset 0 2px 4px rgba(255, 247, 204, 0.82),
+              inset 0 -3px 5px rgba(76, 0, 0, 0.28),
+              0 5px 9px rgba(0, 0, 0, 0.28);
+            transform: translateY(-2px);
           }
         }
 
-        @keyframes services-next-letter-glow {
-          50% {
-            color: var(--color-red-accent);
-            text-shadow:
-              0 0 4px rgb(242 56 30 / 72%),
-              0 2px 2px rgba(255, 255, 255, 0.78),
-              0 5px 8px rgba(255, 255, 255, 0.44);
-          }
+        .services-next-button:active,
+        .services-next-button:hover:active {
+          background-color: rgba(151, 11, 24, 0.88);
+          box-shadow:
+            inset 0 3px 6px rgba(60, 0, 0, 0.48),
+            inset 0 -1px 2px rgba(255, 247, 204, 0.48),
+            0 1px 2px rgba(0, 0, 0, 0.2);
+          transform: translateY(1px) scale(0.98);
+          transition-duration: 80ms;
         }
 
-        @keyframes services-next-focused-letter {
-          0%,
-          100% {
-            filter: blur(0);
-          }
-
-          50% {
-            filter: blur(8px) brightness(150%) drop-shadow(-28px 10px 10px rgb(242 56 30 / 72%));
-            transform: scale(1.65);
-          }
-        }
-
-        @keyframes services-next-sparkle-flicker {
-          50% {
-            opacity: 0.34;
-          }
-        }
-
-        @keyframes services-next-red-band {
-          0% {
-            transform: translateX(0);
-            opacity: 0;
-          }
-
-          12% {
-            opacity: 1;
-          }
-
-          78% {
-            opacity: 1;
-          }
-
-          100% {
-            transform: translateX(420%);
-            opacity: 0;
-          }
-        }
-
-        @keyframes services-next-curve-sheen {
-          0% {
-            left: -34%;
-            top: 58%;
-            opacity: 0;
-            transform: rotate(-20deg) scaleY(0.55);
-          }
-
-          16% {
-            top: 22%;
-            opacity: 0.92;
-          }
-
-          48% {
-            top: 5%;
-            opacity: 0.82;
-            transform: rotate(-4deg) scaleY(0.55);
-          }
-
-          78% {
-            top: 22%;
-            opacity: 0.62;
-          }
-
-          100% {
-            left: 104%;
-            top: 58%;
-            opacity: 0;
-            transform: rotate(18deg) scaleY(0.55);
-          }
-        }
-
-        @keyframes services-next-cartoon-shine {
-          0% {
-            left: -32%;
-            top: 58%;
-            transform: rotate(-18deg) scaleY(0.58);
-            opacity: 0;
-          }
-
-          14% {
-            top: 24%;
-            opacity: 0.96;
-          }
-
-          48% {
-            top: 6%;
-            opacity: 0.9;
-            transform: rotate(-4deg) scaleY(0.58);
-          }
-
-          70% {
-            top: 24%;
-            opacity: 0.64;
-          }
-
-          100% {
-            left: 102%;
-            top: 58%;
-            transform: rotate(18deg) scaleY(0.58);
-            opacity: 0;
-          }
+        .services-next-button:focus-visible {
+          outline: 3px solid rgba(182, 15, 28, 0.35);
+          outline-offset: 4px;
         }
 
         @media (prefers-reduced-motion: reduce) {
+          .services-next-button,
+          .services-next-button:hover,
+          .services-next-button:active {
+            transform: none;
+            transition: none;
+          }
+
           .service-cta-card,
           .service-cta-card__stat-rail,
           .service-cta-card__bg,

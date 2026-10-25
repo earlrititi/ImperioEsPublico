@@ -56,6 +56,13 @@ const FOOTER_LEGAL_LINKS = LEGAL_LINKS.filter((link) =>
     : link
 );
 
+const FOOTER_META = {
+  privacy: "Pol\u00edtica de privacidad",
+  cookiePreferences: "Preferencias de cookies",
+  copyright: `\u00a9 ${new Date().getFullYear()} Imperio Espa\u00f1ol.`,
+  creator: "Web creada por Levante Digital",
+};
+
 export default function Footer({ variant = "light" }) {
   const isDark = variant === "dark";
 
@@ -192,6 +199,23 @@ export default function Footer({ variant = "light" }) {
             />
           ))}
         </nav>
+
+        <div class="image-footer__meta" role="group" aria-label={"Privacidad, cookies y cr\u00e9ditos"}>
+          <a href={withBase("/legal/privacidad")}>{FOOTER_META.privacy}</a>
+          <a
+            class="image-footer__cookie-preferences"
+            href={withBase("/legal/cookies")}
+            data-cookie-settings-trigger
+          >
+            <span class="image-footer__consent-mark" aria-hidden="true">
+              <span>{"\u2713"}</span>
+              <span>{"\u00d7"}</span>
+            </span>
+            {FOOTER_META.cookiePreferences}
+          </a>
+          <span>{FOOTER_META.copyright}</span>
+          <span class="image-footer__creator">{FOOTER_META.creator}</span>
+        </div>
       </div>
 
       <style>{`
@@ -610,6 +634,112 @@ export default function Footer({ variant = "light" }) {
           left: 84.1%;
           width: 3.2%;
           height: 9%;
+        }
+
+        .image-footer__meta {
+          --footer-meta-red: #a92317;
+          position: absolute;
+          right: 0;
+          bottom: 0;
+          left: 0;
+          z-index: 5;
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          justify-content: center;
+          gap: 0.7rem 1.25rem;
+          min-height: 58px;
+          padding: 0.65rem max(1rem, calc((100% - 1200px) / 2));
+          border-top: 1px solid rgb(255 255 255 / 70%);
+          background: rgb(255 255 255 / 90%);
+          box-shadow: 0 -8px 28px rgb(38 14 8 / 12%);
+          -webkit-backdrop-filter: blur(10px) saturate(125%);
+          backdrop-filter: blur(10px) saturate(125%);
+          color: #514a45;
+          font-family: "Inter", "Segoe UI", sans-serif;
+          font-size: clamp(0.82rem, 1.05vw, 0.96rem);
+          line-height: 1.35;
+        }
+
+        .image-footer__meta a,
+        .image-footer__meta button {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.58rem;
+          min-height: 36px;
+          margin: 0;
+          border: 0;
+          padding: 0.25rem 0;
+          background: transparent;
+          color: #171412;
+          cursor: pointer;
+          font: inherit;
+          text-decoration: none;
+        }
+
+        .image-footer__meta .image-footer__cookie-preferences {
+          color: var(--footer-meta-red);
+          font-weight: 600;
+        }
+
+        .image-footer__consent-mark {
+          display: inline-grid;
+          grid-template-columns: 1fr 1fr;
+          align-items: center;
+          width: 42px;
+          height: 22px;
+          overflow: hidden;
+          border-radius: 999px;
+          background: var(--footer-meta-red);
+          color: #fff;
+          font-size: 0.78rem;
+          font-weight: 800;
+          line-height: 1;
+          box-shadow: inset 0 0 0 1px rgb(255 255 255 / 30%);
+        }
+
+        .image-footer__consent-mark span {
+          display: grid;
+          place-items: center;
+        }
+
+        .image-footer__consent-mark span + span {
+          border-left: 1px solid rgb(255 255 255 / 46%);
+        }
+
+        .image-footer__creator {
+          color: var(--footer-meta-red);
+          font-weight: 650;
+        }
+
+        .image-footer__meta a:hover,
+        .image-footer__meta button:hover,
+        .image-footer__meta a:focus-visible,
+        .image-footer__meta button:focus-visible {
+          color: #8f160e;
+          text-decoration: underline;
+          text-underline-offset: 0.2em;
+        }
+
+        .image-footer__meta a:focus-visible,
+        .image-footer__meta button:focus-visible {
+          border-radius: 3px;
+          outline: 2px solid var(--footer-meta-red);
+          outline-offset: 3px;
+        }
+
+        @media (max-width: 640px) {
+          .image-footer__meta {
+            justify-content: flex-start;
+            gap: 0.35rem 1rem;
+            padding: 0.8rem 1rem;
+          }
+
+          .image-footer__meta > span,
+          .image-footer__meta > a,
+          .image-footer__meta > button {
+            flex: 1 1 calc(50% - 0.5rem);
+          }
         }
 
         .image-footer__sr-only {

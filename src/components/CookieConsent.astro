@@ -328,7 +328,10 @@ if (hasAuthMarker) {
     });
 
     document.querySelectorAll("[data-cookie-settings-trigger]").forEach((trigger) => {
-      trigger.addEventListener("click", () => openSettings());
+      trigger.addEventListener("click", (event) => {
+        event.preventDefault();
+        openSettings();
+      });
     });
 
     consentSwitches.forEach((control) => {

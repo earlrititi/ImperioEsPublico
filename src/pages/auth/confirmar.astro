@@ -31,6 +31,12 @@ if (Astro.request.method === "POST") {
     if (result.data.user && ["magiclink", "email"].includes(type)) {
       recordAuthAnalytics({ cookies: Astro.cookies, request: Astro.request }, "login", "magic_link");
     }
+    // The deployed signup email template uses type=email, including on another device.
+    if (["signup", "email"].includes(type) && result.data.user?.email && result.data.user.email_confirmed_at) {
+      const { notifyLead } = await import("../../lib/lead-notifications");
+      await notifyLead({ kind: "registration", reference: result.data.user.id, email: result.data.user.email })
+        .catch(() => console.error("Registration owner notification failed"));
+    }
 
     return Astro.redirect(next, 303);
   } catch (confirmationError) {

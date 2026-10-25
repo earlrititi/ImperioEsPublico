@@ -16,7 +16,7 @@ export async function readAuthForm(request: Request, endpoint: string) {
   return new URLSearchParams(body);
 }
 export function authError(error: unknown) {
-  return error instanceof Error && ["origin", "validation", "rate"].includes(error.message) ? error.message : "unavailable";
+  return error instanceof Error && ["origin", "validation", "rate", "captcha"].includes(error.message) ? error.message : "unavailable";
 }
 export function privateAuthHeaders(headers: Headers) {
   headers.set("Cache-Control", "private, no-store");

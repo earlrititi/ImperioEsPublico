@@ -5,6 +5,8 @@ import { authError, privateAuthHeaders, readAuthForm, validEmail } from "../lib/
 import { safeInternalPath } from "../lib/redirects";
 import { createSupabaseServerClient } from "../lib/supabase/server";
 import { recordAuthAnalytics } from "../lib/auth-analytics";
+import AuthCaptcha from "../components/AuthCaptcha.astro";
+import { authCaptchaToken, isAuthCaptchaFailure } from "../lib/auth-captcha";
 privateAuthHeaders(Astro.response.headers);
 const error = Astro.url.searchParams.get("error");
 const updated = Astro.url.searchParams.get("updated") === "1";
@@ -15,16 +17,19 @@ if (Astro.request.method === "POST") {
     const form = await readAuthForm(Astro.request, "auth_login");
     const email = String(form.get("email") ?? "").trim().toLowerCase();
     if (!validEmail(email)) return fail("validation");
+    const captchaToken = authCaptchaToken(form);
     const supabase = createSupabaseServerClient({ cookies: Astro.cookies, request: Astro.request });
     if (form.get("method") === "magic") {
       const site = (import.meta.env.PUBLIC_SITE_URL || Astro.url.origin).replace(/\/$/, "");
-      await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: false,
+      const result = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: false, captchaToken,
         emailRedirectTo: `${site}/api/auth/callback?next=${encodeURIComponent(next)}` } });
+      if (isAuthCaptchaFailure(result.error)) return fail("captcha");
       return Astro.redirect(`/login?sent=1&next=${encodeURIComponent(next)}`, 303);
     }
     const password = form.get("password") ?? "";
     if (!password || password.length > 256) return fail("credentials");
-    const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password, options: { captchaToken } });
+    if (isAuthCaptchaFailure(signInError)) return fail("captcha");
     if (signInError || !data.user) return fail("credentials");
     recordAuthAnalytics({ cookies: Astro.cookies, request: Astro.request }, "login", "password");
     return Astro.redirect(next, 303);
@@ -36,11 +41,12 @@ if (Astro.request.method === "POST") {
     <div class="auth-panel">
       <p class="auth-panel__lede">Accede a tu archivo, tus reservas y tu suscripción.</p>
       {updated && <p class="auth-notice" role="status">Contraseña guardada. Ya puedes iniciar sesión.</p>}
-      {error && <p class="auth-notice auth-notice--error" role="alert">{error === "rate" ? "Demasiados intentos. Espera unos minutos." : error === "credentials" ? "No se pudo iniciar sesión. Revisa el correo, la contraseña y la confirmación de tu cuenta." : "No se pudo completar la solicitud. Inténtalo de nuevo."}</p>}
+      {error && <p class="auth-notice auth-notice--error" role="alert">{error === "rate" ? "Demasiados intentos. Espera unos minutos." : error === "captcha" ? "No se pudo verificar la solicitud. Completa de nuevo la comprobacion de seguridad." : error === "credentials" ? "No se pudo iniciar sesión. Revisa el correo, la contraseña y la confirmación de tu cuenta." : "No se pudo completar la solicitud. Inténtalo de nuevo."}</p>}
       <form class="auth-form" method="post">
         <label for="email">Correo electrónico</label>
         <input id="email" name="email" type="email" autocomplete="username" maxlength="254" required />
         <PasswordField />
+        <AuthCaptcha action="login" />
         <button class="btn btn-primary auth-form__submit" type="submit">Iniciar sesión</button>
       </form>
       <a class="auth-secondary" href="/recuperar-contrasena">¿Has olvidado tu contraseña?</a>

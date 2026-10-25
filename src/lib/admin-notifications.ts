@@ -36,13 +36,13 @@ export function leadNotification(params: {
   email: string; name?: string; plan?: string;
 }) {
   const label = params.kind === "newsletter" ? "Solicitud de newsletter y PDF" : params.kind === "manifesto" ? "Solicitud del manifiesto"
-    : params.kind === "subscription_interest" ? "Checkout de suscripción pendiente de pago" : "Registro gratuito PIQUERO (no es una suscripción de pago)";
+    : params.kind === "subscription_interest" ? "Checkout de suscripción pendiente de pago" : "Registro gratuito PIQUERO confirmado (no es una suscripción de pago)";
   return {
     subject: `${label}: Imperio Español`,
     text: [label, `Nombre: ${params.name || "No facilitado"}`, `Correo: ${params.email}`,
       params.plan ? `Plan: ${params.plan}` : null,
       params.kind === "subscription_interest" ? "El pago todavía no está confirmado." : null,
-      params.kind === "registration" ? "La cuenta puede estar pendiente de confirmar el correo. No se ha cobrado una suscripción." : null,
+      params.kind === "registration" ? "Correo confirmado en Supabase. No se ha cobrado una suscripción. La confirmacion no implica consentimiento comercial." : null,
     ].filter(Boolean).join("\n"),
   };
 }

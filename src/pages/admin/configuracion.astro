@@ -5,15 +5,26 @@ import { ANALYTICS } from "../../config/analytics";
 import { SITE } from "../../config/site";
 import { LEGAL_DOCUMENT_VERSIONS } from "../../config/legal";
 import { SHIRT_PRICE_COPY } from "../../config/commerce";
+import { authCaptchaConfig } from "../../lib/auth-captcha";
 
 export const prerender = false;
 Astro.response.headers.set("Cache-Control", "private, no-store");
 try { await requireAdmin(Astro); } catch { return Astro.redirect("/login?next=/admin/configuracion"); }
 const configured = (name: string) => Boolean(optionalEnv(name)) ? "Configurada" : "No configurada";
 const enabled = (name: string) => optionalEnv(name) === "true" ? "Activado" : "Desactivado";
+const captcha = authCaptchaConfig();
 ---
 <AdminShell title="Configuracion">
   <h1>Configuracion</h1>
+  <section class="settings-section" aria-labelledby="settings-auth">
+    <h2 id="settings-auth">Registro y seguridad</h2>
+    <dl>
+      <dt>Aviso PIQUERO</dt><dd>Solo tras confirmar el correo en Supabase</dd>
+      <dt>Turnstile en formularios</dt><dd>{captcha.enabled ? (captcha.siteKey ? "Activado en la web" : "Configuracion incompleta") : "No activado"}</dd>
+      <dt>Validacion del CAPTCHA</dt><dd>Supabase Auth; requiere activacion en Bot and Abuse Protection</dd>
+    </dl>
+    <a href="/admin">Cuentas y confirmaciones</a>
+  </section>
   <section class="settings-section" aria-labelledby="settings-commerce">
     <h2 id="settings-commerce">Comercio</h2>
     <dl>

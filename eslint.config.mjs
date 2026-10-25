@@ -6,7 +6,7 @@ export default [{
     'src/lib/cart.ts','src/lib/ecommerce.ts','src/lib/ga4-reports.ts','tests/cart.test.ts','tests/ga4-reports.test.ts','tests/google-tag-manager.test.ts',
     'src/lib/purchase-analytics.ts','tests/purchase-analytics.test.ts','tests/google-purchase.test.ts',
     'src/lib/subscription-purchase.ts','src/pages/api/subscriptions/purchase.ts','tests/subscription-purchase.test.ts','tests/google-subscription-purchase.test.ts',
-    'src/lib/resend.ts',
+    'src/lib/resend.ts','src/lib/lead-notifications.ts',
     'src/lib/article-media.ts','src/lib/admin-article-editor.ts','src/pages/media/articles/*.ts','tests/article-media.test.ts',
     'src/components/Services.jsx','tests/service-card-visibility.test.ts',
     'src/lib/email-automations.ts','src/lib/automation-worker.ts','src/pages/api/marketing-maintenance.ts','src/pages/api/marketing/activity.ts','tests/email-automations.test.ts','tests/automation-worker.test.ts','src/lib/mail-delivery.ts','tests/mail-delivery.test.ts','tests/lead-magnet.test.ts',

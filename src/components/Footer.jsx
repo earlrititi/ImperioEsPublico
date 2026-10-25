@@ -202,17 +202,25 @@ export default function Footer({ variant = "light" }) {
 
         <div class="image-footer__meta" role="group" aria-label={"Privacidad, cookies y cr\u00e9ditos"}>
           <a href={withBase("/legal/privacidad")}>{FOOTER_META.privacy}</a>
-          <a
-            class="image-footer__cookie-preferences"
-            href={withBase("/legal/cookies")}
-            data-cookie-settings-trigger
-          >
-            <span class="image-footer__consent-mark" aria-hidden="true">
-              <span>{"\u2713"}</span>
-              <span>{"\u00d7"}</span>
-            </span>
-            {FOOTER_META.cookiePreferences}
-          </a>
+          <span class="image-footer__cookie-preferences">
+            <label class="image-footer__cookie-switch image-footer__cookie-switch--meta">
+              <span class="image-footer__sr-only">Permitir anal\u00edtica</span>
+              <input
+                type="checkbox"
+                role="switch"
+                data-cookie-consent-switch
+                aria-label="Permitir anal\u00edtica"
+              />
+              <span class="image-footer__cookie-switch-track" aria-hidden="true" />
+            </label>
+            <a
+              class="image-footer__cookie-preferences-link"
+              href={withBase("/legal/cookies")}
+              data-cookie-settings-trigger
+            >
+              {FOOTER_META.cookiePreferences}
+            </a>
+          </span>
           <span>{FOOTER_META.copyright}</span>
           <span class="image-footer__creator">{FOOTER_META.creator}</span>
         </div>
@@ -678,33 +686,48 @@ export default function Footer({ variant = "light" }) {
         }
 
         .image-footer__meta .image-footer__cookie-preferences {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.58rem;
           color: var(--footer-meta-red);
           font-weight: 600;
         }
 
-        .image-footer__consent-mark {
-          display: inline-grid;
-          grid-template-columns: 1fr 1fr;
-          align-items: center;
+        .image-footer__cookie-switch--meta .image-footer__cookie-switch-track {
           width: 42px;
           height: 22px;
-          overflow: hidden;
-          border-radius: 999px;
+          background: rgb(169 35 23 / 42%);
+          box-shadow: inset 0 0 0 1px rgb(255 255 255 / 55%);
+        }
+
+        .image-footer__cookie-switch--meta .image-footer__cookie-switch-track::after {
+          top: 3px;
+          left: 3px;
+          width: 16px;
+          height: 16px;
+          background: #fff;
+          box-shadow:
+            0 1px 4px rgb(0 0 0 / 32%),
+            inset 0 0 0 1px rgb(169 35 23 / 22%);
+        }
+
+        .image-footer__cookie-switch--meta input:checked + .image-footer__cookie-switch-track {
           background: var(--footer-meta-red);
-          color: #fff;
-          font-size: 0.78rem;
-          font-weight: 800;
-          line-height: 1;
-          box-shadow: inset 0 0 0 1px rgb(255 255 255 / 30%);
+          box-shadow: inset 0 0 0 1px rgb(255 255 255 / 38%);
         }
 
-        .image-footer__consent-mark span {
-          display: grid;
-          place-items: center;
+        .image-footer__cookie-switch--meta input:checked + .image-footer__cookie-switch-track::after {
+          left: 23px;
+          background: #fff;
         }
 
-        .image-footer__consent-mark span + span {
-          border-left: 1px solid rgb(255 255 255 / 46%);
+        .image-footer__cookie-switch--meta input:focus-visible + .image-footer__cookie-switch-track {
+          outline-color: var(--footer-meta-red);
+        }
+
+        .image-footer__meta .image-footer__cookie-preferences-link {
+          color: var(--footer-meta-red);
+          font-weight: 600;
         }
 
         .image-footer__creator {

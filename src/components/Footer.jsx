@@ -651,7 +651,7 @@ export default function Footer({ variant = "light" }) {
           min-height: 58px;
           padding: 0.65rem max(1rem, calc((100% - 1200px) / 2));
           border-top: 1px solid rgb(255 255 255 / 70%);
-          background: rgb(255 255 255 / 90%);
+          background: rgb(255 255 255 / 60%);
           box-shadow: 0 -8px 28px rgb(38 14 8 / 12%);
           -webkit-backdrop-filter: blur(10px) saturate(125%);
           backdrop-filter: blur(10px) saturate(125%);

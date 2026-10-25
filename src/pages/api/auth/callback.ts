@@ -24,7 +24,7 @@ export const GET: APIRoute = async ({ cookies, redirect, request, url }) => {
 
   const pendingConsent = cookies.get("imperio_registration_consent")?.value;
   if (!pendingConsent && data.user) recordAuthAnalytics({ cookies, request }, "login", "magic_link");
-  if (pendingConsent && data.user?.email) {
+  if (pendingConsent && data.user?.email && data.user.email_confirmed_at) {
     const { notifyLead } = await import("../../../lib/lead-notifications");
     await notifyLead({ kind: "registration", reference: data.user.id, email: data.user.email })
       .catch(() => console.error("Registration owner notification failed"));

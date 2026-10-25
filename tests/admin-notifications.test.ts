@@ -9,7 +9,11 @@ test("Lead notices distinguish requests from paid subscriptions without exposing
   assert.match(manifesto.text, /lector@example.invalid/);
   const notice = leadNotification({ kind: "subscription_interest", email: "lector@example.invalid", plan: "ARCABUCERO mensual" });
   assert.match(notice.text, /pago todavía no está confirmado/);
-  assert.match(leadNotification({ kind: "registration", email: "lector@example.invalid" }).text, /pendiente de confirmar/);
+  const registration = leadNotification({ kind: "registration", email: "lector@example.invalid" });
+  assert.match(registration.subject, /PIQUERO confirmado/);
+  assert.match(registration.text, /Correo confirmado en Supabase/);
+  assert.doesNotMatch(registration.text, /pendiente de confirmar/);
+  assert.match(registration.text, /no implica consentimiento comercial/);
   assert.doesNotMatch(notice.text, /password|contraseña|token|https?:/);
 });
 

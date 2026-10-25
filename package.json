@@ -17,11 +17,12 @@
     "test": "tsx --test tests/**/*.test.ts",
     "test:ga4": "node scripts/verify-ga4-dashboard.mjs",
     "test:email-preferences": "node scripts/verify-email-preferences.mjs",
+    "test:registration": "node scripts/verify-registration-notices.mjs",
     "test:subscription-analytics": "node scripts/verify-subscription-analytics.mjs",
     "test:cms": "node scripts/verify-article-cms.mjs",
     "test:integration": "node scripts/verify-article-access.mjs && node scripts/verify-commerce.mjs && node scripts/verify-admin-mail.mjs && node scripts/verify-paid-order-admin-mail.mjs && node scripts/verify-shirt-catalog.mjs && node scripts/verify-reservation-checkout.mjs && node scripts/verify-password-auth.mjs && node scripts/verify-manifesto.mjs && node scripts/verify-admin-delivery.mjs && node scripts/verify-newsletter-audience.mjs && node scripts/verify-payment-ux.mjs && node scripts/verify-subscription-analytics.mjs && node --import tsx scripts/verify-automation-drafts.mjs && node --import tsx scripts/verify-automation-runtime.mjs && node scripts/verify-commercial-ux.mjs",
     "verify": "npm run check && npm test && npm run build",
-    "verify:master": "npm run verify && npm run lint && npm run lint:admin && npm run test:integration && npm run test:ga4 && npm run test:cms && npm run test:email-preferences && node scripts/verify-admin-settings.mjs && npm audit --omit=dev",
+    "verify:master": "npm run verify && npm run lint && npm run lint:admin && npm run test:integration && npm run test:ga4 && npm run test:cms && npm run test:email-preferences && npm run test:registration && node scripts/verify-admin-settings.mjs && npm audit --omit=dev",
     "preview": "astro preview",
     "astro": "astro"
   },
@@ -58,6 +59,9 @@
     "tsx": "^4.23.12"
   },
   "overrides": {
-    "path-to-regexp": "6.3.0"
+    "path-to-regexp": "6.3.0",
+    "@vercel/cli-config": {
+      "zod": "4.6.7"
+    }
   }
 }

@@ -7,6 +7,8 @@ import { authError, privateAuthHeaders, readAuthForm, validNewPassword } from ".
 import { safeInternalPath } from "../lib/redirects";
 import { EMAIL_MARKETING_CONSENT, EMAIL_MARKETING_NOTE, EMAIL_MARKETING_COPY_VERSION } from "../config/email-marketing";
 import { recordAuthAnalytics } from "../lib/auth-analytics";
+import AuthCaptcha from "../components/AuthCaptcha.astro";
+import { authCaptchaToken, isAuthCaptchaFailure } from "../lib/auth-captcha";
 
 privateAuthHeaders(Astro.response.headers);
 const error = Astro.url.searchParams.get("error");
@@ -32,6 +34,9 @@ if (Astro.request.method === "POST") {
   if (!emailPattern.test(email) || email.length > 254 || !acceptedTerms || !acknowledgedPrivacy) {
     return Astro.redirect(`/registro?error=validation&next=${encodeURIComponent(next)}`);
   }
+  let captchaToken: string | undefined;
+  try { captchaToken = authCaptchaToken(formData); }
+  catch { return Astro.redirect(`/registro?error=captcha&next=${encodeURIComponent(next)}`, 303); }
 
   const anonymousId = crypto.randomUUID();
   const { createSupabaseServerClient } = await import("../lib/supabase/server");
@@ -78,12 +83,13 @@ if (Astro.request.method === "POST") {
     password,
     options: {
       emailRedirectTo: redirectTo,
+      captchaToken,
     },
   });
 
   if (signUpError) {
     Astro.cookies.delete("imperio_registration_consent", { path: "/" });
-    return Astro.redirect(`/registro?error=otp&next=${encodeURIComponent(next)}`);
+    return Astro.redirect(`/registro?error=${isAuthCaptchaFailure(signUpError) ? "captcha" : "otp"}&next=${encodeURIComponent(next)}`);
   }
 
   if (signUpData.user && signUpData.user.identities?.length) {
@@ -93,9 +99,11 @@ if (Astro.request.method === "POST") {
     const { linkAnonymousConsents } = await import("../lib/legal-consents");
     await linkAnonymousConsents({ anonymousId, userId: signUpData.user.id })
       .catch(() => console.error("Registration consent link failed"));
-    const { notifyLead } = await import("../lib/lead-notifications");
-    await notifyLead({ kind: "registration", reference: signUpData.user.id, email })
-      .catch(() => console.error("Registration owner notification failed"));
+    if (signUpData.user.email_confirmed_at) {
+      const { notifyLead } = await import("../lib/lead-notifications");
+      await notifyLead({ kind: "registration", reference: signUpData.user.id, email })
+        .catch(() => console.error("Registration owner notification failed"));
+    }
   }
 
   if (signUpData.session && signUpData.user) {
@@ -134,6 +142,8 @@ if (Astro.request.method === "POST") {
             ? "Revisa el correo y acepta los dos documentos obligatorios."
             : error === "rate"
               ? "Has realizado demasiadas solicitudes. Espera unos minutos."
+            : error === "captcha"
+              ? "No se pudo verificar la solicitud. Completa de nuevo la comprobacion de seguridad."
             : "Intentalo de nuevo dentro de unos minutos."}
         </p>
       </div>
@@ -164,6 +174,7 @@ if (Astro.request.method === "POST") {
           <input type="checkbox" name="newsletter" />
           <span>{EMAIL_MARKETING_CONSENT} <small>{EMAIL_MARKETING_NOTE}</small></span>
         </label>
+        <AuthCaptcha action="registration" />
         <button class="btn btn-primary" type="submit">Crear cuenta PIQUERO</button>
         <p class="muted">El alta y la newsletter son independientes. Tambien puedes <a href="/newsletter">recibir las 7 historias del Siglo de Oro sin crear una cuenta</a>.</p>
       </form>

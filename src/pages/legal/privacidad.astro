@@ -45,7 +45,12 @@ import { ANALYTICS } from "../../config/analytics";
     <p>
       Se utilizan Supabase para autenticacion y base de datos, Stripe para pagos y
       facturacion, Vercel para alojamiento y entrega, y Resend para correos
-      transaccionales y, cuando se soliciten, comerciales. Google Analytics 4{ANALYTICS.gtmId ? " y Google Tag Manager" : ""} solo se cargan tras
+      transaccionales y, cuando se soliciten, comerciales. Cloudflare Turnstile
+      comprueba las solicitudes de registro, acceso y recuperacion para prevenir
+      abuso automatizado mediante datos tecnicos de la conexion y el navegador.
+      Esta comprobacion de seguridad no activa analitica ni comunicaciones comerciales.
+      Consulta la <a href="https://www.cloudflare.com/turnstile-privacy-policy/" rel="noopener noreferrer">informacion de privacidad de Turnstile</a>.
+      Google Analytics 4{ANALYTICS.gtmId ? " y Google Tag Manager" : ""} solo se cargan tras
       consentimiento de analitica, independiente del email marketing. La logistica solo recibira los datos necesarios cuando se
       habiliten envios. Discord y las redes sociales se abren como servicios externos.
       Meta Platforms Ireland Limited recibe los eventos de marketing consentidos,

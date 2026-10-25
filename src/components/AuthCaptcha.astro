@@ -1,0 +1,16 @@
+---
+import { authCaptchaConfig } from "../lib/auth-captcha";
+interface Props { action: string; }
+const { action } = Astro.props;
+const { enabled, siteKey } = authCaptchaConfig();
+---
+{enabled && (siteKey ? (
+  <div class="auth-captcha">
+    <div class="cf-turnstile" data-sitekey={siteKey} data-action={action} data-size="flexible" data-theme="dark" data-language="es"></div>
+    <noscript>Activa JavaScript para completar la comprobacion de seguridad.</noscript>
+    <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  </div>
+) : <p role="alert">La comprobacion de seguridad no esta disponible. Intentalo mas tarde.</p>)}
+<style>
+  .auth-captcha { min-width:0; min-height:65px; }
+</style>

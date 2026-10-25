@@ -12,6 +12,13 @@ export async function notifyLead(params: {
   plan?: string;
 }) {
   if(optionalEnv("COMMERCE_EMAIL_MODE")==="disabled")return;
+  if (params.kind === "registration") {
+    // Verify with Auth before claiming the event; a browser cookie is not proof.
+    const { data, error } = await (await database()).auth.admin.getUserById(params.reference);
+    if (error) throw new Error("AUTH_UNAVAILABLE");
+    if (!data.user?.email_confirmed_at || data.user.id !== params.reference || !data.user.email ||
+      data.user.email.toLowerCase() !== params.email.toLowerCase()) return;
+  }
   const id = `admin_lead_${createHash("sha256").update(`${params.kind}:${params.reference}`).digest("hex")}`;
   if (!await claimStripeEvent({ eventId: id, eventType: `internal.${params.kind}_notification` })) return;
   try {

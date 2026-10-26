@@ -342,7 +342,7 @@ export default function Footer({ variant = "light" }) {
         }
 
         .image-footer__cookie-switch input:checked + .image-footer__cookie-switch-track .image-footer__cookie-switch-target {
-          transform: translate(28px, -50%);
+          transform: translate(24px, -50%);
         }
 
         .image-footer__cookie-switch input:checked + .image-footer__cookie-switch-track {

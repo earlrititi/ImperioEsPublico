@@ -324,7 +324,6 @@ export default function Services() {
               data-funnel-manifesto
               onClick={() => setIsManifestFormOpen(true)}
             >
-              <span class="services-next-button__ring" aria-hidden="true"></span>
               <span class="services-next-button__label">RECIBE EL MANIFIESTO</span>
               <span class="services-next-button__chevron" aria-hidden="true"></span>
             </button>
@@ -2182,7 +2181,7 @@ export default function Services() {
           z-index: 3;
           isolation: isolate;
           display: grid;
-          grid-template-columns: 1.8rem minmax(0, 1fr) 1.8rem;
+          grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
           align-items: center;
           gap: 0.65rem;
           width: min(100%, 22rem);
@@ -2227,28 +2226,21 @@ export default function Services() {
           pointer-events: none;
         }
 
-        .services-next-button__ring,
         .services-next-button__label,
         .services-next-button__chevron {
           position: relative;
           z-index: 1;
         }
 
-        .services-next-button__ring {
-          width: 1.75rem;
-          aspect-ratio: 1;
-          border: 3px solid rgba(255, 255, 255, 0.94);
-          border-radius: 50%;
-          box-shadow: 0 0 8px rgba(255, 255, 255, 0.22);
-        }
-
         .services-next-button__label {
+          grid-column: 2;
           min-width: 0;
           text-align: center;
           white-space: nowrap;
         }
 
         .services-next-button__chevron {
+          grid-column: 3;
           justify-self: end;
           width: 1.05rem;
           height: 1.05rem;
@@ -2297,14 +2289,9 @@ export default function Services() {
 
         @media (max-width: 380px) {
           .services-next-button {
-            grid-template-columns: 1.6rem minmax(0, 1fr) 1.6rem;
             gap: 0.5rem;
             padding-inline: 0.9rem;
             font-size: 0.8rem;
-          }
-
-          .services-next-button__ring {
-            width: 1.55rem;
           }
 
           .services-next-button__chevron {

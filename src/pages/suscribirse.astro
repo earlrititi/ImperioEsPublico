@@ -1,7 +1,6 @@
 ---
 import PageShell from "../layouts/PageShell.astro";
 import { ES_VAT } from "../config/tax";
-import { shirtOfferCopy } from "../config/tshirt-offer";
 ---
 
 <PageShell
@@ -9,7 +8,7 @@ import { shirtOfferCopy } from "../config/tshirt-offer";
   description="Elige tu acceso a Imperio Espanol: Piquero, Arcabucero o Maestre de Campo."
   eyebrow="Acceso"
   heading="Elige tu acceso"
-  summary="Accede al archivo, las cronicas completas y las rutas de lectura. El pago se procesa de forma segura en Stripe Checkout."
+  summary="Compara el acceso a las publicaciones y las ventajas de cada plan. El pago se procesa de forma segura en Stripe Checkout."
 >
   <section class="section">
     <p class="muted">{ES_VAT.description} Aplicable a los planes mensuales y anuales.</p>
@@ -17,42 +16,67 @@ import { shirtOfferCopy } from "../config/tshirt-offer";
       <article class="card subscribe-card">
         <span class="badge">Gratis</span>
         <h2>PIQUERO</h2>
-        <p class="muted">Entrada gratuita al circulo de lectores.</p>
-        <p>Manifiesto y contenido gratuito publicado en el archivo.</p>
-        <p class="muted">Foro: próximamente.</p>
+        <p class="plan-summary">Explora Imperio Español y lee las publicaciones abiertas.</p>
+        <dl class="plan-features">
+          <div><dt>Mensual</dt><dd>Gratis</dd></div>
+          <div><dt>Anual</dt><dd>—</dd></div>
+          <div><dt>Función</dt><dd>Explorar</dd></div>
+          <div><dt>Artículos</dt><dd>Publicaciones abiertas</dd></div>
+          <div><dt>Archivo</dt><dd>Acceso limitado</dd></div>
+          <div><dt>Foro y Discord</dt><dd>Próximamente</dd></div>
+          <div><dt>Lanzamientos anticipados</dt><dd>No incluidos</dd></div>
+          <div><dt>Descuento en camiseta</dt><dd>No incluido</dd></div>
+          <div><dt>Ahorro anual</dt><dd>—</dd></div>
+        </dl>
         <a class="btn btn-ghost" href="/registro">Crear cuenta gratis</a>
       </article>
 
       <article class="card subscribe-card" id="arcabucero">
-        <span class="badge">Desde 1,99 EUR / mes</span>
+        <span class="badge">Desde 1,99 € / mes</span>
         <h2>ARCABUCERO</h2>
-        <p class="muted">Acceso a los articulos para suscriptores.</p>
-        <p>Incluye los mismos articulos que Maestre de Campo. Los seis articulos originales siguen siendo gratuitos.</p>
-        <p>{shirtOfferCopy("arcabucero")}</p>
-        <p class="muted">Foro: próximamente.</p>
-        <div class="billing-options" role="group" aria-label="Facturacion de Arcabucero">
+        <p class="plan-summary">Accede al contenido para suscriptores y a todo el catálogo publicado.</p>
+        <dl class="plan-features">
+          <div><dt>Mensual</dt><dd>1,99 €</dd></div>
+          <div><dt>Anual</dt><dd>17,99 €</dd></div>
+          <div><dt>Función</dt><dd>Acceder</dd></div>
+          <div><dt>Artículos</dt><dd>Todos los artículos para suscriptores</dd></div>
+          <div><dt>Archivo</dt><dd>Catálogo completo publicado</dd></div>
+          <div><dt>Foro y Discord</dt><dd>Próximamente</dd></div>
+          <div><dt>Lanzamientos anticipados</dt><dd>Próximamente</dd></div>
+          <div><dt>Descuento en camiseta</dt><dd><strong>15 %</strong><span>Un uso; envío excluido</span></dd></div>
+          <div><dt>Ahorro anual</dt><dd>5,89 €</dd></div>
+        </dl>
+        <div class="billing-options" role="group" aria-label="Facturación de Arcabucero">
           <a class="btn btn-primary" href="/checkout/arcabucero-monthly">
-            Mensual · 1,99 EUR
+            Elegir mensual · 1,99 €
           </a>
           <a class="btn btn-primary" href="/checkout/arcabucero-annual">
-            Anual · 17,99 EUR
+            Elegir anual · 17,99 €
           </a>
         </div>
       </article>
 
       <article class="card subscribe-card" id="maestre-de-campo">
-        <span class="badge">Desde 3,99 EUR / mes</span>
+        <span class="badge">Desde 3,99 € / mes</span>
         <h2>MAESTRE DE CAMPO</h2>
-        <p class="muted">Acceso a los articulos para suscriptores.</p>
-        <p>Incluye los mismos articulos que Arcabucero. Los seis articulos originales siguen siendo gratuitos.</p>
-        <p>{shirtOfferCopy("maestre_campo")}</p>
-        <p class="muted">Foro: próximamente.</p>
-        <div class="billing-options" role="group" aria-label="Facturacion de Maestre de Campo">
+        <p class="plan-summary">Participa con una aportación mayor para sostener el crecimiento del proyecto.</p>
+        <dl class="plan-features">
+          <div><dt>Mensual</dt><dd>3,99 €</dd></div>
+          <div><dt>Anual</dt><dd>37,99 €</dd></div>
+          <div><dt>Función</dt><dd>Apoyar el proyecto</dd></div>
+          <div><dt>Artículos</dt><dd>Todos los artículos para suscriptores</dd></div>
+          <div><dt>Archivo</dt><dd>Catálogo completo publicado</dd></div>
+          <div><dt>Foro y Discord</dt><dd>Próximamente</dd></div>
+          <div><dt>Lanzamientos anticipados</dt><dd>Próximamente</dd></div>
+          <div><dt>Descuento en camiseta</dt><dd><strong>20 %</strong><span>Un uso; envío excluido</span></dd></div>
+          <div><dt>Ahorro anual</dt><dd>9,89 €</dd></div>
+        </dl>
+        <div class="billing-options" role="group" aria-label="Facturación de Maestre de Campo">
           <a class="btn btn-primary" href="/checkout/maestre-campo-monthly">
-            Mensual · 3,99 EUR
+            Elegir mensual · 3,99 €
           </a>
           <a class="btn btn-primary" href="/checkout/maestre-campo-annual">
-            Anual · 37,99 EUR
+            Elegir anual · 37,99 €
           </a>
         </div>
       </article>
@@ -67,9 +91,62 @@ import { shirtOfferCopy } from "../config/tshirt-offer";
 
   .subscribe-card {
     display: grid;
+    grid-template-rows: auto auto auto 1fr auto;
     gap: var(--space-2);
-    align-content: start;
+    align-content: stretch;
     scroll-margin-top: 7rem;
+  }
+
+  .subscribe-card h2,
+  .plan-summary,
+  .plan-features {
+    margin: 0;
+  }
+
+  .plan-summary {
+    color: var(--ink-soft);
+    line-height: 1.55;
+  }
+
+  .plan-features {
+    display: grid;
+    align-self: start;
+    border-block: 1px solid var(--line);
+  }
+
+  .plan-features > div {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    gap: 0.75rem;
+    align-items: start;
+    padding: 0.7rem 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .plan-features > div:first-child {
+    border-top: 0;
+  }
+
+  .plan-features dt {
+    color: var(--ink-soft);
+    font-size: 0.82rem;
+    line-height: 1.35;
+  }
+
+  .plan-features dd {
+    display: grid;
+    gap: 0.2rem;
+    margin: 0;
+    font-size: 0.88rem;
+    font-weight: 650;
+    line-height: 1.35;
+    text-align: right;
+  }
+
+  .plan-features dd span {
+    color: var(--ink-soft);
+    font-size: 0.72rem;
+    font-weight: 400;
   }
 
   .subscribe-card:target {
@@ -86,6 +163,17 @@ import { shirtOfferCopy } from "../config/tshirt-offer";
     gap: 0.45rem;
     align-self: end;
     margin-top: var(--space-2);
+  }
+
+  @media (max-width: 360px) {
+    .plan-features > div {
+      grid-template-columns: 1fr;
+      gap: 0.25rem;
+    }
+
+    .plan-features dd {
+      text-align: left;
+    }
   }
 
 </style>

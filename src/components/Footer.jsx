@@ -1,5 +1,4 @@
 import { SITE } from "../config/site";
-import { LEGAL_LINKS } from "../config/legal";
 import { withBase } from "../utils/basePath";
 
 const SOCIAL_LINKS = [
@@ -41,21 +40,6 @@ const SOCIAL_LINKS = [
   },
 ];
 
-const FOOTER_LEGAL_HREFS = new Set([
-  "/legal/aviso-legal",
-  "/legal/privacidad",
-  "/legal/cookies",
-  "/legal/terminos",
-]);
-
-const FOOTER_LEGAL_LINKS = LEGAL_LINKS.filter((link) =>
-  FOOTER_LEGAL_HREFS.has(link.href)
-).map((link) =>
-  link.href === "/legal/terminos"
-    ? { ...link, label: "Condiciones de contrataci\u00f3n" }
-    : link
-);
-
 const FOOTER_META = {
   privacy: "Pol\u00edtica de privacidad",
   cookiePreferences: "Preferencias de cookies",
@@ -73,44 +57,6 @@ export default function Footer({ variant = "light" }) {
       <a href="/newsletter" data-funnel-newsletter>Recibir el PDF y la newsletter</a>
     </section>
     <footer class={`image-footer image-footer--${variant}`} aria-label="Pie de pagina">
-      <nav class="image-footer__legal" aria-label="Informacion legal">
-        <span class="image-footer__legal-primary">
-          {FOOTER_LEGAL_LINKS.map((link) => (
-            <a href={withBase(link.href)} key={link.href}>{link.label}</a>
-          ))}
-        </span>
-        <span class="image-footer__legal-utilities">
-          <span class="image-footer__cookie-control">
-            <span class="image-footer__cookie-label">PREFERENCIAS DE COOKIES</span>
-            <label class="image-footer__cookie-switch">
-              <span class="image-footer__sr-only">Permitir analítica</span>
-              <input
-                type="checkbox"
-                role="switch"
-                data-cookie-consent-switch
-                aria-label="Permitir analítica"
-              />
-              <span class="image-footer__cookie-switch-track" aria-hidden="true">
-                <span class="image-footer__cookie-switch-target">
-                  <span class="image-footer__cookie-switch-state-layer">
-                    <span class="image-footer__cookie-switch-handle-shape">
-                      <span class="image-footer__cookie-switch-handle-container" />
-                    </span>
-                  </span>
-                </span>
-              </span>
-            </label>
-            <button
-              class="image-footer__cookie-settings"
-              type="button"
-              data-cookie-settings-trigger
-            >
-              Modificar
-            </button>
-          </span>
-        </span>
-      </nav>
-
       <div class="image-footer__frame">
         <picture class="image-footer__art-wrap">
           <source
@@ -224,6 +170,14 @@ export default function Footer({ variant = "light" }) {
                   <span class="image-footer__cookie-switch-state-layer">
                     <span class="image-footer__cookie-switch-handle-shape">
                       <span class="image-footer__cookie-switch-handle-container" />
+                      <svg
+                        class="image-footer__cookie-switch-icon"
+                        viewBox="0 0 16 16"
+                        aria-hidden="true"
+                      >
+                        <path class="image-footer__cookie-switch-icon--off" d="M4.25 4.25 11.75 11.75M11.75 4.25 4.25 11.75" />
+                        <path class="image-footer__cookie-switch-icon--on" d="m3.2 8.2 3.4 3 6.2-6.4" />
+                      </svg>
                     </span>
                   </span>
                 </span>
@@ -264,73 +218,6 @@ export default function Footer({ variant = "light" }) {
           background: var(--color-black-papers);
         }
 
-        .image-footer__legal {
-          position: absolute;
-          inset: 0;
-          z-index: 4;
-          color: #fff;
-          font-family: "Inter", "Segoe UI", sans-serif;
-          font-size: 0.66rem;
-          font-weight: 700;
-          line-height: 1;
-          pointer-events: none;
-          white-space: nowrap;
-        }
-
-        .image-footer__legal-primary,
-        .image-footer__legal-utilities {
-          position: absolute;
-          bottom: 0.7%;
-          display: flex;
-          flex-wrap: wrap;
-          justify-content: center;
-          align-items: center;
-          gap: 0.45rem;
-        }
-
-        .image-footer__legal-primary {
-          left: 50%;
-          transform: translateX(-50%);
-        }
-
-        .image-footer__legal-utilities {
-          right: 1.5%;
-          justify-content: flex-end;
-        }
-
-        .image-footer--dark .image-footer__legal {
-          color: #ead7c1;
-        }
-
-        .image-footer__legal a,
-        .image-footer__legal button {
-          display: inline-flex;
-          align-items: center;
-          width: fit-content;
-          min-height: 28px;
-          border: 0;
-          border-radius: 3px;
-          padding: 0.3rem 0.48rem;
-          color: inherit;
-          background: rgb(11 12 12 / 68%);
-          cursor: pointer;
-          font: inherit;
-          pointer-events: auto;
-          text-decoration: none;
-        }
-
-        .image-footer__cookie-control {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.38rem;
-          width: fit-content;
-          min-height: 28px;
-          border-radius: 3px;
-          padding: 0.18rem 0.24rem 0.18rem 0.48rem;
-          background: rgb(11 12 12 / 68%);
-          pointer-events: auto;
-        }
-
         .image-footer__cookie-switch {
           position: relative;
           display: inline-flex;
@@ -362,19 +249,13 @@ export default function Footer({ variant = "light" }) {
           width: 52px;
           height: 32px;
           box-sizing: border-box;
-          padding: 2px 4px;
+          padding: 4px;
           overflow: visible;
-          border: 0;
+          border: 1px solid #fff;
           border-radius: 100px;
-          background: radial-gradient(
-            50% 50% at 50% 50%,
-            rgb(134 21 9 / 64%) 0%,
-            rgb(236 38 15 / 72%) 100%
-          );
-          box-shadow:
-            inset 0 1px 0 rgb(255 255 255 / 24%),
-            inset 0 -1px 2px rgb(81 7 2 / 18%);
-          transition: background 180ms ease, box-shadow 180ms ease;
+          background: #e6e0e9;
+          box-shadow: none;
+          transition: background 180ms ease, border-color 180ms ease;
         }
 
         .image-footer__cookie-switch-target {
@@ -384,7 +265,7 @@ export default function Footer({ variant = "light" }) {
           justify-content: center;
           align-items: center;
           box-sizing: border-box;
-          width: 50px;
+          width: 48px;
           height: 48px;
           padding: 4px;
           left: -12px;
@@ -398,7 +279,7 @@ export default function Footer({ variant = "light" }) {
           flex-direction: column;
           justify-content: center;
           align-items: center;
-          width: 42px;
+          width: 40px;
           height: 40px;
           box-sizing: border-box;
           padding: 8px;
@@ -409,16 +290,18 @@ export default function Footer({ variant = "light" }) {
         }
 
         .image-footer__cookie-switch-handle-shape {
+          position: relative;
           display: flex;
           flex-direction: row;
           justify-content: center;
           align-items: center;
-          width: 26px;
+          width: 24px;
           height: 24px;
           box-sizing: border-box;
           padding: 11px;
+          isolation: isolate;
           border-radius: 24px;
-          background: #fff;
+          background: #79747e;
           box-shadow: 0 4px 4px rgb(0 0 0 / 25%);
           flex: 1 1 auto;
           align-self: stretch;
@@ -427,117 +310,90 @@ export default function Footer({ variant = "light" }) {
         .image-footer__cookie-switch-handle-container {
           width: 2px;
           height: 2px;
-          border-radius: 18px;
-          background: #fff;
-          box-shadow: inset 0 4px 4px 28px rgb(0 0 0 / 25%);
-          opacity: 0.8;
+          border-radius: 100px;
           flex: none;
+          order: 0;
+          z-index: 0;
+        }
+
+        .image-footer__cookie-switch-icon {
+          position: absolute;
+          z-index: 1;
+          left: 50%;
+          top: 50%;
+          width: 16px;
+          height: 16px;
+          color: #e6e0e9;
+          overflow: visible;
+          transform: translate(-50%, -50%);
+          pointer-events: none;
+        }
+
+        .image-footer__cookie-switch-icon path {
+          fill: none;
+          stroke: currentColor;
+          stroke-width: 2;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+        }
+
+        .image-footer__cookie-switch-icon--on {
+          display: none;
         }
 
         .image-footer__cookie-switch input:checked + .image-footer__cookie-switch-track .image-footer__cookie-switch-target {
-          transform: translate(26px, -50%);
+          transform: translate(28px, -50%);
         }
 
         .image-footer__cookie-switch input:checked + .image-footer__cookie-switch-track {
+          padding: 2px 4px;
+          border-width: 0;
           background: radial-gradient(
             50% 50% at 50% 50%,
             rgb(134 21 9 / 64%) 0%,
             rgb(236 38 15 / 72%) 100%
           );
-          box-shadow:
-            inset 0 1px 0 rgb(255 255 255 / 32%),
-            inset 0 -1px 2px rgb(81 7 2 / 22%);
+        }
+
+        .image-footer__cookie-switch input:checked + .image-footer__cookie-switch-track .image-footer__cookie-switch-handle-shape {
+          background: #fff;
+        }
+
+        .image-footer__cookie-switch input:checked + .image-footer__cookie-switch-track .image-footer__cookie-switch-handle-container {
+          border-radius: 18px;
+        }
+
+        .image-footer__cookie-switch input:checked + .image-footer__cookie-switch-track .image-footer__cookie-switch-icon {
+          color: #b3261e;
+        }
+
+        .image-footer__cookie-switch input:checked + .image-footer__cookie-switch-track .image-footer__cookie-switch-icon--off {
+          display: none;
+        }
+
+        .image-footer__cookie-switch input:checked + .image-footer__cookie-switch-track .image-footer__cookie-switch-icon--on {
+          display: block;
         }
 
         .image-footer__cookie-switch:hover .image-footer__cookie-switch-state-layer {
-          background: rgb(255 255 255 / 10%);
+          background: rgb(121 116 126 / 10%);
         }
 
         .image-footer__cookie-switch:active .image-footer__cookie-switch-state-layer {
-          background: rgb(255 255 255 / 16%);
+          background: rgb(121 116 126 / 16%);
+        }
+
+        .image-footer__cookie-switch:hover input:checked + .image-footer__cookie-switch-track .image-footer__cookie-switch-state-layer {
+          background: rgb(179 38 30 / 10%);
+        }
+
+        .image-footer__cookie-switch:active input:checked + .image-footer__cookie-switch-track .image-footer__cookie-switch-state-layer {
+          background: rgb(179 38 30 / 16%);
         }
 
         .image-footer__cookie-switch input:focus-visible + .image-footer__cookie-switch-track {
           outline: 2px solid #fff;
           outline-offset: 2px;
-        }
-
-        .image-footer__legal .image-footer__cookie-settings {
-          min-height: 22px;
-          padding: 0.2rem 0.32rem;
-          background: transparent;
-        }
-
-        .image-footer__legal a:hover,
-        .image-footer__legal a:focus-visible,
-        .image-footer__legal button:hover,
-        .image-footer__legal button:focus-visible {
-          color: #fff;
-          background: var(--color-red-accent);
-          text-decoration: none;
-        }
-
-        @media (max-width: 980px) {
-          .image-footer__legal {
-            position: absolute;
-            top: 22%;
-            right: 0;
-            bottom: 1.5%;
-            left: auto;
-            z-index: 4;
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            grid-template-rows: repeat(3, minmax(0, 1fr));
-            align-items: center;
-            justify-items: center;
-            column-gap: 0.18rem;
-            width: 33.333%;
-            padding: 0 0.24rem;
-            color: #fff;
-            background: transparent;
-            font-size: clamp(0.34rem, 1.5vw, 0.68rem);
-            line-height: 1;
-            pointer-events: none;
-            white-space: normal;
-          }
-
-          .image-footer__legal-primary,
-          .image-footer__legal-utilities {
-            display: contents;
-          }
-
-          .image-footer--dark .image-footer__legal {
-            color: #ead7c1;
-            background: transparent;
-          }
-
-          .image-footer__legal a,
-          .image-footer__legal button {
-            justify-content: center;
-            max-width: 100%;
-            min-height: 0;
-            padding: 0.06rem 0.2rem;
-            color: #fff;
-            line-height: 1;
-            text-align: center;
-          }
-
-          .image-footer__cookie-control {
-            grid-column: 1 / -1;
-            align-self: center;
-            justify-self: center;
-            justify-content: center;
-            gap: 0.3rem;
-            max-width: 100%;
-            min-height: 0;
-            padding: 0.12rem 0.2rem;
-            text-align: center;
-          }
-
-          .image-footer__cookie-label {
-            flex: 0 1 auto;
-          }
-
         }
 
         @media (prefers-reduced-motion: reduce) {

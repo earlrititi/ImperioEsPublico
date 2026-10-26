@@ -324,7 +324,9 @@ export default function Services() {
               data-funnel-manifesto
               onClick={() => setIsManifestFormOpen(true)}
             >
-              RECIBIR MANIFIESTO
+              <span class="services-next-button__ring" aria-hidden="true"></span>
+              <span class="services-next-button__label">RECIBE EL MANIFIESTO</span>
+              <span class="services-next-button__chevron" aria-hidden="true"></span>
             </button>
           </div>
 
@@ -2168,7 +2170,7 @@ export default function Services() {
           }
         }
 
-        /* Manifesto CTA with restrained hover and pressed feedback. */
+        /* Red glass manifesto CTA: static finish with lightweight interaction feedback. */
         .services-next-button-wrap,
         .services-next-button-wrap:has(.services-next-button:active) {
           transform: none;
@@ -2179,77 +2181,136 @@ export default function Services() {
           position: relative;
           z-index: 3;
           isolation: isolate;
-          display: inline-flex;
+          display: grid;
+          grid-template-columns: 1.8rem minmax(0, 1fr) 1.8rem;
           align-items: center;
-          justify-content: center;
-          min-width: min(100%, 17.25rem);
-          min-height: 3.6rem;
-          padding: 0.95rem 2.15rem;
-          border: 1px solid rgba(255, 224, 132, 0.82);
-          border-radius: 999px;
+          gap: 0.65rem;
+          width: min(100%, 22rem);
+          min-width: 0;
+          min-height: 4.65rem;
+          padding: 0.75rem 1.15rem;
+          overflow: hidden;
+          border: 1px solid rgba(255, 239, 242, 0.44);
+          border-radius: 1.65rem;
           background:
-            linear-gradient(180deg, rgba(255, 255, 255, 0.58) 0%, rgba(255, 255, 255, 0.12) 39%, rgba(74, 0, 0, 0.18) 100%),
-            rgba(182, 15, 28, 0.72);
+            linear-gradient(180deg, rgba(255, 255, 255, 0.34) 0%, rgba(255, 255, 255, 0.1) 34%, rgba(74, 0, 9, 0.17) 100%),
+            linear-gradient(105deg, rgba(220, 24, 49, 0.76), rgba(151, 0, 23, 0.66));
           color: #fff;
           box-shadow:
-            inset 0 2px 5px rgba(255, 247, 204, 0.78),
-            inset 0 -3px 6px rgba(76, 0, 0, 0.28),
-            0 2px 5px rgba(0, 0, 0, 0.22);
-          -webkit-backdrop-filter: blur(8px) saturate(1.14);
-          backdrop-filter: blur(8px) saturate(1.14);
+            inset 0 1px 0 rgba(255, 255, 255, 0.68),
+            inset 0 -2px 0 rgba(255, 128, 146, 0.24),
+            inset 0 0 18px rgba(255, 255, 255, 0.08),
+            0 0 0 1px rgba(255, 65, 91, 0.2),
+            0 12px 24px rgba(75, 0, 13, 0.3),
+            0 4px 18px rgba(255, 42, 72, 0.24);
+          -webkit-backdrop-filter: blur(16px) saturate(1.35);
+          backdrop-filter: blur(16px) saturate(1.35);
           appearance: none;
           cursor: pointer;
-          font: 700 clamp(0.88rem, 1.2vw, 1rem) / 1.1 var(--font-body);
-          letter-spacing: 0.035em;
+          font: 700 clamp(0.86rem, 1.2vw, 1.02rem) / 1.1 var(--font-body);
+          letter-spacing: 0.025em;
           text-decoration: none;
-          text-shadow: 0 1px 2px rgba(70, 0, 0, 0.7);
+          text-shadow: 0 1px 3px rgba(70, 0, 10, 0.62);
           animation: none;
           transform: none;
-          transition: transform 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+          transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+        }
+
+        .services-next-button::before {
+          content: "";
+          position: absolute;
+          z-index: -1;
+          inset: 1px 1px auto;
+          height: 52%;
+          border-radius: 1.55rem 1.55rem 52% 52%;
+          background: linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0));
+          pointer-events: none;
+        }
+
+        .services-next-button__ring,
+        .services-next-button__label,
+        .services-next-button__chevron {
+          position: relative;
+          z-index: 1;
+        }
+
+        .services-next-button__ring {
+          width: 1.75rem;
+          aspect-ratio: 1;
+          border: 3px solid rgba(255, 255, 255, 0.94);
+          border-radius: 50%;
+          box-shadow: 0 0 8px rgba(255, 255, 255, 0.22);
+        }
+
+        .services-next-button__label {
+          min-width: 0;
+          text-align: center;
+          white-space: nowrap;
+        }
+
+        .services-next-button__chevron {
+          justify-self: end;
+          width: 1.05rem;
+          height: 1.05rem;
+          border-right: 3px solid rgba(255, 255, 255, 0.94);
+          border-bottom: 3px solid rgba(255, 255, 255, 0.94);
+          transform: translateY(-0.2rem) rotate(45deg);
         }
 
         .services-next-button:hover,
         .services-next-button:active {
-          border-color: rgba(255, 224, 132, 0.82);
-          border-radius: 999px;
-          background:
-            linear-gradient(180deg, rgba(255, 255, 255, 0.58) 0%, rgba(255, 255, 255, 0.12) 39%, rgba(74, 0, 0, 0.18) 100%),
-            rgba(182, 15, 28, 0.72);
           color: #fff;
-          box-shadow:
-            inset 0 2px 5px rgba(255, 247, 204, 0.78),
-            inset 0 -3px 6px rgba(76, 0, 0, 0.28),
-            0 2px 5px rgba(0, 0, 0, 0.22);
           animation: none;
           outline: none;
-          transform: none;
         }
 
         @media (hover: hover) {
           .services-next-button:hover {
-            background-color: rgba(206, 20, 37, 0.82);
+            border-color: rgba(255, 246, 248, 0.66);
             box-shadow:
-              inset 0 2px 4px rgba(255, 247, 204, 0.82),
-              inset 0 -3px 5px rgba(76, 0, 0, 0.28),
-              0 5px 9px rgba(0, 0, 0, 0.28);
+              inset 0 1px 0 rgba(255, 255, 255, 0.82),
+              inset 0 -2px 0 rgba(255, 151, 166, 0.34),
+              inset 0 0 22px rgba(255, 255, 255, 0.12),
+              0 0 0 1px rgba(255, 89, 112, 0.3),
+              0 15px 28px rgba(75, 0, 13, 0.34),
+              0 5px 24px rgba(255, 48, 78, 0.36);
             transform: translateY(-2px);
           }
         }
 
         .services-next-button:active,
         .services-next-button:hover:active {
-          background-color: rgba(151, 11, 24, 0.88);
+          border-color: rgba(255, 224, 229, 0.48);
           box-shadow:
-            inset 0 3px 6px rgba(60, 0, 0, 0.48),
-            inset 0 -1px 2px rgba(255, 247, 204, 0.48),
-            0 1px 2px rgba(0, 0, 0, 0.2);
-          transform: translateY(1px) scale(0.98);
+            inset 0 4px 10px rgba(62, 0, 11, 0.48),
+            inset 0 -1px 0 rgba(255, 220, 226, 0.34),
+            0 4px 9px rgba(75, 0, 13, 0.24),
+            0 2px 10px rgba(255, 42, 72, 0.2);
+          transform: translateY(2px) scale(0.985);
           transition-duration: 80ms;
         }
 
         .services-next-button:focus-visible {
-          outline: 3px solid rgba(182, 15, 28, 0.35);
+          outline: 3px solid rgba(255, 85, 109, 0.42);
           outline-offset: 4px;
+        }
+
+        @media (max-width: 380px) {
+          .services-next-button {
+            grid-template-columns: 1.6rem minmax(0, 1fr) 1.6rem;
+            gap: 0.5rem;
+            padding-inline: 0.9rem;
+            font-size: 0.8rem;
+          }
+
+          .services-next-button__ring {
+            width: 1.55rem;
+          }
+
+          .services-next-button__chevron {
+            width: 0.92rem;
+            height: 0.92rem;
+          }
         }
 
         @media (prefers-reduced-motion: reduce) {

@@ -24,18 +24,19 @@ test("personal discount emails use only the subscriber's tier copy, never the mi
   assert.match(source, /const offer = shirtOfferCopy\(params\.planName === "MAESTRE DE CAMPO"/);
 });
 
-test("The subscription comparison has matching rows and only the forum is forthcoming", () => {
+test("The subscription comparison aligns current rows and preserves the plan-specific discount", () => {
   for (const service of SERVICES_ITEMS) {
     assert.equal(service.highlights.length, PLAN_COMPARISON_LABELS.length);
     service.highlights.forEach((copy, index) => {
       if (/próximamente/i.test(copy)) assert.equal(PLAN_COMPARISON_LABELS[index], "Foro");
     });
   }
-  assert.match(SERVICES_ITEMS[1].highlights.at(-1) ?? "", /15%/);
-  assert.match(SERVICES_ITEMS[2].highlights.at(-1) ?? "", /20%/);
+  const discountRow = PLAN_COMPARISON_LABELS.indexOf("Descuento drops");
+  assert.notEqual(discountRow, -1);
+  assert.match(SERVICES_ITEMS[1].highlights[discountRow] ?? "", /15%/);
+  assert.match(SERVICES_ITEMS[2].highlights[discountRow] ?? "", /20%/);
   for (const service of SERVICES_ITEMS.slice(1)) {
-    assert.match(service.highlights.at(-1) ?? "", /descuento para cada lanzamiento/);
-    assert.doesNotMatch(service.highlights.at(-1) ?? "", /un solo uso/i);
+    assert.doesNotMatch(service.highlights[discountRow] ?? "", /un solo uso/i);
   }
   assert.match(shirtOfferCopy("arcabucero"), /^15%/);
   assert.match(shirtOfferCopy("maestre_campo"), /^20%/);

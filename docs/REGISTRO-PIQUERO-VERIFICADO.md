@@ -49,16 +49,17 @@ token, porque Turnstile es de un solo uso. Se mantienen los limites por IP.
 
 ### Activacion coordinada
 
-1. Crear un widget Managed de Turnstile con los hosts `imperioes.com` y
-   `www.imperioes.com`. No permitir cualquier hostname. Mantener Test separado.
+1. Reutilizar el widget Managed existente con los hosts `imperioes.com` y
+   `www.imperioes.com`. No crear otro ni permitir cualquier hostname.
 2. Guardar solo la clave publica como `PUBLIC_TURNSTILE_SITE_KEY` en el entorno
    correspondiente de Vercel. La clave privada va en Supabase Auth, no en Git,
    el frontend, los logs o el chat.
-3. Probar primero en Supabase Test y un hostname de preview permitido: Auth >
-   Bot and Abuse Protection > Enable CAPTCHA protection > Turnstile > clave
-   privada. Configurar `AUTH_CAPTCHA_ENABLED=true` en ese preview.
-4. Comprobar alta, acceso, reenvio y recuperacion con tokens validos e invalidos,
-   confirmacion por email y callback. No utilizar claves de prueba en Live.
+3. El titular ha limitado la activacion a produccion. Mantener Supabase Test
+   intacto y ejecutar primero las pruebas aisladas con servicios simulados.
+4. Preparar en Supabase Production > Authentication > Attack Protection la
+   configuracion Turnstile. La clave privada se introduce por el flujo normal
+   de secretos del proveedor, sin compartirla en el chat ni guardarla en el repo.
+   No guardar la activacion mientras los formularios publicados no sean compatibles.
 5. Coordinar la publicacion web con la activacion del mismo proveedor en Supabase
    de produccion. No habilitar Auth antes de disponer de la web compatible: los
    formularios antiguos sin token dejarian de funcionar.
@@ -68,6 +69,15 @@ token, porque Turnstile es de un solo uso. Se mantienen los limites por IP.
    una solicitud directa sin token es rechazada y que una alta real confirmada
    produce un unico aviso. No confundir el indicador web con la configuracion
    externa de Supabase, que el panel no consulta.
+
+El 27 de octubre se ha integrado el parche en la rama aislada
+`fix/production-turnstile-20261027`, basada en la produccion `565896f`, conservando
+los cambios posteriores de planes y footer. Una solicitud directa de acceso
+con credenciales ficticias y sin CAPTCHA devolvio `invalid_credentials`: el
+proveedor todavia no exige el CAPTCHA. No se creo una cuenta ni se envio correo.
+Se ha recuperado la sesion de Cloudflare y comprobado el mismo widget, Managed,
+dos hostnames y sin pre-clearance. El acceso a Supabase sigue detenido en el
+doble factor de GitHub. No se ha recuperado ni copiado la clave privada.
 
 Si el flag esta activo pero falta la clave publica, el registro falla cerrado.
 Si falla el proveedor, no se interpreta como un CAPTCHA valido. El error al
@@ -81,6 +91,14 @@ El arbol instalado probado utiliza Zod 4.6.7. Tras sincronizar el lockfile,
 `npm audit --omit=dev` termino con cero vulnerabilidades. Las comprobaciones son
 aisladas: no crean cuentas reales ni envian correos, y no sustituyen la validacion
 pendiente en produccion.
+
+El 27 de octubre `npm run verify:master` termino con codigo 0 en la rama aislada:
+187 unitarias, 32 escenarios de registro/CAPTCHA, todas las integraciones, build,
+tipos y lint, y cero vulnerabilidades de produccion. Se actualizaron dos pruebas
+antiguas a las filas de planes y el interruptor de cookies publicados, sin cambiar
+esos componentes. El widget de prueba oficial se renderizo en escritorio y en
+390 px sin desbordamiento. Esa comprobacion visual local no acredita validacion
+real ni proteccion nativa en Live.
 
 - `npm run verify:master`: tipos, unitarias, build, lint e integraciones, incluida
   la nueva suite `npm run test:registration`.

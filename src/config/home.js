@@ -10,10 +10,10 @@ export const PLAN_COMPARISON_LABELS = [
   "Función",
   "Artículos",
   "Archivo",
-  "Foro y Discord",
+  "Foro",
+  "Discord",
   "Lanzamientos anticipados",
   "Descuento en camiseta",
-  "Ahorro anual",
 ];
 
 export const SERVICES_ITEMS = [
@@ -33,7 +33,7 @@ export const SERVICES_ITEMS = [
       "Publicaciones abiertas",
       "Acceso limitado",
       "Próximamente",
-      "-",
+      "Próximamente",
       "-",
       "-",
     ],
@@ -57,8 +57,8 @@ export const SERVICES_ITEMS = [
       "Catálogo completo publicado",
       "Próximamente",
       "Próximamente",
+      "Próximamente",
       "15 % · un uso; envío excluido",
-      "5,89 €",
     ],
     reverseOnDesktop: true,
   },
@@ -81,8 +81,8 @@ export const SERVICES_ITEMS = [
       "Catálogo completo publicado",
       "Próximamente",
       "Próximamente",
+      "Próximamente",
       "20 % · un uso; envío excluido",
-      "9,89 €",
     ],
   },
 ];

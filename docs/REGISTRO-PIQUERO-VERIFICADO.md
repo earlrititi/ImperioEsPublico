@@ -27,7 +27,7 @@ aviso administrativo son prueba de actividad, de una compra o de consentimiento.
 La elegibilidad de las automatizaciones ya exigia correo verificado y opt-in.
 No se borra ninguna cuenta ni se etiqueta automaticamente como bot.
 
-## Turnstile: web publicada, activacion nativa pendiente
+## Turnstile: web y proveedor configurados, comprobaciones pendientes
 
 Se ha creado el widget Managed `Imperio E - Produccion` en Cloudflare, limitado
 a `imperioes.com` y `www.imperioes.com`, sin pre-clearance. Por indicacion del
@@ -37,8 +37,10 @@ con el commit `80e62e1`, despliegue `dpl_B4mEjvhzQqUKEdKw1D1xQZ8e6z5V` READY,
 asignado a `imperioes.com` y `www.imperioes.com`.
 Registro, acceso, recuperacion y reenvio devuelven HTML con el widget y la clave
 publica real, CSP compatible y cache `private, no-store`. El widget real del
-navegador obtuvo una respuesta. Eso no acredita la validacion de servidor:
-todavia falta introducir la clave privada y guardar Turnstile en Supabase Auth.
+navegador obtuvo una respuesta. El titular introdujo la clave privada y guardo
+Turnstile en Supabase Auth. La lectura posterior confirma el interruptor activado,
+el proveedor Turnstile y ningun cambio pendiente, sin leer el contenido privado.
+Eso confirma la configuracion guardada, no las pruebas de validacion o repeticion.
 
 Los formularios de registro, acceso, magic link, recuperacion y reenvio admiten
 el widget y pasan `captchaToken` a Supabase. El backend rechaza tokens ausentes,
@@ -76,13 +78,12 @@ token, porque Turnstile es de un solo uso. Se mantienen los limites por IP.
 El 27 de octubre se ha integrado el parche en la rama aislada
 `fix/production-turnstile-20261027`, basada en la produccion `565896f`, conservando
 los cambios posteriores de planes y footer. Una solicitud directa de acceso
-con credenciales ficticias y sin CAPTCHA devolvio `invalid_credentials`: el
-proveedor todavia no exige el CAPTCHA. No se creo una cuenta ni se envio correo.
+con credenciales ficticias y sin CAPTCHA, realizada antes de activar el proveedor,
+devolvio `invalid_credentials`. No se creo una cuenta ni se envio correo.
 Se ha recuperado la sesion de Cloudflare y comprobado el mismo widget, Managed,
 dos hostnames y sin pre-clearance. El titular completo el doble factor de GitHub
-y Supabase ya esta accesible. El formulario de Attack Protection esta preparado
-con Turnstile, pero falta que el titular introduzca la clave privada y guarde.
-El agente no ha recuperado ni copiado esa clave.
+y Supabase ya esta accesible. El titular termino la configuracion de Attack
+Protection y la guardo. El agente no ha recuperado ni copiado la clave privada.
 
 Si el flag esta activo pero falta la clave publica, el registro falla cerrado.
 Si falla el proveedor, no se interpreta como un CAPTCHA valido. El error al
@@ -121,8 +122,16 @@ correo aleatorio `example.invalid`: no crea cuentas, envia correos ni cobra.
 Comprueba ausencia y falsificacion de token, validacion de una respuesta nueva,
 rechazo de su repeticion y los formularios de acceso de ambos dominios sin token.
 La validacion fresca debe superar CAPTCHA y terminar en `invalid_credentials`;
-no se presenta como un inicio de sesion real. Su ejecucion sigue pendiente de
-guardar la configuracion nativa. No usar una clave secreta como entrada de prueba.
+no se presenta como un inicio de sesion real. No usar una clave secreta como
+entrada de prueba.
+
+La ejecucion automatizada de esta prueba Live fue bloqueada por la politica del
+entorno antes de iniciar el proceso: no se ejecutaron los seis casos ni se dio
+por superada su validacion. No se reintento por otro canal. La respuesta efimera
+preparada para la prueba se elimino. Se ha pedido al titular comprobar un acceso
+normal desde la web; siguen pendientes la prueba automatizada de tokens y el
+resultado de esa comprobacion manual. No confundir este limite con las 32 pruebas
+aisladas ya superadas, que utilizan transportes simulados.
 
 Referencias: [CAPTCHA nativo de Supabase](https://supabase.com/docs/guides/auth/auth-captcha),
 [validacion de Turnstile](https://developers.cloudflare.com/turnstile/get-started/server-side-validation/).

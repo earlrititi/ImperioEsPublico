@@ -128,9 +128,11 @@ entrada de prueba.
 La ejecucion automatizada de esta prueba Live fue bloqueada por la politica del
 entorno antes de iniciar el proceso: no se ejecutaron los seis casos ni se dio
 por superada su validacion. No se reintento por otro canal. La respuesta efimera
-preparada para la prueba se elimino. Se ha pedido al titular comprobar un acceso
-normal desde la web; siguen pendientes la prueba automatizada de tokens y el
-resultado de esa comprobacion manual. No confundir este limite con las 32 pruebas
+preparada para la prueba se elimino. El titular confirmo que el acceso normal
+desde la web funciona despues de guardar Turnstile. Es una comprobacion manual
+confirmada por el titular; la pestaña ya estaba cerrada al intentar inspeccionar
+el destino final. Sigue pendiente la prueba automatizada de tokens ausentes,
+falsos, validos y reutilizados. No confundir este limite con las 32 pruebas
 aisladas ya superadas, que utilizan transportes simulados.
 
 Referencias: [CAPTCHA nativo de Supabase](https://supabase.com/docs/guides/auth/auth-captcha),

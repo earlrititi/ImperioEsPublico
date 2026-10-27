@@ -1,6 +1,6 @@
 # Avisos PIQUERO y proteccion del registro
 
-Fecha: 25 de octubre de 2026.
+Fecha: 27 de octubre de 2026.
 
 ## Cambio de avisos
 
@@ -27,15 +27,18 @@ aviso administrativo son prueba de actividad, de una compra o de consentimiento.
 La elegibilidad de las automatizaciones ya exigia correo verificado y opt-in.
 No se borra ninguna cuenta ni se etiqueta automaticamente como bot.
 
-## Turnstile: integracion preparada, activacion externa pendiente
+## Turnstile: web publicada, activacion nativa pendiente
 
 Se ha creado el widget Managed `Imperio E - Produccion` en Cloudflare, limitado
 a `imperioes.com` y `www.imperioes.com`, sin pre-clearance. Por indicacion del
 titular no se ha creado un widget ni modificado Supabase en Test. La clave publica
-esta guardada solo en Vercel Production. `AUTH_CAPTCHA_ENABLED=false` permanece
-desactivado hasta coordinar la web con la proteccion nativa de Supabase.
-Esto no acredita por si solo que el CAPTCHA nativo este activo: siguen pendientes
-su configuracion en Supabase, la publicacion coordinada y la validacion real.
+esta guardada solo en Vercel Production. `AUTH_CAPTCHA_ENABLED=true` esta publicado
+con el commit `80e62e1`, despliegue `dpl_B4mEjvhzQqUKEdKw1D1xQZ8e6z5V` READY,
+asignado a `imperioes.com` y `www.imperioes.com`.
+Registro, acceso, recuperacion y reenvio devuelven HTML con el widget y la clave
+publica real, CSP compatible y cache `private, no-store`. El widget real del
+navegador obtuvo una respuesta. Eso no acredita la validacion de servidor:
+todavia falta introducir la clave privada y guardar Turnstile en Supabase Auth.
 
 Los formularios de registro, acceso, magic link, recuperacion y reenvio admiten
 el widget y pasan `captchaToken` a Supabase. El backend rechaza tokens ausentes,
@@ -76,8 +79,10 @@ los cambios posteriores de planes y footer. Una solicitud directa de acceso
 con credenciales ficticias y sin CAPTCHA devolvio `invalid_credentials`: el
 proveedor todavia no exige el CAPTCHA. No se creo una cuenta ni se envio correo.
 Se ha recuperado la sesion de Cloudflare y comprobado el mismo widget, Managed,
-dos hostnames y sin pre-clearance. El acceso a Supabase sigue detenido en el
-doble factor de GitHub. No se ha recuperado ni copiado la clave privada.
+dos hostnames y sin pre-clearance. El titular completo el doble factor de GitHub
+y Supabase ya esta accesible. El formulario de Attack Protection esta preparado
+con Turnstile, pero falta que el titular introduzca la clave privada y guarde.
+El agente no ha recuperado ni copiado esa clave.
 
 Si el flag esta activo pero falta la clave publica, el registro falla cerrado.
 Si falla el proveedor, no se interpreta como un CAPTCHA valido. El error al
@@ -108,6 +113,16 @@ real ni proteccion nativa en Live.
 - Tambien prueban los cinco formularios con CAPTCHA requerido, ausente, invalido
   y valido; configuracion incompleta; y widget ausente cuando esta desactivado.
 - Estas pruebas no acreditan una activacion real de Cloudflare o Supabase.
+
+`scripts/verify-auth-captcha-live.mjs --production <archivo-env-existente>` espera
+una respuesta real y fresca del widget por entrada estandar, nunca en argumentos.
+Solo utiliza la configuracion publica de Auth y credenciales ficticias de un
+correo aleatorio `example.invalid`: no crea cuentas, envia correos ni cobra.
+Comprueba ausencia y falsificacion de token, validacion de una respuesta nueva,
+rechazo de su repeticion y los formularios de acceso de ambos dominios sin token.
+La validacion fresca debe superar CAPTCHA y terminar en `invalid_credentials`;
+no se presenta como un inicio de sesion real. Su ejecucion sigue pendiente de
+guardar la configuracion nativa. No usar una clave secreta como entrada de prueba.
 
 Referencias: [CAPTCHA nativo de Supabase](https://supabase.com/docs/guides/auth/auth-captcha),
 [validacion de Turnstile](https://developers.cloudflare.com/turnstile/get-started/server-side-validation/).

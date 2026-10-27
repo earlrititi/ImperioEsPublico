@@ -18,15 +18,16 @@ import { ES_VAT } from "../config/tax";
         <h2>PIQUERO</h2>
         <p class="plan-summary">Explora Imperio Español y lee las publicaciones abiertas.</p>
         <dl class="plan-features">
-          <div><dt>Mensual</dt><dd>Gratis</dd></div>
+          <div><dt>Mensual</dt><dd>GRATIS</dd></div>
           <div><dt>Anual</dt><dd>—</dd></div>
           <div><dt>Función</dt><dd>Explorar</dd></div>
-          <div><dt>Artículos</dt><dd>Publicaciones abiertas</dd></div>
-          <div><dt>Archivo</dt><dd>Acceso limitado</dd></div>
-          <div><dt>Foro</dt><dd>Próximamente</dd></div>
-          <div><dt>Discord</dt><dd>Próximamente</dd></div>
-          <div><dt>Lanzamientos anticipados</dt><dd>No incluidos</dd></div>
-          <div><dt>Descuento en camiseta</dt><dd>No incluido</dd></div>
+          <div><dt>Foro</dt><dd>Leer</dd></div>
+          <div><dt>Discord</dt><dd><span aria-label="No incluido">❌</span></dd></div>
+          <div><dt>Artículos</dt><dd>Limitado</dd></div>
+          <div><dt>Archivo</dt><dd>Limitado</dd></div>
+          <div><dt>Lanzamientos anticipados</dt><dd><span aria-label="Incluido">✅</span></dd></div>
+          <div><dt>Descuento drops</dt><dd><span aria-label="No incluido">❌</span></dd></div>
+          <div><dt>Bonus anual</dt><dd><span aria-label="No incluido">❌</span></dd></div>
         </dl>
         <a class="btn btn-ghost" href="/registro">Crear cuenta gratis</a>
       </article>
@@ -38,13 +39,14 @@ import { ES_VAT } from "../config/tax";
         <dl class="plan-features">
           <div><dt>Mensual</dt><dd>1,99 €</dd></div>
           <div><dt>Anual</dt><dd>17,99 €</dd></div>
-          <div><dt>Función</dt><dd>Acceder</dd></div>
-          <div><dt>Artículos</dt><dd>Todos los artículos para suscriptores</dd></div>
-          <div><dt>Archivo</dt><dd>Catálogo completo publicado</dd></div>
-          <div><dt>Foro</dt><dd>Próximamente</dd></div>
-          <div><dt>Discord</dt><dd>Próximamente</dd></div>
-          <div><dt>Lanzamientos anticipados</dt><dd>Próximamente</dd></div>
-          <div><dt>Descuento en camiseta</dt><dd><strong>15 %</strong><span>Un uso; envío excluido</span></dd></div>
+          <div><dt>Función</dt><dd><strong>Acceder</strong></dd></div>
+          <div><dt>Foro</dt><dd>Comentar</dd></div>
+          <div><dt>Discord</dt><dd>Básico</dd></div>
+          <div><dt>Artículos</dt><dd><strong>Ilimitado + 1 nuevos artículos semanales</strong></dd></div>
+          <div><dt>Archivo</dt><dd><strong>Completo</strong></dd></div>
+          <div><dt>Lanzamientos anticipados</dt><dd class="plan-status-value"><span aria-label="Incluido">✅</span><strong>48h antes</strong></dd></div>
+          <div><dt>Descuento drops</dt><dd class="plan-status-value"><span aria-label="Incluido">✅</span><strong>15%</strong></dd></div>
+          <div><dt>Bonus anual</dt><dd><strong>Insignia</strong></dd></div>
         </dl>
         <div class="billing-options" role="group" aria-label="Facturación de Arcabucero">
           <a class="btn btn-primary" href="/checkout/arcabucero-monthly">
@@ -63,13 +65,14 @@ import { ES_VAT } from "../config/tax";
         <dl class="plan-features">
           <div><dt>Mensual</dt><dd>3,99 €</dd></div>
           <div><dt>Anual</dt><dd>37,99 €</dd></div>
-          <div><dt>Función</dt><dd>Apoyar el proyecto</dd></div>
-          <div><dt>Artículos</dt><dd>Todos los artículos para suscriptores</dd></div>
-          <div><dt>Archivo</dt><dd>Catálogo completo publicado</dd></div>
-          <div><dt>Foro</dt><dd>Próximamente</dd></div>
-          <div><dt>Discord</dt><dd>Próximamente</dd></div>
-          <div><dt>Lanzamientos anticipados</dt><dd>Próximamente</dd></div>
-          <div><dt>Descuento en camiseta</dt><dd><strong>20 %</strong><span>Un uso; envío excluido</span></dd></div>
+          <div><dt>Función</dt><dd>Participar</dd></div>
+          <div><dt>Foro</dt><dd><strong>Crear temas</strong></dd></div>
+          <div><dt>Discord</dt><dd><strong>Completo</strong></dd></div>
+          <div><dt>Artículos</dt><dd><strong>Ilimitado + 2 nuevos artículos semanales</strong></dd></div>
+          <div><dt>Archivo</dt><dd><strong>Completo</strong></dd></div>
+          <div><dt>Lanzamientos anticipados</dt><dd class="plan-status-value"><span aria-label="Incluido">✅</span><strong>72h antes</strong></dd></div>
+          <div><dt>Descuento drops</dt><dd class="plan-status-value"><span aria-label="Incluido">✅</span><strong>20%</strong></dd></div>
+          <div><dt>Bonus anual</dt><dd>Lámina + pack digital</dd></div>
         </dl>
         <div class="billing-options" role="group" aria-label="Facturación de Maestre de Campo">
           <a class="btn btn-primary" href="/checkout/maestre-campo-monthly">
@@ -118,8 +121,9 @@ import { ES_VAT } from "../config/tax";
     display: grid;
     grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
     gap: 0.75rem;
-    align-items: start;
-    padding: 0.7rem 0;
+    align-items: center;
+    min-height: 3.75rem;
+    padding: 0.45rem 0;
     border-top: 1px solid var(--line);
   }
 
@@ -149,6 +153,19 @@ import { ES_VAT } from "../config/tax";
     font-weight: 400;
   }
 
+  .plan-features .plan-status-value {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .plan-features .plan-status-value span {
+    color: inherit;
+    font-size: 0.9rem;
+  }
+
   .subscribe-card:target {
     border-color: var(--color-red-accent);
     box-shadow: 0 0 0 3px rgb(242 56 30 / 20%);
@@ -173,6 +190,10 @@ import { ES_VAT } from "../config/tax";
 
     .plan-features dd {
       text-align: left;
+    }
+
+    .plan-features .plan-status-value {
+      justify-content: flex-start;
     }
   }
 

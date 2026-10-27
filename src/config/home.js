@@ -1,19 +1,19 @@
 import { withBase } from "../utils/basePath";
-import { TSHIRT_OFFER_COPY } from "./tshirt-offer";
 
 export const PLAN_COMPARISON_INTRO =
-  `Piquero es gratuito y permite leer las publicaciones abiertas. Arcabucero y Maestre de Campo comparten el catálogo de artículos para suscriptores; Maestre de Campo permite aportar más al proyecto. ${TSHIRT_OFFER_COPY} El foro estará disponible próximamente.`;
+  "Compara precios y ventajas de Piquero, Arcabucero y Maestre de Campo.";
 
 export const PLAN_COMPARISON_LABELS = [
   "Mensual",
   "Anual",
   "Función",
-  "Artículos",
-  "Archivo",
   "Foro",
   "Discord",
+  "Artículos",
+  "Archivo",
   "Lanzamientos anticipados",
-  "Descuento en camiseta",
+  "Descuento drops",
+  "Bonus anual",
 ];
 
 export const SERVICES_ITEMS = [
@@ -28,14 +28,15 @@ export const SERVICES_ITEMS = [
       "Una vision audaz como la tuya tiene el poder de hacer avanzar y alinear comunidades. El Piquero era la base de los Tercios: el soldado raso del ejército, pero a su vez esencial, ya que sostenía las líneas de los flancos. Este es el punto de entrada para explorar el proyecto de manera gratuita.",
     highlights: [
       "GRATIS",
-      "-",
+      "—",
       "Explorar",
-      "Publicaciones abiertas",
-      "Acceso limitado",
-      "Próximamente",
-      "Próximamente",
-      "-",
-      "-",
+      "Leer",
+      "❌",
+      "Limitado",
+      "Limitado",
+      "✅",
+      "❌",
+      "❌",
     ],
   },
   {
@@ -53,12 +54,13 @@ export const SERVICES_ITEMS = [
       "1,99 €",
       "17,99 €",
       "Acceder",
-      "Todos los artículos para suscriptores",
-      "Catálogo completo publicado",
-      "Próximamente",
-      "Próximamente",
-      "Próximamente",
-      "15 % · un uso; envío excluido",
+      "Comentar",
+      "Básico",
+      "Ilimitado + 1 nuevos artículos semanales",
+      "Completo",
+      "✅ 48h antes",
+      "✅ 15%",
+      "Insignia",
     ],
     reverseOnDesktop: true,
   },
@@ -72,17 +74,18 @@ export const SERVICES_ITEMS = [
     imageSrc: withBase("/images/services/arquitectura.jpg"),
     imageAlt: "Maestre de Campo",
     description:
-      "El Maestre de Campo era uno de los oficiales de mayor rango y ejercía el mando de un Tercio. Este nivel permite aportar más al proyecto y comparte el catálogo de artículos de Arcabucero. Incluye:",
+      "El Maestre de Campo era uno de los oficiales de mayor rango y ejercía el mando de un Tercio. Este nivel permite participar y acceder a la experiencia más completa del proyecto. Incluye:",
     highlights: [
       "3,99 €",
       "37,99 €",
-      "Apoyar el proyecto",
-      "Todos los artículos para suscriptores",
-      "Catálogo completo publicado",
-      "Próximamente",
-      "Próximamente",
-      "Próximamente",
-      "20 % · un uso; envío excluido",
+      "Participar",
+      "Crear temas",
+      "Completo",
+      "Ilimitado + 2 nuevos artículos semanales",
+      "Completo",
+      "✅ 72h antes",
+      "✅ 20%",
+      "Lámina + pack digital",
     ],
   },
 ];

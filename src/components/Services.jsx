@@ -599,7 +599,10 @@ export default function Services() {
                     <ul class="service-cta-card__list" aria-label={`Puntos clave de ${service.title}`}>
                       {comparisonHighlights.map((highlight, index) => {
                         const isEmpty = !highlight;
-                        const isUnavailable = highlight === "-";
+                        const isUnavailable = highlight === "❌";
+                        const hasCheck = typeof highlight === "string" && highlight.startsWith("✅");
+                        const valueText = hasCheck ? highlight.slice("✅".length).trim() : highlight;
+                        const hasStatus = isUnavailable || hasCheck;
                         const comparisonLabel = PLAN_COMPARISON_LABELS[index];
 
                         return (
@@ -607,28 +610,41 @@ export default function Services() {
                             class={`service-cta-card__list-item${isEmpty ? " service-cta-card__list-item--empty" : ""}`}
                             key={`${service.id}-highlight-${index}`}
                           >
-                            <span class="service-cta-card__value">
+                            <span
+                              class={`service-cta-card__value${hasStatus ? "" : " service-cta-card__value--plain"}`}
+                              aria-label={
+                                isUnavailable
+                                  ? "No incluido"
+                                  : hasCheck
+                                    ? valueText
+                                      ? `Incluido: ${valueText}`
+                                      : "Incluido"
+                                    : undefined
+                              }
+                            >
                               {!isEmpty && (
                                 <>
-                                  <span
-                                    class={`service-cta-card__check${isUnavailable ? " service-cta-card__check--unavailable" : ""}`}
-                                    aria-hidden="true"
-                                  >
-                                    {isUnavailable ? (
-                                      <img
-                                        src={withBase("/images/subscription-x-brush.webp")}
-                                        alt=""
-                                        width="128"
-                                        height="128"
-                                        loading="lazy"
-                                        decoding="async"
-                                      />
-                                    ) : (
-                                      "\u2713"
-                                    )}
-                                  </span>
-                                  {!isUnavailable && (
-                                    <span class="service-cta-card__value-text">{highlight}</span>
+                                  {hasStatus && (
+                                    <span
+                                      class={`service-cta-card__check${isUnavailable ? " service-cta-card__check--unavailable" : ""}`}
+                                      aria-hidden="true"
+                                    >
+                                      {isUnavailable ? (
+                                        <img
+                                          src={withBase("/images/subscription-x-brush.webp")}
+                                          alt=""
+                                          width="128"
+                                          height="128"
+                                          loading="lazy"
+                                          decoding="async"
+                                        />
+                                      ) : (
+                                        "\u2713"
+                                      )}
+                                    </span>
+                                  )}
+                                  {!isUnavailable && valueText && (
+                                    <span class="service-cta-card__value-text">{valueText}</span>
                                   )}
                                 </>
                               )}
@@ -1236,6 +1252,10 @@ export default function Services() {
           padding: 0.72rem 0.8rem 0.72rem 0;
         }
 
+        .service-cta-card__value--plain {
+          grid-template-columns: minmax(0, 1fr);
+        }
+
         .service-cta-card__value-text {
           min-width: 0;
           line-height: 1.18;
@@ -1817,6 +1837,7 @@ export default function Services() {
           }
 
           .service-cta-card__list {
+            grid-template-rows: repeat(var(--services-comparison-row-count), 5rem);
             align-self: start;
             justify-self: stretch;
             width: 100%;
@@ -1834,7 +1855,9 @@ export default function Services() {
 
           .service-cta-card__list-item {
             grid-template-columns: minmax(0, 1fr);
-            min-height: 4.5rem;
+            min-height: 5rem;
+            height: 5rem;
+            overflow: hidden;
           }
 
           .service-cta-card__list-item--empty {
@@ -2027,6 +2050,10 @@ export default function Services() {
             grid-template-columns: 0.8rem minmax(0, 1fr);
             gap: 0.35rem;
             padding: 0;
+          }
+
+          .service-cta-card__value--plain {
+            grid-template-columns: minmax(0, 1fr);
           }
 
           .service-cta-card__value-text {

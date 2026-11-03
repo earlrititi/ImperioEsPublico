@@ -4,8 +4,9 @@ import { SITE } from "../config/site";
 import { REVIEW_EMAIL } from "./seo-engine-model";
 import { editorialInventory } from "./seo-engine-inventory";
 import { generateEditorial, generatedArticle, verifyEditorial, editorialProviderConfig } from "./seo-engine-generation";
-import { engineConfiguration, sourceRecords, proposeEditorial, runAudit, searchConsoleReport, scheduleEngine, seoFingerprint, queueGeneration } from "./seo-engine";
+import { engineConfiguration, sourceRecords, proposeEditorial, runAudit, searchConsoleReport, scheduleEngine, seoFingerprint, queueGeneration, checkCollaboration } from "./seo-engine";
 import { renderAdminMail } from "./admin-mail-template";
+import { readPublicPage } from "./seo-engine-http";
 import { randomUUID } from "node:crypto";
 
 async function finishJob(job: any, patch: Record<string, unknown>) {
@@ -28,6 +29,11 @@ async function notify(job: any) {
     const r = await db.from("seo_reviews").select("*").eq("id", job.review_id).single();
     if (r.error) throw Error("DATABASE_UNAVAILABLE");
     const o = await db.from("seo_opportunities").select("data").eq("id", r.data.opportunity_id).single(); if (o.error) throw Error("DATABASE_UNAVAILABLE");
+    if (job.payload.event === "published") {
+      const url = `${SITE.url}/papeles-y-tratados/${r.data.snapshot.slug}`;
+      const page = await readPublicPage(url);
+      if (!page.html.includes(`rel="canonical" href="${url}"`) && !page.html.includes(`href="${url}" rel="canonical"`)) throw Error("SEO_PUBLICATION_VERIFICATION_FAILED");
+    }
     payload = reviewMail(r.data, o.data.data, job.payload.event === "published");
     const snapshot = await db.from("seo_jobs").update({ payload: { ...job.payload, message: payload } }).eq("id", job.id).eq("claim_id", job.claim_id).select("id");
     if (snapshot.error || snapshot.data?.length !== 1) throw Error("SEO_JOB_CONFLICT");
@@ -90,6 +96,12 @@ export async function runSeoWorker(kinds = ["notify", "daily", "weekly", "monthl
       }
       if (kind === "monthly") {
         await rpc("seo_retention");
+        const active = await (await database()).from("seo_records").select("id").eq("kind", "collaboration").eq("data->>status", "active").limit(5);
+        if (active.error) throw Error("DATABASE_UNAVAILABLE");
+        for (const row of active.data) {
+          const checked = await checkCollaboration(job.actor_id, row.id);
+          if (!checked?.data?.check?.verified) await queueSeoNotice(job.actor_id, `${job.job_key}:link:${row.id}`, "[IMPERIO E] Enlace pendiente de comprobacion", "Un enlace de una colaboracion activa requiere revision. Consulta el resultado HTTP y la fecha de comprobacion en el panel. Un fallo aislado no confirma la perdida del enlace.");
+        }
         const metrics = await searchConsoleReport(), inventory = await editorialInventory();
         const data = { period: job.job_key, createdAt: new Date().toISOString(), searchConsole: metrics, articles: inventory.length, pendingSourceReviews: inventory.filter(a => a.issues.some(i => i.includes("bibliografia"))).length, note: "Inventario cualitativo y datos autorizados. Sin estimaciones de trafico o citas." };
         await rpc("seo_save", { p_actor: job.actor_id, p_kind: "report", p_id: randomUUID(), p_revision: 0, p_data: data, p_fingerprint: seoFingerprint(job.job_key) }); output = { saved: true };

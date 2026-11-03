@@ -18,7 +18,7 @@ const ENTITIES: [string, string, string][] = [
   ["Lepanto", "event", "siglo XVI"], ["Rocroi", "event", "siglo XVII"], ["Tordesillas", "event", "siglo XV"], ["Flandes", "territory", ""], ["Nueva Espana", "territory", ""], ["Peru", "territory", ""],
   ["Carrera de Indias", "institution", ""], ["Galeon de Manila", "institution", ""], ["Consejo de Indias", "institution", ""], ["Tercios", "institution", ""], ["Monarquia Hispanica", "concept", ""],
 ];
-export function analyzeArticle(meta: { id?: string; slug: string; title: string; category?: string; description?: string; lead?: string; publishedAt?: string; author?: string; imageSrc?: string }, html: string, state = "published", revision = 0): InventoryArticle {
+export function analyzeArticle(meta: { id?: string; slug: string; title: string; category?: string; description?: string; lead?: string; publishedAt?: string; author?: string; imageSrc?: string; editorialReview?: { reviewedAt?: string } }, html: string, state = "published", revision = 0): InventoryArticle {
   const editorial = getArticleEditorial(meta.slug), isPremium = getArticleTier(meta.slug) !== "piquero";
   const plain = htmlText(html), visible = isPremium ? `${meta.title} ${meta.lead ?? ""} ${meta.description ?? ""}` : plain;
   const haystack = ` ${normalizeSeo(`${meta.title} ${visible}`)} `;
@@ -31,10 +31,10 @@ export function analyzeArticle(meta: { id?: string; slug: string; title: string;
   if (!references.length) issues.push("Revisar bibliografia y trazabilidad de fuentes");
   if (links.filter(l => new URL(l.url).hostname === "imperioes.com").length < 2) issues.push("Revisar enlaces internos");
   if (!isPremium && !/<h[23]\b/i.test(html)) issues.push("Revisar estructura de secciones");
-  if (!editorial.modifiedAt) issues.push("No consta fecha de revision historica");
+  if (!meta.editorialReview?.reviewedAt && !editorial.modifiedAt) issues.push("No consta fecha de revision historica");
   if (isPremium) issues.push("Analisis publico limitado a metadatos; texto protegido excluido del contexto IA");
   return { id: meta.id ?? null, slug: meta.slug, title: meta.title, category: meta.category ?? "", url: canonicalUrl(`/papeles-y-tratados/${meta.slug}`), state,
-    tier: getArticleTier(meta.slug), publishedAt: meta.publishedAt ?? null, reviewedAt: editorial.modifiedAt ?? null, author: meta.author ?? "Imperio Espanol", revision, source: meta.id ? "cms" : "file",
+    tier: getArticleTier(meta.slug), publishedAt: meta.publishedAt ?? null, reviewedAt: meta.editorialReview?.reviewedAt ?? editorial.modifiedAt ?? null, author: meta.author ?? "Imperio Espanol", revision, source: meta.id ? "cms" : "file",
     description: meta.description ?? "", image: meta.imageSrc ?? "", entities: entities.map(([name]) => name), periods: [...new Set(entities.map(([, , period]) => period).filter(Boolean))],
     references, links: [...new Set(links.map(l => l.url))], issues, publicText: visible.slice(0, 6000) };
 }

@@ -20,7 +20,9 @@ export function sanitizeArticleBody(html: string) {
     allowedTags: ["p","br","h2","h3","strong","em","s","u","sup","blockquote","ul","ol","li","a","img","figure","figcaption","hr"],
     allowedAttributes: { h2:["id"],h3:["id"],a: ["href","title","rel"], img: ["src","alt","title","width","height","loading"] },
     allowedSchemes: ["https","http"], allowProtocolRelative: false,
-    transformTags: { a: sanitizeHtml.simpleTransform("a",{rel:"noopener noreferrer"}),
+    transformTags: { a: (tagName, attribs) => ({ tagName, attribs: { ...attribs,
+      rel: [...new Set(["noopener", "noreferrer", ...(attribs.rel ?? "").toLowerCase().split(/\s+/).filter(value => ["sponsored", "nofollow", "ugc"].includes(value))])].join(" "),
+    } }),
       img: sanitizeHtml.simpleTransform("img",{loading:"lazy"}) },
     exclusiveFilter: frame => frame.tag === "img" && !safeArticleImage(frame.attribs.src ?? ""),
   });

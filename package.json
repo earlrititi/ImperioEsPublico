@@ -10,6 +10,7 @@
     "lint:admin": "eslint src/lib/admin-*.ts src/lib/newsletter-audience.ts src/lib/subscription-checkout.ts src/lib/subscription-reconciliation.ts src/lib/interaction-validation.ts src/lib/env.ts src/lib/funnel*.ts src/components/admin src/pages/api/admin src/pages/api/newsletter-unsubscribe.ts src/pages/api/interactions.ts src/pages/api/funnel.ts src/pages/api/manifesto.php.ts tests/admin-*.test.ts tests/subscription-checkout.test.ts tests/funnel.test.ts",
     "test:seo": "node scripts/verify-seo.mjs",
     "lint:seo-engine": "eslint src/lib/seo-engine*.ts src/pages/api/admin/seo.ts src/pages/api/seo-maintenance.ts src/components/admin/SeoEngine.tsx tests/seo-engine*.test.ts",
+    "test:seo-engine": "node scripts/verify-seo-engine.mjs",
     "dev": "astro dev",
     "build": "astro build",
     "postbuild": "node scripts/prune-vercel-output.mjs",
@@ -23,7 +24,7 @@
     "test:cms": "node scripts/verify-article-cms.mjs",
     "test:integration": "node scripts/verify-article-access.mjs && node scripts/verify-commerce.mjs && node scripts/verify-admin-mail.mjs && node scripts/verify-paid-order-admin-mail.mjs && node scripts/verify-shirt-catalog.mjs && node scripts/verify-reservation-checkout.mjs && node scripts/verify-password-auth.mjs && node scripts/verify-manifesto.mjs && node scripts/verify-admin-delivery.mjs && node scripts/verify-newsletter-audience.mjs && node scripts/verify-payment-ux.mjs && node scripts/verify-subscription-analytics.mjs && node --import tsx scripts/verify-automation-drafts.mjs && node --import tsx scripts/verify-automation-runtime.mjs && node scripts/verify-commercial-ux.mjs",
     "verify": "npm run check && npm test && npm run build",
-    "verify:master": "npm run verify && npm run lint && npm run lint:admin && npm run test:integration && npm run test:ga4 && npm run test:cms && npm run test:email-preferences && npm run test:registration && node scripts/verify-admin-settings.mjs && npm audit --omit=dev",
+    "verify:master": "npm run verify && npm run lint && npm run lint:admin && npm run lint:seo-engine && npm run test:seo-engine && npm run test:integration && npm run test:ga4 && npm run test:cms && npm run test:email-preferences && npm run test:registration && node scripts/verify-admin-settings.mjs && npm audit --omit=dev",
     "preview": "astro preview",
     "astro": "astro"
   },

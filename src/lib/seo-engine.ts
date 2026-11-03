@@ -117,7 +117,10 @@ export async function saveCollaboration(actor: string, id: string, revision: num
 export async function checkCollaboration(actor: string, id: string) {
   const row = await getRow("seo_records", id); if (row.kind !== "collaboration") throw Error("INVALID_INPUT");
   const data = collaborationSchema.parse(Object.fromEntries(Object.entries(row.data).filter(([k]) => !["check", "requiredRel"].includes(k))));
-  const page = await readPublicPage(data.url), target = data.linkTarget || `${SITE.url}/papeles-y-tratados/${data.articleSlug}`;
+  const target = data.linkTarget || `${SITE.url}/papeles-y-tratados/${data.articleSlug}`;
+  let page;
+  try { page = await readPublicPage(data.url); }
+  catch { return saveRecord(actor, "collaboration", id, row.revision, { ...data, requiredRel: requiredRel(data.linkType), check: { checkedAt: new Date().toISOString(), verified: false, found: null, error: "HTTP_CHECK_UNAVAILABLE", lastVerifiedAt: row.data.check?.verified ? row.data.check.checkedAt : row.data.check?.lastVerifiedAt ?? null } }, new URL(data.url).hostname); }
   const links = htmlLinks(page.html, page.url).filter(l => l.url.split("#")[0] === target);
   const rel = requiredRel(data.linkType), verified = links.length > 0 && (!rel || links.some(l => l.rel.split(/\s+/).includes(rel)));
   const check = { checkedAt: new Date().toISOString(), status: page.status, target, found: links.length > 0, verified, rel: links.map(l => l.rel), requiredRel: rel, digest: page.digest };

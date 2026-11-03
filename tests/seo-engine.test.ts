@@ -5,6 +5,7 @@ import { isPublicAddress, publicUrl, htmlLinks, htmlText } from "../src/lib/seo-
 import { analyzeArticle, duplicateCandidates, geoQueries } from "../src/lib/seo-engine-inventory";
 import { generatedArticle, verifyEditorial, quoteGeneration, editorialProviderConfig } from "../src/lib/seo-engine-generation";
 import { reviewMail } from "../src/lib/seo-engine-worker";
+import { sanitizeArticleBody } from "../src/lib/admin-article-content";
 
 const ids = ["11111111-1111-4111-8111-111111111111", "22222222-2222-4222-8222-222222222222"];
 const sources = ids.map((id, i) => ({ id, title: `Documento ${i + 1}`, url: `https://www.bne.es/documento-${i}`, institution: "Biblioteca Nacional", author: "", year: "", shelfmark: "", excerpt: "El testimonio documental conserva una descripcion del contexto historico y su administracion.", checkedAt: new Date().toISOString(), digest: "a".repeat(64), verification: "excerpt_matched" }));
@@ -57,6 +58,8 @@ test("GEO requires observed evidence and distinguishes domain citations from men
 });
 test("collaboration link attributes reflect the actual relationship", () => {
   assert.equal(requiredRel("editorial"), ""); assert.equal(requiredRel("sponsored"), "sponsored"); assert.equal(requiredRel("contractual"), "sponsored"); assert.equal(requiredRel("ugc"), "ugc"); assert.equal(requiredRel("unendorsed"), "nofollow");
+  const html = sanitizeArticleBody('<p><a href="https://example.com/recurso" rel="sponsored nofollow ugc opener">Recurso</a></p>');
+  assert.match(html, /rel="noopener noreferrer sponsored nofollow ugc"/); assert.doesNotMatch(html, /\sopener[\s"]/);
 });
 test("budget starts paused and an unconfigured provider cannot consume money", () => {
   const saved = { ...process.env };

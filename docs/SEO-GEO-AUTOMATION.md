@@ -163,6 +163,7 @@ existentes: no se convierten eventos consentidos en ingresos contables.
 - `npm run verify`, `npm run lint`, `npm run lint:admin`, `npm run lint:seo-engine`.
 - `node scripts/verify-seo-engine.mjs`: rutas compiladas, identidades, CSRF,
   privacidad, inventario real y ausencia de proveedor; red bloqueada.
+  Tambien disponible como `npm run test:seo-engine`, incluido en `verify:master`.
 - `node scripts/verify-seo-engine-db.mjs`: pruebas SQL en transaccion y ROLLBACK;
   `--apply` solo despues de verificarlas aplica 041 con todo pausado.
 - `node scripts/verify-seo-engine.mjs --serve`: panel aislado en puerto 4343 con

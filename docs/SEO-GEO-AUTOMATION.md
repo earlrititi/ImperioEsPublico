@@ -189,8 +189,13 @@ Referencias de integracion: [Chat Completions](https://developers.openai.com/api
   las retiradas del CMS. 83 relaciones/referencias y 23 consultas de seguimiento.
 - Cinco oportunidades cualitativas guardadas. Dos candidatos institucionales para
   revision; cero contactos, acuerdos o backlinks atribuidos al sistema.
-- Las dos paginas documentales probadas no se marcan verificadas: una devuelve
-  403 y otra supera el limite. No hay fuentes nuevas aprobadas ni borradores IA.
+- Las dos paginas documentales iniciales no se marcan verificadas: una devuelve
+  403 y otra supera el limite. Se guardaron despues dos fuentes accesibles del
+  Ministerio de Cultura, con extractos cotejados por el lector real: [edicion del
+  Quijote](https://www.cultura.gob.es/va/cultura/areas/museos/mc/ceres/catalogos-tematicos/cervantes/el-quijote.html)
+  y [nacimiento de Cervantes](https://www.cultura.gob.es/cultura/areas/museos/mc/ceres/catalogos-tematicos/cervantes/la-vida.html).
+  El cotejo de un extracto no sustituye la revision historica ni aprueba una
+  oportunidad. No hay borradores IA.
 - Resend: prueba administrativa a `imperio_e@hotmail.com`, evento `delivered`,
   proveedor `01a1a296-d301-7a61-85be-b95cd844b79f`. No se publico un articulo para probar.
 - Migraciones 041-044 aplicadas tras pruebas con ROLLBACK, incluidas regeneracion,
@@ -198,6 +203,15 @@ Referencias de integracion: [Chat Completions](https://developers.openai.com/api
 - Jobs diario/semanal/mensual ejecutados y persistidos correctamente. Se reutiliza
   `imperio-commerce-maintenance`, activo cada cinco minutos. Generacion pausada,
   presupuesto cero y oportunidades pendientes de investigacion/aprobacion.
+- Publicacion verificada el 3 de noviembre de 2026: commit funcional `e13c840`,
+  deployment `dpl_HhMZLnG89aUmzsTxhEN12uPSXWMS` promovido a `imperioes.com`.
+  Las 43 URLs del sitemap responden 200, con canonical propio, un H1 y sin noindex;
+  entre ellas estan los 22 articulos. `www` conserva la ruta al redirigir con 308.
+  La API privada devuelve 403 sin sesion y el panel redirige al login.
+- El worker desplegado ejecuto un informe mensual con respuesta HTTP 200 y job
+  `succeeded`. Search Console devuelve `unavailable_check_api_and_property_access`:
+  la credencial configurada no proporciona datos de la propiedad. No se informa
+  cero trafico ni cero impresiones a partir de ese fallo de acceso.
 - 198 pruebas unitarias y suites compiladas de CMS, premium, autenticacion, correo,
   comercio y SEO. Lint y typecheck sin errores; siete hints anteriores de Astro.
 - `npm audit --omit=dev`: cuatro avisos moderados previos en glob/minimatch y la

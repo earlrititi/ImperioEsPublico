@@ -17,7 +17,7 @@ export function relatedArticles(slug: string) {
   return candidates.filter(item => score(item) > 0).sort((a, b) => score(b) - score(a)).slice(0, 3);
 }
 
-export function articleSchema(article: typeof ARTICLES_ITEMS[number]) {
+export function articleSchema(article: typeof ARTICLES_ITEMS[number] & { editorialReview?: { reviewer: string; reviewedAt: string; method: string } }) {
   const editorial = getArticleEditorial(article.slug);
   const authors = getAuthors(editorial.authorIds);
   const entities = getEntities(editorial.entityIds);
@@ -29,8 +29,9 @@ export function articleSchema(article: typeof ARTICLES_ITEMS[number]) {
     inLanguage: "es", articleSection: article.category,
     isAccessibleForFree: getArticleTier(article.slug) === "piquero",
     ...(article.publishedAt ? { datePublished: article.publishedAt } : {}),
-    ...(editorial.modifiedAt ? { dateModified: editorial.modifiedAt } : {}),
-    author: "cmsId" in article && "author" in article ? [{"@type":"Person",name:String(article.author)}] : authors.map(author => ({
+    dateModified: article.editorialReview?.reviewedAt ?? editorial.modifiedAt,
+    ...(article.editorialReview ? { creditText: article.editorialReview.method, editor: { "@type": "Person", name: article.editorialReview.reviewer } } : {}),
+    author: "cmsId" in article && "author" in article ? [{"@type": /^Imperio\b/i.test(String(article.author)) ? "Organization" : "Person",name:String(article.author)}] : authors.map(author => ({
       "@type": author.type, name: author.name, url: canonicalUrl(`/autores/${author.id}`),
     })),
     ...(entities.length ? { about: entities.map(entity => ({

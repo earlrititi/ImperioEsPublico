@@ -57,6 +57,15 @@ export default function ArticleEditor() {
   const status = article?.status ?? "draft";
 
   useEffect(() => {
+    const id = new URLSearchParams(location.search).get("article");
+    if (!id || !/^[a-f0-9-]{36}$/i.test(id)) return;
+    let active = true; setBusy(true);
+    api<Saved>(`/api/admin/articles?id=${id}`).then(saved => { if (active) { applySaved(saved); setView("edit"); } })
+      .catch(reason => { if (active) setError(reason.message); }).finally(() => { if (active) setBusy(false); });
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
     if (view !== "edit" || !host.current) return;
     const instance = new Editor({
       element: host.current, extensions: [StarterKit.configure({ heading: { levels: [2, 3] }, link: { openOnClick: false } }), Image], content: draft.body,

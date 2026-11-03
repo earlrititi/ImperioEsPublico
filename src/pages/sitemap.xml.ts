@@ -9,7 +9,7 @@ export const GET: APIRoute = async () => {
     ...INDEXABLE_STATIC_ROUTES.map(path => ({ path })),
     ...(await publishedArticles()).map(article => ({
       path: `/papeles-y-tratados/${article.slug}`,
-      modified: getArticleEditorial(article.slug).modifiedAt ?? article.publishedAt,
+      modified: article.editorialReview?.reviewedAt ?? getArticleEditorial(article.slug).modifiedAt ?? article.publishedAt,
     })),
     ...Object.entries(AUTHORS).filter(([, author]) => author.published).map(([id]) => ({ path: `/autores/${id}` })),
     ...Object.entries(REFERENCE_PAGES).filter(([, page]) => page.published).map(([id, page]) => ({ path: `/${id}`, modified: page.modifiedAt })),

@@ -3,7 +3,7 @@ import { database } from "./reservations";
 import { getArticleTier } from "../config/article-access";
 import type { ArticleDraft } from "./admin-article-content";
 
-export type PublishedArticle = (typeof ARTICLES_ITEMS)[number] & { cmsId?: string; author?: string };
+export type PublishedArticle = (typeof ARTICLES_ITEMS)[number] & { cmsId?: string; author?: string; editorialReview?: { reviewer: string; reviewedAt: string; method: string } };
 
 // Select metadata only. Drafts and premium bodies must never reach a public list.
 export async function publishedArticles(): Promise<PublishedArticle[]> {

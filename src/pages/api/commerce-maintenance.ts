@@ -64,7 +64,12 @@ export const POST: APIRoute = async ({ request }) => {
     let marketing;
     try { marketing = { ...(await runMarketingAutomations(3)), delivery: await automationDeliveryReceipts(3) }; }
     catch { marketing = { failed: true }; console.error("MARKETING_MAINTENANCE_FAILED"); }
-    return privateJson({ expired, opened, paidOrderAdminMail, paidOrderAdminDelivery, ...commerceMail, adminMail, adminDelivery, marketing });
+    let seo: unknown = { enabled: false };
+    if (process.env.SEO_ENGINE_ENABLED === "true") {
+      try { const { runSeoWorker } = await import("../../lib/seo-engine-worker"); seo = await runSeoWorker(); }
+      catch { seo = { failed: true }; console.error("SEO_MAINTENANCE_FAILED"); }
+    }
+    return privateJson({ expired, opened, paidOrderAdminMail, paidOrderAdminDelivery, ...commerceMail, adminMail, adminDelivery, marketing, seo });
   } catch (error) {
     return failure(error);
   }

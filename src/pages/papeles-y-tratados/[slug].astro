@@ -29,7 +29,7 @@ type Article = (typeof ARTICLES_ITEMS)[number] & {
 
 Astro.response.headers.set("Cache-Control", "private, no-store");
 const catalogue = await publishedArticles();
-const article = catalogue.find((item) => item.slug === Astro.params.slug) as (Article & {cmsId?:string;author?:string}) | undefined;
+const article = catalogue.find((item) => item.slug === Astro.params.slug) as (Article & {cmsId?:string;author?:string;editorialReview?:{reviewer:string;reviewedAt:string;method:string}}) | undefined;
 if (!article) return new Response("Articulo no encontrado", { status: 404 });
 
 const tier = getArticleTier(article.slug);
@@ -77,7 +77,7 @@ const structuredData = [articleSchema(article), breadcrumbs([
   structuredData={structuredData}
   ogType="article"
   publishedAt={article.publishedAt}
-  modifiedAt={editorial.modifiedAt}
+  modifiedAt={article.editorialReview?.reviewedAt ?? editorial.modifiedAt}
 >
   <main class="article-page" data-home-mark-surface="black">
     <div class="article-page__dots" aria-hidden="true"></div>
@@ -98,6 +98,7 @@ const structuredData = [articleSchema(article), breadcrumbs([
           {article.cmsId ? <span>{article.author}</span> : authors.map(author => <a rel="author" href={withBase(`/autores/${author.id}`)}>{author.name}</a>)}
           {article.publishedAt && <span>Publicado: <time datetime={article.publishedAt}>{formatEditorialDate(article.publishedAt)}</time></span>}
           {editorial.modifiedAt && <span>Revisado: <time datetime={editorial.modifiedAt}>{formatEditorialDate(editorial.modifiedAt)}</time></span>}
+          {article.editorialReview && <span>{article.editorialReview.method}. Revision: {article.editorialReview.reviewer}, <time datetime={article.editorialReview.reviewedAt}>{formatEditorialDate(article.editorialReview.reviewedAt)}</time></span>}
         </div>
       </header>
 

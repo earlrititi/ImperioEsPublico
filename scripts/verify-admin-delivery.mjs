@@ -13,7 +13,8 @@ globalThis.fetch=async(input,options)=>{
 };
 const dir=new URL('../.vercel/output/functions/_render.func/dist/server/chunks/',import.meta.url);const file=readdirSync(dir).find(n=>n.startsWith('admin-mail_')&&n.endsWith('.mjs'));assert.ok(file);
 const mod=await import(new URL(file,dir));const reconcile=Object.values(mod).find(f=>typeof f==='function'&&f.name==='reconcileAdminDelivery');assert.ok(reconcile);
-assert.equal((await reconcile(10)).checked,5);assert.deepEqual(updates.map(u=>u.delivery_status),['delivered','bounced','complained','delivered','delivered']);
+assert.equal((await reconcile(10)).checked,5);assert.deepEqual(updates.map(u=>u.delivery_status),['delivered','bounced','complained','opened','clicked']);
+assert.ok(updates[0].provider_delivery_confirmed_at);assert.ok(updates.slice(1).every(u=>!u.provider_delivery_confirmed_at),'An open/click cannot manufacture delivery evidence');
 assert.deepEqual(suppressed.map(s=>s.p_reason),['provider_bounced','provider_complained']);
 process.env.COMMERCE_EMAIL_MODE='disabled';assert.equal((await reconcile()).disabled,true);assert.equal(updates.length,5);
 console.log('Provider receipts, delivery persistence and bounce/complaint suppression verified. No messages sent.');

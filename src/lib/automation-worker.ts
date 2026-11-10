@@ -6,6 +6,8 @@ import { AUTOMATION_DEFAULTS, campaignAutomationMail, personalizeAutomation, pla
 import { renderAdminMail } from "./admin-mail-template";
 import { unsubscribeToken } from "./admin-mail";
 import { assertMailRecipient } from "./mail-delivery";
+import { prepareCorporateEmail } from "./corporate-email";
+import { runContactWelcome } from "./contact-welcome-worker";
 
 export type AutomationSubject = { user_id: string; email: string; name: string; consent_id: string; marketing_accepted_at: string;
   welcome_at: string; visited_at: string | null; product_at: string | null; cart_at: string | null; checkout_at: string | null;
@@ -83,6 +85,7 @@ export async function runMarketingAutomations(limit = 10) {
     if (!facts) continue;
     const planned = planAutomation(facts, await sentHistory(subject.user_id), Date.now())[0];
     if (!planned) continue;
+    if(planned.key==="welcome"&&optionalEnv("MARKETING_CENTRAL_WELCOME_ENABLED")==="true")continue;
     const draft = drafts.find(item => item.key === planned.key)!;
     if (await rpc("queue_marketing_automation", { p_user: subject.user_id, p_consent: subject.consent_id, p_key: planned.key, p_step: planned.step,
       p_anchor: new Date(planned.anchor).toISOString(), p_due: new Date(planned.dueAt).toISOString(), p_revision: draft.revision, p_digest: digest })) queued++;
@@ -130,13 +133,14 @@ export async function runMarketingAutomations(limit = 10) {
         if (lease.data.status === "processing") await finish({ status: "suppressed", reason: "ELIGIBILITY_CHANGED", provider_payload: null });
         suppressed++; continue;
       }
-      const response = await client.emails.send(payload, { idempotencyKey: `automation-${job.id}` });
+      const response = await client.emails.send(prepareCorporateEmail(payload,Boolean(job.provider_payload)), { idempotencyKey: `automation-${job.id}` });
       if (response.error || !response.data) throw Error("EMAIL_PROVIDER_UNAVAILABLE");
       await finish({ status: "sent", provider_id: response.data.id, sent_at: new Date().toISOString(), provider_payload: null, delivery_status: "accepted_by_provider" }); sent++;
     } catch { failed++; }
     await new Promise(resolve => { setTimeout(resolve, 600); });
   }
-  return { disabled: false, queued, sent, suppressed, failed };
+  const central=await runContactWelcome(approved,limit,async()=>Boolean((await approvedRuntime())?.digest===digest));
+  return { disabled: false, queued:queued+central.queued, sent:sent+central.sent, suppressed:suppressed+central.suppressed, failed:failed+central.failed };
 }
 
 export async function automationDeliveryReceipts(limit = 10) {
@@ -152,8 +156,8 @@ export async function automationDeliveryReceipts(limit = 10) {
   for (const job of jobs.data ?? []) {
     const response = await client.emails.get(job.provider_id);
     if (response.error || !response.data) continue;
-    const event = String(response.data.last_event), status = ["opened", "clicked"].includes(event) ? "delivered" : event;
-    const saved = await db.from("marketing_automation_jobs").update({ delivery_status: status, provider_checked_at: new Date().toISOString() }).eq("id", job.id).eq("provider_id", job.provider_id);
+    const status = String(response.data.last_event);
+    const saved = await db.from("marketing_automation_jobs").update({ delivery_status: status, provider_checked_at: new Date().toISOString(),...(status==="delivered"?{provider_delivery_confirmed_at:new Date().toISOString()}:{}) }).eq("id", job.id).eq("provider_id", job.provider_id);
     if (saved.error) throw Error("DATABASE_UNAVAILABLE");
     if (["bounced", "complained"].includes(status)) {
       const recipient = response.data.to?.[0]?.trim().toLowerCase();

@@ -1,5 +1,6 @@
 ---
 import PageShell from "../layouts/PageShell.astro";
+import {EMAIL_MARKETING_CONSENT,EMAIL_MARKETING_NOTE} from "../config/email-marketing";
 ---
 
 <PageShell
@@ -77,15 +78,14 @@ import PageShell from "../layouts/PageShell.astro";
         tabindex="-1"
         aria-hidden="true"
       />
-      <label class="manifesto-modal__privacy">
-        <input id="manifesto-privacy" type="checkbox" name="privacyAcknowledged" required />
+      <p class="manifesto-modal__privacy">
         <span>
           He leido la <a href="/legal/privacidad" target="_self">politica de privacidad</a>.
           El envio del manifiesto no te suscribe a marketing.
         </span>
-      </label>
+      </p>
       <p class="manifesto-modal__error" id="manifesto-error" role="alert" hidden></p>
-      <label class="manifesto-modal__privacy"><input id="manifesto-marketing" type="checkbox"/><span>Quiero recibir la newsletter de Imperio E. Opcional; puedo darme de baja cuando quiera.</span></label>
+      <label class="manifesto-modal__privacy"><input id="manifesto-marketing" type="checkbox"/><span>{EMAIL_MARKETING_CONSENT} {EMAIL_MARKETING_NOTE}</span></label>
       <p class="manifesto-modal__message" id="manifesto-message" role="status" hidden></p>
       <button class="btn btn-primary manifesto-modal__submit" id="manifesto-submit" type="submit" disabled>
         Recibir manifiesto
@@ -103,7 +103,6 @@ import PageShell from "../layouts/PageShell.astro";
   const manifestoFirstNameInput = document.getElementById("manifesto-first-name");
   const manifestoEmailInput = document.getElementById("manifesto-email");
   const manifestoCompanyInput = document.getElementById("manifesto-company");
-  const manifestoPrivacyInput = document.getElementById("manifesto-privacy");
   const manifestoSubmit = document.getElementById("manifesto-submit");
   const manifestoClose = document.getElementById("manifesto-close");
   const manifestoError = document.getElementById("manifesto-error");
@@ -126,8 +125,7 @@ import PageShell from "../layouts/PageShell.astro";
     Boolean(
       manifestoFirstNameInput?.value.trim() &&
         manifestoEmailInput?.value.trim() &&
-        manifestoEmailInput?.validity.valid &&
-        manifestoPrivacyInput?.checked
+        manifestoEmailInput?.validity.valid
     );
 
   const updateManifestoSubmitState = () => {
@@ -169,7 +167,7 @@ import PageShell from "../layouts/PageShell.astro";
 
   manifestoClose?.addEventListener("click", closeManifestoModal);
 
-  [manifestoFirstNameInput, manifestoEmailInput, manifestoPrivacyInput].forEach((field) => {
+  [manifestoFirstNameInput, manifestoEmailInput].forEach((field) => {
     field?.addEventListener("input", () => {
       setManifestoError("");
       setManifestoMessage("");
@@ -202,7 +200,7 @@ import PageShell from "../layouts/PageShell.astro";
           firstName: manifestoFirstNameInput?.value || "",
           email: manifestoEmailInput?.value || "",
           company: manifestoCompanyInput?.value || "",
-          privacyAcknowledged: Boolean(manifestoPrivacyInput?.checked),
+          privacyAcknowledged: true,
           marketingConsent:document.getElementById("manifesto-marketing")?.checked===true,
           anonymousId: getManifestoAnonymousId(),
           requestId:manifestoRequestId ||= crypto.randomUUID(),
@@ -227,9 +225,6 @@ import PageShell from "../layouts/PageShell.astro";
       }
       if (manifestoCompanyInput) {
         manifestoCompanyInput.value = "";
-      }
-      if (manifestoPrivacyInput) {
-        manifestoPrivacyInput.checked = false;
       }
       if (manifestoOpenButton) {
         manifestoOpenButton.textContent = "Manifiesto solicitado";

@@ -136,12 +136,18 @@ export function publicReservation(r: any) {
     payload_hash,
     request_id,
     reservation_payment_attempts,
+    commerce_orders,
     ...rest
   } = r;
   const pending = reservation_payment_attempts?.find(
     (attempt: any) => attempt.status === "OPEN",
   );
-  return { ...rest, paymentAddress: pending?.shipping_address ?? null };
+  let publicOrder = commerce_orders;
+  if (commerce_orders) {
+    const { delivery_evidence_ref, delivery_source, delivery_paused_at, post_delivery_stage, next_email_at, last_email_at, ...order } = commerce_orders;
+    publicOrder = order;
+  }
+  return { ...rest, commerce_orders: publicOrder, paymentAddress: pending?.shipping_address ?? null };
 }
 export const privateJson = (data: unknown, status = 200) =>
   Response.json(data, {

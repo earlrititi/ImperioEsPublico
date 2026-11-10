@@ -42,7 +42,7 @@ export async function sendPiqueroWelcomeEmail(params: {
     subject: "Tu cuenta PIQUERO esta activa",
     html: `
       <div style="font-family: Georgia, serif; line-height: 1.6; color: #111;">
-        <h1>${greeting(name)}</h1>
+        <h1>${escapeHtml(greeting(name))}</h1>
         <p>Tu cuenta <strong>PIQUERO</strong> esta activa.</p>
         <p>Ya formas parte del circulo de lectores y puedes acceder al contenido gratuito ampliado.</p>
         <p><strong>Plus Ultra.</strong></p>
@@ -71,11 +71,11 @@ export async function sendPaidWelcomeEmail(params: {
     subject: `Tu suscripcion ${planName} esta activa`,
     html: `
       <div style="font-family: Georgia, serif; line-height: 1.6; color: #111;">
-        <h1>${greeting(name)}</h1>
+        <h1>${escapeHtml(greeting(name))}</h1>
         <p>Tu suscripcion <strong>${planName}</strong> esta activa.</p>
-        <p><strong>Precio y periodicidad:</strong> ${priceSummary}.</p>
+        <p><strong>Precio y periodicidad:</strong> ${escapeHtml(priceSummary)}.</p>
         <p>La suscripcion se renueva automaticamente hasta que la canceles desde tu cuenta antes de la siguiente renovacion.</p>
-        <p>Terminos aceptados: version ${termsVersion}. Puedes consultarlos en <a href="${siteUrl}/legal/terminos">${siteUrl}/legal/terminos</a>.</p>
+        <p>Terminos aceptados: version ${escapeHtml(termsVersion)}. Puedes consultarlos en <a href="${siteUrl}/legal/terminos">${siteUrl}/legal/terminos</a>.</p>
         <p>${copy}</p>
         ${offer ? `<p>${offer}</p>` : ""}
         <p><strong>Plus Ultra.</strong></p>
@@ -135,7 +135,7 @@ export async function sendMerchPurchaseEmail(params: {
     html: `
       <div style="font-family: Georgia, serif; line-height: 1.6; color: #111;">
         <h1>Pedido confirmado</h1>
-        <p>Hemos recibido el pago de <strong>${productName}${sizeCopy}</strong>.</p>
+        <p>Hemos recibido el pago de <strong>${escapeHtml(productName)}${escapeHtml(sizeCopy)}</strong>.</p>
         <p>Tu compra se ha realizado correctamente. Comenzaremos a tramitar tu env&iacute;o a partir del 13 de octubre de 2026. Esta fecha corresponde al inicio de la tramitaci&oacute;n, no a la entrega.</p>
         <p><strong>Plus Ultra.</strong></p>
       </div>

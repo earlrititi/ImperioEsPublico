@@ -3,6 +3,7 @@ import { getRequiredEnv } from "./env";
 import { database, hash, optionalEnv, rpc, safeEqual, sign } from "./reservations";
 import { renderAdminMail, type MailContent } from "./admin-mail-template";
 import { assertMailRecipient } from "./mail-delivery";
+import { prepareCorporateEmail } from "./corporate-email";
 
 export function mailApproval(actor: string, payload: unknown, expires: number) {
   return sign(`admin-mail:${actor}:${expires}:${hash(JSON.stringify(payload))}`);
@@ -54,7 +55,7 @@ export async function drainAdminMail(limit = 10) {
         if (saved.error || saved.data?.length !== 1) throw new Error("EMAIL_SNAPSHOT_UNAVAILABLE");
       }
       assertMailRecipient(payload, mode, optionalEnv("COMMERCE_TEST_EMAIL"));
-      const result = await client.emails.send(payload,{idempotencyKey:`admin-mail-${job.id}`});
+      const result = await client.emails.send(prepareCorporateEmail(payload,Boolean(job.provider_payload)),{idempotencyKey:`admin-mail-${job.id}`});
       if (result.error || !result.data) throw new Error("EMAIL_PROVIDER_UNAVAILABLE");
       await rpc("finish_admin_mail",{p_id:job.id,p_claim:job.claim_id,p_status:"sent",p_provider_id:result.data.id});
       sent++;
@@ -80,8 +81,8 @@ export async function reconcileAdminDelivery(limit=10){
     const response=await client.emails.get(row.provider_message_id);
     if(response.error || !response.data)throw Error("EMAIL_PROVIDER_UNAVAILABLE");
     const event=String(response.data.last_event);
-    const state=["opened","clicked"].includes(event)?"delivered":event;
-    const updated=await db.from("email_logs").update({delivery_status:state,provider_checked_at:now}).eq("id",row.id).eq("provider_message_id",row.provider_message_id);
+    const state=event;
+    const updated=await db.from("email_logs").update({delivery_status:state,provider_checked_at:now,...(state==="delivered"?{provider_delivery_confirmed_at:now}:{})}).eq("id",row.id).eq("provider_message_id",row.provider_message_id);
     if(updated.error)throw Error("DATABASE_UNAVAILABLE");
     if(["bounced","complained"].includes(state)){
       await rpc("suppress_marketing_email",{p_email:row.recipient.toLowerCase(),p_reason:`provider_${state}`});

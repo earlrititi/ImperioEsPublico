@@ -5,7 +5,6 @@ import { getRequiredEnv } from "../../lib/env";
 import { recordLegalConsents } from "../../lib/legal-consents";
 import { consumeRateLimit } from "../../lib/rate-limit";
 import { isAllowedRequestOrigin } from "../../lib/request-security";
-import { notifyLead } from "../../lib/lead-notifications";
 import {database,optionalEnv} from "../../lib/reservations";
 import { EMAIL_MARKETING_CONSENT, EMAIL_MARKETING_COPY_VERSION, NEWSLETTER_PDF_PATH } from "../../config/email-marketing";
 import { unsubscribeToken } from "../../lib/admin-mail";
@@ -90,7 +89,7 @@ export const POST: APIRoute = async ({ request }) => {
       if(size>8192){await reader.cancel();return respond({ok:false,error:"Solicitud demasiado grande."},413);}raw+=decoder.decode(value,{stream:true});}raw+=decoder.decode();}
     const form = nativeForm ? new URLSearchParams(raw) : null;
     const body = form ? {...Object.fromEntries(form),resource:"seven_stories",source:"newsletter_page",
-      privacyAcknowledged:form.get("intent")==="newsletter_pdf",marketingConsent:form.get("intent")==="newsletter_pdf",consentAction:form.get("intent")}
+      privacyAcknowledged:["newsletter_pdf","pdf_only"].includes(form.get("intent")??""),marketingConsent:form.get("marketingConsent")==="on",consentAction:form.get("intent")}
       : (()=>{try{return JSON.parse(raw);}catch{return null;}})();
 
     if (!body || typeof body !== "object") {
@@ -122,9 +121,8 @@ export const POST: APIRoute = async ({ request }) => {
     const resource = payload.resource ?? "manifesto";
     if(resource!=="manifesto" && resource!=="seven_stories")return respond({ok:false,error:"Recurso no valido."},400);
     const newsletter = resource==="seven_stories";
-    if(newsletter && (!marketingConsent || payload.consentAction!=="newsletter_pdf"))return respond({ok:false,error:"Confirma la suscripcion a la newsletter."},400);
+    if(newsletter && !["newsletter_pdf","pdf_only"].includes(String(payload.consentAction)))return respond({ok:false,error:"Selecciona la descarga del PDF."},400);
     const name = `${firstName} ${lastName}`.trim();
-    const kind = newsletter ? "newsletter" : "manifesto";
 
     if (
       (!newsletter && !firstName) ||
@@ -146,7 +144,8 @@ export const POST: APIRoute = async ({ request }) => {
     if(existing.error)throw Error("DATABASE_UNAVAILABLE");
     if(existing.data.email!==email || existing.data.name!==name || existing.data.resource!==resource || existing.data.marketing_consent!==marketingConsent)return respond({ok:false,error:"La solicitud ha cambiado. Recarga el formulario."},409);
     if(existing.data.status==="accepted"){
-      await notifyLead({kind,reference:requestId,email,name});
+      if(marketingConsent){const {requestMarketingVerification}=await import("../../lib/marketing-contacts");
+        await requestMarketingVerification({email,name,source:newsletter?"newsletter_pdf":"manifesto",contextId:requestId}).catch(()=>console.error("Marketing confirmation pending"));}
       return respond({ok:true,message:"El PDF ya ha sido enviado por correo."});
     }
     await recordLegalConsents([
@@ -160,7 +159,7 @@ export const POST: APIRoute = async ({ request }) => {
         contextId: requestId,
         metadata: { resource },
       },
-      ...(marketingConsent?[{anonymousId,consentType:"marketing_email" as const,documentVersion:LEGAL_DOCUMENT_VERSIONS.privacy,accepted:true,source:newsletter?"newsletter_pdf":"manifesto",contextType:"resource_request",contextId:requestId,metadata:{resource,copy_version:EMAIL_MARKETING_COPY_VERSION,consent_text:EMAIL_MARKETING_CONSENT,action:newsletter?"Suscribirme y recibir el PDF":"optional_checkbox"}}]:[]),
+      ...(marketingConsent?[{anonymousId,consentType:"marketing_email" as const,documentVersion:LEGAL_DOCUMENT_VERSIONS.privacy,accepted:true,source:newsletter?"newsletter_pdf":"manifesto",contextType:"resource_request",contextId:requestId,metadata:{resource,copy_version:EMAIL_MARKETING_COPY_VERSION,consent_text:EMAIL_MARKETING_CONSENT,action:"optional_checkbox"}}]:[]),
     ]);
 
     const greeting = name ? `Hola ${name},` : "Hola,";
@@ -222,7 +221,9 @@ export const POST: APIRoute = async ({ request }) => {
     if(!result.data)throw Error("EMAIL_PROVIDER_UNAVAILABLE");
     const accepted=await db.from("manifesto_requests").update({status:"accepted",provider_id:result.data.id,accepted_at:new Date().toISOString()}).eq("id",requestId);
     if(accepted.error)throw Error("DATABASE_UNAVAILABLE");
-    await notifyLead({ kind, reference: requestId, email, name });
+    // Resource delivery is independent; a subscription notice follows verified opt-in only.
+    if(marketingConsent){const {requestMarketingVerification}=await import("../../lib/marketing-contacts");
+      await requestMarketingVerification({email,name,source:newsletter?"newsletter_pdf":"manifesto",contextId:requestId}).catch(()=>console.error("Marketing confirmation pending"));}
 
     return respond({
       ok: true,

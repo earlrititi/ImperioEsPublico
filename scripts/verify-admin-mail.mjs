@@ -58,7 +58,7 @@ assert.equal(sends.length, 4);
 assert.deepEqual(sends[0], sends[2], "Customer retry preserves the same payload and idempotency key");
 assert.deepEqual(sends[1], sends[3], "Admin retry preserves the same payload and idempotency key");
 assert.match(sends[1].body.text, /Cantidad de camisetas: 3/);
-assert.doesNotMatch(sends[1].body.text, /https?:|token=/);
+assert.doesNotMatch(sends[1].body.text, /token=|\/reservas\/gestionar|\/admin[/?#]/);
 assert.equal(sends[0].body.adminNotification, undefined);
 assert.equal((await drain(1)).sent, 0);
 job.status = "PROCESSING";

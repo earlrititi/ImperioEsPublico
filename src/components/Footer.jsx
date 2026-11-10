@@ -222,7 +222,14 @@ export default function Footer({ variant = "light" }) {
             </a>
           </span>
           <span>{FOOTER_META.copyright}</span>
-          <span class="image-footer__creator">{FOOTER_META.creator}</span>
+          <a
+            class="image-footer__creator"
+            href="https://bylevantedigital.com"
+            target="_self"
+            rel="noopener noreferrer"
+          >
+            {FOOTER_META.creator}
+          </a>
         </div>
       </div>
 
@@ -316,6 +323,10 @@ export default function Footer({ variant = "light" }) {
         }
 
         .image-footer__cookie-switch {
+          --switch-track: #E6E0E9;
+          --switch-border: #FFFFFF;
+          --switch-handle: #79747E;
+          --switch-on: var(--color-red-accent);
           position: relative;
           display: inline-flex;
           flex: 0 0 auto;
@@ -335,61 +346,66 @@ export default function Footer({ variant = "light" }) {
         .image-footer__cookie-switch-track {
           position: relative;
           display: block;
-          width: 58px;
+          width: 52px;
           height: 32px;
           box-sizing: border-box;
-          border: 0;
-          border-radius: 999px;
-          background: #969696;
-          box-shadow: inset 0 1px 2px rgb(0 0 0 / 16%);
-          transition: background 180ms ease, box-shadow 180ms ease;
+          border: 1px solid var(--switch-border);
+          border-radius: 100px;
+          background: var(--switch-track);
+          transition: background 180ms ease, border-color 180ms ease;
         }
 
         .image-footer__cookie-switch-track::after {
           content: "";
           position: absolute;
-          top: 5px;
-          left: 5px;
-          width: 22px;
-          height: 22px;
-          border-radius: 50%;
-          background: #f5f5f5;
-          box-shadow: 0 1px 3px rgb(0 0 0 / 28%);
+          top: 3px;
+          left: 3px;
+          width: 24px;
+          height: 24px;
+          border-radius: 24px;
+          background: var(--switch-handle);
+          box-shadow: 0px 4px 4px rgb(0 0 0 / 25%);
           transition: left 180ms ease, background-color 180ms ease;
         }
 
         .image-footer__cookie-switch-track::before {
-          display: none;
           content: "";
           position: absolute;
-          top: 6px;
-          right: 5px;
-          width: 8px;
-          height: 8px;
-          box-sizing: border-box;
-          border: 2px solid #fff;
-          border-radius: 50%;
+          top: -4px;
+          left: -5px;
+          width: 40px;
+          height: 40px;
+          border-radius: 100px;
+          pointer-events: none;
+          background: transparent;
+          transition: left 180ms ease, background-color 180ms ease;
+        }
+
+        .image-footer__cookie-switch:hover .image-footer__cookie-switch-track::before,
+        .image-footer__cookie-switch input:focus-visible + .image-footer__cookie-switch-track::before,
+        .image-footer__cookie-switch:active .image-footer__cookie-switch-track::before {
+          background: rgb(121 116 126 / 12%);
         }
 
         .image-footer__cookie-switch input:checked + .image-footer__cookie-switch-track::before {
-          left: 7px;
-          right: auto;
-          width: 2px;
-          border: 0;
-          border-radius: 0;
-          background: #fff;
+          left: 15px;
+          background: transparent;
+        }
+
+        .image-footer__cookie-switch:hover input:checked + .image-footer__cookie-switch-track::before,
+        .image-footer__cookie-switch input:checked:focus-visible + .image-footer__cookie-switch-track::before,
+        .image-footer__cookie-switch:active input:checked + .image-footer__cookie-switch-track::before {
+          background: rgb(255 255 255 / 16%);
         }
 
         .image-footer__cookie-switch input:checked + .image-footer__cookie-switch-track {
-          background: #d2d2d2;
-          box-shadow:
-            inset 0 1px 2px rgb(0 0 0 / 16%),
-            inset 0 0 0 1px rgb(169 35 23 / 18%);
+          border-color: var(--switch-on);
+          background: var(--switch-on);
         }
 
         .image-footer__cookie-switch input:checked + .image-footer__cookie-switch-track::after {
-          left: 31px;
-          background: var(--color-red-accent);
+          left: 23px;
+          background: #fff;
         }
 
         .image-footer__cookie-switch input:focus-visible + .image-footer__cookie-switch-track {
@@ -477,6 +493,7 @@ export default function Footer({ variant = "light" }) {
 
         @media (prefers-reduced-motion: reduce) {
           .image-footer__cookie-switch-track,
+          .image-footer__cookie-switch-track::before,
           .image-footer__cookie-switch-track::after { transition: none; }
         }
 
@@ -693,32 +710,8 @@ export default function Footer({ variant = "light" }) {
           font-weight: 600;
         }
 
-        .image-footer__cookie-switch--meta .image-footer__cookie-switch-track {
-          width: 42px;
-          height: 22px;
-          background: rgb(169 35 23 / 42%);
-          box-shadow: inset 0 0 0 1px rgb(255 255 255 / 55%);
-        }
-
-        .image-footer__cookie-switch--meta .image-footer__cookie-switch-track::after {
-          top: 3px;
-          left: 3px;
-          width: 16px;
-          height: 16px;
-          background: #fff;
-          box-shadow:
-            0 1px 4px rgb(0 0 0 / 32%),
-            inset 0 0 0 1px rgb(169 35 23 / 22%);
-        }
-
-        .image-footer__cookie-switch--meta input:checked + .image-footer__cookie-switch-track {
-          background: var(--footer-meta-red);
-          box-shadow: inset 0 0 0 1px rgb(255 255 255 / 38%);
-        }
-
-        .image-footer__cookie-switch--meta input:checked + .image-footer__cookie-switch-track::after {
-          left: 23px;
-          background: #fff;
+        .image-footer__cookie-switch--meta {
+          --switch-on: var(--footer-meta-red);
         }
 
         .image-footer__cookie-switch--meta input:focus-visible + .image-footer__cookie-switch-track {
@@ -730,7 +723,7 @@ export default function Footer({ variant = "light" }) {
           font-weight: 600;
         }
 
-        .image-footer__creator {
+        .image-footer__meta .image-footer__creator {
           color: var(--footer-meta-red);
           font-weight: 650;
         }

@@ -8,6 +8,7 @@ import { engineConfiguration, sourceRecords, proposeEditorial, runAudit, searchC
 import { renderAdminMail } from "./admin-mail-template";
 import { readPublicPage } from "./seo-engine-http";
 import { randomUUID } from "node:crypto";
+import { prepareCorporateEmail } from "./corporate-email";
 
 async function finishJob(job: any, patch: Record<string, unknown>) {
   const r = await (await database()).from("seo_jobs").update(patch).eq("id", job.id).eq("claim_id", job.claim_id).eq("status", "processing").select("id");
@@ -39,7 +40,7 @@ async function notify(job: any) {
     if (snapshot.error || snapshot.data?.length !== 1) throw Error("SEO_JOB_CONFLICT");
   }
   if (payload.to !== REVIEW_EMAIL || payload.cc || payload.bcc) throw Error("SEO_MAIL_RECIPIENT_MISMATCH");
-  const sent = await new Resend(process.env.RESEND_API_KEY).emails.send(payload, { idempotencyKey: `seo-${job.id}` });
+  const sent = await new Resend(process.env.RESEND_API_KEY).emails.send(prepareCorporateEmail(payload,Boolean(job.payload.message)), { idempotencyKey: `seo-${job.id}` });
   if (sent.error || !sent.data) throw Error("SEO_MAIL_PROVIDER_UNAVAILABLE");
   await finishJob(job, { status: "succeeded", provider_id: sent.data.id, delivery_status: "accepted_by_provider", finished_at: new Date().toISOString() });
 }
@@ -66,8 +67,8 @@ export async function reconcileSeoMail() {
   if (r.error) throw Error("DATABASE_UNAVAILABLE");
   const client = new Resend(process.env.RESEND_API_KEY); let checked = 0;
   for (const row of r.data) { const result = await client.emails.get(row.provider_id); if (result.error || !result.data) continue;
-    const state = ["opened", "clicked"].includes(result.data.last_event) ? "delivered" : result.data.last_event;
-    const u = await db.from("seo_jobs").update({ delivery_status: state, provider_checked_at: new Date().toISOString() }).eq("id", row.id); if (u.error) throw Error("DATABASE_UNAVAILABLE"); checked++;
+    const state = result.data.last_event;
+    const u = await db.from("seo_jobs").update({ delivery_status: state, provider_checked_at: new Date().toISOString(),...(state==="delivered"?{provider_delivery_confirmed_at:new Date().toISOString()}:{}) }).eq("id", row.id); if (u.error) throw Error("DATABASE_UNAVAILABLE"); checked++;
   }
   return { checked };
 }

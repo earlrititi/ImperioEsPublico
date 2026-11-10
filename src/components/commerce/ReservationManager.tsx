@@ -256,6 +256,9 @@ export default function ReservationManager({ paymentReturn = false }: { paymentR
         <>
           <p>Pedido: {order.number}</p>
           <p>Envio: {RESERVATION_STATUS[order.status]}</p>
+          <p>Entrega acreditada por transportista: {order.carrier_delivered_at ? new Date(order.carrier_delivered_at).toLocaleDateString("es-ES", { timeZone: "Europe/Madrid" }) : "sin confirmar"}.</p>
+          <p>Recepción confirmada por ti: {order.customer_received_at ? new Date(order.customer_received_at).toLocaleDateString("es-ES", { timeZone: "Europe/Madrid" }) : "sin confirmar"}.</p>
+          <p><a href={`/pedidos/recepcion?order=${order.id}`}>Confirmar la recepción desde mi cuenta o comunicar una incidencia</a></p>
           {order.tracking_number && (
             <p>
               {order.carrier}: {order.tracking_number}

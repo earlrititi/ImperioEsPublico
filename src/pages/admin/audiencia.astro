@@ -1,0 +1,8 @@
+---
+import AdminShell from "../../layouts/AdminShell.astro";
+import Communications from "../../components/admin/Communications";
+import { requireAdmin } from "../../lib/reservations";
+export const prerender = false;
+try { await requireAdmin(Astro); } catch { return Astro.redirect("/login?next=/admin/audiencia"); }
+---
+<AdminShell title="Audiencia"><Communications audience client:load /></AdminShell>

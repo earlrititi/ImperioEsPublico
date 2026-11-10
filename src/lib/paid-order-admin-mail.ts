@@ -4,6 +4,7 @@ import { ADMIN_NOTIFICATION_EMAIL, paidOrderNotification } from "./admin-notific
 import { getRequiredEnv } from "./env";
 import { database, optionalEnv, rpc } from "./reservations";
 import { UUID } from "./reservation-validation";
+import { prepareCorporateEmail } from "./corporate-email";
 
 function messageKey() {
   return createHash("sha256").update(`paid-order-admin:${getRequiredEnv("RESERVATION_TOKEN_SECRET")}`).digest();
@@ -40,13 +41,13 @@ export async function drainPaidOrderAdminMail(limit = 10, orderId?: string) {
       else {
         const order = await db.from("commerce_orders").select("*,commerce_order_items(*)").eq("id", job.order_id).single();
         if (order.error || !order.data?.stripe_checkout_session_id?.startsWith(`cs_${mode}_`)) throw Error("ORDER_NOTICE_DATA_UNAVAILABLE");
-        message = { from: `Imperio E <${SITE.contactEmail}>`, to: recipient, replyTo: SITE.contactEmail, ...paidOrderNotification(order.data) };
+        message = prepareCorporateEmail({ from: `Imperio E <${SITE.contactEmail}>`, to: recipient, replyTo: SITE.contactEmail, ...paidOrderNotification(order.data) });
         const saved = await db.from("paid_order_admin_outbox").update({ encrypted_message: seal(message, job.order_id) })
           .eq("order_id", job.order_id).eq("claim_id", job.claim_id).is("encrypted_message", null).select("order_id");
         if (saved.error || saved.data?.length !== 1) throw Error("EMAIL_SNAPSHOT_UNAVAILABLE");
       }
       if (message.to !== recipient || message.cc || message.bcc) throw Error("ADMIN_RECIPIENT_MISMATCH");
-      const response = await client.emails.send(message, { idempotencyKey: `paid-order-admin-${job.order_id}` });
+      const response = await client.emails.send(prepareCorporateEmail(message,Boolean(job.encrypted_message)), { idempotencyKey: `paid-order-admin-${job.order_id}` });
       if (response.error || !response.data) throw Error("EMAIL_PROVIDER_UNAVAILABLE");
       if (!await rpc("finish_paid_order_admin_notice", { p_order: job.order_id, p_claim: job.claim_id, p_provider: response.data.id })) throw Error("EMAIL_RECEIPT_UNAVAILABLE");
       sent++;
@@ -73,8 +74,8 @@ export async function reconcilePaidOrderAdminDelivery(limit = 10) {
     if (!job.provider_id) continue;
     const result = await client.emails.get(job.provider_id);
     if (result.error || !result.data) continue;
-    const event = String(result.data.last_event), status = ["opened", "clicked"].includes(event) ? "delivered" : event;
-    const saved = await db.from("paid_order_admin_outbox").update({ delivery_status: status, provider_checked_at: new Date().toISOString() })
+    const event = String(result.data.last_event), status = event;
+    const saved = await db.from("paid_order_admin_outbox").update({ delivery_status: status, provider_checked_at: new Date().toISOString(),...(status==="delivered"?{provider_delivery_confirmed_at:new Date().toISOString()}:{}) })
       .eq("order_id", job.order_id).eq("provider_id", job.provider_id);
     if (saved.error) throw Error("DATABASE_UNAVAILABLE");
     const history = await db.from("admin_notification_history").update({ delivery_status: status }).eq("id", `paid_order_admin_${job.order_id}`);

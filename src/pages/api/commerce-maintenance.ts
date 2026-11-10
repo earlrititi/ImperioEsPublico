@@ -13,6 +13,8 @@ import { closeOpenReservationPayment, shirtPaymentConfiguration } from "../../li
 import { readCampaign } from "../../lib/reservation-campaign";
 import { drainPaidOrderAdminMail, reconcilePaidOrderAdminDelivery } from "../../lib/paid-order-admin-mail";
 import { automationDeliveryReceipts, runMarketingAutomations } from "../../lib/automation-worker";
+import { runPostDelivery } from "../../lib/post-delivery-worker";
+import {runSubscriptionNotices} from "../../lib/marketing-contacts";
 export const prerender = false;
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -62,14 +64,17 @@ export const POST: APIRoute = async ({ request }) => {
     const commerceMail = await drainCommerceMail(20), adminMail = await drainAdminMail(10);
     // Marketing runs after transactional work and cannot fail the order-mail maintenance.
     let marketing;
-    try { marketing = { ...(await runMarketingAutomations(3)), delivery: await automationDeliveryReceipts(3) }; }
+    try { marketing = { ...(await runMarketingAutomations(3)), delivery: await automationDeliveryReceipts(3),subscriptionNotices:await runSubscriptionNotices(3) }; }
     catch { marketing = { failed: true }; console.error("MARKETING_MAINTENANCE_FAILED"); }
+    let postDelivery: unknown;
+    try { postDelivery = await runPostDelivery(3); }
+    catch { postDelivery = { failed: true }; console.error("POST_DELIVERY_MAINTENANCE_FAILED"); }
     let seo: unknown = { enabled: false };
     if (process.env.SEO_ENGINE_ENABLED === "true") {
       try { const { runSeoWorker } = await import("../../lib/seo-engine-worker"); seo = await runSeoWorker(); }
       catch { seo = { failed: true }; console.error("SEO_MAINTENANCE_FAILED"); }
     }
-    return privateJson({ expired, opened, paidOrderAdminMail, paidOrderAdminDelivery, ...commerceMail, adminMail, adminDelivery, marketing, seo });
+    return privateJson({ expired, opened, paidOrderAdminMail, paidOrderAdminDelivery, ...commerceMail, adminMail, adminDelivery, marketing, postDelivery, seo });
   } catch (error) {
     return failure(error);
   }

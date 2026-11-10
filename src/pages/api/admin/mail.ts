@@ -4,10 +4,12 @@ import { renderAdminMail, validateMail } from "../../../lib/admin-mail-template"
 import { mailApproval, verifyMailApproval,reconcileAdminDelivery } from "../../../lib/admin-mail";
 import { normalizeEmail, validEmail } from "../../../lib/newsletter-audience";
 import { UUID } from "../../../lib/reservation-validation";
+import { corporateEmailPreview, renderCorporateEmail } from "../../../lib/corporate-email";
 export const prerender = false;
 export const GET: APIRoute = async context => {
   try {
     await requireAdmin(context);
+    if (context.url.searchParams.get("template") === "empty") return privateJson(corporateEmailPreview(renderCorporateEmail({ empty: true }), context.url.origin));
     const page = Math.max(0,Math.min(10000,Number(context.url.searchParams.get("page")) || 0));
     const result = await (await database()).from("email_logs").select("id,recipient,type,subject,status,provider_message_id,delivery_status,error,created_at,sent_at",{count:"exact"}).order("created_at",{ascending:false}).range(page*25,page*25+24);
     if (result.error) throw new Error("DATABASE_UNAVAILABLE");
@@ -27,7 +29,7 @@ export const POST: APIRoute = async context => {
     const payload = {content,type,recipient,requestId:body.requestId};
     if (body.action === "preview") {
       const expires = Date.now()+15*60*1000;
-      return privateJson({...renderAdminMail(content),recipient,expires,token:mailApproval(user.id,payload,expires)});
+      return privateJson({...corporateEmailPreview(renderAdminMail(content),context.url.origin),recipient,expires,token:mailApproval(user.id,payload,expires)});
     }
     if (body.action !== "send" || body.confirm !== "ENVIAR" || !verifyMailApproval(user.id,payload,body.expires,body.token)) throw new Error("INVALID_INPUT");
     const id = await rpc("queue_individual_mail",{p_id:body.requestId,p_actor:user.id,p_recipient:recipient,p_type:type,p_content:content});

@@ -43,7 +43,7 @@ export async function recordLegalConsents(consents: LegalConsentInput[]) {
   const { error } = await supabaseAdmin.from("legal_consents").insert(rows);
 
   if (error) {
-    console.error("recordLegalConsents error:", error);
+    console.error("recordLegalConsents failed", error.code);
     throw error;
   }
 }
@@ -60,7 +60,7 @@ export async function linkAnonymousConsents(params: {
     .is("user_id", null);
 
   if (error) {
-    console.error("linkAnonymousConsents error:", error);
+    console.error("linkAnonymousConsents failed", error.code);
     throw error;
   }
 }

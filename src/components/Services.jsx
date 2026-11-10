@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "preact/hooks";
-import { EMAIL_MARKETING_CONSENT } from "../config/email-marketing";
+import { EMAIL_MARKETING_CONSENT, EMAIL_MARKETING_NOTE } from "../config/email-marketing";
 import {
   PLAN_COMPARISON_INTRO,
   PLAN_COMPARISON_LABELS,
@@ -42,7 +42,6 @@ export default function Services() {
   const [manifestFirstName, setManifestFirstName] = useState("");
   const [manifestEmail, setManifestEmail] = useState("");
   const [manifestCompany, setManifestCompany] = useState("");
-  const [manifestPrivacy, setManifestPrivacy] = useState(false);
   const [manifestMarketing,setManifestMarketing]=useState(false);
   const manifestRequestIdRef = useRef(null);
   const [manifestStatus, setManifestStatus] = useState("idle");
@@ -50,7 +49,7 @@ export default function Services() {
   const manifestModalRef = useRef(null);
   const manifestFirstNameInputRef = useRef(null);
   const isManifestFormReady = Boolean(
-    manifestPrivacy && manifestFirstName.trim() &&
+    manifestFirstName.trim() &&
       /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(manifestEmail.trim())
   );
 
@@ -227,7 +226,7 @@ export default function Services() {
           source: "home",
           anonymousId: manifestRequestIdRef.current,
           requestId: manifestRequestIdRef.current,
-          privacyAcknowledged: manifestPrivacy,
+          privacyAcknowledged: true,
           marketingConsent:manifestMarketing,
         }),
       });
@@ -244,7 +243,6 @@ export default function Services() {
       setManifestEmail("");
       setManifestCompany("");
       setManifestMarketing(false);
-      setManifestPrivacy(false);
     } catch (error) {
       setManifestStatus("idle");
       setManifestError(error.message || "No se pudo enviar el manifiesto.");
@@ -410,11 +408,10 @@ export default function Services() {
                         {manifestError}
                       </p>
                     )}
-                    <label class="services-manifest-modal__privacy">
-                      <input type="checkbox" checked={manifestPrivacy} required onChange={(event) => setManifestPrivacy(event.currentTarget.checked)} />
-                      <span>He leído la <a href="/legal/privacidad">política de privacidad</a> para recibir el manifiesto.</span>
-                    </label>
-                    <label class="services-manifest-modal__privacy"><input type="checkbox" checked={manifestMarketing} onChange={e=>setManifestMarketing(e.currentTarget.checked)}/><span>{EMAIL_MARKETING_CONSENT} Opcional; baja en cualquier momento.</span></label>
+                    <p class="services-manifest-modal__privacy">
+                      <span>Usaremos tus datos para entregarte el manifiesto. Consulta la <a href="/legal/privacidad">política de privacidad</a>. El envío del manifiesto no te suscribe a comunicaciones comerciales.</span>
+                    </p>
+                    <label class="services-manifest-modal__privacy"><input type="checkbox" checked={manifestMarketing} onChange={e=>setManifestMarketing(e.currentTarget.checked)}/><span>{EMAIL_MARKETING_CONSENT} {EMAIL_MARKETING_NOTE}</span></label>
                     <button
                       class="services-manifest-modal__submit"
                       type="submit"

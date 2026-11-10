@@ -11,6 +11,7 @@ public/Manifiesto IE.pdf
 public/images/**/*.png
 !public/images/logo-redv2.png
 !public/images/subscription-x-brush.png
+!public/images/email/**
 skills
 tmp
 tools

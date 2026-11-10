@@ -218,6 +218,11 @@ export const POST: APIRoute = async ({ cookies, request }) => {
     }
 
     // Opening Checkout is not a purchase. Only the paid-invoice webhook notifies the owner.
+    if(body?.marketingConsent===true){
+      const {requestMarketingVerification}=await import("../../lib/marketing-contacts");
+      await requestMarketingVerification({email:subscriberEmail,source:"subscription",contextId:session.id})
+        .catch(()=>console.error("Marketing confirmation pending; checkout preserved"));
+    }
 
     return new Response(JSON.stringify({ url: session.url }), {
       status: 200,

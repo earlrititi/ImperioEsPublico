@@ -23,7 +23,6 @@ if (Astro.request.method === "POST") {
   catch (e) { return Astro.redirect(`/registro?error=${authError(e)}&next=${encodeURIComponent(next)}`, 303); }
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const acceptedTerms = formData.get("terms") === "on";
-  const acknowledgedPrivacy = formData.get("privacy") === "on";
   const marketingConsent = formData.get("newsletter") === "on";
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const password = formData.get("password") ?? "";
@@ -31,7 +30,7 @@ if (Astro.request.method === "POST") {
     return Astro.redirect(`/registro?error=password&next=${encodeURIComponent(next)}`, 303);
   }
 
-  if (!emailPattern.test(email) || email.length > 254 || !acceptedTerms || !acknowledgedPrivacy) {
+  if (!emailPattern.test(email) || email.length > 254 || !acceptedTerms) {
     return Astro.redirect(`/registro?error=validation&next=${encodeURIComponent(next)}`);
   }
   let captchaToken: string | undefined;
@@ -139,7 +138,7 @@ if (Astro.request.method === "POST") {
         <p>
           {error === "password" ? "Las contraseñas deben coincidir y tener al menos 12 caracteres, hasta 72 bytes."
             : error === "validation"
-            ? "Revisa el correo y acepta los dos documentos obligatorios."
+            ? "Revisa el correo y acepta las condiciones aplicables."
             : error === "rate"
               ? "Has realizado demasiadas solicitudes. Espera unos minutos."
             : error === "captcha"
@@ -159,15 +158,8 @@ if (Astro.request.method === "POST") {
         <label class="registration-check">
           <input type="checkbox" name="terms" required />
           <span>
-            Acepto los <a href="/legal/terminos" target="_self">terminos y condiciones</a>
+            He leído la <a href="/legal/privacidad" target="_self">Política de privacidad</a> y acepto los <a href="/legal/terminos" target="_self">términos y condiciones</a>
             {" "}(version {LEGAL_DOCUMENT_VERSIONS.terms}).
-          </span>
-        </label>
-        <label class="registration-check">
-          <input type="checkbox" name="privacy" required />
-          <span>
-            He leido la <a href="/legal/privacidad" target="_self">politica de privacidad</a>
-            {" "}(version {LEGAL_DOCUMENT_VERSIONS.privacy}).
           </span>
         </label>
         <label class="registration-check">

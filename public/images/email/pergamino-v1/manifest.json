@@ -1,0 +1,52 @@
+{
+  "source": "Approved KIT_IMPERIO_E_PERGAMINO_ENTREGA_DASHBOARD",
+  "transformations": "resize to rendered width, lossless PNG or JPEG quality 88; no redrawing",
+  "assets": [
+    {
+      "input": "User-provided transparent logo and complete seal + original approved header",
+      "output": "cabecera-v2.png",
+      "sha256": "d7aadf86e5d3b5b63ca0d5ac238f6b0b70514ab2b7b6ce45b602876904b4bbe1",
+      "width": 600,
+      "height": 279,
+      "bytes": 357443,
+      "logoSha256": "5c09b544be100ebd420513897a8736142c7984dd25a6803910c1494628ac8cb9",
+      "sealSha256": "b99c874f45e07d9f590119d1004626cd9d7434a6f042ece16291b2214545ce11",
+      "originalHeaderSha256": "1257fb6a0dffffb86678ed12f2f8b9fc34a0acb6b6b4b333f82244d74afcfbec",
+      "blankPlateSha256": "1d3363b8d3f6584c94d8109b5d2edbb3960c90fe600fbab07c5898c7aaec37df"
+    },
+    {
+      "input": "titulo_sin_texto.png",
+      "output": "titulo.jpg",
+      "sourceSha256": "c62549297e1d6917f5c1e5d1414bebcd9ced2c1c431d821321b93aacbc460834",
+      "sha256": "b2f0a020ad5817e542b074c0d34b3bb32ac52c8b811751c4de4fc74412610273",
+      "width": 600,
+      "height": 78,
+      "bytes": 5135
+    },
+    {
+      "input": "fondo_aprobado_sin_textos.png",
+      "output": "firma-nao-v2.jpg",
+      "sourceSha256": "4b3e3e2c3160508195be3be64ce91f997fb9d64705a3cf6abcbd10ab6e4a561a",
+      "sha256": "3b52947dd204955813b2b801c8c1fd50de32e1b0fee75b5c88a1efc48fe2ad5d",
+      "width": 600,
+      "height": 375,
+      "bytes": 36355,
+      "crop": {
+        "left": 0,
+        "top": 700,
+        "width": 1122,
+        "height": 702
+      }
+    },
+    {
+      "input": "docs/email-assets/extension-v2.svg",
+      "output": "extension-v2.png",
+      "sourceSha256": "0f83a6b783ea8a859f5298ec8ef1e391c7390633f084ec1e08c55d82435e448d",
+      "sha256": "08bbf6c6152ddd3a2118cede769322ba948d5a06e20b6c5401bede6997784a95",
+      "width": 600,
+      "height": 128,
+      "bytes": 125524
+    }
+  ],
+  "headerUpdate": "Black logo moved down 8 px; supplied seal PNG retained complete, with transparency and no clipping mask, in front of the ribbon. Original curtains and borders retained."
+}

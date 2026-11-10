@@ -9,7 +9,8 @@ import {NEWSLETTER_SEGMENTS} from "../src/lib/newsletter-audience";
 test("email opt-ins state commercial purposes and never replace the free download",()=>{
   assert.match(EMAIL_MARKETING_CONSENT,/historias.*lanzamientos.*ofertas/);
   const page=readFileSync("src/pages/newsletter.astro","utf8");
-  assert.match(page,/Suscribirme y recibir el PDF/);assert.match(page,/Solo descargar el PDF, sin suscribirme/);
+  assert.match(page,/Recibir el PDF/);assert.match(page,/Solo descargar el PDF, sin suscribirme/);
+  assert.match(page,/<input type="checkbox" name="marketingConsent" \/>/);
   assert.ok(readFileSync("public"+NEWSLETTER_PDF_PATH).subarray(0,4).equals(Buffer.from("%PDF")));
   const registration=readFileSync("src/pages/registro.astro","utf8");
   assert.match(registration,/EMAIL_MARKETING_CONSENT/);assert.doesNotMatch(registration,/<input[^>]*name="newsletter"[^>]*(?:required|checked)/);

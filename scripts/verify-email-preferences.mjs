@@ -42,7 +42,8 @@ for(const [body,cookies,origin] of [[{enabled:"yes"},cookie,"https://foreign.inv
 verified=false;r=await post({enabled:"yes"});assert.match(r.headers.get("location"),/comunicaciones=error/);assert.equal(mutations(),before);verified=true;
 blocked=true;r=await post({enabled:"yes"});assert.match(r.headers.get("location"),/comunicaciones=error/);assert.equal(active,false);blocked=false;
 const first=await app.fetch(new Request("https://imperioes.com/newsletter")),html=await first.text();assert.equal(first.status,200);assert.equal(first.headers.get("cache-control"),"no-store");
-assert.ok(html.includes("Suscribirme y recibir el PDF"));assert.ok(html.includes("Solo descargar el PDF, sin suscribirme"));assert.ok(html.includes('name="intent" value="newsletter_pdf"'));assert.ok(html.includes('name="email" type="email"'));assert.ok(!html.includes('name="firstName"'));
+assert.ok(html.includes("Recibir el PDF"));assert.ok(html.includes("Solo descargar el PDF, sin suscribirme"));assert.ok(html.includes('name="intent" value="newsletter_pdf"'));assert.ok(html.includes('name="email" type="email"'));assert.ok(!html.includes('name="firstName"'));
+assert.match(html,/<input type="checkbox" name="marketingConsent"/);assert.doesNotMatch(html,/<input[^>]*name="marketingConsent"[^>]*(?:checked|required)/);
 const second=await(await app.fetch(new Request("https://imperioes.com/newsletter"))).text();assert.notEqual(html.match(/name="requestId" value="([^"]+)/)?.[1],second.match(/name="requestId" value="([^"]+)/)?.[1]);
 const account=await app.fetch(new Request("https://imperioes.com/cuenta",{headers:{cookie}}));assert.equal(account.status,200);assert.match(await account.text(),/aria-checked="false"/);
 console.log("Compiled email preferences: verified server identity, CSRF, native POST, withdrawal/reactivation, failure states, no-JS newsletter, unique request IDs and account switch passed. No real network, email or payment.");

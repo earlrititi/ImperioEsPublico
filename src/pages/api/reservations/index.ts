@@ -70,6 +70,11 @@ export const POST: APIRoute = async (context) => {
     });
     const r = await readReservation(id);
     await drainCommerceMail(1).catch(() => {});
+    if(parsed.marketing){
+      const {requestMarketingVerification}=await import("../../../lib/marketing-contacts");
+      await requestMarketingVerification({email:parsed.customer.email,name:parsed.customer.name,source:"camiseta",contextId:id})
+        .catch(()=>console.error("Marketing confirmation pending; reservation preserved"));
+    }
     return privateJson({ id, number: r.number, url: managementLink(r) }, 201);
   } catch (error) {
     return failure(error);

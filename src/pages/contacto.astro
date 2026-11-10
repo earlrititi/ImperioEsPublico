@@ -70,12 +70,11 @@ const error = Astro.url.searchParams.get("error") === "1";
           <textarea name="message" placeholder="Escribe tu mensaje" rows="8" required maxlength="5000"></textarea>
         </label>
 
-        <label class="contact-consent">
-          <input type="checkbox" name="privacyAcknowledged" required />
-          <span>
-            He leido la <a href="/legal/privacidad" target="_self">politica de privacidad</a>.
-          </span>
-        </label>
+        <p class="contact-privacy">
+          Usaremos tus datos para atender esta consulta. Consulta la
+          <a href="/legal/privacidad" target="_self">política de privacidad</a>.
+          Este formulario no te suscribe a comunicaciones comerciales.
+        </p>
 
         <label class="contact-trap" aria-hidden="true">
           <span>Empresa</span>
@@ -244,33 +243,15 @@ const error = Astro.url.searchParams.get("error") === "1";
     white-space: nowrap;
   }
 
-  .contact-form .contact-consent {
-    grid-template-columns: 22px minmax(0, 1fr);
-    align-items: start;
-    gap: 0.7rem;
+  .contact-privacy {
+    margin: 0;
     color: rgba(255, 255, 255, 0.88);
     font-family: var(--font-display);
     font-size: 0.9rem;
+    line-height: 1.5;
   }
 
-  .contact-form .contact-consent span {
-    position: static;
-    width: auto;
-    height: auto;
-    overflow: visible;
-    clip: auto;
-    white-space: normal;
-  }
-
-  .contact-form .contact-consent input {
-    width: 20px;
-    min-height: 20px;
-    margin: 0;
-    padding: 0;
-    accent-color: var(--color-red-accent);
-  }
-
-  .contact-consent a {
+  .contact-privacy a {
     text-decoration: underline;
     text-underline-offset: 0.18em;
   }

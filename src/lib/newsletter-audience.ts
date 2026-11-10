@@ -39,5 +39,7 @@ export async function newsletterAudience(segment: NewsletterSegment) {
     segment === "manifesto"?manifestoEmails:segment==="leads"?leadEmails:segment==="community"?community:segment==="newsletter"?newsletterEmails:
     segment === "both" ? shirts.filter(email => subscribers.includes(email)) : segment === "all" ? [...shirts, ...subscribers,...manifestoEmails,...newsletterEmails,...leadEmails,...community] :
     paid.filter(s => s.plan === segment&&optedIn.has(normalizeEmail(s.email))).map(s => normalizeEmail(s.email));
-  return filterAudience(emails, suppressed);
+  // A resource request, profile or Stripe payment is not email ownership proof.
+  const verified=new Set((await readAll("marketing_email_contacts","email","email")).map(c=>normalizeEmail(c.email)));
+  return filterAudience(emails.filter(email=>verified.has(normalizeEmail(email))), suppressed);
 }

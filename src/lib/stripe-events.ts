@@ -104,3 +104,35 @@ export async function failStripeEvent(eventId: string, error: unknown) {
     console.error("Stripe event failure logging failed:", updateError);
   }
 }
+
+// Stripe is the only economic source of truth. Revenue is attached to the
+// verified event that produced it and never inferred from email activity.
+export async function recordStripeEventRevenue(eventId: string, values: {
+  occurredAt: string;
+  customerEmail: string | null;
+  amountPaid: number | null;
+  currency: string | null;
+  subscriptionId: string | null;
+  invoiceId: string | null;
+  billingReason: string | null;
+}) {
+  try {
+    const supabaseAdmin = await getSupabaseAdmin();
+    const { error } = await supabaseAdmin
+      .from("stripe_webhook_events")
+      .update({
+        occurred_at: values.occurredAt,
+        customer_email: values.customerEmail ? values.customerEmail.trim().toLowerCase() : null,
+        amount_paid: values.amountPaid,
+        currency: values.currency,
+        subscription_id: values.subscriptionId,
+        invoice_id: values.invoiceId,
+        billing_reason: values.billingReason,
+      })
+      .eq("event_id", eventId);
+    if (error) console.error("Stripe event revenue could not be recorded:", error);
+  } catch (error) {
+    // The migration may not be applied yet; never fail a verified webhook for analytics.
+    console.error("Stripe event revenue unavailable:", error);
+  }
+}

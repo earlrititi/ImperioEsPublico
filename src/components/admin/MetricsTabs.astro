@@ -1,0 +1,16 @@
+---
+interface Props {
+  active: "web" | "general" | "embudo";
+}
+const { active } = Astro.props;
+const tabs = [
+  ["web", "Métricas web", "/admin/embudo?tab=web"],
+  ["general", "Métricas generales", "/admin/embudo?tab=general"],
+  ["embudo", "Métricas embudo", "/admin/embudo?tab=embudo"],
+] as const;
+---
+<nav class="admin-metrics-tabs" aria-label="Secciones de métricas">
+  {tabs.map(([id, label, href]) => (
+    <a href={href} aria-current={active === id ? "page" : undefined}>{label}</a>
+  ))}
+</nav>

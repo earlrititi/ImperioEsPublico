@@ -3,6 +3,7 @@ import { database, failure, limited, privateJson, requestBody, requireAdmin, rpc
 import { AUTOMATION_DEFAULTS, campaignAutomationMail, personalizeAutomation, validateAutomationDraft } from "../../../lib/email-automations";
 import { renderAdminMail } from "../../../lib/admin-mail-template";
 import { automationRuntimeActive } from "../../../lib/automation-worker";
+import { corporateEmailPreview } from "../../../lib/corporate-email";
 export const prerender = false;
 export const GET: APIRoute = async context => {
   try {
@@ -25,7 +26,7 @@ export const POST: APIRoute = async context => {
     if (body.action === "preview") {
       if (!Number.isInteger(body.step) || !steps[body.step]) throw Error("INVALID_INPUT");
       const mail = campaignAutomationMail(personalizeAutomation(steps[body.step].mail, "Lector"), body.key, steps[body.step].id);
-      return privateJson(renderAdminMail(mail, "https://imperioes.com/comunicaciones/baja", true));
+      return privateJson(corporateEmailPreview(renderAdminMail(mail, "https://imperioes.com/comunicaciones/baja", true),context.url.origin));
     }
     if (body.action !== "save" || !Number.isInteger(body.revision) || body.revision < 0) throw Error("INVALID_INPUT");
     const revision = await rpc("save_marketing_automation_draft", { p_key: body.key, p_actor: user.id, p_revision: body.revision, p_steps: steps });

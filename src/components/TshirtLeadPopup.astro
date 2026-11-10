@@ -2,8 +2,8 @@
 import { reservationMode } from "../lib/reservations";
 import { SHIRT_PRICE_COPY } from "../config/commerce";
 const reserving = reservationMode();
-const excluded = /^\/(?:imperio-espanol(?:\/|$)|login|registro|recuperar-contrasena|confirmar-correo|cuenta(?:\/|$)|checkout|newsletter(?:\/|$)|suscribirse(?:\/|$)|tienda(?:\/|$)|carrito(?:\/|$)|recursos(?:\/|$)|legal(?:\/|$)|reservas(?:\/|$)|reserva(?:\/|$)|compra(?:\/|$)|gracias(?:\/|$)|admin(?:\/|$))/;
-const enabled = !excluded.test(Astro.url.pathname) && Astro.url.pathname.replace(/\/$/, "") !== "/instagram";
+const excluded = /^\/(?:imperio-espanol(?:\/|$)|login|registro|recuperar-contrasena|confirmar-correo|cuenta(?:\/|$)|checkout|newsletter(?:\/|$)|suscribirse(?:\/|$)|tienda(?:\/|$)|carrito(?:\/|$)|recursos(?:\/|$)|links(?:\/|$)|legal(?:\/|$)|reservas(?:\/|$)|reserva(?:\/|$)|compra(?:\/|$)|gracias(?:\/|$)|admin(?:\/|$))/;
+const enabled = !excluded.test(Astro.url.pathname) && !/^\/(?:pedidos|comunicaciones)(?:\/|$)/.test(Astro.url.pathname) && Astro.url.pathname.replace(/\/$/, "") !== "/instagram";
 ---
 
 {enabled && (

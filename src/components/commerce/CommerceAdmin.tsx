@@ -1,6 +1,7 @@
 import { useEffect, useState } from "preact/hooks";
 import { formatMoney, RESERVATION_STATUS } from "../../config/commerce";
 import { AddressSummary, api, ItemsSummary } from "./shared";
+import DeliveryActions from "./DeliveryActions";
 
 export default function CommerceAdmin() {
   const [view, setView] = useState("reservations"),
@@ -331,6 +332,7 @@ export default function CommerceAdmin() {
                           order={r}
                           busy={busy}
                           onSave={(extra) => action("fulfillment", r.id, extra)}
+                          onChange={refresh}
                         />
                       </>
                     )}
@@ -389,10 +391,12 @@ function Fulfillment({
   order,
   busy,
   onSave,
+  onChange,
 }: {
   order: any;
   busy: boolean;
   onSave: (data: Record<string, string>) => void;
+  onChange: () => Promise<void>;
 }) {
   const [carrier, setCarrier] = useState(order.carrier ?? "Correos"),
     [tracking, setTracking] = useState(order.tracking_number ?? "");
@@ -400,10 +404,9 @@ function Fulfillment({
     READY_FOR_FULFILLMENT: "PREPARING",
     PREPARING: "READY_TO_SHIP",
     READY_TO_SHIP: "SHIPPED",
-    SHIPPED: "DELIVERED",
   };
   return (
-    <form
+    <><form
       onSubmit={(e) => {
         e.preventDefault();
         onSave({ status: next[order.status], carrier, tracking });
@@ -431,6 +434,6 @@ function Fulfillment({
           Marcar: {RESERVATION_STATUS[next[order.status]]}
         </button>
       )}
-    </form>
+    </form><DeliveryActions order={order} busy={busy} onChange={onChange} /></>
   );
 }

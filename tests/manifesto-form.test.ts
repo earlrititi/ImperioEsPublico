@@ -7,7 +7,9 @@ test("manifesto popup requests name and email without a surname field or submit 
   assert.match(source,/name="firstName"/);
   assert.match(source,/name="email"/);
   assert.doesNotMatch(source,/name="lastName"|manifestLastName|setManifestLastName|family-name/);
-  assert.match(source,/manifestPrivacy && manifestFirstName\.trim\(\)/);
+  assert.doesNotMatch(source,/manifestPrivacy|name="privacyAcknowledged"/);
+  assert.match(source,/privacyAcknowledged:\s*true/);
+  assert.match(source,/\[manifestMarketing,setManifestMarketing\]=useState\(false\)/);
 });
 
 test("standalone manifesto popup also works without surnames",()=>{

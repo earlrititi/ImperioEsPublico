@@ -9,6 +9,7 @@ import {
   claimStripeEvent,
   completeStripeEvent,
   failStripeEvent,
+  recordStripeEventRevenue,
 } from "../../lib/stripe-events";
 import {
   type BillingInterval,
@@ -218,6 +219,7 @@ export const POST: APIRoute = async ({ request }) => {
     "customer.subscription.updated", "customer.subscription.deleted",
     "invoice.paid", "invoice.payment_succeeded", "invoice.payment_failed",
     "checkout.session.expired", "payment_intent.payment_failed", "charge.refunded",
+    "charge.dispute.created", "charge.dispute.updated", "charge.dispute.closed",
     "checkout.session.async_payment_succeeded", "checkout.session.async_payment_failed",
   ];
   if (!supportedEvents.includes(event.type)) return Response.json({ received: true, ignored: true });
@@ -330,6 +332,14 @@ export const POST: APIRoute = async ({ request }) => {
         }
         break;
       }
+      case "charge.dispute.created":
+      case "charge.dispute.updated":
+      case "charge.dispute.closed": {
+        const snapshot = event.data.object as Stripe.Dispute;
+        const { captureDeliveryDispute } = await import("../../lib/commerce-disputes");
+        await captureDeliveryDispute(snapshot.id, id => stripe.disputes.retrieve(id), args => rpc("record_commerce_dispute", args));
+        break;
+      }
       case "charge.refunded": {
         const snapshot = event.data.object as Stripe.Charge;
         const current = await stripe.charges.retrieve(snapshot.id);
@@ -359,6 +369,16 @@ export const POST: APIRoute = async ({ request }) => {
       case "invoice.payment_succeeded": {
         const invoice = event.data.object as Stripe.Invoice;
         const subscriptionId = getInvoiceSubscriptionId(invoice);
+        const paidAt = invoice.status_transitions?.paid_at ?? invoice.created;
+        await recordStripeEventRevenue(event.id, {
+          occurredAt: new Date((paidAt ?? Math.floor(Date.now() / 1000)) * 1000).toISOString(),
+          customerEmail: invoice.customer_email ?? null,
+          amountPaid: Number.isFinite(invoice.amount_paid) ? invoice.amount_paid : null,
+          currency: invoice.currency ?? null,
+          subscriptionId,
+          invoiceId: invoice.id ?? null,
+          billingReason: invoice.billing_reason ?? null,
+        });
 
         if (subscriptionId) {
           const subscription = await stripe.subscriptions.retrieve(subscriptionId);

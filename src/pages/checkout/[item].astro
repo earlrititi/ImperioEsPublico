@@ -11,6 +11,7 @@ import { ES_VAT } from "../../config/tax";
 import { SHIRT_PRICE_COPY } from "../../config/commerce";
 import { shirtOfferCopy } from "../../config/tshirt-offer";
 import { createSupabaseServerClient } from "../../lib/supabase/server";
+import {EMAIL_MARKETING_CONSENT,EMAIL_MARKETING_NOTE} from "../../config/email-marketing";
 
 export const prerender = false;
 
@@ -153,27 +154,13 @@ const pageTitle = selectedPlan
           <label>
             <input type="checkbox" name="terms" required />
             <span>
-              Acepto los <a href="/legal/terminos" target="_self">terminos y condiciones</a>
-              {" "}(version {LEGAL_DOCUMENT_VERSIONS.terms}).
+              He leído la <a href="/legal/privacidad" target="_self">Política de privacidad</a> y acepto los <a href="/legal/terminos" target="_self">términos y condiciones</a>
+              {" "}(versión {LEGAL_DOCUMENT_VERSIONS.terms}). Solicito que el servicio digital comience inmediatamente tras confirmarse el pago y reconozco las consecuencias que el inicio inmediato puede tener sobre mi derecho de desistimiento conforme a las condiciones aplicables.
             </span>
           </label>
           <label>
-            <input type="checkbox" name="privacy" required />
-            <span>
-              He leido la <a href="/legal/privacidad" target="_self">politica de privacidad</a>
-              {" "}(version {LEGAL_DOCUMENT_VERSIONS.privacy}).
-            </span>
-          </label>
-          <label>
-            <input type="checkbox" name="immediateAccess" required />
-            <span>Solicito que el servicio digital comience inmediatamente tras confirmarse el pago.</span>
-          </label>
-          <label>
-            <input type="checkbox" name="withdrawalAcknowledgement" required />
-            <span>
-              Reconozco las consecuencias que el inicio inmediato puede tener sobre
-              mi derecho de desistimiento conforme a las condiciones aplicables.
-            </span>
+            <input type="checkbox" name="marketing" />
+            <span>{EMAIL_MARKETING_CONSENT} {EMAIL_MARKETING_NOTE}</span>
           </label>
           <button class="btn btn-primary" type="submit" disabled={!canStartSubscription}>
             Suscribirme y pagar {formattedAmount} / {intervalLabel}
@@ -263,11 +250,12 @@ const pageTitle = selectedPlan
             email: formData.get("email"),
             requestId,
             anonymousId,
+            marketingConsent:formData.get("marketing")==="on",
             consents: {
               terms: formData.get("terms") === "on",
-              privacy: formData.get("privacy") === "on",
-              immediateAccess: formData.get("immediateAccess") === "on",
-              withdrawalAcknowledgement: formData.get("withdrawalAcknowledgement") === "on",
+              privacy: formData.get("terms") === "on",
+              immediateAccess: formData.get("terms") === "on",
+              withdrawalAcknowledgement: formData.get("terms") === "on",
             },
           }),
         });

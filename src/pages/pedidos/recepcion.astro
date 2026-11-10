@@ -1,0 +1,12 @@
+---
+import PageShell from "../../layouts/PageShell.astro";
+import ReceiptConfirmation from "../../components/commerce/ReceiptConfirmation";
+import "../../styles/commerce.css";
+export const prerender = false;
+Astro.response.headers.set("Cache-Control", "private, no-store");
+Astro.response.headers.set("Referrer-Policy", "no-referrer");
+Astro.response.headers.set("X-Robots-Tag", "noindex, nofollow");
+---
+<PageShell heading="¿Has recibido tu pedido?" title="Recepción de tu pedido | Imperio Español" noindex showCookieConsent={false}>
+  <ReceiptConfirmation client:load />
+</PageShell>

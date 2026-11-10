@@ -6,8 +6,8 @@
     "node": ">=22.19.0"
   },
   "scripts": {
-    "lint": "eslint src/config/commerce.ts src/lib/reservation*.ts src/lib/commerce-mail.ts src/lib/tshirt-promotion.ts src/lib/emails.ts src/components/commerce src/pages/api/reservations src/pages/api/commerce-*.ts src/pages/api/tshirt-lead.ts tests/reservations.test.ts src/lib/auth-*.ts src/pages/api/auth tests/auth-forms.test.ts src/config/editorial.ts src/lib/seo.ts src/lib/article-seo.ts src/pages/feed.xml.ts src/pages/sitemap.xml.ts tests/seo.test.ts scripts/verify-seo.mjs",
-    "lint:admin": "eslint src/lib/admin-*.ts src/lib/newsletter-audience.ts src/lib/subscription-checkout.ts src/lib/subscription-reconciliation.ts src/lib/interaction-validation.ts src/lib/env.ts src/lib/funnel*.ts src/components/admin src/pages/api/admin src/pages/api/newsletter-unsubscribe.ts src/pages/api/interactions.ts src/pages/api/funnel.ts src/pages/api/manifesto.php.ts tests/admin-*.test.ts tests/subscription-checkout.test.ts tests/funnel.test.ts",
+    "lint": "eslint src/config/commerce.ts src/lib/reservation*.ts src/lib/commerce-mail.ts src/lib/tshirt-promotion.ts src/lib/emails.ts src/components/commerce src/pages/api/reservations src/pages/api/commerce-*.ts src/pages/api/tshirt-lead.ts tests/reservations.test.ts src/lib/auth-*.ts src/pages/api/auth tests/auth-forms.test.ts src/config/editorial.ts src/lib/seo.ts src/lib/article-seo.ts src/pages/feed.xml.ts src/pages/sitemap.xml.ts tests/seo.test.ts scripts/verify-seo.mjs src/pages/api/contact.ts scripts/verify-contact.mjs",
+    "lint:admin": "eslint src/lib/admin-*.ts src/lib/newsletter-audience.ts src/lib/subscription-checkout.ts src/lib/subscription-reconciliation.ts src/lib/interaction-validation.ts src/lib/env.ts src/lib/funnel*.ts src/lib/email-funnel*.ts src/lib/resend-webhook.ts src/lib/stripe-events.ts src/components/admin src/pages/api/admin src/pages/api/resend-webhook.ts src/pages/api/newsletter-unsubscribe.ts src/pages/api/interactions.ts src/pages/api/funnel.ts src/pages/api/manifesto.php.ts tests/admin-*.test.ts tests/subscription-checkout.test.ts tests/funnel.test.ts tests/email-funnel.test.ts tests/resend-webhook.test.ts",
     "test:seo": "node scripts/verify-seo.mjs",
     "lint:seo-engine": "eslint src/lib/seo-engine*.ts src/pages/api/admin/seo.ts src/pages/api/seo-maintenance.ts src/components/admin/SeoEngine.tsx tests/seo-engine*.test.ts",
     "test:seo-engine": "node scripts/verify-seo-engine.mjs",
@@ -22,7 +22,7 @@
     "test:registration": "node scripts/verify-registration-notices.mjs",
     "test:subscription-analytics": "node scripts/verify-subscription-analytics.mjs",
     "test:cms": "node scripts/verify-article-cms.mjs",
-    "test:integration": "node scripts/verify-article-access.mjs && node scripts/verify-commerce.mjs && node scripts/verify-admin-mail.mjs && node scripts/verify-paid-order-admin-mail.mjs && node scripts/verify-shirt-catalog.mjs && node scripts/verify-reservation-checkout.mjs && node scripts/verify-password-auth.mjs && node scripts/verify-manifesto.mjs && node scripts/verify-admin-delivery.mjs && node scripts/verify-newsletter-audience.mjs && node scripts/verify-payment-ux.mjs && node scripts/verify-subscription-analytics.mjs && node --import tsx scripts/verify-automation-drafts.mjs && node --import tsx scripts/verify-automation-runtime.mjs && node scripts/verify-commercial-ux.mjs",
+    "test:integration": "node scripts/verify-article-access.mjs && node scripts/verify-commerce.mjs && node scripts/verify-admin-mail.mjs && node scripts/verify-paid-order-admin-mail.mjs && node scripts/verify-shirt-catalog.mjs && node scripts/verify-reservation-checkout.mjs && node scripts/verify-password-auth.mjs && node scripts/verify-manifesto.mjs && node scripts/verify-admin-delivery.mjs && node scripts/verify-newsletter-audience.mjs && node scripts/verify-payment-ux.mjs && node scripts/verify-subscription-analytics.mjs && node --import tsx scripts/verify-automation-drafts.mjs && node --import tsx scripts/verify-automation-runtime.mjs && node scripts/verify-commercial-ux.mjs && node scripts/verify-marketing-contacts.mjs && node scripts/verify-contact.mjs",
     "verify": "npm run check && npm test && npm run build",
     "verify:master": "npm run verify && npm run lint && npm run lint:admin && npm run lint:seo-engine && npm run test:seo-engine && npm run test:integration && npm run test:ga4 && npm run test:cms && npm run test:email-preferences && npm run test:registration && node scripts/verify-admin-settings.mjs && npm audit --omit=dev",
     "preview": "astro preview",
@@ -62,6 +62,9 @@
   },
   "overrides": {
     "path-to-regexp": "6.3.0",
+    "@vercel/nft": {
+      "glob": "14.0.2"
+    },
     "@vercel/cli-config": {
       "zod": "4.6.7"
     }

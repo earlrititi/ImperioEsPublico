@@ -1,12 +1,15 @@
 import { Resend } from "resend";
 import { getRequiredEnv } from "./env";
 import { transactionalTestMessage } from "./mail-delivery";
+import { prepareCorporateEmail } from "./corporate-email";
 
 if (!import.meta.env.SSR) {
   throw new Error("resend can only be used on the server.");
 }
 
 export const resend = new Resend(getRequiredEnv("RESEND_API_KEY"));
+const corporateSend = resend.emails.send.bind(resend.emails);
+resend.emails.send = (message, options) => corporateSend(prepareCorporateEmail(message), options);
 
 // Explicit opt-in for isolated subscription/auth Test runs. Ordinary Live sends
 // are unchanged; enabling the redirect with a Live Stripe key fails closed.

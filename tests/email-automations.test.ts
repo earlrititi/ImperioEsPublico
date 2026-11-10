@@ -11,7 +11,7 @@ const facts: AutomationFacts = { identified: true, verifiedEmail: true, marketin
 
 test("six sequences keep requested cadence and existing transactional order channel", () => {
   assert.equal(AUTOMATION_DEFAULTS.length, 6);
-  assert.deepEqual(AUTOMATION_DEFAULTS[0].steps.map(item => item.afterHours), [24, 72, 120, 192, 288]);
+  assert.deepEqual(AUTOMATION_DEFAULTS[0].steps.map(item => item.afterHours), [0, 72, 120, 192, 288]);
   assert.deepEqual(AUTOMATION_DEFAULTS[1].steps.map(item => item.afterHours), [1, 24, 72]);
   assert.deepEqual(AUTOMATION_DEFAULTS.find(item => item.key === "cart")!.steps.map(item => item.afterHours), [4, 24]);
   assert.deepEqual(AUTOMATION_DEFAULTS.find(item => item.key === "placed_order")!.steps, []);

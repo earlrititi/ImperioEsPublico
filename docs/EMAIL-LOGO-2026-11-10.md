@@ -1,0 +1,45 @@
+# Logo superior del correo — 10 de noviembre de 2026
+
+Se sustituyó únicamente el logo superior por el PNG adjunto recibido en esta conversación. Se conserva su transparencia, silueta y relación de aspecto; no se redibujaron sus letras ni símbolos. SHA256 del archivo recibido: `5c09b544be100ebd420513897a8736142c7984dd25a6803910c1494628ac8cb9`.
+
+La cabecera anterior llevaba otro logo incrustado en la fotografía. Se limpió su región central con la herramienta integrada ImageGen y se ensambló una fuente SVG que conserva el JPEG original fuera de una máscara suavizada. Así se mantienen las cortinas, bordes, cinta y sello originales. El PNG del usuario se coloca con escala uniforme sobre ese papel, usando su alpha para que el fondo se vea entre las letras y evitar un rectángulo opaco. El texto del cuerpo continúa siendo HTML real.
+
+La fuente reproducible es `docs/email-assets/cabecera-v2.svg`; el archivo utilizado por el renderer es `public/images/email/pergamino-v1/cabecera-v2.png` (600 × 279). La imagen original recibida se conserva en `logo-superior-original.png`. A petición posterior del usuario, el sello original y sus borlas se desplazaron **9 píxeles hacia abajo**, conservando sus píxeles; quedan aproximadamente 15 píxeles libres respecto del extremo inferior del logo. Se mantuvieron el resto del diseño y el marcador de layout para no alterar las snapshots anteriores ni la idempotencia. El script habitual de assets reconoce las fuentes SVG nuevas.
+
+También se corrigió el matte rectangular más claro que contenía `extension.png`. `docs/email-assets/extension-v2.svg` conserva los bordes originales y usa únicamente una región sin adornos de la reparación de papel; se exporta como `extension-v2.png`. La textura tiene 128 píxeles de alto, continuidad reflejada y ajuste cromático respecto al título y la firma, para evitar bandas de repetición. Los párrafos siguen transparentes sobre el pergamino y no se rasterizan los textos dinámicos.
+
+Pasaron las diez pruebas focalizadas de plantilla y correo administrativo y doce vistas de navegador (vacía, breve y larga en 320/390/600/1440), sin desbordamientos, errores JavaScript, imágenes fallidas ni solapamientos. Se inspeccionó visualmente el resultado final: logo proporcionado, sello separado y texto sin placa opaca ni bandas claras repetidas. Las previsualizaciones y comprobaciones de navegador quedan en `outputs/integracion-vscode/correos-logo-v2` y `screenshots-logo-v2`, bajo la raíz de entrega del 6 de noviembre. El nuevo envío puntual autorizado usa imágenes CID y un registro de intento independiente; no requiere publicar assets ni cambiar producción.
+
+Se envió una única prueba nueva con asunto «Imperio Español | Prueba con el logo corregido». Resend confirmó `delivered`. El resultado está guardado fuera del repositorio en `authorized-preview-logo-v2-2026-11-10-result.json`. Ambos PNG finales se regeneraron desde las fuentes SVG con coincidencia exacta de hashes. No se realizó ningún despliegue.
+
+## Corrección posterior del corte de la nao
+
+La captura siguiente del usuario permitió localizar el artefacto: `firma_nao_y_footer.png` era un recorte exacto desde y=890 del fondo aprobado completo, mientras que el mástil comienza alrededor de y=734. El corte no procedía del HTML; faltaban unos 156 píxeles fuente de la parte superior del barco.
+
+El generador de assets utiliza ahora el fondo aprobado completo desde y=700 hasta y=1402. Exporta `firma-nao-v2.jpg` a 600 × 375 y el renderer declara esas dimensiones. La imagen conserva íntegros barco, firma, marco y pie; la unión cae sobre unos 18 píxeles de papel vacío antes del mástil. No se redibujó ni regeneró la nao. Se conserva el archivo anterior para las snapshots y correos históricos.
+
+Los cuatro assets activos tras esta corrección suman 524.877 bytes. La previsualización actual está en `correos-nao-v2` y la evidencia de navegador en `screenshots-nao-v2` y `qa-nao-v2-results.json`, fuera del repositorio bajo la raíz de entrega. Esta corrección local no provoca un nuevo envío ni un despliegue.
+
+Tras la posterior petición explícita «envíamelo a ver», se envió una única prueba adicional con asunto «Imperio Español | Prueba con la nao corregida», con los cuatro assets actuales incrustados. El registro y el estado del proveedor están en `authorized-preview-nao-v2-2026-11-10-result.json`, fuera del repositorio. No se efectuaron campañas ni cambios en producción.
+
+## PNG de sello proporcionado posteriormente
+
+En la siguiente revisión se bajó el logo negro otros 8 píxeles (su contenido visible comienza en y=18) y se sustituyó el sello reconstruido anterior por el archivo completo `sello imperio e.png` proporcionado por el usuario. Su SHA256 es `b99c874f45e07d9f590119d1004626cd9d7434a6f042ece16291b2214545ce11`, idéntico al de la copia `sello-superior-original.png` conservada en el proyecto.
+
+El PNG tiene 176 × 191 y 20 filas transparentes superiores. Se coloca íntegro en primer plano a 74 píxeles de ancho, con su proporción y transparencia, sin máscara circular ni recorte. Su contenido visible comienza en y=190 y el lienzo completo termina antes de y=262, dentro de la cabecera de 279 píxeles. Se retiran el sello fotográfico antiguo y sus borlas; el nuevo PNG no se redibuja ni se divide. Las líneas visibles sobre negro en algunas previsualizaciones pertenecen a RGB oculto bajo alpha cero y no se muestran al componer el PNG.
+
+Pasaron diez pruebas focalizadas y dos vistas completas en Chrome (390/600), sin recursos fallidos ni solapamientos. La previsualización está en `correos-sello-v3`, las capturas en `screenshots-sello-v3` y el resultado en `qa-sello-v3-results.json`, dentro de la evidencia externa habitual. Los cuatro assets actuales suman 524.457 bytes. Esta petición no generó un correo adicional ni un despliegue.
+
+Prompt de edición utilizado con ImageGen integrado:
+
+> Edit only the supplied email header image. Remove ALL of the central black logo artwork: the crown, crossed branches/saltire, the IMPERIO ESPAÑOL words and the short thin black horizontal rules next to ESPAÑOL. Replace that removed central area seamlessly with the same continuous antique light parchment and faint nautical-map texture already behind it. The entire central space above the red ribbon must be completely blank parchment, with no letters, logos, crown, cross or black artifacts. Preserve the exact existing burgundy curtains, golden trim, parchment outer edges, double red border, horizontal red ribbon, red wax seal and tassels, nautical-map decoration, lighting and color, and all positions. Do not redesign anything. Do not add any artwork. Keep the supplied image's wide 600:279 aspect ratio and original framing. This is a blank background plate onto which the exact original transparent logo will be placed separately in HTML, so do not put any logo or text into the result.
+
+Para separar el sello, el prompt final de la placa de cabecera fue:
+
+> Make a clean background plate from this exact email header. Remove the entire central black logo including crown, crossed branches, IMPERIO ESPAÑOL text and short rules. Also remove the central red wax seal and both small golden tassels below it. Seamlessly reconstruct the faint nautical parchment behind the logo, and reconstruct the uninterrupted horizontal red-and-gold ribbon behind the removed seal, continuing the ribbon's existing curve and thickness exactly. Preserve all original curtains, outer borders, paper edges, nautical-map decoration, colors, lighting, positions and wide 600:279 framing. No logos, letters, seal, tassels or new decorations in the central area. These original elements will be placed separately from their unchanged source pixels, so do not recreate or redraw them.
+
+Para la textura del cuerpo se pidió:
+
+> Edit this email template screenshot only to remove the pale rectangular horizontal patch across the central body area, immediately below the short dark red divider and immediately above the sailing ship/signature. That pale patch is a defect: the body writing area must be continuous natural warm antique parchment, with exactly the same hue and subtle grain as the adjacent parchment above and below it, without any rectangular matte, white fill, panel, border or visible seam. The blank writing area stays blank. Keep the original red side border, parchment edges, shadows, crown and crossed-branch black logo, the wordmarks, curtains, wax seal, ship and bottom signature entirely unchanged. Keep all original framing and scale. Do not add text or illustrations and do not redesign the composition. Only repair that light patch to match the surrounding parchment. The corrected body texture will be extracted from the result; the logos and decorations will be retained from their exact original files.
+
+El ensamblado final se realizó en SVG para conservar el logo adjunto y los elementos originales, en vez de aceptar una reinterpretación generativa de los símbolos de marca. Las imágenes completas generadas sirven solo de placas de reparación: no sustituyen el logo, el sello, la firma ni la nao.

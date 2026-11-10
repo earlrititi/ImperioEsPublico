@@ -17,8 +17,15 @@ export default function MailComposer({newsletter=false}:{newsletter?:boolean}) {
   const [refresh,setRefresh]=useState(0);
   const [page,setPage]=useState(0);
   const [total,setTotal]=useState(0);
+  const [emptyTemplate,setEmptyTemplate]=useState("");
+  const [previewWidth,setPreviewWidth]=useState(600);
   const endpoint=newsletter?"/api/admin/newsletter":"/api/admin/mail";
   useEffect(()=>{setRequestId(crypto.randomUUID());},[]);
+  useEffect(()=>{
+    const controller=new AbortController();
+    fetch("/api/admin/mail?template=empty",{signal:controller.signal,cache:"no-store"}).then(async r=>{if(!r.ok)throw Error("No se pudo cargar la plantilla.");return r.json();}).then(data=>setEmptyTemplate(data.html)).catch(e=>{if(e.name!=="AbortError")setMessage(e.message);});
+    return()=>controller.abort();
+  },[]);
   useEffect(()=>{
     const controller=new AbortController();
     fetch(`${endpoint}?page=${page}`,{signal:controller.signal,cache:"no-store"}).then(async r=>{const result=await r.json();if(!r.ok) throw new Error(result.error);return result;}).then(data=>{setLogs(data.items);setTotal(data.total??data.items.length);}).catch(e=>{if(e.name!=="AbortError")setMessage(e.message);});
@@ -54,8 +61,10 @@ export default function MailComposer({newsletter=false}:{newsletter?:boolean}) {
     </fieldset>
   </form>
   <p role="status" aria-live="polite">{message}</p>
+  <div class="admin-toolbar"><span>Plantilla: Pergamino oficial</span><label>Vista<select value={previewWidth} onChange={e=>setPreviewWidth(Number(e.currentTarget.value))}><option value={600}>Escritorio</option><option value={375}>Móvil</option><option value={320}>Móvil compacto</option></select></label></div>
+  {!preview&&emptyTemplate&&<section><h2>Plantilla vacía</h2><p>Asunto y contenido se incorporan al generar la vista previa.</p><iframe title="Plantilla de pergamino vacía" sandbox="" srcDoc={emptyTemplate} style={{width:`${previewWidth}px`,maxWidth:"100%",height:"850px",display:"block",margin:"0 auto"}}/></section>}
   {preview&&<section><h2>Vista previa</h2>{preview.audience&&<p>{preview.audience.recipients.length} destinatarios · {preview.audience.duplicates} duplicados · {preview.audience.invalid} invalidos · {preview.audience.unsubscribed} bajas</p>}
-    {preview.recipient&&<p>Para: {preview.recipient}</p>}<iframe title="Vista previa del correo" sandbox="" srcDoc={preview.html}/><button disabled={busy||(newsletter&&!preview.audience?.recipients.length)} onClick={()=>void submit("send")}>Confirmar envio</button>
+    {preview.recipient&&<p>Para: {preview.recipient}</p>}<iframe title="Vista previa del correo" sandbox="" srcDoc={preview.html} style={{width:`${previewWidth}px`,maxWidth:"100%",height:"850px",display:"block",margin:"0 auto"}}/><button disabled={busy||(newsletter&&!preview.audience?.recipients.length)} onClick={()=>void submit("send")}>Confirmar envio</button>
   </section>}
   <div class="admin-toolbar"><h2>Historial</h2><button onClick={()=>setRefresh(n=>n+1)}>Actualizar</button><button disabled={busy} onClick={()=>void checkDelivery()}>Comprobar entrega</button></div>
   <div class="admin-table-wrap"><table><thead><tr><th>Fecha</th><th>Asunto</th><th>{newsletter?"Destinatarios":"Correo"}</th><th>Estado</th>{newsletter&&<><th>Entrega</th><th>Accion</th></>}</tr></thead><tbody>{logs.map(log=><tr key={log.id}><td>{new Date(log.created_at).toLocaleString("es-ES")}</td><td>{log.subject}</td><td>{newsletter?log.recipient_count:log.recipient}</td><td>{log.delivery_status==="accepted_by_provider"?"Aceptado por el proveedor":log.status}</td>{newsletter&&<><td>{log.delivery?`${log.delivery.accepted} aceptados / ${log.delivery.delivered} entregados / ${log.delivery.bounced} rebotes / ${log.delivery.failed} fallos`:"Sin envios"}</td><td>{log.status==="draft"&&<button disabled={busy} onClick={()=>openDraft(log)}>Editar</button>}</td></>}</tr>)}{!logs.length&&<tr><td colSpan={newsletter?6:4}>Sin envios registrados.</td></tr>}</tbody></table></div>

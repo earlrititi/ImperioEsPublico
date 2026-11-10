@@ -67,7 +67,6 @@ export const POST: APIRoute = async ({ redirect, request }) => {
   const subject = clean(raw.subject ?? raw.tema, 160);
   const message = clean(raw.message ?? raw.mensaje, 5000);
   const company = clean(raw.company, 120);
-  const privacyAcknowledged = raw.privacyAcknowledged === "on" || raw.privacyAcknowledged === true;
   const orderReference = clean(raw.orderReference, 100);
   const contractDate = clean(raw.contractDate, 20);
   const destination = requestType === "withdrawal"
@@ -85,7 +84,6 @@ export const POST: APIRoute = async ({ redirect, request }) => {
     !EMAIL_PATTERN.test(email) ||
     !subject ||
     !message ||
-    (requestType === "contact" && !privacyAcknowledged) ||
     (requestType === "withdrawal" && (!orderReference || !contractDate))
   ) {
     return fail("Revisa los campos obligatorios.", 400, destination);

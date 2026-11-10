@@ -18,6 +18,7 @@ import { getRequiredEnv } from "./env";
 import { SITE } from "../config/site";
 import { ADMIN_NOTIFICATION_EMAIL, reservationNotification } from "./admin-notifications";
 import { assertMailRecipient } from "./mail-delivery";
+import { prepareCorporateEmail } from "./corporate-email";
 import { UUID } from "./reservation-validation";
 import {
   createCipheriv,
@@ -160,6 +161,8 @@ export async function drainCommerceMail(limit = 10, jobId?: string) {
               }
             : undefined,
         };
+        message = prepareCorporateEmail(message);
+        if (message.adminNotification) message.adminNotification = prepareCorporateEmail(message.adminNotification);
         const saved = await db
           .from("commerce_outbox")
           .update({ encrypted_message: seal(message, job.id) })
@@ -173,13 +176,13 @@ export async function drainCommerceMail(limit = 10, jobId?: string) {
       const { adminNotification, ...customerMessage } = message;
       assertMailRecipient(customerMessage, mode, optionalEnv("COMMERCE_TEST_EMAIL"));
       if (adminNotification) assertMailRecipient(adminNotification, mode, optionalEnv("COMMERCE_TEST_EMAIL"));
-      const response = await client.emails.send(customerMessage, {
+      const response = await client.emails.send(prepareCorporateEmail(customerMessage,Boolean(job.encrypted_message)), {
         idempotencyKey: `commerce-mail-${job.id}`,
       });
       if (response.error || !response.data)
         throw new Error("EMAIL_PROVIDER_UNAVAILABLE");
       if (adminNotification) {
-        const notice = await client.emails.send(adminNotification, {
+        const notice = await client.emails.send(prepareCorporateEmail(adminNotification,Boolean(job.encrypted_message)), {
           idempotencyKey: `commerce-admin-${job.id}`,
         });
         if (notice.error || !notice.data) throw new Error("ADMIN_EMAIL_PROVIDER_UNAVAILABLE");

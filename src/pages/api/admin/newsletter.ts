@@ -5,17 +5,18 @@ import { mailApproval, verifyMailApproval } from "../../../lib/admin-mail";
 import { NEWSLETTER_SEGMENTS, newsletterAudience } from "../../../lib/newsletter-audience";
 import { UUID } from "../../../lib/reservation-validation";
 import { auditAdmin } from "../../../lib/admin-data";
+import { corporateEmailPreview } from "../../../lib/corporate-email";
 export const prerender = false;
 export const GET: APIRoute = async context => {
   try {
     await requireAdmin(context);
     const result = await (await database()).from("newsletter_campaigns").select("*").order("created_at",{ascending:false}).limit(100);
     if(result.error) throw new Error("DATABASE_UNAVAILABLE");
-    const logs=await (await database()).from("email_logs").select("campaign_id,status,delivery_status").not("campaign_id","is",null).limit(10001);
+    const logs=await (await database()).from("email_logs").select("campaign_id,status,delivery_status,provider_delivery_confirmed_at").not("campaign_id","is",null).limit(10001);
     if(logs.error || logs.data.length>10000)throw Error("DATABASE_UNAVAILABLE");
     return privateJson({items:result.data.map(c=>({...c,delivery:{
       accepted:logs.data.filter(l=>l.campaign_id===c.id&&l.status==="sent").length,
-      delivered:logs.data.filter(l=>l.campaign_id===c.id&&l.delivery_status==="delivered").length,
+      delivered:logs.data.filter(l=>l.campaign_id===c.id&&l.provider_delivery_confirmed_at&&!['bounced','complained','failed'].includes(l.delivery_status)).length,
       bounced:logs.data.filter(l=>l.campaign_id===c.id&&l.delivery_status==="bounced").length,
       failed:logs.data.filter(l=>l.campaign_id===c.id&&["failed","review"].includes(l.status)).length,
     }}))});
@@ -38,7 +39,7 @@ export const POST: APIRoute = async context => {
     const payload = {content,segment:body.segment,recipients:[...audience.recipients].sort(),requestId:body.requestId,revision:body.revision};
     if(body.action === "preview") {
       const expires = Date.now()+15*60*1000;
-      return privateJson({...renderAdminMail(content),audience,expires,revision:body.revision,token:mailApproval(user.id,payload,expires)});
+      return privateJson({...corporateEmailPreview(renderAdminMail(content),context.url.origin),audience,expires,revision:body.revision,token:mailApproval(user.id,payload,expires)});
     }
     if(body.action !== "send" || body.confirm !== "ENVIAR" || !audience.recipients.length || !verifyMailApproval(user.id,payload,body.expires,body.token)) throw new Error("INVALID_INPUT");
     const db = await database();

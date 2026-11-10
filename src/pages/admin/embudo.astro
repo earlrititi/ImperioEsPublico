@@ -1,11 +1,23 @@
 ---
 import AdminShell from "../../layouts/AdminShell.astro";
+import EmailFunnel from "../../components/admin/EmailFunnel";
 import Funnel from "../../components/admin/Funnel";
-import {requireAdmin} from "../../lib/reservations";
-export const prerender=false;
-try{await requireAdmin(Astro);}catch{return Astro.redirect("/login?next=/admin/embudo");}
+import GeneralMetrics from "../../components/admin/GeneralMetrics";
+import MetricsTabs from "../../components/admin/MetricsTabs.astro";
+import { requireAdmin } from "../../lib/reservations";
+import "../../styles/admin-email-funnel.css";
+export const prerender = false;
+try { await requireAdmin(Astro); } catch { return Astro.redirect("/login?next=/admin/embudo"); }
+const requested = Astro.url.searchParams.get("tab");
+const tab = requested === "general" || requested === "embudo" ? requested : "web";
+const titles = { web: "Métricas web", general: "Métricas generales", embudo: "Métricas embudo" } as const;
 ---
-<AdminShell title="Embudo"><Funnel client:load /></AdminShell>
+<AdminShell title={titles[tab]}>
+  <MetricsTabs active={tab} />
+  {tab === "web" && <Funnel client:load />}
+  {tab === "general" && <GeneralMetrics client:load />}
+  {tab === "embudo" && <EmailFunnel client:load />}
+</AdminShell>
 <style is:global>
   .admin-shell meter {display:block;width:100%;min-width:100px;height:12px;accent-color:#dc3434}
 </style>

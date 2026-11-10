@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';import {readdirSync} from 'node:fs';import {Socket} from 'node:net';
 Socket.prototype.connect=()=>{throw Error('Real network prohibited');};
 Object.assign(process.env,{PUBLIC_SUPABASE_URL:'https://fixture.supabase.co',SUPABASE_SERVICE_ROLE_KEY:'fixture',STRIPE_SECRET_KEY:'sk_test_fixture'});
-const tables={subscriptions:[],profiles:[],legal_consents:[],
+const tables={subscriptions:[],profiles:[],legal_consents:[],marketing_email_contacts:['shirt','manifesto','lead','community','newsletter'].map(name=>({email:name+'@example.invalid'})),
  reservations:[{id:'1',customer_email:'shirt@example.invalid',status:'CONVERTED_TO_ORDER',marketing_consent:true},{id:'2',customer_email:'not-consented@example.invalid',status:'RESERVED',marketing_consent:false},{id:'3',customer_email:'withdrawn@example.invalid',status:'RESERVED',marketing_consent:true,marketing_withdrawn_at:'2026-01-01'}],
  manifesto_requests:[{id:'1',email:'manifesto@example.invalid',status:'accepted',marketing_consent:true},{id:'2',email:'resource-only@example.invalid',status:'accepted',marketing_consent:false},{id:'3',email:'failed@example.invalid',status:'failed',marketing_consent:true}],
  marketing_leads:[{id:'1',email:'lead@example.invalid',marketing_accepted_at:'2026-01-01'},{id:'2',email:'unsubscribed@example.invalid',marketing_accepted_at:'2026-01-01'}],

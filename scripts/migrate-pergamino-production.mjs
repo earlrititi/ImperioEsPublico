@@ -71,13 +71,26 @@ for (const [version, name] of pending) {
 const verified = await query(`select
   (select count(*)=3 from information_schema.columns where table_schema='public' and table_name='marketing_automation_jobs'
     and (column_name in ('contact_email','provider_delivery_confirmed_at') or (column_name='user_id' and is_nullable='YES'))) as jobs_columns,
-  exists(select 1 from pg_tables where schemaname='public' and tablename in ('marketing_email_verifications','marketing_subscription_notices','commerce_delivery_events','post_delivery_jobs','email_provider_events','communication_mailboxes')) as six_tables,
-  exists(select 1 from pg_views where schemaname='public' and viewname in ('marketing_email_contacts','admin_communication_records','admin_audience_contacts','admin_email_funnel_contacts')) as four_views,
+  (select count(distinct tablename)=6 from pg_tables where schemaname='public' and tablename in ('marketing_email_verifications','marketing_subscription_notices','commerce_delivery_events','post_delivery_jobs','email_provider_events','communication_mailboxes')) as six_tables,
+  exists(select 1 from pg_tables where schemaname='public' and tablename='communication_inbound_messages') as inbound_table,
+  (select count(distinct viewname)=4 from pg_views where schemaname='public' and viewname in ('marketing_email_contacts','admin_communication_records','admin_audience_contacts','admin_email_funnel_contacts')) as four_views,
+  (select count(distinct viewname)=5 from pg_views where schemaname='public' and viewname in ('admin_communication_source_records','admin_communication_coverage','admin_audience_sources','admin_audience_totals','admin_audience_timeline')) as communications_views,
   (select count(*)=4 from information_schema.columns where table_schema='public' and table_name='commerce_orders'
     and column_name in ('carrier_delivered_at','customer_received_at','post_delivery_stage','next_email_at')) as order_columns,
   (select count(*)=7 from information_schema.columns where table_schema='public' and table_name='stripe_webhook_events'
     and column_name in ('occurred_at','customer_email','amount_paid','currency','subscription_id','invoice_id','billing_reason')) as webhook_columns,
-  exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname in ('confirm_marketing_email','claim_contact_welcome','queue_contact_welcome','record_commerce_delivery','queue_post_delivery_jobs','confirm_commerce_receipt','commit_mailbox_read_batch','record_commerce_dispute')) as eight_functions`);
+  (select bool_and(to_regprocedure(signature) is not null) from unnest(array[
+    'public.confirm_marketing_email(uuid,text)',
+    'public.claim_contact_welcome()',
+    'public.queue_contact_welcome(text,text,timestamp with time zone,integer,text)',
+    'public.record_commerce_delivery(uuid,text,integer,integer,timestamp with time zone,text,uuid,text,uuid)',
+    'public.queue_post_delivery_jobs(timestamp with time zone,integer,integer,boolean)',
+    'public.confirm_commerce_receipt(uuid,uuid,timestamp with time zone,uuid,text,integer,integer,uuid)',
+    'public.commit_mailbox_read_batch(jsonb)',
+    'public.record_commerce_dispute(text,text,timestamp with time zone)'
+  ]) as expected(signature)) as eight_functions,
+  to_regprocedure('public.prune_communications_data()') is not null as prune_function,
+  to_regprocedure('public.email_funnel_step_kind(text,jsonb)') is not null as funnel_step_function`);
 assert.equal(verified.length, 1);
 for (const [check, value] of Object.entries(verified[0])) assert.equal(value, true, `verification failed: ${check}`);
 const runtimeAfter = await query("select enabled, enrollment_starts_at::text, template_digest from public.marketing_automation_runtime where id=true");

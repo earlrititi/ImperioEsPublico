@@ -90,7 +90,23 @@ export default function Footer({ variant = "light" }) {
                 data-cookie-consent-switch
                 aria-label="Permitir analítica"
               />
-              <span class="image-footer__cookie-switch-track" aria-hidden="true" />
+              <span class="image-footer__cookie-switch-track" aria-hidden="true">
+                <span class="image-footer__cookie-switch-target">
+                  <span class="image-footer__cookie-switch-state-layer">
+                    <span class="image-footer__cookie-switch-handle-shape">
+                      <span class="image-footer__cookie-switch-handle-container" />
+                      <svg
+                        class="image-footer__cookie-switch-icon"
+                        viewBox="0 0 16 16"
+                        aria-hidden="true"
+                      >
+                        <path class="image-footer__cookie-switch-icon--off" d="M4.25 4.25 11.75 11.75M11.75 4.25 4.25 11.75" />
+                        <path class="image-footer__cookie-switch-icon--on" d="m3.2 8.2 3.4 3 6.2-6.4" />
+                      </svg>
+                    </span>
+                  </span>
+                </span>
+              </span>
             </label>
             <button
               class="image-footer__cookie-settings"
@@ -211,7 +227,23 @@ export default function Footer({ variant = "light" }) {
                 data-cookie-consent-switch
                 aria-label="Permitir anal\u00edtica"
               />
-              <span class="image-footer__cookie-switch-track" aria-hidden="true" />
+              <span class="image-footer__cookie-switch-track" aria-hidden="true">
+                <span class="image-footer__cookie-switch-target">
+                  <span class="image-footer__cookie-switch-state-layer">
+                    <span class="image-footer__cookie-switch-handle-shape">
+                      <span class="image-footer__cookie-switch-handle-container" />
+                      <svg
+                        class="image-footer__cookie-switch-icon"
+                        viewBox="0 0 16 16"
+                        aria-hidden="true"
+                      >
+                        <path class="image-footer__cookie-switch-icon--off" d="M4.25 4.25 11.75 11.75M11.75 4.25 4.25 11.75" />
+                        <path class="image-footer__cookie-switch-icon--on" d="m3.2 8.2 3.4 3 6.2-6.4" />
+                      </svg>
+                    </span>
+                  </span>
+                </span>
+              </span>
             </label>
             <a
               class="image-footer__cookie-preferences-link"
@@ -323,13 +355,14 @@ export default function Footer({ variant = "light" }) {
         }
 
         .image-footer__cookie-switch {
-          --switch-track: #E6E0E9;
-          --switch-border: #FFFFFF;
-          --switch-handle: #79747E;
-          --switch-on: var(--color-red-accent);
           position: relative;
           display: inline-flex;
-          flex: 0 0 auto;
+          align-items: center;
+          justify-content: center;
+          width: 52px;
+          height: 32px;
+          box-sizing: border-box;
+          flex: 0 0 52px;
           cursor: pointer;
         }
 
@@ -345,67 +378,153 @@ export default function Footer({ variant = "light" }) {
 
         .image-footer__cookie-switch-track {
           position: relative;
-          display: block;
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          justify-content: flex-end;
           width: 52px;
           height: 32px;
           box-sizing: border-box;
-          border: 1px solid var(--switch-border);
+          padding: 4px;
+          overflow: visible;
+          border: 1px solid #fff;
           border-radius: 100px;
-          background: var(--switch-track);
+          background: #e6e0e9;
+          box-shadow: none;
           transition: background 180ms ease, border-color 180ms ease;
         }
 
-        .image-footer__cookie-switch-track::after {
-          content: "";
+        .image-footer__cookie-switch-target {
           position: absolute;
-          top: 3px;
-          left: 3px;
-          width: 24px;
-          height: 24px;
-          border-radius: 24px;
-          background: var(--switch-handle);
-          box-shadow: 0px 4px 4px rgb(0 0 0 / 25%);
-          transition: left 180ms ease, background-color 180ms ease;
+          display: flex;
+          flex-direction: row;
+          justify-content: center;
+          align-items: center;
+          box-sizing: border-box;
+          width: 48px;
+          height: 48px;
+          padding: 4px;
+          left: -12px;
+          top: 50%;
+          transform: translate(0, -50%);
+          transition: transform 180ms ease;
         }
 
-        .image-footer__cookie-switch-track::before {
-          content: "";
-          position: absolute;
-          top: -4px;
-          left: -5px;
+        .image-footer__cookie-switch-state-layer {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
           width: 40px;
           height: 40px;
+          box-sizing: border-box;
+          padding: 8px;
+          gap: 8px;
           border-radius: 100px;
+          background: transparent;
+          transition: background-color 180ms ease;
+        }
+
+        .image-footer__cookie-switch-handle-shape {
+          position: relative;
+          display: flex;
+          flex-direction: row;
+          justify-content: center;
+          align-items: center;
+          width: 24px;
+          height: 24px;
+          box-sizing: border-box;
+          padding: 11px;
+          isolation: isolate;
+          border-radius: 24px;
+          background: #79747e;
+          box-shadow: 0 4px 4px rgb(0 0 0 / 25%);
+          flex: 1 1 auto;
+          align-self: stretch;
+        }
+
+        .image-footer__cookie-switch-handle-container {
+          width: 2px;
+          height: 2px;
+          border-radius: 100px;
+          flex: none;
+          order: 0;
+          z-index: 0;
+        }
+
+        .image-footer__cookie-switch-icon {
+          position: absolute;
+          z-index: 1;
+          left: 50%;
+          top: 50%;
+          width: 16px;
+          height: 16px;
+          color: #e6e0e9;
+          overflow: visible;
+          transform: translate(-50%, -50%);
           pointer-events: none;
-          background: transparent;
-          transition: left 180ms ease, background-color 180ms ease;
         }
 
-        .image-footer__cookie-switch:hover .image-footer__cookie-switch-track::before,
-        .image-footer__cookie-switch input:focus-visible + .image-footer__cookie-switch-track::before,
-        .image-footer__cookie-switch:active .image-footer__cookie-switch-track::before {
-          background: rgb(121 116 126 / 12%);
+        .image-footer__cookie-switch-icon path {
+          fill: none;
+          stroke: currentColor;
+          stroke-width: 2;
+          stroke-linecap: round;
+          stroke-linejoin: round;
         }
 
-        .image-footer__cookie-switch input:checked + .image-footer__cookie-switch-track::before {
-          left: 15px;
-          background: transparent;
+        .image-footer__cookie-switch-icon--on {
+          display: none;
         }
 
-        .image-footer__cookie-switch:hover input:checked + .image-footer__cookie-switch-track::before,
-        .image-footer__cookie-switch input:checked:focus-visible + .image-footer__cookie-switch-track::before,
-        .image-footer__cookie-switch:active input:checked + .image-footer__cookie-switch-track::before {
-          background: rgb(255 255 255 / 16%);
+        .image-footer__cookie-switch input:checked + .image-footer__cookie-switch-track .image-footer__cookie-switch-target {
+          transform: translate(24px, -50%);
         }
 
         .image-footer__cookie-switch input:checked + .image-footer__cookie-switch-track {
-          border-color: var(--switch-on);
-          background: var(--switch-on);
+          padding: 2px 4px;
+          border-width: 0;
+          background: radial-gradient(
+            50% 50% at 50% 50%,
+            rgb(134 21 9 / 64%) 0%,
+            rgb(236 38 15 / 72%) 100%
+          );
         }
 
-        .image-footer__cookie-switch input:checked + .image-footer__cookie-switch-track::after {
-          left: 23px;
+        .image-footer__cookie-switch input:checked + .image-footer__cookie-switch-track .image-footer__cookie-switch-handle-shape {
           background: #fff;
+        }
+
+        .image-footer__cookie-switch input:checked + .image-footer__cookie-switch-track .image-footer__cookie-switch-handle-container {
+          border-radius: 18px;
+        }
+
+        .image-footer__cookie-switch input:checked + .image-footer__cookie-switch-track .image-footer__cookie-switch-icon {
+          color: #b3261e;
+        }
+
+        .image-footer__cookie-switch input:checked + .image-footer__cookie-switch-track .image-footer__cookie-switch-icon--off {
+          display: none;
+        }
+
+        .image-footer__cookie-switch input:checked + .image-footer__cookie-switch-track .image-footer__cookie-switch-icon--on {
+          display: block;
+        }
+
+        .image-footer__cookie-switch:hover .image-footer__cookie-switch-state-layer {
+          background: rgb(121 116 126 / 10%);
+        }
+
+        .image-footer__cookie-switch:active .image-footer__cookie-switch-state-layer {
+          background: rgb(121 116 126 / 16%);
+        }
+
+        .image-footer__cookie-switch:hover input:checked + .image-footer__cookie-switch-track .image-footer__cookie-switch-state-layer {
+          background: rgb(179 38 30 / 10%);
+        }
+
+        .image-footer__cookie-switch:active input:checked + .image-footer__cookie-switch-track .image-footer__cookie-switch-state-layer {
+          background: rgb(179 38 30 / 16%);
         }
 
         .image-footer__cookie-switch input:focus-visible + .image-footer__cookie-switch-track {
@@ -493,8 +612,8 @@ export default function Footer({ variant = "light" }) {
 
         @media (prefers-reduced-motion: reduce) {
           .image-footer__cookie-switch-track,
-          .image-footer__cookie-switch-track::before,
-          .image-footer__cookie-switch-track::after { transition: none; }
+          .image-footer__cookie-switch-target,
+          .image-footer__cookie-switch-state-layer { transition: none; }
         }
 
         .image-footer__frame {
@@ -708,10 +827,6 @@ export default function Footer({ variant = "light" }) {
           gap: 0.58rem;
           color: var(--footer-meta-red);
           font-weight: 600;
-        }
-
-        .image-footer__cookie-switch--meta {
-          --switch-on: var(--footer-meta-red);
         }
 
         .image-footer__cookie-switch--meta input:focus-visible + .image-footer__cookie-switch-track {

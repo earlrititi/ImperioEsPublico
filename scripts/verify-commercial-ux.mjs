@@ -60,9 +60,16 @@ assert.doesNotMatch(store, /available_stock|physical_stock|reserved_stock/);
 for (const path of ["/newsletter","/newsletter/","/tienda","/carrito","/suscribirse","/reservas?cart=1","/recursos/7-historias-del-siglo-de-oro"]) {
   const html=await page(path);
   const containsPopup=node=>node.attrs?.some(a=>a.name==="data-tshirt-lead") || (node.childNodes??[]).some(containsPopup);
-  assert.equal(containsPopup(parse(html)),false,`${path} must not contain an offer popup`);
+  const document = parse(html);
+  const containsConsentSwitch = node => {
+    const attrs = Object.fromEntries((node.attrs ?? []).map(({name,value}) => [name,value]));
+    return (node.tagName === "input" && attrs.type === "checkbox" && attrs.role === "switch" &&
+      "data-cookie-consent-switch" in attrs && Boolean(attrs["aria-label"]?.trim())) ||
+      (node.childNodes ?? []).some(containsConsentSwitch);
+  };
+  assert.equal(containsPopup(document),false,`${path} must not contain an offer popup`);
   assert.match(html,/TU PRIVACIDAD IMPORTA/);
-  assert.match(html,/Permitir analítica/);
+  assert.ok(containsConsentSwitch(document),`${path} must contain the labelled footer consent switch`);
 }
 const booklet = await page("/recursos/7-historias-del-siglo-de-oro");
 assert.match(booklet,/Descargar PDF/);

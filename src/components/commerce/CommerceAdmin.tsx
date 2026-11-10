@@ -102,6 +102,7 @@ export default function CommerceAdmin() {
       {!data && !loadError && <p role="status">Cargando reservas...</p>}
       {message && <p role="status" aria-live="polite">{message}</p>}
       {data && <>
+        <p class="commerce-sync">Las ventas e ingresos confirmados se calculan con pedidos registrados tras el pago en Stripe; las visitas y conversiones de GA4 solo reflejan a quienes aceptaron la analitica. No interpretes una diferencia entre ambas fuentes como ventas perdidas.</p>
         <div class="commerce-dashboard-totals">
           <div><span>Disponibles para reservar</span><strong>{available}</strong></div>
           <div><span>Unidades reservadas</span><strong>{inventory.reduce((total, v) => total + v.reserved_stock, 0)}</strong></div>

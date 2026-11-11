@@ -1,4 +1,6 @@
-import { readdir, rm, stat } from "node:fs/promises";
+import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
+import { readFile, readdir, rm, stat } from "node:fs/promises";
 import path from "node:path";
 
 const outputRoot = path.resolve(".vercel/output/static");
@@ -35,7 +37,7 @@ const pruneImages = async (directory) => {
 
       const extension = path.extname(entry.name).toLowerCase();
       const relativePath = path.relative(imageRoot, entryPath).replaceAll("\\", "/");
-      const isSourcePng = extension === ".png" && !retainedPngFiles.has(entry.name);
+      const isSourcePng = extension === ".png" && !retainedPngFiles.has(entry.name) && !relativePath.startsWith("email/");
       const isArticleSource =
         extension === ".jpg" && entryPath.startsWith(path.join(imageRoot, "articulos"));
       const isLegacyPreloaderVariant =
@@ -56,10 +58,18 @@ const pruneImages = async (directory) => {
 
 try {
   await pruneImages(imageRoot);
+  const emailRoot = path.join(imageRoot, "email", "pergamino-v1");
+  const emailManifest = JSON.parse(await readFile(path.join(emailRoot, "manifest.json"), "utf8"));
+  assert.ok(Array.isArray(emailManifest.assets) && emailManifest.assets.length > 0, "Corporate email manifest is empty");
+  for (const asset of emailManifest.assets) {
+    assert.equal(path.basename(asset.output), asset.output, "Invalid corporate email asset path");
+    const content = await readFile(path.join(emailRoot, asset.output));
+    assert.equal(createHash("sha256").update(content).digest("hex"), asset.sha256, `Corporate email asset mismatch: ${asset.output}`);
+  }
   await removeFile(path.join(outputRoot, "Manifiesto IE.pdf")).catch(() => undefined);
   console.log(
     `Pruned ${removedFiles} unused production assets (${(removedBytes / 1024 / 1024).toFixed(1)} MB).`
   );
 } catch (error) {
-  if (error?.code !== "ENOENT") throw error;
+  if (error?.code !== "ENOENT" || error.path !== imageRoot) throw error;
 }

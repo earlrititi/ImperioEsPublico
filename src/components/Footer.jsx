@@ -73,51 +73,6 @@ export default function Footer({ variant = "light" }) {
       <a href="/newsletter" data-funnel-newsletter>Recibir el PDF y la newsletter</a>
     </section>
     <footer class={`image-footer image-footer--${variant}`} aria-label="Pie de pagina">
-      <nav class="image-footer__legal" aria-label="Informacion legal">
-        <span class="image-footer__legal-primary">
-          {FOOTER_LEGAL_LINKS.map((link) => (
-            <a href={withBase(link.href)} key={link.href}>{link.label}</a>
-          ))}
-        </span>
-        <span class="image-footer__legal-utilities">
-          <span class="image-footer__cookie-control">
-            <span class="image-footer__cookie-label">PREFERENCIAS DE COOKIES</span>
-            <label class="image-footer__cookie-switch">
-              <span class="image-footer__sr-only">Permitir analítica</span>
-              <input
-                type="checkbox"
-                role="switch"
-                data-cookie-consent-switch
-                aria-label="Permitir analítica"
-              />
-              <span class="image-footer__cookie-switch-track" aria-hidden="true">
-                <span class="image-footer__cookie-switch-target">
-                  <span class="image-footer__cookie-switch-state-layer">
-                    <span class="image-footer__cookie-switch-handle-shape">
-                      <span class="image-footer__cookie-switch-handle-container" />
-                      <svg
-                        class="image-footer__cookie-switch-icon"
-                        viewBox="0 0 16 16"
-                        aria-hidden="true"
-                      >
-                        <path class="image-footer__cookie-switch-icon--off" d="M4.25 4.25 11.75 11.75M11.75 4.25 4.25 11.75" />
-                        <path class="image-footer__cookie-switch-icon--on" d="m3.2 8.2 3.4 3 6.2-6.4" />
-                      </svg>
-                    </span>
-                  </span>
-                </span>
-              </span>
-            </label>
-            <button
-              class="image-footer__cookie-settings"
-              type="button"
-              data-cookie-settings-trigger
-            >
-              Modificar
-            </button>
-          </span>
-        </span>
-      </nav>
 
       <div class="image-footer__frame">
         <picture class="image-footer__art-wrap">
@@ -265,6 +220,52 @@ export default function Footer({ variant = "light" }) {
         </div>
       </div>
 
+      <nav class="image-footer__legal" aria-label="Informacion legal">
+        <span class="image-footer__legal-primary">
+          {FOOTER_LEGAL_LINKS.map((link) => (
+            <a href={withBase(link.href)} key={link.href}>{link.label}</a>
+          ))}
+        </span>
+        <span class="image-footer__legal-utilities">
+          <span class="image-footer__cookie-control">
+            <span class="image-footer__cookie-label">PREFERENCIAS DE COOKIES</span>
+            <label class="image-footer__cookie-switch">
+              <span class="image-footer__sr-only">Permitir analítica</span>
+              <input
+                type="checkbox"
+                role="switch"
+                data-cookie-consent-switch
+                aria-label="Permitir analítica"
+              />
+              <span class="image-footer__cookie-switch-track" aria-hidden="true">
+                <span class="image-footer__cookie-switch-target">
+                  <span class="image-footer__cookie-switch-state-layer">
+                    <span class="image-footer__cookie-switch-handle-shape">
+                      <span class="image-footer__cookie-switch-handle-container" />
+                      <svg
+                        class="image-footer__cookie-switch-icon"
+                        viewBox="0 0 16 16"
+                        aria-hidden="true"
+                      >
+                        <path class="image-footer__cookie-switch-icon--off" d="M4.25 4.25 11.75 11.75M11.75 4.25 4.25 11.75" />
+                        <path class="image-footer__cookie-switch-icon--on" d="m3.2 8.2 3.4 3 6.2-6.4" />
+                      </svg>
+                    </span>
+                  </span>
+                </span>
+              </span>
+            </label>
+            <button
+              class="image-footer__cookie-settings"
+              type="button"
+              data-cookie-settings-trigger
+            >
+              Modificar
+            </button>
+          </span>
+        </span>
+      </nav>
+
       <style>{`
         .footer-newsletter{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:32px max(24px,calc((100% - 1200px)/2));background:#111010;color:#fff;font-family:"Inter","Segoe UI",sans-serif}
         .footer-newsletter h2{font:700 24px/1.3 Georgia,serif;margin:0 0 8px;letter-spacing:0}
@@ -288,37 +289,31 @@ export default function Footer({ variant = "light" }) {
         }
 
         .image-footer__legal {
-          position: absolute;
-          inset: 0;
-          z-index: 4;
+          position: relative;
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem 1.5rem;
+          width: 100%;
+          box-sizing: border-box;
+          padding: 0.75rem 1rem;
           color: #fff;
+          background: rgb(11 12 12 / 94%);
           font-family: "Inter", "Segoe UI", sans-serif;
           font-size: 0.66rem;
           font-weight: 700;
-          line-height: 1;
-          pointer-events: none;
-          white-space: nowrap;
+          line-height: 1.35;
         }
 
         .image-footer__legal-primary,
         .image-footer__legal-utilities {
-          position: absolute;
-          bottom: 0.7%;
           display: flex;
           flex-wrap: wrap;
           justify-content: center;
           align-items: center;
           gap: 0.45rem;
-        }
-
-        .image-footer__legal-primary {
-          left: 50%;
-          transform: translateX(-50%);
-        }
-
-        .image-footer__legal-utilities {
-          right: 1.5%;
-          justify-content: flex-end;
+          max-width: 100%;
         }
 
         .image-footer--dark .image-footer__legal {
@@ -549,65 +544,29 @@ export default function Footer({ variant = "light" }) {
 
         @media (max-width: 980px) {
           .image-footer__legal {
-            position: absolute;
-            top: 22%;
-            right: 0;
-            bottom: 1.5%;
-            left: auto;
-            z-index: 4;
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            grid-template-rows: repeat(3, minmax(0, 1fr));
-            align-items: center;
-            justify-items: center;
-            column-gap: 0.18rem;
-            width: 33.333%;
-            padding: 0 0.24rem;
-            color: #fff;
-            background: transparent;
-            font-size: clamp(0.34rem, 1.5vw, 0.68rem);
-            line-height: 1;
-            pointer-events: none;
-            white-space: normal;
+            gap: 0.5rem;
+            font-size: 0.72rem;
           }
 
           .image-footer__legal-primary,
           .image-footer__legal-utilities {
-            display: contents;
-          }
-
-          .image-footer--dark .image-footer__legal {
-            color: #ead7c1;
-            background: transparent;
+            flex: 1 1 100%;
           }
 
           .image-footer__legal a,
           .image-footer__legal button {
             justify-content: center;
             max-width: 100%;
-            min-height: 0;
-            padding: 0.06rem 0.2rem;
-            color: #fff;
-            line-height: 1;
+            min-height: 32px;
             text-align: center;
           }
 
           .image-footer__cookie-control {
-            grid-column: 1 / -1;
-            align-self: center;
-            justify-self: center;
+            flex-wrap: wrap;
             justify-content: center;
-            gap: 0.3rem;
             max-width: 100%;
-            min-height: 0;
-            padding: 0.12rem 0.2rem;
             text-align: center;
           }
-
-          .image-footer__cookie-label {
-            flex: 0 1 auto;
-          }
-
         }
 
         @media (prefers-reduced-motion: reduce) {

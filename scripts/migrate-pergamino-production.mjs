@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
-import { readFileSync, readdirSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
 
 // Applies migrations 050-054 to ImperioE production through the Supabase
 // Management API (HTTPS) because direct Postgres ports are blocked on some
@@ -8,6 +11,12 @@ import { readFileSync, readdirSync } from "node:fs";
 const project = "pjrqozlyrjgugdraoght";
 const token = process.env.SUPABASE_ACCESS_TOKEN;
 const apply = process.argv.includes("--apply");
+// --cli uses the official CLI's existing authenticated session. Credentials
+// remain in native storage; this script never extracts or copies them.
+const useCli = process.argv.includes("--cli");
+const npmCli = join(dirname(process.execPath), "node_modules/npm/bin/npm-cli.js");
+const queryDirectory = useCli ? mkdtempSync(join(tmpdir(), "imperio-pergamino-sql-")) : null;
+let queryNumber = 0;
 const MIGRATIONS = [
   ["050", "central_marketing_contacts"],
   ["051", "post_delivery"],
@@ -15,7 +24,8 @@ const MIGRATIONS = [
   ["053", "mailbox_incremental_commit"],
   ["054", "email_funnel"],
 ];
-assert.ok(token, "SUPABASE_ACCESS_TOKEN (Supabase personal access token) is required");
+assert.ok(token || useCli, "Use --cli with an authenticated Supabase CLI, or provide SUPABASE_ACCESS_TOKEN");
+if (useCli) assert.ok(existsSync(npmCli), "The Node installation must include npm for --cli");
 assert.equal(readFileSync("supabase/.temp/project-ref", "utf8").trim(), project);
 const local = readdirSync("supabase/migrations").filter(file => file.endsWith(".sql")).map(file => file.slice(0, 3)).sort();
 
@@ -28,6 +38,21 @@ function body(version, name) {
 }
 
 async function query(sql) {
+  if (useCli) {
+    const queryFile = join(queryDirectory, `${++queryNumber}.sql`);
+    writeFileSync(queryFile, sql);
+    const result = spawnSync(process.execPath, [npmCli, "exec", "--offline", "--", "supabase", "db", "query",
+      `--remote=${project}`, "--file", queryFile, "--output", "json", /^\s*select\b/i.test(sql) ? "--read-only" : "--yes"],
+    { encoding: "utf8", timeout: 150000, maxBuffer: 16 * 1024 * 1024 });
+    if (result.error || result.status !== 0) {
+      // Preserve diagnostic output locally, without exposing database values.
+      writeFileSync(`${queryFile}.error.log`, `${result.stdout ?? ""}\n${result.stderr ?? ""}`);
+      throw Error(`SUPABASE_CLI_QUERY_FAILED: inspect ${queryFile}.error.log`);
+    }
+    const data = JSON.parse(result.stdout);
+    assert.ok(Array.isArray(data.rows), "Unexpected Supabase CLI query response");
+    return data.rows;
+  }
   const response = await fetch(`https://api.supabase.com/v1/projects/${project}/database/query`, {
     method: "POST",
     headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },

@@ -32,10 +32,16 @@ const local = readdirSync("supabase/migrations").filter(file => file.endsWith(".
 function body(version, name) {
   let sql = readFileSync(`supabase/migrations/${version}_${name}.sql`, "utf8");
   assert.ok(!sql.includes(`$migration${version}$`), `${version}: dollar-quote delimiter collision`);
-  sql = sql.replace(/^\s*begin;\s*/i, "").replace(/\s*commit;\s*$/i, "").trim();
+  // Preserve leading SQL comments while removing an optional outer transaction.
+  sql = sql.replace(/^((?:\s|--[^\r\n]*(?:\r?\n|$)|\/\*[\s\S]*?\*\/)*)begin;\s*/i, "$1")
+    .replace(/\s*commit;\s*$/i, "").trim();
   assert.ok(!/(^|\n)\s*(begin|commit|rollback)\s*;/i.test(sql), `${version}: unexpected transaction control in migration body`);
   return sql;
 }
+
+// Validate every migration locally before even querying the remote history.
+// A malformed later file must not leave earlier migrations already applied.
+const migrationBodies = new Map(MIGRATIONS.map(([version, name]) => [version, body(version, name)]));
 
 async function query(sql) {
   if (useCli) {
@@ -77,7 +83,7 @@ if (!apply) process.exit(0);
 
 const runtimeBefore = await query("select enabled, enrollment_starts_at::text, template_digest from public.marketing_automation_runtime where id=true");
 for (const [version, name] of pending) {
-  const sql = body(version, name);
+  const sql = migrationBodies.get(version);
   const result = await query(`begin;
     set local lock_timeout='5s';
     set local statement_timeout='120s';

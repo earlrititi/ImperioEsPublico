@@ -2,7 +2,8 @@ import { randomUUID } from "node:crypto";
 import type { APIContext } from "astro";
 import { database, failure, limited, optionalEnv, privateJson, requestBody, requireAdmin, rpc } from "./reservations";
 import { auditAdmin } from "./admin-data";
-import { COMMUNICATION_SOURCES, csvCell, dashboardQuery, inertMessage, redactedText } from "./communications-model";
+import { COMMUNICATION_SOURCES, csvCell, dashboardQuery, redactedText } from "./communications-model";
+import { messagePreview } from "./corporate-mail-preview";
 import { normalizeEmail, validEmail } from "./newsletter-audience";
 
 const MESSAGE_COLUMNS = "id,source,source_id,direction,created_at,occurred_at,sent_at,last_provider_check,sender,email,recipient_email,customer_name,subject,subject_available,type,flow,stage,source_status,state,delivery_status,provider,provider_id,order_id,attempts,seen,in_reply_to";
@@ -75,7 +76,7 @@ export async function communicationDetail(id: string, db?: DB) {
   assertResult(result); if (!result.data) throw Error("NOT_FOUND");
   const row: any = result.data;
   const {body_html, body_text, error, ...summary} = row;
-  const preview = inertMessage(body_html, body_text);
+  const preview = messagePreview(body_html, body_text, row.subject);
   // No token-bearing provider payload, raw headers, addresses or encrypted snapshots are returned.
   const relatedIds = [row.internet_message_id, row.in_reply_to].filter(Boolean);
   let related: any[] = [];

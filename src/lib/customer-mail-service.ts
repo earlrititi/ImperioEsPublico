@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { prepareCorporateEmail } from "./corporate-email";
+import { archiveAcceptedCustomerMail } from "./customer-mail-archive";
 import {
   sendCorporateMail as transportSend,
   type CorporateMailClient,
@@ -64,6 +65,7 @@ type ServiceDependencies = {
   database: () => Promise<CustomerMailAuditDatabase>;
   auditEnabled: () => boolean;
   auditFailed: () => void;
+  archiveAccepted: typeof archiveAcceptedCustomerMail;
 };
 const digest = (value: unknown) =>
   createHash("sha256").update(JSON.stringify(value)).digest("hex");
@@ -92,6 +94,7 @@ export function createCustomerMailService(
     auditFailed: () => {
       console.error("CORPORATE_MAIL_AUDIT_FAILED");
     },
+    archiveAccepted: archiveAcceptedCustomerMail,
     ...dependencies,
   };
   const record = async (
@@ -157,6 +160,13 @@ export function createCustomerMailService(
             .eq("key", row.key)
             .in("status", ["pending", "failed"]);
           if (updated.error) throw Error("AUDIT_STORE_FAILED");
+          // The accepted receipt is durable first. A missing optional archive
+          // column or a store outage must never turn acceptance into a resend.
+          try {
+            await deps.archiveAccepted(db, row.key, payload, context);
+          } catch {
+            deps.auditFailed();
+          }
         }
       }
     } catch {
@@ -172,7 +182,8 @@ export function createCustomerMailService(
     if (context.audit === false || !deps.auditEnabled())
       return transportSend(client, message, options, context);
     // Freeze the same prepared payload for transport and its digest. Bodies
-    // and signed links are never copied into the metadata store.
+    // and signed links are never copied into the metadata store. The optional
+    // archive receives only a separately sanitized semantic copy on acceptance.
     const payload = prepareCorporateEmail(
       message,
       context.preserveSnapshot === true,

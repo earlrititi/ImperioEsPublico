@@ -1,5 +1,9 @@
 # Cobertura de correo de Stripe y catálogo de clientes
 
+Actualización del 12 de noviembre. `stripe-customer-mail.ts` incorpora avisos de factura pagada, pago único con recibo, estados de reembolso, fallo o autenticación de pago, factura pendiente, notas de crédito, prueba próxima a terminar, renovación y cancelación. Utiliza una cola cifrada con claves por operación, reintentos y comprobación del estado actual en Stripe. La migración 057 crea su configuración desactivada, con una fecha de inicio obligatoria para activarla.
+
+La activación requiere revisar la cuenta y sus ajustes de correo mediante una conexión autorizada a Stripe. La clave local consultada está caducada. El evento `customer.source.expiring` cubre tarjetas del sistema Sources; las tarjetas PaymentMethod necesitan su propia comprobación periódica. La tabla siguiente conserva el diagnóstico anterior al nuevo módulo y sirve para identificar las categorías que deben revisarse durante el cambio.
+
 El catálogo `src/lib/customer-mail-catalog.ts` reúne los seis mensajes existentes de `src/lib/emails.ts`: bienvenida PIQUERO, bienvenida de suscripción de pago, descuento de camiseta, fallo de pago de suscripción, cancelación de suscripción y compra antigua. Conserva exactamente sus asuntos, textos, HTML de contenido, remitentes, destinatarios y parámetros. Reutiliza `prepareCorporateEmail`; la key del descuento continúa en su emisor. Diez fixtures sintéticas capturadas antes del cambio comprueban esa conservación sin acceder a servicios ni secretos.
 
 `safeSendWebhookEmail` reconoce tanto excepciones como respuestas SDK con `error` o sin id aceptado. Registra el fallo y devuelve `false`; conserva el reconocimiento del webhook y sus reglas actuales. Este cambio no crea una outbox de suscripciones ni introduce reintentos o nuevos tipos de correo. Comercio mantiene su outbox, payload cifrado, keys y reglas de elegibilidad existentes.

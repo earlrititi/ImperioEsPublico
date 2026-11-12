@@ -6,6 +6,8 @@ La arquitectura y el orden operativo se mantienen en este documento. El registro
 
 ## Implementación
 
+La ampliación del 12 de noviembre añade la vista fiel del pergamino en el lector, un archivo consultable de los registros locales y copias protegidas de nuevos envíos. La migración 056 incorpora los campos de cuerpo saneado y un aviso genérico para Auth. La recuperación del historial disponible en Resend utiliza un proceso de lectura y archivo, con claves estables por mensaje y destinatario. Las migraciones 056–057 y esa recuperación requieren la autorización específica del propietario antes de ejecutarse en producción.
+
 El transporte de la aplicación utiliza una única fábrica de Resend y el renderer corporativo actual. `corporate-mail-transport.ts` conserva remitentes, destinatarios, opciones del proveedor, adjuntos y claves existentes. Los snapshots de reintento conservan su payload; no se reescriben cuerpos históricos ni se anidan plantillas. `customer-mail-catalog.ts` reúne los mensajes de clientes ya existentes y `auth-mail-catalog.ts` prepara los mensajes de autenticación admitidos.
 
 `customer-mail-service.ts` añade auditoría prospectiva de **metadatos**, sin guardar HTML, texto del correo, contraseñas, URLs firmadas ni tokens. Conserva destinatario, remitente, asunto depurado, flujo, etapa, digests, identificador del proveedor y estado. La auditoría ordinaria es best effort: un fallo de registro produce un código fijo y no altera la respuesta de entrega. `CORPORATE_MAIL_AUDIT_ENABLED=false` permite desactivarla en QA; no sustituye ni desactiva la deduplicación estricta del hook Auth.

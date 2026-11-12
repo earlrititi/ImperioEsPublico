@@ -13,8 +13,10 @@ const message = {
 };
 function store() {
   const rows = new Map<string, CustomerMailAuditRow>();
+  const archives = new Map<string, unknown>();
   return {
     rows,
+    archives,
     db: {
       from: () => ({
         upsert: async (row: CustomerMailAuditRow) => {
@@ -23,6 +25,10 @@ function store() {
         },
         update: (patch: any) => ({
           eq: (_column: string, key: string) => ({
+            is: async () => {
+              if (!archives.has(key)) archives.set(key, patch);
+              return { error: null };
+            },
             in: async (_status: string, statuses: string[]) => {
               const row = rows.get(key);
               if (row && statuses.includes(row.status))
@@ -58,6 +64,8 @@ test("audit stores only metadata and digests, preserves provider result and dedu
   for (const token of ["private-bearer", "token_hash", "<p>", "html", "text"])
     assert.ok(!saved.includes(token));
   assert.equal([...s.rows.values()][0].delivery_status, "accepted_by_provider");
+  assert.equal(s.archives.size, 1);
+  assert.ok(!JSON.stringify([...s.archives.values()]).includes("private-bearer"));
 });
 test("audit failure cannot lose a provider acceptance or alter a retry payload", async () => {
   let warnings = 0;
@@ -114,6 +122,7 @@ test("a failed keyed request may later be promoted to accepted without claiming 
     };
   await service.sendCorporateMail(client, message, { idempotencyKey: "retry" });
   assert.equal([...s.rows.values()][0].status, "failed");
+  assert.equal(s.archives.size, 0);
   client.emails.send = async () => ({
     data: { id: "accepted-later" },
     error: null,
@@ -121,4 +130,22 @@ test("a failed keyed request may later be promoted to accepted without claiming 
   await service.sendCorporateMail(client, message, { idempotencyKey: "retry" });
   assert.equal([...s.rows.values()][0].status, "sent");
   assert.equal([...s.rows.values()][0].delivery_status, "accepted_by_provider");
+  assert.equal(s.archives.size, 1);
+});
+
+test("a missing archive column cannot reverse acceptance or request a resend", async () => {
+  const s = store();
+  let failures = 0, sends = 0;
+  const service = createCustomerMailService({
+    database: async () => s.db as any,
+    auditEnabled: () => true,
+    archiveAccepted: async () => { throw Error("fixture schema has no archive columns"); },
+    auditFailed: () => { failures++; },
+  });
+  const accepted: any = { data: { id: "accepted-without-archive" }, error: null };
+  const client: any = { emails: { send: async () => { sends++; return accepted; } } };
+  assert.equal(await service.sendCorporateMail(client, message), accepted);
+  assert.equal(sends, 1);
+  assert.equal(failures, 1);
+  assert.equal([...s.rows.values()][0].status, "sent");
 });

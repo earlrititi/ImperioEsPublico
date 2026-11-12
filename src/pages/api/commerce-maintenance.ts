@@ -15,6 +15,8 @@ import { drainPaidOrderAdminMail, reconcilePaidOrderAdminDelivery } from "../../
 import { automationDeliveryReceipts, runMarketingAutomations } from "../../lib/automation-worker";
 import { runPostDelivery } from "../../lib/post-delivery-worker";
 import {runSubscriptionNotices} from "../../lib/marketing-contacts";
+import { drainStripeCustomerMail } from "../../lib/stripe-customer-mail";
+import { reconcileCustomerMailArchive } from "../../lib/customer-mail-archive";
 export const prerender = false;
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -62,6 +64,9 @@ export const POST: APIRoute = async ({ request }) => {
     }
     const adminDelivery=await reconcileAdminDelivery(10);
     const commerceMail = await drainCommerceMail(20), adminMail = await drainAdminMail(10);
+    const { stripe } = await import("../../lib/stripe");
+    const stripeMail = await drainStripeCustomerMail(5, stripe);
+    const mailArchive = await reconcileCustomerMailArchive(5);
     // Marketing runs after transactional work and cannot fail the order-mail maintenance.
     let marketing;
     try { marketing = { ...(await runMarketingAutomations(3)), delivery: await automationDeliveryReceipts(3),subscriptionNotices:await runSubscriptionNotices(3) }; }
@@ -74,7 +79,7 @@ export const POST: APIRoute = async ({ request }) => {
       try { const { runSeoWorker } = await import("../../lib/seo-engine-worker"); seo = await runSeoWorker(); }
       catch { seo = { failed: true }; console.error("SEO_MAINTENANCE_FAILED"); }
     }
-    return privateJson({ expired, opened, paidOrderAdminMail, paidOrderAdminDelivery, ...commerceMail, adminMail, adminDelivery, marketing, postDelivery, seo });
+    return privateJson({ expired, opened, paidOrderAdminMail, paidOrderAdminDelivery, ...commerceMail, adminMail, adminDelivery, stripeMail, mailArchive, marketing, postDelivery, seo });
   } catch (error) {
     return failure(error);
   }

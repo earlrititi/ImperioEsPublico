@@ -6,6 +6,8 @@ const date = (v: string) => {
 };
 const problem = (code: string) =>
   ({
+    MAIL_ARCHIVE_UNAVAILABLE:
+      "El archivo no está disponible. Actualiza la consulta en unos instantes.",
     FORBIDDEN: "Tu sesión no permite consultar el buzón.",
     NOT_FOUND: "El mensaje ya no está disponible.",
     MAILBOX_RESET_REQUIRED: "El buzón ha cambiado. Actualiza la lista.",
@@ -89,7 +91,7 @@ export default function Mailbox() {
     setError("");
     const params = new URLSearchParams({
       folder,
-      ...(folder === "application"
+      ...(["application", "archive"].includes(folder)
         ? { id: row.id }
         : { uid: row.id, validity: String(data?.validity || 0) }),
     });
@@ -154,6 +156,7 @@ export default function Mailbox() {
           ["inbox", "Recibidos"],
           ["sent", "Enviados del buzón"],
           ["application", "Enviados por la web"],
+          ["archive", "Archivo de la web"],
         ].map(([value, label]) => (
           <button
             type="button"
@@ -205,7 +208,7 @@ export default function Mailbox() {
           Buscar
         </button>
       </form>
-      {folder !== "application" && (
+      {!["application", "archive"].includes(folder) && (
         <details open={data?.connected === false}>
           <summary>Conexión del buzón corporativo</summary>
           <p>
@@ -299,7 +302,9 @@ export default function Mailbox() {
                 setCursor(
                   folder === "application"
                     ? { after: data?.nextAfter }
-                    : { before: data?.nextBefore, validity: data?.validity },
+                    : folder === "archive"
+                      ? { page: data?.nextPage }
+                      : { before: data?.nextBefore, validity: data?.validity },
                 );
               }}
             >
@@ -336,7 +341,10 @@ export default function Mailbox() {
                   srcDoc={message.html}
                 />
               ) : (
-                <p>Este mensaje no contiene un cuerpo de texto disponible.</p>
+                <p>
+                  {message.omissionReason ||
+                    "El contenido de este mensaje no está disponible en el archivo."}
+                </p>
               )}
               {message.attachments?.length > 0 && (
                 <>

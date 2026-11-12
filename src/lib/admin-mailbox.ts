@@ -2,6 +2,7 @@ import { ImapFlow } from "imapflow";
 import { SITE } from "../config/site";
 import { AUTH_REAUTHENTICATION_SUBJECT } from "./auth-mail-catalog";
 import { inertMessage, redactedText } from "./communications-model";
+import { messagePreview } from "./corporate-mail-preview";
 import { createCorporateMailClient } from "./customer-mail-service";
 import { optionalEnv, rpc } from "./reservations";
 
@@ -220,7 +221,7 @@ export async function readCorporateMailbox(
       }
       const preview = isAuthenticationCode(item.envelope?.subject)
         ? inertMessage("", codeOmitted)
-        : inertMessage(html, plain);
+        : messagePreview(html, plain, item.envelope?.subject);
       return {
         connected: true,
         source: "ionos",
@@ -348,7 +349,7 @@ export async function readApplicationMailbox(query: MailboxQuery) {
     const mail = result.data,
       preview = isAuthenticationCode(mail.subject)
         ? inertMessage("", codeOmitted)
-        : inertMessage(mail.html || "", mail.text || "");
+        : messagePreview(mail.html || "", mail.text || "", mail.subject);
     return {
       connected: true,
       source: "resend",

@@ -2,6 +2,7 @@ import type { APIRoute } from "astro";
 import { randomUUID } from "node:crypto";
 import { SITE } from "../../../config/site";
 import { auditAdmin } from "../../../lib/admin-data";
+import { archiveMailboxQuery, readArchivedApplicationMailbox } from "../../../lib/customer-mail-archive";
 import {
   corporateMailboxPassword,
   mailboxQuery,
@@ -29,6 +30,7 @@ const mailboxFailure = (error: unknown) => {
   )
     return failure(error);
   const allowed = [
+    "MAIL_ARCHIVE_UNAVAILABLE",
     "NOT_FOUND",
     "MAILBOX_FOLDER_NOT_FOUND",
     "MAILBOX_RESET_REQUIRED",
@@ -43,13 +45,16 @@ export const GET: APIRoute = async (context) => {
   try {
     const actor = await requireAdmin(context);
     await limited(context.request, "admin_mailbox_read", 60);
-    const query = mailboxQuery(context.url.searchParams);
     await auditAdmin(
       actor.id,
       "communications",
       randomUUID(),
       "ADMIN_PRIVATE_READ",
     );
+    if (context.url.searchParams.get("folder") === "archive") {
+      return privateJson(await readArchivedApplicationMailbox(archiveMailboxQuery(context.url.searchParams)));
+    }
+    const query = mailboxQuery(context.url.searchParams);
     if (query.folder === "application")
       return privateJson(await readApplicationMailbox(query));
     const password = await corporateMailboxPassword();

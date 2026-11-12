@@ -6,6 +6,7 @@ import { database, rpc } from "../../lib/reservations";
 import { ADMIN_NOTIFICATION_EMAIL, subscriptionNotification } from "../../lib/admin-notifications";
 import { SITE } from "../../config/site";
 import { safeSendCustomerMail } from "../../lib/customer-mail-catalog";
+import { STRIPE_CUSTOMER_MAIL_EVENTS, queueStripeCustomerMail, drainStripeCustomerMail, stripeCustomerMailActiveForEvent } from "../../lib/stripe-customer-mail";
 import {
   claimStripeEvent,
   completeStripeEvent,
@@ -214,6 +215,7 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response("Stripe mode mismatch", { status: 400 });
   }
   const supportedEvents = [
+    ...STRIPE_CUSTOMER_MAIL_EVENTS,
     "checkout.session.completed", "customer.subscription.created",
     "customer.subscription.updated", "customer.subscription.deleted",
     "invoice.paid", "invoice.payment_succeeded", "invoice.payment_failed",
@@ -241,6 +243,7 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   try {
+    const centralSubscriptionMail = await stripeCustomerMailActiveForEvent(event);
     switch (event.type) {
       case "checkout.session.async_payment_succeeded":
       case "checkout.session.completed": {
@@ -354,7 +357,7 @@ export const POST: APIRoute = async ({ request }) => {
           "canceled"
         );
 
-        if (email) {
+        if (email && !centralSubscriptionMail) {
           const { sendSubscriptionCancelledEmail } = await import("../../lib/emails");
           await safeSendWebhookEmail("subscription cancelled", () => {
             return sendSubscriptionCancelledEmail({ to: email });
@@ -433,7 +436,7 @@ export const POST: APIRoute = async ({ request }) => {
         if (customerId && paymentStillDue) {
           const email = customerEmail;
 
-          if (email) {
+          if (email && !centralSubscriptionMail) {
             const { sendPaymentFailedEmail } = await import("../../lib/emails");
             await safeSendWebhookEmail("payment failed", () => {
               return sendPaymentFailedEmail({ to: email });
@@ -448,7 +451,9 @@ export const POST: APIRoute = async ({ request }) => {
         console.log(`Unhandled Stripe event: ${event.type}`);
     }
 
+    await queueStripeCustomerMail(event, stripe);
     await completeStripeEvent(event.id);
+    await drainStripeCustomerMail(2, stripe).catch(() => { console.error("STRIPE_CUSTOMER_MAIL_RETRY_PENDING"); });
     const { drainPaidOrderAdminMail } = await import("../../lib/paid-order-admin-mail");
     await drainPaidOrderAdminMail(1).catch(() => { console.error("Paid order admin notice worker unavailable; durable queue retained"); });
     const { drainCommerceMail } = await import("../../lib/commerce-mail");

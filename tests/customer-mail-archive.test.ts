@@ -107,6 +107,12 @@ test("historical metadata has an honest missing-body notice and Auth hides even 
     const seen: unknown[] = [];
     const chain: any = {
       select: () => chain,
+      in: (column: string, statuses: string[]) => {
+        assert.equal(column, "source_status");
+        assert.ok(statuses.includes("sent") && statuses.includes("SENT"));
+        assert.ok(!statuses.includes("pending") && !statuses.includes("recorded"));
+        return chain;
+      },
       eq: (...args: unknown[]) => {
         seen.push(args);
         return chain;

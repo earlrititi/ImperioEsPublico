@@ -112,6 +112,7 @@ export function archiveMailboxQuery(
 }
 const metadataColumns =
   "id,source,direction,sender,email,recipient_email,subject,occurred_at,sent_at,state,flow,stage,provider_id";
+const sentStatuses = ["sent", "SENT", "accepted", "succeeded", "delivered"];
 type ArchiveDatabase = { from(table: string): any };
 const assertResult = (result: { error: unknown }) => {
   if (result.error) throw Error("MAIL_ARCHIVE_UNAVAILABLE");
@@ -145,6 +146,7 @@ export async function readArchivedApplicationMailbox(
       .from("admin_communication_records")
       .select(`${metadataColumns},body_html,body_text`)
       .eq("direction", "outbound")
+      .in("source_status", sentStatuses)
       .eq("id", validated.id)
       .maybeSingle();
     assertResult(result);
@@ -184,7 +186,8 @@ export async function readArchivedApplicationMailbox(
   let read = db
     .from("admin_communication_records")
     .select(metadataColumns, { count: "exact" })
-    .eq("direction", "outbound");
+    .eq("direction", "outbound")
+    .in("source_status", sentStatuses);
   if (validated.q) {
     const search = validated.q.replace(/_/g, "\\_");
     read = read.or(`subject.ilike.%${search}%,email.ilike.%${search}%`);

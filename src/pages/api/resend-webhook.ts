@@ -22,6 +22,8 @@ const json = (body: unknown, status = 200) => Response.json(body, {
 
 async function resolveEmail(messageId: string) {
   const db = await database();
+  const central = await db.from("customer_mail_deliveries").select("recipient").eq("provider_id", messageId).limit(1).maybeSingle();
+  if (!central.error && central.data?.recipient) return String(central.data.recipient).toLowerCase();
   const job = await db.from("marketing_automation_jobs")
     .select("contact_email,user_id")
     .eq("provider_id", messageId)
@@ -52,6 +54,7 @@ async function applyReceipt(messageId: string, eventType: ReturnType<typeof rese
     ...(state.confirmed ? { provider_delivery_confirmed_at: occurredAt } : {}),
   };
   const updates = [
+    db.from("customer_mail_deliveries").update(patch).eq("provider_id", messageId),
     db.from("marketing_automation_jobs").update(patch).eq("provider_id", messageId),
     db.from("email_logs").update(patch).eq("provider_message_id", messageId),
     db.from("paid_order_admin_outbox").update(patch).eq("provider_id", messageId),

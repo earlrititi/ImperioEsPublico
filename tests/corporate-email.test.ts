@@ -55,9 +55,10 @@ test("long content remains in normal flow before the fixed signature, with image
   validateCorporateMessage({ subject: "Una historia extensa", ...mail });
 });
 
-test("each direct Resend sender and the singleton has the common preparation boundary", () => {
-  for (const path of ["resend", "admin-mail", "automation-worker", "commerce-mail", "paid-order-admin-mail", "seo-engine-worker"]) {
+test("SDK senders and the compatibility singleton use the common transport boundary", () => {
+  for (const path of ["resend", "admin-mail", "automation-worker", "commerce-mail", "paid-order-admin-mail", "post-delivery-worker", "seo-engine-worker"]) {
     const source = readFileSync(new URL(`../src/lib/${path}.ts`, import.meta.url), "utf8");
-    assert.match(source, /prepareCorporateEmail\(/, `${path} must validate and render before sending`);
+    assert.match(source, /sendCorporateMail\(/, `${path} must send through the validated transport`);
+    assert.doesNotMatch(source, /new Resend\(|import\("resend"\)|from "resend"/, `${path} must use the common client factory`);
   }
 });

@@ -8,17 +8,29 @@ const supabase = createSupabaseServerClient({ cookies: Astro.cookies, request: A
 const { data: { user }, error: userError } = await supabase.auth.getUser();
 if (userError || !user?.email_confirmed_at) return Astro.redirect('/login?next=%2Fcuenta%2Fcontrasena', 303);
 let error = '';
+let reauthenticationSent = false;
+let reauthenticationRequired = false;
 if (Astro.request.method === 'POST') {
   try {
     const form = await readAuthForm(Astro.request, 'auth_password_update');
-    const password = form.get('password') ?? '';
-    if (!validNewPassword(password) || password !== form.get('password_confirmation')) error = 'password';
-    else {
-      const { error: updateError } = await supabase.auth.updateUser({ password });
-      if (updateError) error = 'update';
+    if (form.get('action') === 'reauthenticate') {
+      const result = await supabase.auth.reauthenticate();
+      if (result.error) error = 'reauthentication';
+      else reauthenticationSent = true;
+    } else {
+      const password = form.get('password') ?? '', nonce = (form.get('nonce') ?? '').trim();
+      if (!validNewPassword(password) || password !== form.get('password_confirmation')) error = 'password';
+      else if (nonce && !/^\d{4,32}$/.test(nonce)) error = 'nonce';
       else {
-        await supabase.auth.signOut({ scope: 'global' });
-        return Astro.redirect('/login?updated=1', 303);
+        const { error: updateError } = await supabase.auth.updateUser({ password, ...(nonce ? { nonce } : {}) });
+        if (updateError) {
+          reauthenticationRequired = ['reauthentication_needed', 'reauthentication_not_valid'].includes(updateError.code ?? '');
+          error = reauthenticationRequired ? 'nonce' : 'update';
+        }
+        else {
+          await supabase.auth.signOut({ scope: 'global' });
+          return Astro.redirect('/login?updated=1', 303);
+        }
       }
     }
   } catch (e) { error = authError(e); }
@@ -26,11 +38,20 @@ if (Astro.request.method === 'POST') {
 ---
 <PageShell title="Cambiar contraseña | Imperio Español" description="Define la contraseña de tu cuenta." heading="Definir contraseña" noindex narrow>
   <Fragment slot="header">
-    {error && <p role="alert">{error === 'password' ? 'Las contraseñas deben coincidir y tener al menos 12 caracteres, hasta 72 bytes.' : error === 'rate' ? 'Demasiados intentos. Espera unos minutos.' : 'No se pudo cambiar la contraseña. Solicita un nuevo enlace de recuperación y utiliza una contraseña diferente.'}</p>}
+    {error && <p role="alert">{error === 'password' ? 'Las contraseñas deben coincidir y tener al menos 12 caracteres, hasta 72 bytes.' : error === 'rate' ? 'Demasiados intentos. Espera unos minutos.' : error === 'nonce' ? 'Solicita un código de verificación e introdúcelo para confirmar el cambio de contraseña.' : error === 'reauthentication' ? 'No se pudo enviar el código. Espera unos minutos y vuelve a intentarlo.' : 'No se pudo cambiar la contraseña. Solicita un nuevo enlace de recuperación y utiliza una contraseña diferente.'}</p>}
+    {reauthenticationSent && <p role="status">Hemos solicitado un código a tu método de contacto verificado. Introdúcelo a continuación junto con tu nueva contraseña.</p>}
+    {reauthenticationRequired && <p>Por seguridad, esta operación necesita verificar de nuevo tu identidad.</p>}
     <form method="post">
       <PasswordField isNew autocomplete="new-password" label="Nueva contraseña" />
       <PasswordField isNew autocomplete="new-password" name="password_confirmation" label="Repetir contraseña" />
+      <label for="nonce">Código de verificación, si se te ha solicitado</label>
+      <input id="nonce" name="nonce" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{4,32}" maxlength="32" aria-describedby="nonce-help" />
+      <small id="nonce-help">Introduce el código recibido sin compartirlo con nadie. La contraseña no se guarda hasta confirmar el cambio.</small>
       <button class="btn btn-primary" type="submit">Guardar contraseña</button>
+    </form>
+    <form method="post">
+      <input type="hidden" name="action" value="reauthenticate" />
+      <button class="btn" type="submit">Solicitar código de verificación</button>
     </form>
     <p><a href="/cuenta">Volver a mi cuenta</a></p>
   </Fragment>

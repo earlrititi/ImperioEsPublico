@@ -6,4 +6,4 @@ export const prerender = false;
 Astro.response.headers.set("Cache-Control", "private, no-store");
 try { await requireAdmin(Astro); } catch { return Astro.redirect("/login?next=/admin"); }
 ---
-<AdminShell title="Administracion"><Overview client:load/></AdminShell>
+<AdminShell title="Administracion"><p><a class="btn" href="/admin/buzon">Abrir buzón · enviados y recibidos</a></p><Overview client:load/></AdminShell>

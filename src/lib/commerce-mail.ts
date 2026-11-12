@@ -19,6 +19,7 @@ import { SITE } from "../config/site";
 import { ADMIN_NOTIFICATION_EMAIL, reservationNotification } from "./admin-notifications";
 import { assertMailRecipient } from "./mail-delivery";
 import { prepareCorporateEmail } from "./corporate-email";
+import { createCorporateMailClient, sendCorporateMail } from "./customer-mail-service";
 import { UUID } from "./reservation-validation";
 import {
   createCipheriv,
@@ -134,8 +135,7 @@ export async function drainCommerceMail(limit = 10, jobId?: string) {
     const job = jobs?.[0];
     if (!job) break;
     try {
-      const { Resend } = await import("resend");
-      const client = new Resend(getRequiredEnv("RESEND_API_KEY"));
+      const client = createCorporateMailClient(getRequiredEnv("RESEND_API_KEY"));
       let message;
       if (job.encrypted_message)
         message = unseal(job.encrypted_message, job.id);
@@ -176,15 +176,15 @@ export async function drainCommerceMail(limit = 10, jobId?: string) {
       const { adminNotification, ...customerMessage } = message;
       assertMailRecipient(customerMessage, mode, optionalEnv("COMMERCE_TEST_EMAIL"));
       if (adminNotification) assertMailRecipient(adminNotification, mode, optionalEnv("COMMERCE_TEST_EMAIL"));
-      const response = await client.emails.send(prepareCorporateEmail(customerMessage,Boolean(job.encrypted_message)), {
+      const response = await sendCorporateMail(client, customerMessage, {
         idempotencyKey: `commerce-mail-${job.id}`,
-      });
+      }, { preserveSnapshot: Boolean(job.encrypted_message) });
       if (response.error || !response.data)
         throw new Error("EMAIL_PROVIDER_UNAVAILABLE");
       if (adminNotification) {
-        const notice = await client.emails.send(prepareCorporateEmail(adminNotification,Boolean(job.encrypted_message)), {
+        const notice = await sendCorporateMail(client, adminNotification, {
           idempotencyKey: `commerce-admin-${job.id}`,
-        });
+        }, { preserveSnapshot: Boolean(job.encrypted_message) });
         if (notice.error || !notice.data) throw new Error("ADMIN_EMAIL_PROVIDER_UNAVAILABLE");
       }
       const { error } = await db

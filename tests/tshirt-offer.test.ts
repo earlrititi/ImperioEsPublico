@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { qualifiesForTshirtOffer, shirtDiscountPercent, shirtOfferCopy } from "../src/config/tshirt-offer";
 import { PLAN_COMPARISON_LABELS, SERVICES_ITEMS } from "../src/config/home";
-import { readFileSync } from "node:fs";
+import { renderCustomerMail } from "../src/lib/customer-mail-catalog";
 
 test("Active paid plans grant their non-stacking shirt benefit", () => {
   assert.equal(qualifiesForTshirtOffer({ plan: "arcabucero", status: "active" }), true);
@@ -18,10 +18,18 @@ test("Active paid plans grant their non-stacking shirt benefit", () => {
 test("personal discount emails use only the subscriber's tier copy, never the mixed public offer", () => {
   assert.doesNotMatch(shirtOfferCopy("maestre_campo"), /15%/);
   assert.doesNotMatch(shirtOfferCopy("arcabucero"), /20%/);
-  const source = readFileSync("src/lib/emails.ts", "utf8");
-  assert.doesNotMatch(source, /TSHIRT_OFFER_COPY/);
-  assert.match(source, /const offer = shirtOfferCopy\(params\.percent === 20/);
-  assert.match(source, /const offer = shirtOfferCopy\(params\.planName === "MAESTRE DE CAMPO"/);
+  for (const [percent, planName, excluded] of [[15, "ARCABUCERO", /20%/], [20, "MAESTRE DE CAMPO", /15%/]] as const) {
+    const discount = renderCustomerMail("tshirt_discount", {
+      to: "fixture@example.test", name: "Lector", code: "FIXTURE", percent, reference: "fixture",
+    }, "https://imperioes.com");
+    const welcome = renderCustomerMail("paid_welcome", {
+      to: "fixture@example.test", planName, priceSummary: "Cuota de prueba", termsVersion: "fixture",
+    }, "https://imperioes.com");
+    for (const message of [discount, welcome]) {
+      assert.doesNotMatch(message.text, excluded);
+      assert.match(message.text, new RegExp(`${percent}%`));
+    }
+  }
 });
 
 test("The subscription comparison aligns current rows and preserves the plan-specific discount", () => {

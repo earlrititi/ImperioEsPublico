@@ -61,15 +61,15 @@ export async function communicationCoverage(db?: DB) {
     limitations: [
       "Historial local conservado en las fuentes indicadas. No se ha importado el historial completo de Resend ni mensajes manuales externos.",
       "Los registros de comercio, recursos y cupones pueden conservar solo la referencia de plantilla, sin el asunto/cuerpo original ni confirmación de entrega.",
-      "No existe acceso demostrado al buzón IONOS. Sin autorización y sincronización real, recibidos y respuestas permanecen no sincronizados.",
-      "Los correos de autenticación, formularios de contacto y avisos antiguos sin identificador en estas colas no están incluidos. Los destinatarios administrativos no se deducen del cliente del pedido.",
+      "El historial local de IONOS no se ha sincronizado. La consulta directa está disponible en Buzón tras conectar la cuenta; no importa mensajes al historial de Comunicaciones.",
+      "El transporte central conserva metadatos prospectivos, sin cuerpos ni enlaces firmados. Los correos externos y los avisos antiguos sin registro local siguen fuera de cobertura. Los destinatarios administrativos no se deducen del cliente del pedido.",
       "Aperturas/clics históricos son señales parciales y no acreditan lectura. Solo el evento delivered acredita entrega.",
     ],
   };
 }
 
 export async function communicationDetail(id: string, db?: DB) {
-  if (!/^(email_logs|marketing_automation_jobs|marketing_email_verifications|marketing_subscription_notices|post_delivery_jobs|commerce_outbox|manifesto_requests|marketing_leads|paid_order_admin_outbox|seo_jobs|mailbox):[a-f0-9-]{36}$/.test(id)) throw Error("INVALID_INPUT");
+  if (!/^(email_logs|marketing_automation_jobs|marketing_email_verifications|marketing_subscription_notices|post_delivery_jobs|commerce_outbox|manifesto_requests|marketing_leads|paid_order_admin_outbox|seo_jobs|customer_mail_deliveries|mailbox):[a-f0-9-]{36}$/.test(id)) throw Error("INVALID_INPUT");
   const client = db ?? await database();
   const result = await client.from("admin_communication_records").select(`${MESSAGE_COLUMNS},body_html,body_text,internet_message_id,error`).eq("id", id).maybeSingle();
   assertResult(result); if (!result.data) throw Error("NOT_FOUND");

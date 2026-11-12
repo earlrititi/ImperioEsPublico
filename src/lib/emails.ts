@@ -1,145 +1,31 @@
 import { getRequiredEnv } from "./env";
 import { resend } from "./resend";
-import { SITE } from "../config/site";
-import { shirtOfferCopy } from "../config/tshirt-offer";
+import { renderCustomerMail, type CustomerMailParameters } from "./customer-mail-catalog";
 
-const from = `Imperio Espanol <${SITE.contactEmail}>`;
-
-function greeting(name?: string | null) {
-  return name ? `Bienvenido, ${name}` : "Bienvenido";
-}
-
-function escapeHtml(value: string) {
-  return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
-}
-
-export async function sendTshirtDiscountEmail(params: { to: string; name: string; code: string; percent: number; reference: string }) {
+export async function sendTshirtDiscountEmail(params: CustomerMailParameters<"tshirt_discount">[0]) {
   const siteUrl = getRequiredEnv("PUBLIC_SITE_URL").replace(/\/$/, "");
-  const name = escapeHtml(params.name);
-  const code = escapeHtml(params.code);
-  const plan = params.percent === 20 ? "Maestre de Campo" : "Arcabucero";
-  const offer = shirtOfferCopy(params.percent === 20 ? "maestre_campo" : "arcabucero");
-  return resend.emails.send({
-    from,
-    replyTo: SITE.contactEmail,
-    to: params.to,
-    subject: `Tu ${params.percent}% para la Camiseta Imperial`,
-    html: `<div style="font-family:Georgia,serif;line-height:1.6;color:#111"><h1>Una pieza de nuestra historia</h1><p>Hola ${name},</p><p>Tu suscripción ${plan} está activa. Tu descuento del ${params.percent}% para la Camiseta Imperial está preparado.</p><p><strong>Código: ${code}</strong></p><p>${offer} Se aplica automáticamente al confirmar la compra, no al reservar. La compra se confirma en Stripe desde la tienda.</p><p><a href="${siteUrl}/tienda">Ver la Camiseta Imperial</a></p><p><strong>Plus Ultra.</strong></p></div>`,
-    text: `Hola ${params.name}. Tu suscripción ${plan} está activa. Código: ${params.code}. ${offer} Se aplica automáticamente al confirmar la compra, no al reservar. La compra se confirma en Stripe desde la tienda. ${siteUrl}/tienda`,
-  }, { idempotencyKey: `arcabucero-discount-${params.reference}` });
-}
-
-export async function sendPiqueroWelcomeEmail(params: {
-  to: string;
-  name?: string | null;
-}) {
-  const { to, name } = params;
-
-  return resend.emails.send({
-    from,
-    replyTo: SITE.contactEmail,
-    to,
-    subject: "Tu cuenta PIQUERO esta activa",
-    html: `
-      <div style="font-family: Georgia, serif; line-height: 1.6; color: #111;">
-        <h1>${escapeHtml(greeting(name))}</h1>
-        <p>Tu cuenta <strong>PIQUERO</strong> esta activa.</p>
-        <p>Ya formas parte del circulo de lectores y puedes acceder al contenido gratuito ampliado.</p>
-        <p><strong>Plus Ultra.</strong></p>
-      </div>
-    `,
-    text: `${greeting(name)}. Tu cuenta PIQUERO esta activa. Ya formas parte del circulo de lectores y puedes acceder al contenido gratuito ampliado. Plus Ultra.`,
+  return resend.emails.send(renderCustomerMail("tshirt_discount", params, siteUrl), {
+    idempotencyKey: `arcabucero-discount-${params.reference}`,
   });
 }
 
-export async function sendPaidWelcomeEmail(params: {
-  to: string;
-  name?: string | null;
-  planName: "ARCABUCERO" | "MAESTRE DE CAMPO";
-  priceSummary: string;
-  termsVersion: string;
-}) {
-  const { to, name, planName, priceSummary, termsVersion } = params;
+export async function sendPiqueroWelcomeEmail(params: CustomerMailParameters<"piquero_welcome">[0]) {
+  return resend.emails.send(renderCustomerMail("piquero_welcome", params));
+}
+
+export async function sendPaidWelcomeEmail(params: CustomerMailParameters<"paid_welcome">[0]) {
   const siteUrl = getRequiredEnv("PUBLIC_SITE_URL").replace(/\/$/, "");
-  const copy = "Ya puedes leer todos los articulos para suscriptores, compartidos por Arcabucero y Maestre de Campo.";
-  const offer = shirtOfferCopy(params.planName === "MAESTRE DE CAMPO" ? "maestre_campo" : "arcabucero");
-
-  return resend.emails.send({
-    from,
-    replyTo: SITE.contactEmail,
-    to,
-    subject: `Tu suscripcion ${planName} esta activa`,
-    html: `
-      <div style="font-family: Georgia, serif; line-height: 1.6; color: #111;">
-        <h1>${escapeHtml(greeting(name))}</h1>
-        <p>Tu suscripcion <strong>${planName}</strong> esta activa.</p>
-        <p><strong>Precio y periodicidad:</strong> ${escapeHtml(priceSummary)}.</p>
-        <p>La suscripcion se renueva automaticamente hasta que la canceles desde tu cuenta antes de la siguiente renovacion.</p>
-        <p>Terminos aceptados: version ${escapeHtml(termsVersion)}. Puedes consultarlos en <a href="${siteUrl}/legal/terminos">${siteUrl}/legal/terminos</a>.</p>
-        <p>${copy}</p>
-        ${offer ? `<p>${offer}</p>` : ""}
-        <p><strong>Plus Ultra.</strong></p>
-      </div>
-    `,
-    text: `${greeting(name)}. Tu suscripcion ${planName} esta activa. Precio y periodicidad: ${priceSummary}. Se renueva automaticamente hasta que la canceles desde tu cuenta antes de la siguiente renovacion. Terminos aceptados: version ${termsVersion}, disponibles en ${siteUrl}/legal/terminos. ${copy} ${offer} Plus Ultra.`,
-  });
+  return resend.emails.send(renderCustomerMail("paid_welcome", params, siteUrl));
 }
 
-export async function sendPaymentFailedEmail(params: { to: string }) {
-  return resend.emails.send({
-    from,
-    replyTo: SITE.contactEmail,
-    to: params.to,
-    subject: "No hemos podido procesar tu pago",
-    html: `
-      <div style="font-family: Georgia, serif; line-height: 1.6; color: #111;">
-        <h1>Problema con el pago</h1>
-        <p>No hemos podido procesar el ultimo pago de tu suscripcion.</p>
-        <p>Actualiza tu metodo de pago para mantener el acceso al archivo.</p>
-      </div>
-    `,
-    text: "No hemos podido procesar el ultimo pago de tu suscripcion. Actualiza tu metodo de pago para mantener el acceso al archivo.",
-  });
+export async function sendPaymentFailedEmail(params: CustomerMailParameters<"payment_failed">[0]) {
+  return resend.emails.send(renderCustomerMail("payment_failed", params));
 }
 
-export async function sendSubscriptionCancelledEmail(params: { to: string }) {
-  return resend.emails.send({
-    from,
-    replyTo: SITE.contactEmail,
-    to: params.to,
-    subject: "Tu suscripcion ha sido cancelada",
-    html: `
-      <div style="font-family: Georgia, serif; line-height: 1.6; color: #111;">
-        <h1>Suscripcion cancelada</h1>
-        <p>Tu suscripcion ha sido cancelada correctamente.</p>
-        <p>Tu cuenta PIQUERO seguira disponible como acceso gratuito.</p>
-      </div>
-    `,
-    text: "Tu suscripcion ha sido cancelada correctamente. Tu cuenta PIQUERO seguira disponible como acceso gratuito.",
-  });
+export async function sendSubscriptionCancelledEmail(params: CustomerMailParameters<"subscription_cancelled">[0]) {
+  return resend.emails.send(renderCustomerMail("subscription_cancelled", params));
 }
 
-export async function sendMerchPurchaseEmail(params: {
-  to: string;
-  productName: string;
-  size: string;
-}) {
-  const { to, productName, size } = params;
-  const sizeCopy = size ? `, talla ${size}` : "";
-
-  return resend.emails.send({
-    from,
-    replyTo: SITE.contactEmail,
-    to,
-    subject: "Hemos recibido tu pedido",
-    html: `
-      <div style="font-family: Georgia, serif; line-height: 1.6; color: #111;">
-        <h1>Pedido confirmado</h1>
-        <p>Hemos recibido el pago de <strong>${escapeHtml(productName)}${escapeHtml(sizeCopy)}</strong>.</p>
-        <p>Tu compra se ha realizado correctamente. Comenzaremos a tramitar tu env&iacute;o a partir del 13 de octubre de 2026. Esta fecha corresponde al inicio de la tramitaci&oacute;n, no a la entrega.</p>
-        <p><strong>Plus Ultra.</strong></p>
-      </div>
-    `,
-    text: `Pedido confirmado. Hemos recibido el pago de ${productName}${sizeCopy}. Tu compra se ha realizado correctamente. Comenzaremos a tramitar tu env\u00edo a partir del 13 de octubre de 2026. Esta fecha corresponde al inicio de la tramitaci\u00f3n, no a la entrega. Plus Ultra.`,
-  });
+export async function sendMerchPurchaseEmail(params: CustomerMailParameters<"merch_purchase">[0]) {
+  return resend.emails.send(renderCustomerMail("merch_purchase", params));
 }

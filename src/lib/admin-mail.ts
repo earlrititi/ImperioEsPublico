@@ -3,7 +3,7 @@ import { getRequiredEnv } from "./env";
 import { database, hash, optionalEnv, rpc, safeEqual, sign } from "./reservations";
 import { renderAdminMail, type MailContent } from "./admin-mail-template";
 import { assertMailRecipient } from "./mail-delivery";
-import { prepareCorporateEmail } from "./corporate-email";
+import { createCorporateMailClient, sendCorporateMail } from "./customer-mail-service";
 
 export function mailApproval(actor: string, payload: unknown, expires: number) {
   return sign(`admin-mail:${actor}:${expires}:${hash(JSON.stringify(payload))}`);
@@ -34,8 +34,7 @@ export async function isMailSuppressed(db: Awaited<ReturnType<typeof database>>,
 export async function drainAdminMail(limit = 10) {
   const mode = optionalEnv("COMMERCE_EMAIL_MODE");
   if (!["live","test"].includes(mode)) return { sent:0, disabled:true };
-  const { Resend } = await import("resend");
-  const client = new Resend(getRequiredEnv("RESEND_API_KEY"));
+  const client = createCorporateMailClient(getRequiredEnv("RESEND_API_KEY"));
   const db = await database();
   let sent = 0;
   for (let n=0;n<Math.min(limit,20);n++) {
@@ -55,7 +54,7 @@ export async function drainAdminMail(limit = 10) {
         if (saved.error || saved.data?.length !== 1) throw new Error("EMAIL_SNAPSHOT_UNAVAILABLE");
       }
       assertMailRecipient(payload, mode, optionalEnv("COMMERCE_TEST_EMAIL"));
-      const result = await client.emails.send(prepareCorporateEmail(payload,Boolean(job.provider_payload)),{idempotencyKey:`admin-mail-${job.id}`});
+      const result = await sendCorporateMail(client,payload,{idempotencyKey:`admin-mail-${job.id}`},{preserveSnapshot:Boolean(job.provider_payload)});
       if (result.error || !result.data) throw new Error("EMAIL_PROVIDER_UNAVAILABLE");
       await rpc("finish_admin_mail",{p_id:job.id,p_claim:job.claim_id,p_status:"sent",p_provider_id:result.data.id});
       sent++;
@@ -69,7 +68,7 @@ export async function drainAdminMail(limit = 10) {
 
 export async function reconcileAdminDelivery(limit=10){
   if(!["live","test"].includes(optionalEnv("COMMERCE_EMAIL_MODE")))return {checked:0,disabled:true};
-  const {Resend}=await import("resend");const client=new Resend(getRequiredEnv("RESEND_API_KEY"));const db=await database();
+  const client=createCorporateMailClient(getRequiredEnv("RESEND_API_KEY"));const db=await database();
   const now=new Date().toISOString();const cutoff=new Date(Date.now()-6*3600000).toISOString();
   const result=await db.from("email_logs").select("id,recipient,provider_message_id").eq("status","sent")
     .gte("sent_at",new Date(Date.now()-7*86400000).toISOString()).or(`provider_checked_at.is.null,provider_checked_at.lt.${cutoff}`)

@@ -65,6 +65,7 @@ export function inertMessage(html: unknown, text?: unknown) {
       return { tagName: "span", attribs: {} };
     } },
   });
+  if (!source.trim() && text) safe = `<div style="white-space:pre-wrap">${escapeMessageText(redactedText(text))}</div>`;
   const decodedText = decodedMessageText(safe);
   const redacted = redactedText(decodedText);
   // When credentials are present, use a semantic text rendering. Redacting
@@ -72,6 +73,7 @@ export function inertMessage(html: unknown, text?: unknown) {
   if (redacted !== decodedText) safe = `<div style="white-space:pre-wrap">${escapeMessageText(redacted)}</div>`;
   const csp = "default-src 'none'; img-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-src 'none'; connect-src 'none'";
   return {
+    contentLimited: String(html ?? "").length > 200_000 || String(text ?? "").length > 100_000,
     html: `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="${csp}"><style>body{font:16px/1.6 Georgia,serif;color:#28231e;background:#f6efd9;margin:0;padding:24px;overflow-wrap:anywhere}table{max-width:100%;border-collapse:collapse}td,th{padding:8px}a,span{color:inherit}</style></head><body>${safe}</body></html>`,
     text: redactedText(text || decodedText),
     links: [...links].slice(0, 30),

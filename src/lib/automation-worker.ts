@@ -6,7 +6,7 @@ import { AUTOMATION_DEFAULTS, campaignAutomationMail, personalizeAutomation, pla
 import { renderAdminMail } from "./admin-mail-template";
 import { unsubscribeToken } from "./admin-mail";
 import { assertMailRecipient } from "./mail-delivery";
-import { prepareCorporateEmail } from "./corporate-email";
+import { createCorporateMailClient, sendCorporateMail } from "./customer-mail-service";
 import { runContactWelcome } from "./contact-welcome-worker";
 
 export type AutomationSubject = { user_id: string; email: string; name: string; consent_id: string; marketing_accepted_at: string;
@@ -92,7 +92,7 @@ export async function runMarketingAutomations(limit = 10) {
   }
   const cursor = await db.from("marketing_automation_runtime").update({ last_user_id: subjects.data.length === 100 ? subjects.data.at(-1)!.user_id : null }).eq("id", true);
   if (cursor.error) throw Error("DATABASE_UNAVAILABLE");
-  const { Resend } = await import("resend"), client = new Resend(getRequiredEnv("RESEND_API_KEY"));
+  const client = createCorporateMailClient(getRequiredEnv("RESEND_API_KEY"));
   for (let n = 0; n < Math.max(0, Math.min(20, limit)); n++) {
     if (!await approvedRuntime()) break;
     const job = (await rpc("claim_marketing_automation"))?.[0];
@@ -133,7 +133,7 @@ export async function runMarketingAutomations(limit = 10) {
         if (lease.data.status === "processing") await finish({ status: "suppressed", reason: "ELIGIBILITY_CHANGED", provider_payload: null });
         suppressed++; continue;
       }
-      const response = await client.emails.send(prepareCorporateEmail(payload,Boolean(job.provider_payload)), { idempotencyKey: `automation-${job.id}` });
+      const response = await sendCorporateMail(client, payload, { idempotencyKey: `automation-${job.id}` }, { preserveSnapshot: Boolean(job.provider_payload) });
       if (response.error || !response.data) throw Error("EMAIL_PROVIDER_UNAVAILABLE");
       await finish({ status: "sent", provider_id: response.data.id, sent_at: new Date().toISOString(), provider_payload: null, delivery_status: "accepted_by_provider" }); sent++;
     } catch { failed++; }
@@ -146,7 +146,7 @@ export async function runMarketingAutomations(limit = 10) {
 export async function automationDeliveryReceipts(limit = 10) {
   const approved = await approvedRuntime();
   if (!approved) return { disabled: true, checked: 0 };
-  const db = await database(), { Resend } = await import("resend"), client = new Resend(getRequiredEnv("RESEND_API_KEY"));
+  const db = await database(), client = createCorporateMailClient(getRequiredEnv("RESEND_API_KEY"));
   const jobs = await db.from("marketing_automation_jobs").select("id,user_id,provider_id").eq("status", "sent")
     .gte("sent_at", new Date(Date.now() - 7 * 86400000).toISOString())
     .or(`provider_checked_at.is.null,provider_checked_at.lt.${new Date(Date.now() - 3600000).toISOString()}`)

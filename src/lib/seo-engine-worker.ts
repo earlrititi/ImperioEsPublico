@@ -1,4 +1,4 @@
-import { Resend } from "resend";
+import { createCorporateMailClient, sendCorporateMail } from "./customer-mail-service";
 import { database, rpc } from "./reservations";
 import { SITE } from "../config/site";
 import { REVIEW_EMAIL } from "./seo-engine-model";
@@ -8,7 +8,6 @@ import { engineConfiguration, sourceRecords, proposeEditorial, runAudit, searchC
 import { renderAdminMail } from "./admin-mail-template";
 import { readPublicPage } from "./seo-engine-http";
 import { randomUUID } from "node:crypto";
-import { prepareCorporateEmail } from "./corporate-email";
 
 async function finishJob(job: any, patch: Record<string, unknown>) {
   const r = await (await database()).from("seo_jobs").update(patch).eq("id", job.id).eq("claim_id", job.claim_id).eq("status", "processing").select("id");
@@ -40,7 +39,8 @@ async function notify(job: any) {
     if (snapshot.error || snapshot.data?.length !== 1) throw Error("SEO_JOB_CONFLICT");
   }
   if (payload.to !== REVIEW_EMAIL || payload.cc || payload.bcc) throw Error("SEO_MAIL_RECIPIENT_MISMATCH");
-  const sent = await new Resend(process.env.RESEND_API_KEY).emails.send(prepareCorporateEmail(payload,Boolean(job.payload.message)), { idempotencyKey: `seo-${job.id}` });
+  const client = createCorporateMailClient(process.env.RESEND_API_KEY);
+  const sent = await sendCorporateMail(client, payload, { idempotencyKey: `seo-${job.id}` }, { preserveSnapshot: Boolean(job.payload.message) });
   if (sent.error || !sent.data) throw Error("SEO_MAIL_PROVIDER_UNAVAILABLE");
   await finishJob(job, { status: "succeeded", provider_id: sent.data.id, delivery_status: "accepted_by_provider", finished_at: new Date().toISOString() });
 }
@@ -65,7 +65,7 @@ export async function reconcileSeoMail() {
   const db = await database(), r = await db.from("seo_jobs").select("id,provider_id").eq("kind", "notify").eq("status", "succeeded").not("provider_id", "is", null)
     .gte("finished_at", new Date(Date.now() - 7 * 86400000).toISOString()).or(`provider_checked_at.is.null,provider_checked_at.lt.${new Date(Date.now() - 6 * 3600000).toISOString()},delivery_status.in.(queued,sent,accepted_by_provider,delivery_delayed)`).limit(3);
   if (r.error) throw Error("DATABASE_UNAVAILABLE");
-  const client = new Resend(process.env.RESEND_API_KEY); let checked = 0;
+  const client = createCorporateMailClient(process.env.RESEND_API_KEY); let checked = 0;
   for (const row of r.data) { const result = await client.emails.get(row.provider_id); if (result.error || !result.data) continue;
     const state = result.data.last_event;
     const u = await db.from("seo_jobs").update({ delivery_status: state, provider_checked_at: new Date().toISOString(),...(state==="delivered"?{provider_delivery_confirmed_at:new Date().toISOString()}:{}) }).eq("id", row.id); if (u.error) throw Error("DATABASE_UNAVAILABLE"); checked++;

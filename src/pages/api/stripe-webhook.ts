@@ -5,6 +5,7 @@ import { handleReservationCheckout } from "../../lib/reservation-payment";
 import { database, rpc } from "../../lib/reservations";
 import { ADMIN_NOTIFICATION_EMAIL, subscriptionNotification } from "../../lib/admin-notifications";
 import { SITE } from "../../config/site";
+import { safeSendCustomerMail } from "../../lib/customer-mail-catalog";
 import {
   claimStripeEvent,
   completeStripeEvent,
@@ -113,11 +114,9 @@ async function safeSendWebhookEmail(
   label: string,
   sendEmail: () => Promise<unknown>
 ) {
-  try {
-    await sendEmail();
-  } catch (error) {
+  return safeSendCustomerMail(sendEmail, error => {
     console.error(`Stripe webhook email failed (${label}):`, error);
-  }
+  });
 }
 
 function getSubscriptionPeriod(subscription: Stripe.Subscription) {

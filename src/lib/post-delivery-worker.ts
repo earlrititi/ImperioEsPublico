@@ -1,6 +1,7 @@
 import { SITE } from "../config/site";
 import { renderAdminMail } from "./admin-mail-template";
 import { prepareCorporateEmail } from "./corporate-email";
+import { createCorporateMailClient, sendCorporateMail } from "./customer-mail-service";
 import { unsubscribeToken } from "./admin-mail";
 import { assertMailRecipient } from "./mail-delivery";
 import { database, hash, optionalEnv, rpc } from "./reservations";
@@ -43,7 +44,7 @@ export async function runPostDelivery(limit = 3) {
   if (!active) return { disabled: true, queued: 0, sent: 0, cancelled: 0, failed: 0 };
   const queued = await rpc("queue_post_delivery_jobs", { p_starts_at: active.startsAt, p_check_hours: active.checkHours,
     p_loyalty_hours: active.loyaltyHours, p_loyalty: active.loyalty });
-  const db = await database(), { Resend } = await import("resend"), client = new Resend(getRequiredEnv("RESEND_API_KEY"));
+  const db = await database(), client = createCorporateMailClient(getRequiredEnv("RESEND_API_KEY"));
   let sent = 0, cancelled = 0, failed = 0;
   for (let n = 0; n < Math.min(10, Math.max(0, limit)); n++) {
     if (!runtime()) break;
@@ -80,7 +81,7 @@ export async function runPostDelivery(limit = 3) {
         cancelled++; continue;
       }
       assertMailRecipient(message, active.mode, recipient);
-      const response = await client.emails.send(message, { idempotencyKey: `post-delivery-v1-${job.id}` });
+      const response = await sendCorporateMail(client, message, { idempotencyKey: `post-delivery-v1-${job.id}` });
       if (response.error || !response.data) throw Error("EMAIL_PROVIDER_UNAVAILABLE");
       await finish({ status: "sent", sent_at: new Date().toISOString(), provider_id: response.data.id,
         provider_status: "accepted_by_provider", last_error: null });

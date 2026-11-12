@@ -5,6 +5,7 @@ import { getRequiredEnv } from "./env";
 import { database, optionalEnv, rpc } from "./reservations";
 import { UUID } from "./reservation-validation";
 import { prepareCorporateEmail } from "./corporate-email";
+import { createCorporateMailClient, sendCorporateMail } from "./customer-mail-service";
 
 function messageKey() {
   return createHash("sha256").update(`paid-order-admin:${getRequiredEnv("RESERVATION_TOKEN_SECRET")}`).digest();
@@ -29,8 +30,8 @@ export async function drainPaidOrderAdminMail(limit = 10, orderId?: string) {
   if (mode !== expectedMode) throw Error("BILLING_MODE_MISMATCH");
   if (orderId && !UUID.test(orderId)) throw Error("INVALID_INPUT");
   const recipient = mode === "test" ? getRequiredEnv("COMMERCE_TEST_EMAIL") : ADMIN_NOTIFICATION_EMAIL;
-  const db = await database(), { Resend } = await import("resend");
-  const client = new Resend(getRequiredEnv("RESEND_API_KEY"));
+  const db = await database();
+  const client = createCorporateMailClient(getRequiredEnv("RESEND_API_KEY"));
   let sent = 0, failed = 0;
   for (let n = 0; n < Math.max(0, Math.min(limit, 20)); n++) {
     const job = (await rpc("claim_paid_order_admin_notice", { p_order: orderId ?? null }))?.[0];
@@ -47,7 +48,7 @@ export async function drainPaidOrderAdminMail(limit = 10, orderId?: string) {
         if (saved.error || saved.data?.length !== 1) throw Error("EMAIL_SNAPSHOT_UNAVAILABLE");
       }
       if (message.to !== recipient || message.cc || message.bcc) throw Error("ADMIN_RECIPIENT_MISMATCH");
-      const response = await client.emails.send(prepareCorporateEmail(message,Boolean(job.encrypted_message)), { idempotencyKey: `paid-order-admin-${job.order_id}` });
+      const response = await sendCorporateMail(client, message, { idempotencyKey: `paid-order-admin-${job.order_id}` }, { preserveSnapshot: Boolean(job.encrypted_message) });
       if (response.error || !response.data) throw Error("EMAIL_PROVIDER_UNAVAILABLE");
       if (!await rpc("finish_paid_order_admin_notice", { p_order: job.order_id, p_claim: job.claim_id, p_provider: response.data.id })) throw Error("EMAIL_RECEIPT_UNAVAILABLE");
       sent++;
@@ -63,7 +64,7 @@ export async function drainPaidOrderAdminMail(limit = 10, orderId?: string) {
 
 export async function reconcilePaidOrderAdminDelivery(limit = 10) {
   if (!["live", "test"].includes(optionalEnv("COMMERCE_EMAIL_MODE"))) return { checked: 0, disabled: true };
-  const db = await database(), { Resend } = await import("resend"), client = new Resend(getRequiredEnv("RESEND_API_KEY"));
+  const db = await database(), client = createCorporateMailClient(getRequiredEnv("RESEND_API_KEY"));
   const cutoff = new Date(Date.now() - 3600000).toISOString();
   const jobs = await db.from("paid_order_admin_outbox").select("order_id,provider_id").eq("status", "SENT")
     .gte("sent_at", new Date(Date.now() - 7 * 86400000).toISOString()).or(`provider_checked_at.is.null,provider_checked_at.lt.${cutoff}`)

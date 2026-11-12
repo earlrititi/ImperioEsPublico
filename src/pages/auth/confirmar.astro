@@ -8,13 +8,14 @@ import { recordAuthAnalytics } from "../../lib/auth-analytics";
 
 privateAuthHeaders(Astro.response.headers);
 
-const allowedTypes = new Set<EmailOtpType>(["email", "signup", "invite", "magiclink", "recovery"]);
+const allowedTypes = new Set<EmailOtpType>(["email", "signup", "invite", "magiclink", "recovery", "email_change"]);
 const isAllowedType = (value: string | null): value is EmailOtpType => Boolean(value && allowedTypes.has(value as EmailOtpType));
 const defaultNext = Astro.url.searchParams.get("type") === "recovery" ? "/cuenta/contrasena" : "/cuenta";
 let tokenHash = Astro.url.searchParams.get("token_hash") ?? "";
 let type = Astro.url.searchParams.get("type");
 let next = safeInternalPath(Astro.url.searchParams.get("next"), defaultNext);
 let error = "";
+let awaitingOtherEmail = false;
 
 if (Astro.request.method === "POST") {
   try {
@@ -23,29 +24,36 @@ if (Astro.request.method === "POST") {
     type = form.get("type");
     next = safeInternalPath(form.get("next"), type === "recovery" ? "/cuenta/contrasena" : "/cuenta");
 
-    if (!tokenHash || !isAllowedType(type)) throw new Error("validation");
+    if (!tokenHash || tokenHash.length > 512 || /\s/.test(tokenHash) || !isAllowedType(type)) throw new Error("validation");
 
     const supabase = createSupabaseServerClient({ cookies: Astro.cookies, request: Astro.request });
     const result = await supabase.auth.verifyOtp({ token_hash: tokenHash, type });
     if (result.error) throw new Error("invalid_token");
-    if (result.data.user && ["magiclink", "email"].includes(type)) {
-      recordAuthAnalytics({ cookies: Astro.cookies, request: Astro.request }, "login", "magic_link");
-    }
-    // The deployed signup email template uses type=email, including on another device.
-    if (["signup", "email"].includes(type) && result.data.user?.email && result.data.user.email_confirmed_at) {
-      const { notifyLead } = await import("../../lib/lead-notifications");
-      await notifyLead({ kind: "registration", reference: result.data.user.id, email: result.data.user.email })
-        .catch(() => console.error("Registration owner notification failed"));
-    }
+    if (type === "email_change" && !result.data.user && !result.data.session) {
+      // Secure Email Change accepts the first token without issuing a session.
+      // Do not present that intermediate response as a completed address change.
+      awaitingOtherEmail = true;
+      tokenHash = "";
+    } else {
+      if (result.data.user && ["magiclink", "email"].includes(type)) {
+        recordAuthAnalytics({ cookies: Astro.cookies, request: Astro.request }, "login", "magic_link");
+      }
+      // Preserve compatibility with previously delivered signup templates.
+      if (["signup", "email"].includes(type) && result.data.user?.email && result.data.user.email_confirmed_at) {
+        const { notifyLead } = await import("../../lib/lead-notifications");
+        await notifyLead({ kind: "registration", reference: result.data.user.id, email: result.data.user.email })
+          .catch(() => console.error("Registration owner notification failed"));
+      }
 
-    return Astro.redirect(next, 303);
+      return Astro.redirect(next, 303);
+    }
   } catch (confirmationError) {
     const code = authError(confirmationError);
     error = code === "rate" ? "rate" : "invalid";
   }
 }
 
-const ready = Boolean(tokenHash && isAllowedType(type));
+const ready = Boolean(tokenHash && tokenHash.length <= 512 && !/\s/.test(tokenHash) && isAllowedType(type));
 const recovery = type === "recovery";
 ---
 
@@ -59,6 +67,7 @@ const recovery = type === "recovery";
   <Fragment slot="header">
     {error === "rate" && <p role="alert">Demasiados intentos. Espera unos minutos y vuelve a intentarlo.</p>}
     {error === "invalid" && <p role="alert">El enlace ha caducado o ya se ha utilizado. Solicita uno nuevo.</p>}
+    {awaitingOtherEmail && <p role="status">Esta dirección ya está confirmada para el cambio. Confirma también el enlace enviado al otro correo para completar la operación.</p>}
     {!error && ready && (
       <>
         <p>{recovery ? "Confirma que quieres definir una nueva contraseña." : "Confirma tu dirección de correo para acceder a tu cuenta."}</p>
@@ -70,8 +79,8 @@ const recovery = type === "recovery";
         </form>
       </>
     )}
-    {!ready && !error && <p role="alert">El enlace no es válido. Solicita uno nuevo.</p>}
-    <p><a href={recovery ? "/recuperar-contrasena" : "/confirmar-correo"}>Solicitar un nuevo enlace</a></p>
+    {!ready && !error && !awaitingOtherEmail && <p role="alert">El enlace no es válido. Solicita uno nuevo.</p>}
+    {!awaitingOtherEmail && <p><a href={recovery ? "/recuperar-contrasena" : "/confirmar-correo"}>Solicitar un nuevo enlace</a></p>}
   </Fragment>
 </PageShell>
 

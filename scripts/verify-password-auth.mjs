@@ -15,7 +15,7 @@ const token = `${encode({alg:'HS256',typ:'JWT'})}.${encode({sub:user.id,exp,role
 const session = { access_token:token, refresh_token:'fixture-refresh',token_type:'bearer',expires_in:3600,expires_at:exp,user };
 const project = new URL(env.PUBLIC_SUPABASE_URL).hostname.split('.')[0];
 const cookie = `sb-${project}-auth-token=base64-${encode(session)}`;
-let allowed = true, denyPassword = false, denyCode = false, updateFail = false, genuinelyNew = false;
+let allowed = true, denyPassword = false, denyCode = false, updateFail = false, genuinelyNew = false, requireReauthentication = false;
 const calls = [];
 globalThis.fetch = async (input, options = {}) => {
   const url = new URL(typeof input === 'string' || input instanceof URL ? input : input.url);
@@ -31,10 +31,15 @@ globalThis.fetch = async (input, options = {}) => {
   }
   if (url.pathname === '/auth/v1/verify') {
     if (body.token_hash === 'expired') return json({msg:'Token has expired',error_code:'otp_expired'},403);
+    if (body.type === 'email_change' && body.token_hash === 'change-first') return json({msg:'Please confirm the other email',code:'200'});
     return json(session);
   }
   if (url.pathname === '/auth/v1/signup') return json({user:{...user,email_confirmed_at:null,identities:genuinelyNew?[{id:'fixture-identity'}]:[]},session:null});
-  if (url.pathname === '/auth/v1/user') return updateFail && method==='PUT' ? json({msg:'Invalid password'},422) : json(user);
+  if (url.pathname === '/auth/v1/user') {
+    if (method === 'PUT' && requireReauthentication && body.nonce !== '12345678') return json({msg:'Reauthentication required',code:'reauthentication_needed',error_code:'reauthentication_needed'},422);
+    return updateFail && method==='PUT' ? json({msg:'Invalid password'},422) : json(user);
+  }
+  if (url.pathname === '/auth/v1/reauthenticate') return json({});
   if (['/auth/v1/recover','/auth/v1/resend','/auth/v1/otp','/auth/v1/logout'].includes(url.pathname)) return json({});
   throw Error(`Unexpected fixture request ${url.pathname}`);
 };
@@ -99,6 +104,43 @@ r=await request('/api/auth/callback?code=valid&next=%2Fcuenta%2Fcontrasena',unde
 r=await request('/auth/confirmar',{token_hash:'fixture-hash',type:'recovery',next:'/cuenta/contrasena'});assert.equal(r.status,303);assert.equal(r.headers.get('location'),'/cuenta/contrasena');assert.ok(r.headers.get('set-cookie'));checks++;
 r=await request('/auth/confirmar',{token_hash:'expired',type:'recovery',next:'/cuenta/contrasena'});assert.equal(r.status,200);assert.match(await r.text(),/caducado/);checks++;
 r=await request('/auth/confirmar',{token_hash:'fixture-hash',type:'invalid',next:'https://evil.invalid'});assert.equal(r.status,200);assert.match(await r.text(),/caducado/);checks++;
+// A mail scanner's GET cannot consume any OTP or change an address.
+before=calls.filter(c=>c.path==='/auth/v1/verify').length;
+r=await request('/auth/confirmar?token_hash=change-first&type=email_change&next=%2Fcuenta');
+assert.equal(r.status,200);assert.match(await r.text(),/method="post"/);
+assert.equal(calls.filter(c=>c.path==='/auth/v1/verify').length,before);checks++;
+r=await request('/auth/confirmar',{token_hash:'change-first',type:'email_change',next:'/cuenta'});
+const partialChangeHtml=await r.text();
+assert.equal(r.status,200);assert.equal(r.headers.get('location'),null);assert.match(partialChangeHtml,/Confirma también el enlace enviado al otro correo/);
+assert.doesNotMatch(partialChangeHtml,/name="token_hash"/);checks++;
+r=await request('/auth/confirmar',{token_hash:'change-second',type:'email_change',next:'/cuenta'});
+assert.equal(r.status,303);assert.equal(r.headers.get('location'),'/cuenta');assert.ok(r.headers.get('set-cookie'));checks++;
+before=calls.filter(c=>c.path==='/auth/v1/verify').length;
+await request('/auth/confirmar',{token_hash:'change-first',type:'email_change',next:'/cuenta'},'','https://evil.invalid');
+assert.equal(calls.filter(c=>c.path==='/auth/v1/verify').length,before);checks++;
+allowed=false;await request('/auth/confirmar',{token_hash:'change-first',type:'email_change',next:'/cuenta'});
+assert.equal(calls.filter(c=>c.path==='/auth/v1/verify').length,before);allowed=true;checks++;
+// Reauthentication has the same verified-session, Origin and rate protections
+// as password updates. Only an explicit POST requests the service OTP.
+before=calls.filter(c=>c.path==='/auth/v1/reauthenticate').length;
+await request('/cuenta/contrasena');
+await request('/cuenta/contrasena',{action:'reauthenticate'});
+await request('/cuenta/contrasena',{action:'reauthenticate'},cookie,'https://evil.invalid');
+assert.equal(calls.filter(c=>c.path==='/auth/v1/reauthenticate').length,before);checks++;
+allowed=false;await request('/cuenta/contrasena',{action:'reauthenticate'},cookie);
+assert.equal(calls.filter(c=>c.path==='/auth/v1/reauthenticate').length,before);allowed=true;checks++;
+r=await request('/cuenta/contrasena',{action:'reauthenticate'},cookie);
+assert.equal(r.status,200);assert.match(await r.text(),/Hemos solicitado un código/);
+assert.equal(calls.filter(c=>c.path==='/auth/v1/reauthenticate').length,before+1);checks++;
+requireReauthentication=true;
+r=await request('/cuenta/contrasena',{password:credentials.password,password_confirmation:credentials.password},cookie);
+assert.equal(r.status,200);assert.match(await r.text(),/necesita verificar de nuevo tu identidad/);checks++;
+before=calls.filter(c=>c.path==='/auth/v1/user'&&c.method==='PUT').length;
+r=await request('/cuenta/contrasena',{password:credentials.password,password_confirmation:credentials.password,nonce:'bad-code'},cookie);
+assert.equal(r.status,200);assert.equal(calls.filter(c=>c.path==='/auth/v1/user'&&c.method==='PUT').length,before);checks++;
+r=await request('/cuenta/contrasena',{password:credentials.password,password_confirmation:credentials.password,nonce:'12345678'},cookie);
+assert.equal(r.status,303);assert.equal(r.headers.get('location'),'/login?updated=1');
+assert.equal(calls.filter(c=>c.path==='/auth/v1/user'&&c.method==='PUT').at(-1).body.nonce,'12345678');requireReauthentication=false;checks++;
 r=await request('/api/auth/logout',{logout:'1'},cookie,'https://evil.invalid');assert.equal(r.status,403);checks++;
 r=await request('/api/auth/logout',{logout:'1'},cookie);assert.equal(r.status,303);checks++;
 console.log(`${checks} compiled password authentication scenarios passed. No network or real emails.`);

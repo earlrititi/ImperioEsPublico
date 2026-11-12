@@ -1,3 +1,3 @@
 export const COMMUNICATION_STATES = ["recorded", "queued", "scheduled", "processing", "accepted_by_provider", "delivered", "deferred", "bounced", "complained", "failed", "cancelled", "unsubscribed", "review", "received"] as const;
-export const COMMUNICATION_SOURCES = ["email_logs", "marketing_automation_jobs", "marketing_email_verifications", "marketing_subscription_notices", "post_delivery_jobs", "commerce_outbox", "manifesto_requests", "marketing_leads", "paid_order_admin_outbox", "seo_jobs", "mailbox"] as const;
+export const COMMUNICATION_SOURCES = ["email_logs", "marketing_automation_jobs", "marketing_email_verifications", "marketing_subscription_notices", "post_delivery_jobs", "commerce_outbox", "manifesto_requests", "marketing_leads", "paid_order_admin_outbox", "seo_jobs", "customer_mail_deliveries", "mailbox"] as const;
 export const AUDIENCE_STATES = ["eligible", "pending_verification", "unsubscribed", "suppressed", "no_consent"] as const;

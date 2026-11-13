@@ -3,7 +3,7 @@ export default [{
   files:['src/config/commerce.ts','src/lib/reservation*.ts','src/lib/commerce-mail.ts','src/components/commerce/**/*.{ts,tsx}',
     'src/lib/corporate-mail-*.ts','src/lib/customer-mail-*.ts','src/lib/auth-mail-*.ts','tests/corporate-mail-*.test.ts','tests/customer-mail-*.test.ts','tests/auth-mail-*.test.ts',
     'src/lib/marketing-contact*.ts','src/lib/contact-welcome*.ts','src/lib/corporate-email.ts','src/lib/communications-model.ts','src/lib/mailbox-sync.ts','tests/marketing-contact.test.ts','tests/corporate-email.test.ts','tests/communications.test.ts','src/pages/api/marketing/confirm.ts',
-    'src/lib/admin-*.ts','src/lib/newsletter-audience.ts','src/lib/subscription-checkout.ts','src/lib/subscription-reconciliation.ts','src/lib/interaction-validation.ts','src/lib/env.ts',
+    'src/lib/admin-*.ts','src/lib/unified-mailbox.ts','src/lib/newsletter-audience.ts','src/lib/subscription-checkout.ts','src/lib/subscription-reconciliation.ts','src/lib/interaction-validation.ts','src/lib/env.ts',
     'src/lib/shirt-checkout-lines.ts','tests/shirt-checkout-lines.test.ts',
     'src/lib/cart.ts','src/lib/ecommerce.ts','src/lib/ga4-reports.ts','tests/cart.test.ts','tests/ga4-reports.test.ts','tests/google-tag-manager.test.ts',
     'src/lib/purchase-analytics.ts','tests/purchase-analytics.test.ts','tests/google-purchase.test.ts',

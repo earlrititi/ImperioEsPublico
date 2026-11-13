@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { SITE } from "../../../config/site";
 import { auditAdmin } from "../../../lib/admin-data";
 import { archiveMailboxQuery, readArchivedApplicationMailbox } from "../../../lib/customer-mail-archive";
+import { invalidateUnifiedMailboxIndex, unifiedMailboxGet } from "../../../lib/unified-mailbox";
 import {
   corporateMailboxPassword,
   mailboxQuery,
@@ -42,6 +43,8 @@ const mailboxFailure = (error: unknown) => {
   );
 };
 export const GET: APIRoute = async (context) => {
+  if (context.url.searchParams.get("view") === "unified")
+    return unifiedMailboxGet(context);
   try {
     const actor = await requireAdmin(context);
     await limited(context.request, "admin_mailbox_read", 60);
@@ -96,6 +99,7 @@ export const POST: APIRoute = async (context) => {
     );
     await readCorporateMailbox(probe, body.password);
     await rpc("store_corporate_mailbox_secret", { p_password: body.password });
+    invalidateUnifiedMailboxIndex();
     await auditAdmin(
       actor.id,
       "communications",

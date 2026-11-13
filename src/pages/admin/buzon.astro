@@ -1,8 +1,4 @@
 ---
-import AdminShell from "../../layouts/AdminShell.astro";
-import Mailbox from "../../components/admin/Mailbox";
-import { requireAdmin } from "../../lib/reservations";
-export const prerender=false;
-try { await requireAdmin(Astro); } catch { return Astro.redirect("/login?next=/admin/buzon"); }
+export const prerender = false;
+return Astro.redirect("/admin/mail", 302);
 ---
-<AdminShell title="Buzón de correo"><Mailbox client:load/></AdminShell>

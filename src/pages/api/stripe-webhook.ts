@@ -243,7 +243,7 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   try {
-    const centralSubscriptionMail = await stripeCustomerMailActiveForEvent(event);
+    const centralSubscriptionMail = await stripeCustomerMailActiveForEvent(event, stripe);
     switch (event.type) {
       case "checkout.session.async_payment_succeeded":
       case "checkout.session.completed": {

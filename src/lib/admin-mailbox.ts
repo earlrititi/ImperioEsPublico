@@ -28,6 +28,9 @@ export type MailboxQuery = {
   uid: number;
   providerId: string;
   after: string;
+  /** Internal metadata index for the unified reader; never downloads bodies. */
+  allMetadata?: boolean;
+  limit?: 25 | 100;
 };
 export function mailboxQuery(params: URLSearchParams): MailboxQuery {
   const integer = (name: string) => {
@@ -85,6 +88,12 @@ const timestamp = (value: Date | string | undefined) => {
 };
 const folderId = (path: string) =>
   Buffer.from(path, "utf8").toString("base64url");
+const folderKind = (box: { path: string; specialUse?: string }) => {
+  if (box.path.toUpperCase() === "INBOX") return "inbox";
+  if (box.specialUse === "\\Sent" || /(?:^|[./])(?:sent|sent items|sent messages|enviados)$/i.test(box.path)) return "sent";
+  if (box.specialUse === "\\Drafts" || /(?:^|[./])(?:drafts|borradores)$/i.test(box.path)) return "drafts";
+  return "folder";
+};
 export const corporateImapOptions = (password: string) => ({
   host: "imap.ionos.es",
   port: 993,
@@ -159,18 +168,13 @@ export async function readCorporateMailbox(
       .map((box) => ({
         id: folderId(box.path),
         name: text(box.name, 100),
-        kind:
-          box.path.toUpperCase() === "INBOX"
-            ? "inbox"
-            : box.specialUse === "\\Sent"
-              ? "sent"
-              : "folder",
+        kind: folderKind(box),
       }));
     const selected = listed.find((box) =>
       query.folder === "inbox"
         ? box.path.toUpperCase() === "INBOX"
         : query.folder === "sent"
-          ? box.specialUse === "\\Sent"
+          ? folderKind(box) === "sent"
           : folderId(box.path) === query.folder,
     );
     if (!selected) throw Error("MAILBOX_FOLDER_NOT_FOUND");
@@ -234,6 +238,7 @@ export async function readCorporateMailbox(
           from: address(item.envelope?.from),
           to: address(item.envelope?.to),
           date: timestamp(item.envelope?.date),
+          internetMessageId: item.envelope?.messageId || null,
           ...preview,
           attachments: parts
             .filter(
@@ -284,11 +289,12 @@ export async function readCorporateMailbox(
     if (query.before) search.uid = `1:${query.before - 1}`;
     const matches = await client.search(search, { uid: true });
     const uids = (Array.isArray(matches) ? matches : []).sort((a, b) => b - a),
-      page = uids.slice(0, 25),
+      page = query.allMetadata ? uids : uids.slice(0, 25),
       items: any[] = [];
-    if (page.length)
+    // Bounded IMAP commands, even when indexing the whole folder's metadata.
+    for (let offset = 0; offset < page.length; offset += 100)
       for await (const item of client.fetch(
-        page.join(","),
+        page.slice(offset, offset + 100).join(","),
         {
           uid: true,
           envelope: true,
@@ -304,6 +310,8 @@ export async function readCorporateMailbox(
           from: address(item.envelope?.from),
           to: address(item.envelope?.to),
           date: timestamp(item.envelope?.date || item.internalDate),
+          receivedAt: timestamp(item.internalDate),
+          internetMessageId: item.envelope?.messageId || null,
           seen: item.flags?.has("\\Seen") ?? false,
           size: item.size ?? 0,
         });
@@ -317,7 +325,7 @@ export async function readCorporateMailbox(
       validity,
       items,
       total: box.exists,
-      hasMore: uids.length > 25,
+      hasMore: !query.allMetadata && uids.length > 25,
       nextBefore: page.at(-1) ?? null,
       checkedAt: new Date().toISOString(),
     };
@@ -359,6 +367,7 @@ export async function readApplicationMailbox(query: MailboxQuery) {
         from: [mail.from],
         to: mail.to,
         date: mail.created_at,
+        internetMessageId: mail.message_id || null,
         ...preview,
         state: mail.last_event,
         bodyAvailable: true,
@@ -368,7 +377,7 @@ export async function readApplicationMailbox(query: MailboxQuery) {
     };
   }
   const result = await client.emails.list({
-    limit: 25,
+    limit: query.limit || 25,
     ...(query.after ? { after: query.after } : {}),
   });
   if (result.error || !result.data) throw Error("MAILBOX_PROVIDER_UNAVAILABLE");
@@ -391,6 +400,7 @@ export async function readApplicationMailbox(query: MailboxQuery) {
         from: [mail.from],
         to: mail.to,
         date: mail.created_at,
+        internetMessageId: mail.message_id || null,
         seen: true,
         state: mail.last_event,
       })),

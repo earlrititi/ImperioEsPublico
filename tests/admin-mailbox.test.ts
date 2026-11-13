@@ -168,6 +168,22 @@ test("sent folder is discovered by server special-use and UID generation mismatc
     /MAILBOX_RESET_REQUIRED/,
   );
 });
+
+test("unified index reads every matching UID as metadata and recognises Drafts without downloading bodies", async () => {
+  const f = fixture(), originalList = f.client.list;
+  f.client.list = async () => [...await originalList(), {
+    path: "INBOX.Borradores", name: "Borradores", flags: new Set(),
+  }];
+  const result: any = await readCorporateMailbox(
+    { ...mailboxQuery(new URLSearchParams()), allMetadata: true },
+    "fixture", f.factory,
+  );
+  assert.equal(result.items.length, 40);
+  assert.equal(result.hasMore, false);
+  assert.equal(result.folders.find((folder: any) => folder.name === "Borradores").kind, "drafts");
+  assert.equal(f.calls.filter(call => ["download", "fetchOne"].includes(call.method)).length, 0);
+  assert.deepEqual(f.calls.find(call => call.method === "open")?.args, ["INBOX", { readOnly: true }]);
+});
 test("message reading fetches only a bounded text MIME part and blocks active/remote content", async () => {
   const f = fixture(),
     result: any = await readCorporateMailbox(

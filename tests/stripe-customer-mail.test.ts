@@ -1,13 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { planStripeCustomerMail, queueStripeCustomerMail, drainStripeCustomerMail, stripeCustomerMailActiveForEvent, type StripeCustomerMailReadClient, type StripeCustomerMailDependencies, type StripeCustomerMailEvent } from "../src/lib/stripe-customer-mail";
+import { planStripeCustomerMail, queueStripeCustomerMail, drainStripeCustomerMail, stripeCustomerMailActiveForEvent, stripeCustomerMailInScope, type StripeCustomerMailReadClient, type StripeCustomerMailDependencies, type StripeCustomerMailEvent } from "../src/lib/stripe-customer-mail";
 
 const now = Date.parse("2026-11-12T10:00:00Z");
 const event: StripeCustomerMailEvent = { id: "evt_fixture_paid", type: "invoice.paid", created: now / 1000, livemode: false, data: { object: { id: "in_fixture" } } };
-const invoice = { id: "in_fixture", status: "paid", number: "FACTURA-12345678", customer_email: "customer@example.invalid", customer_name: "<script>cliente</script>", amount_paid: 3500, currency: "eur", hosted_invoice_url: "https://invoice.stripe.com/i/fixture" };
+const invoice = { id: "in_fixture", parent: { type: "subscription_details", subscription_details: { subscription: "sub_imperio" } }, status: "paid", number: "FACTURA-12345678", customer_email: "customer@example.invalid", customer_name: "<script>cliente</script>", amount_paid: 3500, currency: "eur", hosted_invoice_url: "https://invoice.stripe.com/i/fixture" };
+const subscription = { id: "sub_imperio", metadata: { plan: "arcabucero", billingInterval: "month" }, items: { data: [{ price: { id: "price_fixture" } }] } };
 function reader(): StripeCustomerMailReadClient {
   const unexpected = async () => { throw Error("UNEXPECTED_FIXTURE_READ"); };
-  return { invoices: { retrieve: async () => invoice }, checkout: { sessions: { retrieve: unexpected } }, paymentIntents: { retrieve: unexpected }, charges: { retrieve: unexpected }, refunds: { retrieve: unexpected }, subscriptions: { retrieve: unexpected }, customers: { retrieve: unexpected }, creditNotes: { retrieve: unexpected } };
+  return { invoices: { retrieve: async () => invoice }, checkout: { sessions: { retrieve: unexpected } }, paymentIntents: { retrieve: unexpected }, charges: { retrieve: unexpected }, refunds: { retrieve: unexpected }, subscriptions: { retrieve: async () => subscription }, customers: { retrieve: unexpected }, creditNotes: { retrieve: unexpected } };
 }
 
 test("disabled or pre-cutover billing mail performs no provider reads, queue writes or sends", async () => {
@@ -16,7 +17,40 @@ test("disabled or pre-cutover billing mail performs no provider reads, queue wri
   const deps: Partial<StripeCustomerMailDependencies> = { runtime: async () => ({ enabled: false, starts_at: null, livemode: false }), now: () => now, rpc: async () => { throw Error("MUST_NOT_WRITE"); }, send: async () => { throw Error("MUST_NOT_SEND"); } };
   assert.equal((await queueStripeCustomerMail(event, api, deps)).enabled, false);
   assert.equal((await drainStripeCustomerMail(1, api, deps)).enabled, false);
-  assert.equal(await stripeCustomerMailActiveForEvent(event, { ...deps, runtime: async () => ({ enabled: true, starts_at: new Date(now + 1000).toISOString(), livemode: false }) }), false);
+  assert.equal(await stripeCustomerMailActiveForEvent(event, api, { ...deps, runtime: async () => ({ enabled: true, starts_at: new Date(now + 1000).toISOString(), livemode: false }) }), false);
+});
+
+test("same-account foreign subscriptions do not enqueue mail or suppress legacy handlers", async () => {
+  const api = reader();
+  api.subscriptions.retrieve = async () => ({ id: "sub_unrelated", metadata: { plan: "unrelated" }, items: { data: [{ price: { id: "price_foreign" } }] } });
+  const deps: Partial<StripeCustomerMailDependencies> = {
+    runtime: async () => ({ enabled: true, starts_at: new Date(now - 1000).toISOString(), livemode: false }), now: () => now,
+    rpc: async () => { throw Error("FOREIGN_MAIL_MUST_NOT_ENQUEUE"); },
+  };
+  assert.equal(await stripeCustomerMailInScope(event, api), false);
+  assert.equal(await stripeCustomerMailActiveForEvent(event, api, deps), false);
+  assert.equal((await queueStripeCustomerMail(event, api, deps)).planned, 0);
+  assert.equal(await stripeCustomerMailActiveForEvent(event, undefined, deps), false);
+  assert.equal(await stripeCustomerMailInScope(event, reader()), true);
+});
+
+test("Checkout and refund ownership require own site markers or owning invoice links", async () => {
+  const checkoutEvent = { ...event, type: "checkout.session.completed" as const, data: { object: { id: "cs_fixture" } } };
+  const refundEvent = { ...event, type: "refund.updated" as const, data: { object: { id: "re_fixture" } } };
+  const api = reader();
+  let own = false;
+  api.checkout.sessions.retrieve = async () => ({ id: "cs_fixture", metadata: own ? { product: "camiseta-imperial" } : {}, payment_intent: "pi_fixture" });
+  api.paymentIntents.retrieve = async () => ({ id: "pi_fixture", metadata: own ? { reservationAttemptId: "00000000-0000-4000-8000-000000000001", reservation_id: "00000000-0000-4000-8000-000000000002" } : {} });
+  api.refunds.retrieve = async () => ({ id: "re_fixture", charge: "ch_fixture" });
+  api.charges.retrieve = async () => ({ id: "ch_fixture", payment_intent: "pi_fixture" });
+  assert.equal(await stripeCustomerMailInScope(checkoutEvent, api), false);
+  assert.equal(await stripeCustomerMailInScope(refundEvent, api), false);
+  own = true;
+  assert.equal(await stripeCustomerMailInScope(checkoutEvent, api), true);
+  assert.equal(await stripeCustomerMailInScope(refundEvent, api), true);
+  own = false;
+  api.invoicePayments = { list: async () => ({ data: [{ invoice }] }) };
+  assert.equal(await stripeCustomerMailInScope(refundEvent, api), true, "renewal refund must resolve its own subscription via InvoicePayment");
 });
 
 test("both paid invoice events coalesce by invoice and render escaped corporate content", async () => {

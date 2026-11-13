@@ -54,6 +54,7 @@ export type StripeCustomerMailReadClient = {
   checkout: {
     sessions: {
       retrieve(id: string, params?: { expand?: string[] }): Promise<unknown>;
+      list?(params: { payment_intent: string; limit: number }): Promise<unknown>;
     };
   };
   paymentIntents: {
@@ -63,13 +64,24 @@ export type StripeCustomerMailReadClient = {
   refunds: { retrieve(id: string): Promise<unknown> };
   subscriptions: {
     retrieve(id: string, params?: { expand?: string[] }): Promise<unknown>;
+    list?(params: { customer: string; status: "all"; limit: number }): Promise<unknown>;
   };
   customers: {
     retrieve(id: string): Promise<unknown>;
     retrieveSource?(customer: string, source: string): Promise<unknown>;
   };
   creditNotes: { retrieve(id: string): Promise<unknown> };
+  invoicePayments?: {
+    list(params: { payment: { type: "payment_intent"; payment_intent: string }; limit: number; expand?: string[] }): Promise<unknown>;
+  };
 };
+
+export type StripeCustomerMailScope = { subscriptionPriceIds: readonly string[] };
+
+function configuredScope(): StripeCustomerMailScope {
+  const names = ["STRIPE_PRICE_ARCABUCERO_MONTHLY", "STRIPE_PRICE_ARCABUCERO_ANNUAL", "STRIPE_PRICE_MAESTRE_CAMPO_MONTHLY", "STRIPE_PRICE_MAESTRE_CAMPO_ANNUAL"];
+  return { subscriptionPriceIds: names.map(name => str(import.meta.env?.[name] ?? process.env[name])).filter(value => /^price_[A-Za-z0-9_]+$/.test(value)) };
+}
 type Data = Record<string, unknown>;
 type Message = {
   from: string;
@@ -323,6 +335,107 @@ const cancellationAt = (subscription: Data) =>
 const isOpenInvoice = (invoice: Data) =>
   invoice.status === "open" && (finite(invoice.amount_remaining) ?? 0) > 0;
 
+function ownership(api: StripeCustomerMailReadClient, scope: StripeCustomerMailScope) {
+  const rows = (value: unknown) => Array.isArray(data(value).data) ? (data(value).data as unknown[]).map(data) : [];
+  const uuid = (value: unknown) => /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(str(value));
+  // These markers are set by the site's server-side Checkout creators. An
+  // email/customer match or merely sharing the Stripe account is never scope.
+  const shirtMarker = (object: Data) => {
+    const metadata = data(object.metadata);
+    return metadata.product === "camiseta-imperial" || (uuid(metadata.reservationAttemptId) && uuid(metadata.reservation_id));
+  };
+  const ownSubscription = async (value: unknown) => {
+    const subscription = typeof value === "string" ? data(await api.subscriptions.retrieve(identifier(value))) : data(value);
+    const metadata = data(subscription.metadata), prices = items(subscription).map(item => id(data(item.price)));
+    const taggedPlan = ["arcabucero", "maestre_campo"].includes(str(metadata.plan)) && ["month", "year"].includes(str(metadata.billingInterval));
+    return (taggedPlan && prices.length === 1 && Boolean(prices[0])) || (prices.length > 0 && prices.every(price => scope.subscriptionPriceIds.includes(price)));
+  };
+  const ownInvoice = async (value: unknown) => {
+    const invoice = typeof value === "string" ? data(await api.invoices.retrieve(identifier(value))) : data(value);
+    if (shirtMarker(invoice)) return true;
+    const subscription = subscriptionId(invoice);
+    return Boolean(subscription) && ownSubscription(subscription);
+  };
+  const sessionMarker = async (session: Data) => {
+    if (shirtMarker(session)) return true;
+    return Boolean(id(session.subscription)) && ownSubscription(id(session.subscription));
+  };
+  const ownPayment = async (value: unknown) => {
+    const payment = typeof value === "string" ? data(await api.paymentIntents.retrieve(identifier(value))) : data(value);
+    if (shirtMarker(payment)) return true;
+    const paymentId = id(payment);
+    if (!paymentId) return false;
+    // An initial/legacy Checkout may carry the site marker only on the Session.
+    if (api.checkout.sessions.list) {
+      const sessions = rows(await api.checkout.sessions.list({ payment_intent: identifier(paymentId), limit: 10 }));
+      for (const session of sessions) if (await sessionMarker(session)) return true;
+    }
+    // Renewal PaymentIntents have no Checkout Session. SDK 22 exposes their
+    // owning invoice through InvoicePayment, not invoice.payment_intent.
+    if (api.invoicePayments) {
+      const payments = rows(await api.invoicePayments.list({ payment: { type: "payment_intent", payment_intent: identifier(paymentId) }, limit: 10, expand: ["data.invoice"] }));
+      for (const paymentLink of payments) {
+        const invoice = paymentLink.invoice;
+        if (id(invoice) && await ownInvoice(typeof invoice === "string" ? invoice : data(invoice))) return true;
+      }
+    }
+    return false;
+  };
+  const ownCharge = async (value: unknown) => {
+    const charge = typeof value === "string" ? data(await api.charges.retrieve(identifier(value))) : data(value);
+    if (shirtMarker(charge)) return true;
+    if (id(charge.payment_intent) && await ownPayment(id(charge.payment_intent))) return true;
+    return Boolean(id(charge.invoice)) && ownInvoice(id(charge.invoice));
+  };
+  return async (resource: Guard["resource"], object: Data): Promise<boolean> => {
+    if (resource === "subscription") return ownSubscription(await api.subscriptions.retrieve(identifier(object.id)));
+    if (resource === "invoice") return ownInvoice(await api.invoices.retrieve(identifier(object.id)));
+    if (resource === "checkout") {
+      const session = data(await api.checkout.sessions.retrieve(identifier(object.id)));
+      return await sessionMarker(session) || (Boolean(id(session.payment_intent)) && ownPayment(id(session.payment_intent)));
+    }
+    if (resource === "refund") {
+      const refund = data(await api.refunds.retrieve(identifier(object.id)));
+      return Boolean(id(refund.charge)) && ownCharge(id(refund.charge));
+    }
+    if (resource === "credit_note") {
+      const note = data(await api.creditNotes.retrieve(identifier(object.id)));
+      return Boolean(id(note.invoice)) && ownInvoice(id(note.invoice));
+    }
+    const customerId = id(object.customer);
+    if (!customerId || !api.subscriptions.list) return false;
+    const customer = data(await api.customers.retrieve(identifier(customerId)));
+    const subscriptions = rows(await api.subscriptions.list({ customer: identifier(customerId), status: "all", limit: 100 }));
+    for (const subscription of subscriptions) {
+      if (!["active", "trialing", "past_due", "unpaid", "incomplete", "paused"].includes(str(subscription.status)) || id(subscription.default_payment_method)) continue;
+      const source = id(subscription.default_source) || id(customer.default_source);
+      if (source === id(object.id) && await ownSubscription(subscription)) return true;
+    }
+    return false;
+  };
+}
+
+/** Scope is proved through server metadata/prices and resource relationships,
+ * never by customer email or by membership in the same Stripe account. */
+export async function stripeCustomerMailInScope(event: StripeCustomerMailEvent, api: StripeCustomerMailReadClient, scope = configuredScope()) {
+  if (!(STRIPE_CUSTOMER_MAIL_EVENTS as readonly string[]).includes(event.type)) return false;
+  let resource: Guard["resource"];
+  if (event.type.startsWith("invoice.")) resource = "invoice";
+  else if (event.type.startsWith("checkout.session.")) resource = "checkout";
+  else if (event.type.startsWith("refund.")) resource = "refund";
+  else if (event.type.startsWith("credit_note.")) resource = "credit_note";
+  else if (event.type.startsWith("customer.subscription.")) resource = "subscription";
+  else if (event.type === "customer.source.expiring") resource = "legacy_card";
+  else return false;
+  const object = data(event.data.object);
+  // Upcoming invoices intentionally have no invoice ID.
+  if (event.type === "invoice.upcoming") {
+    const subscription = subscriptionId(object);
+    return Boolean(subscription) && ownership(api, scope)("subscription", { id: subscription });
+  }
+  return ownership(api, scope)(resource, object);
+}
+
 /** Prepares prospective content only; never sends, writes, authenticates a user or mutates Stripe. */
 export async function planStripeCustomerMail(
   event: StripeCustomerMailEvent,
@@ -331,6 +444,7 @@ export async function planStripeCustomerMail(
 ): Promise<StripeCustomerMailPlan[]> {
   if (!(STRIPE_CUSTOMER_MAIL_EVENTS as readonly string[]).includes(event.type))
     return [];
+  if (!(await stripeCustomerMailInScope(event, api))) return [];
   const object = data(event.data.object),
     nowSeconds = Math.floor(now / 1000);
   if (
@@ -780,6 +894,7 @@ async function stillEligible(
   api: StripeCustomerMailReadClient,
   now: number,
 ) {
+  if (!(await ownership(api, configuredScope())(guard.resource, { id: guard.id, customer: guard.customerId }))) return false;
   if (guard.resource === "invoice") {
     const invoice = data(await api.invoices.retrieve(identifier(guard.id)));
     return guard.expected === "paid"
@@ -940,6 +1055,7 @@ function activeFor(runtime: StripeCustomerMailRuntime, now: number) {
 
 export async function stripeCustomerMailActiveForEvent(
   event: StripeCustomerMailEvent,
+  api?: StripeCustomerMailReadClient,
   overrides: Partial<StripeCustomerMailDependencies> = {},
 ) {
   const deps = dependencies(overrides);
@@ -950,7 +1066,9 @@ export async function stripeCustomerMailActiveForEvent(
     event.livemode === runtime.livemode &&
     Number.isSafeInteger(event.created) &&
     event.created * 1000 >= Date.parse(runtime.starts_at!) &&
-    event.created * 1000 <= now + 300000
+    event.created * 1000 <= now + 300000 &&
+    Boolean(api) &&
+    await stripeCustomerMailInScope(event, api!)
   );
 }
 

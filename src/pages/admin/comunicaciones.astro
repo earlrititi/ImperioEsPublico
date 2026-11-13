@@ -1,8 +1,4 @@
 ---
-import AdminShell from "../../layouts/AdminShell.astro";
-import Communications from "../../components/admin/Communications";
-import { requireAdmin } from "../../lib/reservations";
 export const prerender = false;
-try { await requireAdmin(Astro); } catch { return Astro.redirect("/login?next=/admin/comunicaciones"); }
+return Astro.redirect("/admin/mail", 302);
 ---
-<AdminShell title="Comunicaciones"><Communications client:load /></AdminShell>

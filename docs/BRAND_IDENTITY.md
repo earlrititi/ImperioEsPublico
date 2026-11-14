@@ -72,7 +72,7 @@ La prueba real preparada en `scripts/test-brand-email.ts` fija el destinatario `
 
 ## Iconos y redes
 
-`node scripts/generate-favicon.mjs` genera favicon ICO (16/32/48), PNG 16/32, Apple Touch 180 e iconos 192/512 desde el isotipo SVG completo, encajándolo proporcionalmente sobre transparencia. El favicon SVG enlaza directamente al original, sin copia adicional. El manifiesto y los enlaces incluyen versión para invalidar la caché anterior.
+`node scripts/generate-favicon.mjs` genera favicon ICO (16/32/48), PNG 16/32, Apple Touch 180 e iconos 192/512 desde el isotipo SVG completo, encajándolo proporcionalmente sobre transparencia. El layout enlaza directamente al SVG original; la URL convencional `/favicon.svg` se conserva como copia idéntica de compatibilidad, generada desde el mismo maestro. El manifiesto y los enlaces incluyen versión para invalidar la caché anterior.
 
 `node scripts/generate-brand-social.mjs` compone la tarjeta 1200 × 630 centrando el principal íntegro sobre fondo claro. Solo reemplaza la imagen social corporativa predeterminada; las imágenes específicas de artículos y productos permanecen. JSON-LD usa el principal PNG oficial. Los recursos `/brand/` tienen caché pública de un día y revalidación; los originales con nombres estables no se marcan como inmutables.
 

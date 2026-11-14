@@ -14,7 +14,7 @@ for (const [name, expected] of Object.entries(manifest.files)) {
   assert.equal(createHash("sha256").update(bytes).digest("hex"), expected.sha256, name);
   results.push({ path: `/brand/logos/${name}`, status: response.status });
 }
-for (const path of ["/favicon.ico", "/favicon-16x16.png", "/favicon-32x32.png", "/apple-touch-icon.png", "/icon-192.png", "/icon-512.png", "/site.webmanifest", "/brand/social/imperio-espanol-og.png"]) {
+for (const path of ["/favicon.svg", "/favicon.ico", "/favicon-16x16.png", "/favicon-32x32.png", "/apple-touch-icon.png", "/icon-192.png", "/icon-512.png", "/site.webmanifest", "/brand/social/imperio-espanol-og.png"]) {
   const response = await fetch(origin + path);
   assert.equal(response.status, 200, path);
   assert.ok((await response.arrayBuffer()).byteLength > 0, path);

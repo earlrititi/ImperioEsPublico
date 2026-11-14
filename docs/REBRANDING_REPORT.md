@@ -4,7 +4,7 @@ Informe de ejecución del 14 de noviembre de 2026. Repositorio: `earlrititi/Impe
 
 ## A. Archivos modificados
 
-- Recursos: doce originales en `public/brand/logos/`, manifiesto de integridad `public/brand/manifest.json`, tarjeta social `public/brand/social/imperio-espanol-og.png`, favicon ICO y PNG, Apple Touch, iconos 192/512 y `public/site.webmanifest`.
+- Recursos: doce originales en `public/brand/logos/`, manifiesto de integridad `public/brand/manifest.json`, tarjeta social `public/brand/social/imperio-espanol-og.png`, favicon SVG/ICO y PNG, Apple Touch, iconos 192/512 y `public/site.webmanifest`.
 - Sistema común: `src/config/brand.ts`, `src/config/site.ts`, `src/components/BrandLogo.tsx`, alias compatible `LogoImperio.jsx`.
 - Web: `Navigation.jsx`, `HeroImperio.jsx`, `GlobalHomeMark.astro`, `Footer.jsx`, `ArticlesGrid.jsx`, configuración `hero.js` y `home.js`, layouts `Layout.astro` y `AdminShell.astro`, páginas `index.astro`, `links.astro`, `tienda/index.astro`, `papeles-y-tratados.astro`, `papeles-y-tratados/[slug].astro`, `contacto.astro`, estilos de navegación y controlador de superficie del navbar.
 - Editorial: `src/lib/article-brand.ts`, `published-articles.ts`, lista exacta de recursos autorizados en `admin-article-content.ts`.
@@ -44,7 +44,9 @@ La cabecera clara usa principal PNG y la oscura dark PNG, en URL canónica HTTPS
 | Build de producción con Node 24.22.2 | Correcto; salida Vercel y postbuild generados |
 | Integración sobre bundle final | Cadena completa de 17 scripts correcta; transportes simulados, sin envíos ni cobros reales |
 | SEO, CMS, preferencias, registro y motor SEO | Correctos; SEO: 45 páginas, 23 artículos, 68 artefactos, 0 carencias |
-| Rutas y recursos locales | 38 comprobaciones HTTP correctas, incluidos los doce hashes oficiales |
+| Rutas y recursos locales | 39 comprobaciones HTTP correctas, incluidos los doce hashes oficiales y el favicon SVG convencional actualizado |
+| Recursos de preview Vercel | 22 rutas HTTP 200, con bytes y caché comprobados mediante CLI autenticada; los 12 originales coinciden |
+| Renderizado remoto de inicio | HTTP 500: el Supabase configurado en preview no resuelve; revisión local funcional disponible |
 | Navegación web | 56 estados a 1440, 820 y 390 px; sin errores JavaScript ni overflow final |
 | Menú por teclado | Tab alcanza los enlaces; Escape cierra y devuelve foco al botón |
 | Correos | 50 HTML; 120 renders; 34 comparaciones de datos/enlaces conservadas |
@@ -61,9 +63,16 @@ Los logs y datos de QA completos están en las carpetas locales ignoradas `tmp/r
 
 Proyecto verificado: `imperio-espa-ol-deploy`, ID `prj_sGnSgdWDmz3kzD8yHidTtA1US8DH`, equipo `earlrititi-2806s-projects`, Node 24.x, repositorio `earlrititi/ImperioEsPublico`, producción `main`.
 
-Rama de trabajo: `feat/rebranding-oficial-imperio`. El flujo existente despliega automáticamente solo `preview` y `main`; se conserva esa restricción. La rama `preview` se actualizará de forma normal, sin force push. **Integrar en `main` publica automáticamente en `imperioes.com` y `www.imperioes.com`.** No se integra en producción desde este trabajo.
+Rama de trabajo: `feat/rebranding-oficial-imperio`. La rama `preview` se actualizó de forma normal, sin force push. Se conserva la configuración de despliegue por ramas; abrir el PR generó además una preview de la propia rama desde la integración de Vercel. **Integrar en `main` publica automáticamente en `imperioes.com` y `www.imperioes.com`.** No se ha integrado en producción.
 
-URL, commit de preview y PR: se registrarán tras obtener el resultado real del despliegue.
+- Commit de implementación verificado: `c2ee5697285dd91523b4fb78fee92b46e292a9b2` (incluye `40bc6c9` con el sistema común).
+- [PR #2, borrador](https://github.com/earlrititi/ImperioEsPublico/pull/2), hacia `main`, sin conflictos.
+- [Preview del commit](https://imperio-espa-ol-deploy-3mrvr9sey-earlrititi-2806s-projects.vercel.app), despliegue `dpl_8uvnRaouUeBxbzebSRQ2B3AUtvv9`, estado **READY** confirmado en Vercel.
+- [Alias estable de la rama preview](https://imperio-espa-ol-deploy-git-preview-earlrititi-2806s-projects.vercel.app).
+
+La preview mantiene Vercel Authentication. La CLI autenticada verifica 22 rutas estáticas y los hashes originales, sin abrir su acceso ni cambiar variables. **READY acredita el build; la página inicial remota devuelve HTTP 500.** El log de la función indica `ARTICLE_CATALOG_UNAVAILABLE`: el dominio de Supabase de pruebas configurado en preview, `joicpkgvggfxzrdazisx.supabase.co`, devuelve `ENOTFOUND`. Una consulta de metadatos en el entorno local válido sí funciona. La lectura remota se comprobó sin el override de `.env.local` de la CLI para distinguir ambos entornos; no se han cambiado claves, datos ni configuración externa.
+
+La revisión visual remota de inicio queda pendiente de un Supabase de pruebas vigente. La revisión funcional local está disponible en `http://127.0.0.1:4321/`, con 39 comprobaciones HTTP correctas y las capturas de 56 estados. No se ha sustituido la base de datos de preview por la de producción. Producción permanece en `844152ba23e378ae4cc47971c6ac482b6f1f505f`.
 
 ## F. Problemas detectados y resolución
 
@@ -75,9 +84,12 @@ URL, commit de preview y PR: se registrarán tras obtener el resultado real del 
 - Restos activos de GitHub Pages en origen de metadatos/base: retirado el condicional antiguo; Vercel conserva rutas raíz y URL canónica.
 - El conector MCP de Vercel devolvió 403 para el equipo; la CLI existente autenticada verificó el mismo proyecto y permite seguir el flujo Git autorizado. No se solicitaron ni imprimieron credenciales.
 - Dos fixtures de integración anteriores no simulaban la consulta `stripe_customer_mail_runtime` añadida por el último cambio de `main`. Se completaron los mocks con el runtime de correo desactivado, sin cambiar Stripe ni sus endpoints. La cadena completa pasó después; se comprobó que ambos archivos originales carecían del mock.
+- La URL convencional `/favicon.svg`, aunque no la usaba el layout, todavía contenía el icono antiguo. Se actualizó desde el isotipo oficial completo y se añadió una comprobación de igualdad de bytes.
+- La base de datos configurada en Vercel Preview ya no resuelve. El fallo no procede de la normalización visual: la consulta del catálogo se conserva. No se han cambiado las variables ni se ha introducido un fallback que pudiera volver a publicar artículos retirados. Queda pendiente concretar un entorno de pruebas válido.
 
 ## G. Pendientes y límites
 
+- Completar el renderizado remoto de la preview con un proyecto Supabase de pruebas válido. Se solicitó al propietario únicamente el nombre o URL del proyecto, sin claves. Mientras tanto, la revisión local permanece funcional; no se repunta a producción ni se sustituyen credenciales.
 - Publicación en producción mediante revisión e integración del PR. Los PNG absolutos del correo seguirán devolviendo 404 en el dominio canónico hasta publicar esos archivos. La prueba preparada impide enviar con imágenes rotas.
 - Ejecutar el envío autorizado únicamente a `earlrititi@gmail.com`, desde `contacto@imperioes.com`, cuando estén publicados los recursos y el proceso disponga del proveedor configurado. El script no consulta destinatarios reales ni cambia configuración.
 - Comprobar el resultado en Gmail, Outlook y Apple Mail reales. Las capturas actuales son de navegador.

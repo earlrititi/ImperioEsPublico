@@ -33,6 +33,7 @@ test("central brand paths resolve and email headers select official absolute HTT
 });
 
 test("all touch/manifest/favicon sizes and social metadata have deployed assets", async () => {
+  assert.deepEqual(readFileSync("public/favicon.svg"), readFileSync(`public${BRAND.logos.isotipo.svg}`));
   for (const [path, size] of [["favicon-16x16.png", 16], ["favicon-32x32.png", 32], ["apple-touch-icon.png", 180], ["icon-192.png", 192], ["icon-512.png", 512]] as const) {
     const metadata = await sharp(`public/${path}`).metadata();
     assert.equal(metadata.width, size, path);

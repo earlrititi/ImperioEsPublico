@@ -1,9 +1,11 @@
-import { writeFile } from "node:fs/promises";
+import { copyFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import sharp from "sharp";
 
 const root = process.cwd();
 const source = resolve(root, "public", "brand", "logos", "imperio_es_isotipo.svg");
+// Preserve the conventional public URL as a byte-identical compatibility copy.
+await copyFile(source, resolve(root, "public", "favicon.svg"));
 const sizes = [16, 32, 48];
 
 const pngs = await Promise.all(

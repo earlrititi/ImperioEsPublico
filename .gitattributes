@@ -1,2 +1,3 @@
 # Authorized masters must remain byte-identical on Windows and Linux checkouts.
 /public/brand/logos/* -text
+/public/favicon.svg -text

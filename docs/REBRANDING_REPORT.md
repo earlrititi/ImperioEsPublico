@@ -65,14 +65,14 @@ Proyecto verificado: `imperio-espa-ol-deploy`, ID `prj_sGnSgdWDmz3kzD8yHidTtA1US
 
 Rama de trabajo: `feat/rebranding-oficial-imperio`. La rama `preview` se actualizó de forma normal, sin force push. Se conserva la configuración de despliegue por ramas; abrir el PR generó además una preview de la propia rama desde la integración de Vercel. **Integrar en `main` publica automáticamente en `imperioes.com` y `www.imperioes.com`.** No se ha integrado en producción.
 
-- Commit de implementación verificado: `c2ee5697285dd91523b4fb78fee92b46e292a9b2` (incluye `40bc6c9` con el sistema común).
+- Commit de implementación verificado: `b4c148afc1d519aae73e9c7ecce12c3e539c2c1c` (incluye `c2ee569` con los respaldos de Auth y `40bc6c9` con el sistema común). El ajuste final del favicon pasó 4/4 tests específicos, además de las comprobaciones anteriores.
 - [PR #2, borrador](https://github.com/earlrititi/ImperioEsPublico/pull/2), hacia `main`, sin conflictos.
-- [Preview del commit](https://imperio-espa-ol-deploy-3mrvr9sey-earlrititi-2806s-projects.vercel.app), despliegue `dpl_8uvnRaouUeBxbzebSRQ2B3AUtvv9`, estado **READY** confirmado en Vercel.
+- [Preview del commit](https://imperio-espa-ol-deploy-jngcl7bbf-earlrititi-2806s-projects.vercel.app), despliegue `dpl_GR9QUTEcpguT4MQWygT9iWRvo4CW`, estado **READY** confirmado en Vercel; 22 recursos estáticos correctos, incluidos el favicon SVG actualizado y los 12 hashes oficiales.
 - [Alias estable de la rama preview](https://imperio-espa-ol-deploy-git-preview-earlrititi-2806s-projects.vercel.app).
 
 La preview mantiene Vercel Authentication. La CLI autenticada verifica 22 rutas estáticas y los hashes originales, sin abrir su acceso ni cambiar variables. **READY acredita el build; la página inicial remota devuelve HTTP 500.** El log de la función indica `ARTICLE_CATALOG_UNAVAILABLE`: el dominio de Supabase de pruebas configurado en preview, `joicpkgvggfxzrdazisx.supabase.co`, devuelve `ENOTFOUND`. Una consulta de metadatos en el entorno local válido sí funciona. La lectura remota se comprobó sin el override de `.env.local` de la CLI para distinguir ambos entornos; no se han cambiado claves, datos ni configuración externa.
 
-La revisión visual remota de inicio queda pendiente de un Supabase de pruebas vigente. La revisión funcional local está disponible en `http://127.0.0.1:4321/`, con 39 comprobaciones HTTP correctas y las capturas de 56 estados. No se ha sustituido la base de datos de preview por la de producción. Producción permanece en `844152ba23e378ae4cc47971c6ac482b6f1f505f`.
+La revisión visual remota de inicio queda pendiente de un Supabase de pruebas vigente. La revisión funcional local está disponible en `http://127.0.0.1:4321/`, con 39 comprobaciones HTTP correctas y las capturas de 56 estados. No se ha sustituido la base de datos de preview por la de producción. Producción permanece en `844152ba23e378ae4cc47971c6ac482b6f1f505f`. La actualización posterior de este informe solo afecta a documentación; el código de la rama `preview` queda en el commit de implementación indicado.
 
 ## F. Problemas detectados y resolución
 

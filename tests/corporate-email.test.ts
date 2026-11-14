@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { renderCorporateEmail, prepareCorporateEmail, validateCorporateMessage, sanitizeEmailBody } from "../src/lib/corporate-email";
 import { renderAdminMail } from "../src/lib/admin-mail-template";
+import { BRAND } from "../src/config/brand";
 
 test("the blank corporate template has no message, sample content, CTA or unresolved variables and cannot be sent", () => {
   const empty = renderCorporateEmail({ empty: true, subject: "Ignored", bodyText: "Ignored" });
@@ -45,14 +46,38 @@ test("HTML fragments are sanitized without destroying safe tables, escaped conte
   assert.match(clean, /<td>35 €<\/td>/);
 });
 
-test("long content remains in normal flow before the fixed signature, with image-free semantic text", () => {
+test("long content remains in normal flow before the corporate footer, with image-free semantic text", () => {
   const paragraphs = Array.from({ length: 20 }, (_, i) => `Párrafo ${i + 1}: atención, & < >. ${"Expedición ".repeat(12)}`);
   const mail = renderAdminMail({ subject: "Una historia extensa", preheader: "", content: paragraphs.join("\n\n"), cta_label: "Ver pedido", cta_url: "https://imperioes.com/mi-cuenta" }, "https://imperioes.com/comunicaciones/baja?token=fixture", true);
-  assert.ok(mail.html.indexOf("Párrafo 20") < mail.html.indexOf("firma-nao-v2.jpg"));
+  assert.ok(mail.html.indexOf("Párrafo 20") < mail.html.indexOf('class="imperio-legal"'));
   assert.doesNotMatch(mail.html, /position:absolute|max-height:[1-9]|overflow:hidden[^>]*>Párrafo/);
   for (const paragraph of paragraphs) assert.ok(mail.text.includes(paragraph));
   assert.match(mail.text, /Baja: https:\/\/imperioes.com/);
   validateCorporateMessage({ subject: "Una historia extensa", ...mail });
+});
+
+test("light and dark email headers use the exact authorized PNG, with one accessible proportionate logo", () => {
+  for (const headerTheme of ["light", "dark"] as const) {
+    const mail = renderCorporateEmail({ subject: "Pedido QA-42", bodyText: "Importe: 35 €. Referencia: QA-42.", headerTheme });
+    assert.ok(mail.html.includes(`src="${BRAND.email.logos[headerTheme]}"`));
+    assert.match(mail.html, /data-imperio-brand="official-20261114"/);
+    assert.match(mail.html, /width="184" height="184" alt="Imperio Español"/);
+    assert.equal((mail.html.match(/<img\b/g) ?? []).length, 1);
+    assert.doesNotMatch(mail.html, /\.svg|cabecera-v2|firma-nao-v2|data:image|<script|filter:/i);
+    assert.ok(mail.text.includes("Importe: 35 €. Referencia: QA-42."));
+    assert.doesNotMatch(mail.html, /Dar de baja/, "service emails do not gain an unsubscribe link");
+    validateCorporateMessage({ subject: "Pedido QA-42", ...mail });
+  }
+});
+
+test("Supabase fallback templates retain confirmation tokens and purposes while using the official PNG", () => {
+  for (const [name, purpose, next] of [["confirmation", "email", "%2Fcuenta"], ["recovery", "recovery", "%2Fcuenta%2Fcontrasena"]]) {
+    const html = readFileSync(new URL(`../production-environment/supabase/templates/${name}.html`, import.meta.url), "utf8");
+    assert.ok(html.includes(`{{ .SiteURL }}/auth/confirmar?token_hash={{ .TokenHash }}&amp;type=${purpose}&amp;next=${next}"`));
+    assert.ok(html.includes(`src="${BRAND.email.logos.light}"`));
+    assert.match(html, /width="184" height="184" alt="Imperio Español"/);
+    assert.doesNotMatch(html, /\.svg|Dar de baja|<script/i);
+  }
 });
 
 test("SDK senders and the compatibility singleton use the common transport boundary", () => {

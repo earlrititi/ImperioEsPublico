@@ -65,8 +65,8 @@ test("a normal corporate archive retains its approved layout through a second pr
   });
   for (const html of [copy.body_html, preview.body_html]) {
     assert.ok(html.includes('data-imperio-email-layout="pergamino-v1"'));
-    assert.ok(html.includes("cabecera-v2.png"));
-    assert.ok(html.includes("firma-nao-v2.jpg"));
+    assert.ok(html.includes("imperio_es_principal.png"));
+    assert.doesNotMatch(html, /src="[^"]*firma-nao-v2\.jpg/);
     assert.ok(html.includes("12345678"));
     assert.ok(html.includes("IMPERIO10"));
   }

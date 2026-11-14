@@ -383,7 +383,8 @@ const error = Astro.url.searchParams.get("error") === "1";
 
   @media (max-width: 980px) {
     .contact-page {
-      overflow: visible;
+      overflow-x: clip;
+      overflow-y: visible;
     }
 
     .contact-layout {

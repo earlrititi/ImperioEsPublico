@@ -1,6 +1,7 @@
 import { NAV_ITEMS } from "../config/navigation";
 import { withBase } from "../utils/basePath";
 import { UserRound, ShoppingBag } from "lucide";
+import BrandLogo from "./BrandLogo";
 
 /** @param {{ persistent?: boolean, userEmail?: string | null }} props */
 export default function Navigation({ persistent = false, userEmail = null }) {
@@ -36,15 +37,11 @@ export default function Navigation({ persistent = false, userEmail = null }) {
             class="main-nav__brand text-2xl font-bold tracking-tight hover:text-[var(--color-red-accent)] transition-colors"
             data-return-to-hero
           >
-            <img
-              src={withBase("/images/logo-redv2-96.webp")}
-              alt="Imperio Español"
-              width="96"
-              height="74"
-              loading="eager"
-              decoding="async"
-              class="main-nav__logo"
-            />
+            <span class="main-nav__logo" aria-hidden="true">
+              <BrandLogo variant="principal" width={64} decorative class="main-nav__logo-image main-nav__logo-image--light" />
+              <BrandLogo variant="dark" width={64} decorative class="main-nav__logo-image main-nav__logo-image--dark" />
+              <BrandLogo variant="monochromeWhite" width={64} decorative class="main-nav__logo-image main-nav__logo-image--menu" />
+            </span>
           </a>
 
           <div class="main-nav__links-wrap hidden md:block">
@@ -222,11 +219,29 @@ export default function Navigation({ persistent = false, userEmail = null }) {
         }
 
         .main-nav__logo {
-          width: auto;
-          height: 2.7rem;
+          display: block;
+          position: relative;
+          width: 56px;
+          height: 56px;
           opacity: var(--home-nav-logo-opacity, 1);
-          transition: opacity 0.3s ease, transform 0.3s ease, filter 0.3s ease;
+          transition: opacity 0.3s ease, transform 0.3s ease;
         }
+
+        .main-nav__logo-image {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          opacity: 0;
+          transition: opacity 180ms ease;
+        }
+        #main-nav .main-nav__logo-image--light { opacity: 1; }
+        #main-nav:not([data-persistent]):not(.main-nav--hamburger-dark) .main-nav__logo-image--light,
+        #main-nav[data-nav-theme=dark] .main-nav__logo-image--light { opacity: 0; }
+        #main-nav:not([data-persistent]):not(.main-nav--hamburger-dark) .main-nav__logo-image--dark,
+        #main-nav[data-nav-theme=dark] .main-nav__logo-image--dark { opacity: 1; }
+        #main-nav.main-nav--menu-open .main-nav__logo-image--light,
+        #main-nav.main-nav--menu-open .main-nav__logo-image--dark { opacity: 0; }
+        #main-nav.main-nav--menu-open .main-nav__logo-image--menu { opacity: 1; }
 
         .main-nav__floating-links-layer {
           position: fixed;
@@ -284,7 +299,6 @@ export default function Navigation({ persistent = false, userEmail = null }) {
 
         .main-nav__brand:hover .main-nav__logo,
         .main-nav__brand:focus-visible .main-nav__logo {
-          filter: brightness(0);
           opacity: 1;
           transform: translateY(-1px);
         }
@@ -617,7 +631,7 @@ export default function Navigation({ persistent = false, userEmail = null }) {
 
         @media (min-width: 768px) {
           .main-nav__logo {
-            height: 2.95rem;
+            height: 56px;
           }
         }
 
@@ -632,7 +646,8 @@ export default function Navigation({ persistent = false, userEmail = null }) {
           }
 
           .main-nav__logo {
-            height: clamp(2.1rem, 10vw, 2.55rem);
+            height: 52px;
+            width: 52px;
           }
 
           .side-bar__panel {

@@ -32,7 +32,6 @@ export const createNavSurfaceController = (nav) => {
         if (control.dataset.navSurface === surface) continue;
         control.dataset.navSurface = surface;
         control.style.setProperty('--nav-item-ink', surface === 'dark' ? '#fff' : '#111');
-        control.style.setProperty('--nav-logo-filter', surface === 'dark' ? 'brightness(0) invert(1)' : 'none');
       }
     },
   };

@@ -6,7 +6,7 @@ const ARTICLE_IMAGE_SIZES =
 function ArticleCardContent({ article }) {
   return (
     <>
-      <div class={`article-card__image${article.wordmarkSrc ? " article-card__image--brand" : ""}`}>
+      <div class={`article-card__image${article.brandVariant ? " article-card__image--brand" : ""}`}>
         {article.imageAvifSrcSet ? (
           <picture>
             <source
@@ -38,17 +38,6 @@ function ArticleCardContent({ article }) {
             alt={article.imageAlt}
             width={article.imageWidth}
             height={article.imageHeight}
-            loading="lazy"
-            decoding="async"
-          />
-        )}
-        {article.wordmarkSrc && (
-          <img
-            class="article-card__brand-wordmark"
-            src={article.wordmarkSrc}
-            alt="Imperio Español"
-            width="633"
-            height="162"
             loading="lazy"
             decoding="async"
           />
@@ -152,7 +141,6 @@ export default function ArticlesGrid({ articles = ARTICLES_ITEMS }) {
 
         .article-card__image--brand {
           display: grid;
-          grid-template-rows: minmax(0, 1fr) auto;
           place-items: center;
           gap: clamp(0.5rem, 1.2vw, 1rem);
           padding: clamp(1.5rem, 4vw, 3.5rem);
@@ -161,16 +149,11 @@ export default function ArticlesGrid({ articles = ARTICLES_ITEMS }) {
         }
 
         .article-card__brand-symbol {
-          width: min(42%, 11rem);
+          width: auto;
           height: auto;
+          max-height: 100%;
           min-height: 0;
           object-fit: contain;
-        }
-
-        .article-card__brand-wordmark {
-          width: min(82%, 24rem);
-          height: auto;
-          filter: brightness(0);
         }
 
         .article-card h3 {

@@ -29,7 +29,7 @@ for(const host of ["imperioes.com","www.imperioes.com"]){
   await get(origin+"/api/admin/article-media",403,{method:"POST",headers:{Origin:origin,"Content-Type":"application/json"},body:"{}"});
   const script=await(await get(origin+"/_astro/"+editor)).text();
   assert.match(script,/Restaurar sin publicar/);assert.match(script,/\/api\/admin\/article-media/);
-  const logo=await get(origin+"/images/logo-redv2.png");assert.match(logo.headers.get("content-type"),/image\/png/);await logo.arrayBuffer();
+  const logo=await get(origin+"/brand/logos/imperio_es_principal.png");assert.match(logo.headers.get("content-type"),/image\/png/);await logo.arrayBuffer();
   const pdf=Buffer.from(await(await get(origin+"/recursos/7-historias-del-siglo-de-oro.pdf")).arrayBuffer());assert.equal(pdf.subarray(0,5).toString(),"%PDF-");
 }
 console.log(JSON.stringify({checks,servedCmsArtifact:editor,uncheckedNewsletter:true,privateApisProtected:true}));

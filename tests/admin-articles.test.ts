@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { ARTICLES_ITEMS } from "../src/config/home";
+import { BRAND } from "../src/config/brand";
 import {sanitizeArticleBody,validateArticleDraft,articleDraftPreview,safeArticleImage} from "../src/lib/admin-article-content";
 const draft={title:"El Siglo de Oro",slug:"el-siglo-de-oro",lead:"Resumen",category:"Historia",author:"Imperio E",imageSrc:"",imageAlt:"",imageCaption:"",publishedAt:"2026-10-08",seoTitle:"El Siglo de Oro",description:"Historia",body:"<h2>Literatura</h2><p>Texto</p>"};
 test("CMS rejects malformed slugs, dates and oversized content",()=>{
@@ -23,4 +24,17 @@ test("Every legacy article can be imported without changing its metadata or URL"
     assert.equal(parsed.slug,article.slug);
     assert.equal(parsed.imageSrc,article.imageSrc);
   }
+});
+
+test("CMS permits only exact official brand image paths while rejecting arbitrary SVGs",()=>{
+  for(const logo of Object.values(BRAND.logos)) {
+    assert.equal(safeArticleImage(logo.svg),true);
+    assert.equal(safeArticleImage(logo.png),true);
+  }
+  for(const path of ["/brand/logos/uploaded.svg","/brand/logos/imperio_es_principal.svg?onload=evil","/brand/logos/../evil.svg","/media/articles/evil.svg","/images/evil.svg","https://evil.test/brand/logos/imperio_es_principal.svg"]) {
+    assert.equal(safeArticleImage(path),false,path);
+  }
+  const clean=sanitizeArticleBody(`<img src="${BRAND.logos.principal.svg}" alt="Marca"><img src="/brand/logos/uploaded.svg"><svg onload="evil()"></svg>`);
+  assert.match(clean,/src="\/brand\/logos\/imperio_es_principal.svg"/);
+  assert.doesNotMatch(clean,/uploaded|onload|evil|<svg/);
 });

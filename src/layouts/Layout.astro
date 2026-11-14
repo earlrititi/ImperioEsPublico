@@ -10,6 +10,7 @@ import Footer from "../components/Footer.jsx";
 import GlobalHomeMark from "../components/GlobalHomeMark.astro";
 import Navigation from "../components/Navigation.jsx";
 import { SITE } from "../config/site";
+import { BRAND } from "../config/brand";
 import { withBase } from "../utils/basePath";
 import { canonicalUrl as buildCanonicalUrl, hasSearchParameters, serializeJsonLd } from "../lib/seo";
 
@@ -47,9 +48,7 @@ const {
 
 const pageTitle =
   exactTitle || title === SITE.name || title.includes(SITE.name) ? title : `${title} | ${SITE.name}`;
-const isGitHubPagesBuild = import.meta.env.BASE_URL.startsWith("/Imperio_web");
-const deploymentOrigin =
-  isGitHubPagesBuild ? "https://earlrititi-lang.github.io" : SITE.url;
+const deploymentOrigin = SITE.url;
 const canonicalUrl = buildCanonicalUrl(Astro.url.pathname);
 const excluded = noindex || hasSearchParameters(Astro.url) || (Astro.response.status ?? 200) >= 400;
 const ogImageUrl = new URL(withBase(ogImage), deploymentOrigin).toString();
@@ -59,7 +58,7 @@ const organizationSchema = {
   name: SITE.name,
   alternateName: SITE.alternateName,
   url: SITE.url,
-  logo: new URL("/images/logo-redv2.png", SITE.url).toString(),
+  logo: BRAND.metadata.organizationLogo,
   email: SITE.contactEmail,
   description: SITE.defaultDescription,
   sameAs: SITE.sameAs,
@@ -96,31 +95,38 @@ const jsonLd = {
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonicalUrl} />
     <meta property="og:image" content={ogImageUrl} />
+    {ogImage === SITE.defaultOgImage && <>
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
+      <meta property="og:image:alt" content={BRAND.metadata.socialImageAlt} />
+    </>}
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={pageTitle} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImageUrl} />
+    {ogImage === SITE.defaultOgImage && <meta name="twitter:image:alt" content={BRAND.metadata.socialImageAlt} />}
     <link rel="alternate" type="application/rss+xml" title={`Artículos de ${SITE.name}`} href={withBase("/feed.xml")} />
+    <link rel="icon" type="image/svg+xml" href={withBase(BRAND.metadata.favicon)} />
     <link
       rel="icon"
       type="image/png"
       sizes="32x32"
-      href={`${withBase("/favicon-32x32.png")}?v=20260902`}
+      href={`${withBase("/favicon-32x32.png")}?v=${BRAND.metadata.iconVersion}`}
     />
     <link
       rel="icon"
       type="image/png"
       sizes="16x16"
-      href={`${withBase("/favicon-16x16.png")}?v=20260902`}
+      href={`${withBase("/favicon-16x16.png")}?v=${BRAND.metadata.iconVersion}`}
     />
-    <link rel="icon" href={`${withBase("/favicon.ico")}?v=20260902`} sizes="any" />
-    <link rel="shortcut icon" href={`${withBase("/favicon.ico")}?v=20260902`} />
+    <link rel="icon" href={`${withBase("/favicon.ico")}?v=${BRAND.metadata.iconVersion}`} sizes="any" />
+    <link rel="shortcut icon" href={`${withBase("/favicon.ico")}?v=${BRAND.metadata.iconVersion}`} />
     <link
       rel="apple-touch-icon"
       sizes="180x180"
-      href={withBase("/apple-touch-icon.png")}
+      href={`${withBase("/apple-touch-icon.png")}?v=${BRAND.metadata.iconVersion}`}
     />
-    <link rel="manifest" href={withBase("/site.webmanifest")} />
+    <link rel="manifest" href={`${withBase("/site.webmanifest")}?v=${BRAND.metadata.iconVersion}`} />
     <meta name="apple-mobile-web-app-title" content={SITE.name} />
     <meta name="application-name" content={SITE.name} />
     <meta name="theme-color" content="#f2381e" />

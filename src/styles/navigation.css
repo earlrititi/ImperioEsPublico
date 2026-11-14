@@ -16,10 +16,14 @@ body:has(#main-nav:where([data-persistent])) #main-content {
   border: 0;
 }
 
-body:has(.papers-page, .storefront, .contact-page, .article-page) #main-nav:where([data-persistent]) {
+body:has(.papers-page, .storefront, .contact-page, .article-page, .member-surface, .empire-pillar, .instagram, .in-work-page) #main-nav:where([data-persistent]):not([data-nav-theme]) {
   --nav-ink: #fff;
   background: color-mix(in srgb, var(--color-black-papers) 50%, transparent);
 }
+
+/* Match the first rendered surface before the scroll controller initializes. */
+body:has(.papers-page, .storefront, .contact-page, .article-page, .member-surface, .empire-pillar, .instagram, .in-work-page) #main-nav[data-persistent]:not([data-nav-theme]) .main-nav__logo-image--light { opacity: 0; }
+body:has(.papers-page, .storefront, .contact-page, .article-page, .member-surface, .empire-pillar, .instagram, .in-work-page) #main-nav[data-persistent]:not([data-nav-theme]) .main-nav__logo-image--dark { opacity: 1; }
 
 #main-nav[data-persistent][data-nav-theme="light"] {
   background: rgb(255 255 255 / 50%);
@@ -136,16 +140,8 @@ body:has(.papers-page, .storefront, .contact-page, .article-page) #main-nav:wher
 }
 
 #main-nav:where([data-persistent]) .main-nav__logo {
-  height: 44px;
-  filter: var(--nav-logo-filter, none);
-}
-
-#main-nav:where([data-persistent]) .main-nav__brand:hover .main-nav__logo {
-  filter: none;
-}
-
-#main-nav:where([data-persistent]) .main-nav__brand[data-nav-surface="red"]:hover .main-nav__logo {
-  filter: brightness(0);
+  height: 52px;
+  width: 52px;
 }
 
 #main-nav:where([data-persistent]) .menu-button {
@@ -211,7 +207,7 @@ body:has(.papers-page, .storefront, .contact-page, .article-page) #main-nav:wher
   #main-nav .main-nav__actions { grid-column:2; }
   #main-nav .main-nav__links-wrap { display:none; }
   #main-nav .main-nav__brand { display:inline-flex; justify-self:start; visibility:visible !important; opacity:1 !important; pointer-events:auto !important; }
-  #main-nav .main-nav__logo { height:40px; opacity:1; }
+  #main-nav .main-nav__logo { height:52px; width:52px; opacity:1; }
   #main-nav .main-nav__actions { display:flex; visibility:visible; opacity:1; }
   #main-nav .menu-button { flex:0 0 48px; visibility:visible; opacity:1; }
   #main-nav .account-button--email{flex:0 1 auto;width:auto;max-width:min(32vw,170px);padding-inline:4px}

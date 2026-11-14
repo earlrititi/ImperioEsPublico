@@ -155,14 +155,11 @@ export default function HeroImperio() {
             <div class="hero-imperio__headline">
               <h1 class="hero-imperio__title">
                 <LogoImperio
+                  variant="dark"
                   width={720}
                   className="hero-imperio__wordmark"
-                  title="Imperio Español"
-                  classes={{
-                    corona: "hero-imperio__corona-part",
-                    imperio: "hero-imperio__imperio-part",
-                    espanol: "hero-imperio__espanol-part",
-                  }}
+                  alt="Imperio Español"
+                  fetchpriority="high"
                 />
               </h1>
             </div>
@@ -246,12 +243,6 @@ export default function HeroImperio() {
 
         .hero-imperio__lockup {
           --wordmark-w: min(70vw, 450px);
-          --imperio-x: 0px;
-          --imperio-y: 0px;
-          --imperio-opacity: 0.5;
-          --espanol-x: 0px;
-          --espanol-y: 0px;
-          --espanol-opacity: 1;
           --latin-x: 0px;
           --latin-y: 0px;
           --latin-opacity: 1;
@@ -287,36 +278,6 @@ export default function HeroImperio() {
           opacity: 0;
           transition: transform 1.2s cubic-bezier(0.22, 1, 0.36, 1),
             opacity 1.2s ease;
-        }
-
-        .hero-imperio__corona-part {
-          visibility: hidden;
-          
-        }
-
-        .hero-imperio__imperio-part,
-        .hero-imperio__espanol-part {
-          transform-box: fill-box;
-          transform-origin: center;
-          will-change: transform, opacity, filter;
-        }
-
-        .hero-imperio__imperio-part {
-          opacity: 0;
-          transform: translate(var(--imperio-x), calc(var(--imperio-y) + 28px));
-          transition: transform 1s cubic-bezier(0.22, 1, 0.36, 1),
-            opacity 1s ease;
-          transition-delay: 220ms;
-        }
-
-        .hero-imperio__espanol-part {
-          opacity: 0;
-          transform: translate(var(--espanol-x), calc(var(--espanol-y) + 130px));
-          filter: url(#logo-noise);
-          transition: transform 1.6s cubic-bezier(0.22, 1, 0.36, 1),
-            opacity 1.6s ease,
-            filter 1.2s ease;
-          transition-delay: 520ms;
         }
 
         .hero-imperio__latin-wrap {
@@ -446,17 +407,6 @@ export default function HeroImperio() {
           transform: translateY(0);
         }
 
-        .hero-imperio--wordmark-ready .hero-imperio__imperio-part {
-          opacity: var(--imperio-opacity);
-          transform: translate(var(--imperio-x), var(--imperio-y));
-        }
-
-        .hero-imperio--wordmark-ready .hero-imperio__espanol-part {
-          opacity: var(--espanol-opacity);
-          transform: translate(var(--espanol-x), var(--espanol-y));
-          filter: none;
-        }
-
         .hero-imperio--latin-ready .hero-imperio__latin-layers {
           opacity: 1;
         }
@@ -571,7 +521,7 @@ export default function HeroImperio() {
 
         @media (max-width: 768px) {
           .hero-imperio {
-            min-height: 100svh;
+            min-height: max(100svh, 640px);
             background: var(--color-white-pure);
           }
 
@@ -580,9 +530,9 @@ export default function HeroImperio() {
           }
 
           .hero-imperio__lockup {
-            --wordmark-w: min(84vw, 360px);
+            --wordmark-w: min(84vw, 360px, 40svh);
             left: 50%;
-            top: 46%;
+            top: calc(50% + 32px);
             transform: translate(-50%, -50%);
           }
 
@@ -592,7 +542,7 @@ export default function HeroImperio() {
 
           .hero-imperio__latin-wrap,
           .hero-imperio__latin-block {
-            width: min(92vw, 360px);
+            width: min(92vw, 360px, 40svh);
             max-width: calc(100vw - var(--space-4));
             overflow: hidden;
           }

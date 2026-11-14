@@ -126,6 +126,7 @@ globalThis.fetch = async (input, init) => {
   if (url.pathname === "/rest/v1/rpc/consume_rate_limit") return json(true);
   if (url.pathname === "/rest/v1/reservations") return json(reservation);
   if (url.pathname === "/rest/v1/marketing_leads") return json(null);
+  if (url.pathname === "/rest/v1/stripe_customer_mail_runtime") return json({ enabled: false, starts_at: null, livemode: false });
   if (url.pathname === "/rest/v1/subscriptions") return json(null);
   if (url.pathname === "/rest/v1/rpc/begin_shirt_payment")
     return json(attemptId);

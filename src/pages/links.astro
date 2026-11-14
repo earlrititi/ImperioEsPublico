@@ -2,6 +2,7 @@
 import Layout from "../layouts/Layout.astro";
 import { SITE } from "../config/site";
 import { withBase } from "../utils/basePath";
+import BrandLogo from "../components/BrandLogo";
 ---
 
 <Layout
@@ -15,14 +16,7 @@ import { withBase } from "../utils/basePath";
     <div class="links-shell">
       <header class="links-header">
         <a class="links-avatar" href={withBase("/")} aria-label="Ir a la portada de Imperio Español">
-          <img
-            src={withBase("/images/logo-redv2-320.webp")}
-            alt=""
-            width="320"
-            height="247"
-            loading="eager"
-            decoding="async"
-          />
+          <BrandLogo variant="principal" width={112} decorative />
         </a>
         <p class="links-kicker">Historia · Cultura · Memoria</p>
         <h1 class="links-title">Imperio Español</h1>

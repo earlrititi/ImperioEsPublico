@@ -12,6 +12,8 @@ import { breadcrumbs, formatEditorialDate } from "../../lib/seo";
 import HistoricalBlocks from "../../components/editorial/HistoricalBlocks.astro";
 import Layout from "../../layouts/Layout.astro";
 import { withBase } from "../../utils/basePath";
+import { BRAND } from "../../config/brand";
+import BrandLogo from "../../components/BrandLogo";
 import { publishedArticles, publishedArticleBody } from "../../lib/published-articles";
 
 export const prerender = false;
@@ -72,7 +74,7 @@ const structuredData = [articleSchema(article), breadcrumbs([
 <Layout
   title={article.seoTitle}
   description={article.description}
-  ogImage={article.imageSrc}
+  ogImage={"brandVariant" in article && article.brandVariant ? BRAND.metadata.socialImage : article.imageSrc}
   footerVariant="dark"
   structuredData={structuredData}
   ogType="article"
@@ -104,40 +106,24 @@ const structuredData = [articleSchema(article), breadcrumbs([
 
       {article.imageSrc && <figure class="article-page__figure">
         {
-          "wordmarkSrc" in article ? (
+          "brandVariant" in article && article.brandVariant ? (
           <div
             class="article-page__media article-page__media--brand"
             role="img"
             aria-label={article.imageAlt}
           >
-            <img
-              class="article-page__brand-symbol"
-              src={article.imageSrc}
-              alt=""
-              width={article.imageWidth}
-              height={article.imageHeight}
-              decoding="async"
-              fetchpriority="high"
-            />
-            <img
-              class="article-page__brand-wordmark"
-              src={article.wordmarkSrc}
-              alt=""
-              width="633"
-              height="162"
-              decoding="async"
-            />
+            <BrandLogo variant="dark" class="article-page__brand-symbol" width={360} decorative fetchpriority="high" />
           </div>
           ) : (
           <picture class="article-page__media">
             <source
               type="image/avif"
-              srcset={article.imageAvifSrcSet}
+              srcset={"imageAvifSrcSet" in article ? article.imageAvifSrcSet : undefined}
               sizes="(max-width: 1100px) 100vw, 1100px"
             />
             <source
               type="image/webp"
-              srcset={article.imageWebpSrcSet}
+              srcset={"imageWebpSrcSet" in article ? article.imageWebpSrcSet : undefined}
               sizes="(max-width: 1100px) 100vw, 1100px"
             />
             <img
@@ -298,7 +284,7 @@ const structuredData = [articleSchema(article), breadcrumbs([
     text-underline-offset: 0.18em;
   }
 
-  .article-page__media img:not(.article-page__brand-symbol):not(.article-page__brand-wordmark) {
+  .article-page__media img:not(.article-page__brand-symbol) {
     display: block;
     width: 100%;
     height: auto;
@@ -306,7 +292,6 @@ const structuredData = [articleSchema(article), breadcrumbs([
 
   .article-page__media--brand {
     display: grid;
-    grid-template-rows: minmax(0, 1fr) auto;
     place-items: center;
     gap: clamp(1.25rem, 3vw, 2.5rem);
     min-height: clamp(22rem, 55vw, 38rem);
@@ -314,16 +299,10 @@ const structuredData = [articleSchema(article), breadcrumbs([
   }
 
   .article-page__brand-symbol {
-    width: min(32vw, 15rem);
+    width: min(72vw, 24rem);
     height: auto;
     min-height: 0;
     object-fit: contain;
-  }
-
-  .article-page__brand-wordmark {
-    width: min(72vw, 34rem);
-    height: auto;
-    filter: brightness(0) invert(1);
   }
 
   .article-page__header {
@@ -483,7 +462,7 @@ const structuredData = [articleSchema(article), breadcrumbs([
     }
     .article-page__header h1 { font-size:3rem; line-height:1.08; }
     .article-page__figure { width:calc(100% - 2rem); max-width:640px; margin-inline:auto; }
-    .article-page__media img:not(.article-page__brand-symbol):not(.article-page__brand-wordmark) { max-height:360px; object-fit:contain; }
+    .article-page__media img:not(.article-page__brand-symbol) { max-height:360px; object-fit:contain; }
     .article-page__paywall-actions .btn { flex:1 1 12rem; }
   }
 

@@ -1,4 +1,9 @@
 import sanitizeHtml from "sanitize-html";
+import { BRAND } from "../config/brand";
+
+// The supplied, version-controlled masters are the only allowed SVG images.
+// User-uploaded SVGs and arbitrary paths under /brand remain disallowed.
+const OFFICIAL_BRAND_IMAGES = new Set<string>(Object.values(BRAND.logos).flatMap((logo) => [logo.svg, logo.png]));
 
 export const ARTICLE_SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 export type ArticleDraft = {
@@ -8,6 +13,7 @@ export type ArticleDraft = {
 };
 
 export function safeArticleImage(value: string) {
+  if (OFFICIAL_BRAND_IMAGES.has(value)) return true;
   // Local media only. Uploads will be served from the same-origin media route.
   let decoded:string;
   try{decoded=decodeURIComponent(value);}catch{return false;}

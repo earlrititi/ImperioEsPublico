@@ -6,11 +6,10 @@ import tailwindcss from '@tailwindcss/vite';
 
 import vercel from '@astrojs/vercel';
 
-const base = process.env.GITHUB_PAGES === 'true' ? '/Imperio_web' : '/';
-
 // https://astro.build/config
 export default defineConfig({
-  base,
+  site: 'https://imperioes.com',
+  base: '/',
   output: 'server',
   redirects: {
     '/mentidero': '/foro'

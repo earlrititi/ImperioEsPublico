@@ -2,6 +2,8 @@
 
 Fecha de revisión: 14 de noviembre de 2026. Fuente autorizada: `imperio_es_logos_png_svg.zip` proporcionado por el propietario. Las normas generales están en `BRAND_IDENTITY.md`.
 
+**Aplicación del 15 de noviembre de 2026:** renderer publicado en producción, PNG canónicos comprobados con HTTP 200 y SHA-256 exacto, dos respaldos de Supabase guardados y verificados al recargar, y prueba recibida en Gmail. El hook Send Email continúa activo y conserva su endpoint de la aplicación. Los apartados anteriores de preparación se mantienen como registro; el estado final y sus evidencias están en `REBRANDING_REPORT.md`.
+
 ## Implementación
 
 `src/lib/corporate-email.ts` es el layout compartido de los correos. `prepareCorporateEmail` lo aplica en la frontera común del transporte existente. El envío sigue utilizando Resend; Supabase mantiene su configuración SMTP existente. IONOS se utiliza en el lector de buzón, sin cambiar su configuración ni introducir un transporte nuevo.
@@ -52,7 +54,7 @@ Las antiguas imágenes compuestas `cabecera-v2.png` y `firma-nao-v2.jpg` contien
 
 No se ha encontrado una secuencia comercial independiente de `placed_order`: su definición contiene cero pasos deliberadamente, porque las confirmaciones transaccionales cubren el pedido. No se ha añadido una secuencia duplicada. Los tipos solicitados en el encargo tienen representación en los flujos enumerados; algunos comparten layout o renderizan contenido desde datos, en lugar de tener un archivo HTML por correo.
 
-El código no permite acreditar por sí solo los ajustes actuales del panel de Resend, las plantillas desplegadas en Supabase ni los correos que Stripe envía directamente desde su panel. No se han cambiado configuraciones externas de autenticación, proveedores ni pagos. Las dos plantillas SMTP de respaldo quedan preparadas en el repositorio para su publicación mediante el procedimiento existente, cuando corresponda.
+El panel Supabase del proyecto `pjrqozlyrjgugdraoght` se revisó el 15 de noviembre: confirma el hook Send Email activo con endpoint `https://imperioes.com/api/auth/send-email-hook`. Se guardó la presentación oficial en los respaldos Confirm sign up y Reset password, manteniendo sus asuntos, cuerpos originales, tokens y enlaces. Se verificó persistencia al recargar. No se modificaron hook, SMTP, claves, opciones de seguridad, proveedores ni pagos. Los correos que Stripe envía directamente desde su panel siguen fuera del renderer de la aplicación y no se han modificado.
 
 ## Previsualización y comprobaciones
 
@@ -93,4 +95,6 @@ node --import tsx scripts/test-brand-email.ts --send
 
 Se utilizan exclusivamente `earlrititi@gmail.com` y el remitente `contacto@imperioes.com`. El script no admite otros destinatarios, no consulta clientes ni colas, y emplea el transporte existente con una clave de idempotencia específica. Antes del envío comprueba que ambos PNG públicos responden como PNG y coinciden byte a byte mediante SHA-256 con los archivos locales oficiales. La clave del proveedor se toma del entorno sin imprimirla; el script no carga ni modifica archivos de configuración.
 
-La simulación del 14 de noviembre devolvió HTTP 404 para los dos PNG canónicos y `providerConfigured=false` en el proceso sin cargar variables locales. Resultado: `ready=false`; no se realizó ningún envío. No se envía una prueba con imágenes rotas mientras los recursos solo están en una rama o preview. `prepared-test-message.json`, generado junto a las vistas HTML, permite revisar el contenido antes del envío.
+La simulación inicial del 14 de noviembre devolvió HTTP 404 para los dos PNG canónicos y `providerConfigured=false` en el proceso sin cargar variables locales; se bloqueó correctamente el envío. Tras publicar, el preflight del 15 de noviembre confirmó proveedor existente y ambos PNG HTTP 200 idénticos al ZIP. Se realizó un único envío autorizado con asunto `[PRUEBA DE IDENTIDAD] Imperio Español — sin cobro`; Resend lo aceptó y Gmail confirmó su recepción en `earlrititi@gmail.com`, con remitente `contacto@imperioes.com`, HTML, texto plano y referencia al PNG oficial. El detalle está en `REBRANDING_REPORT.md`. No hubo envíos a clientes, cambios de cuenta, cobros ni ejecución de colas.
+
+La vista previa del panel Supabase aplica una CSP propia que bloquea imágenes externas de `imperioes.com`; se comprobó el motivo en el diagnóstico del navegador y no se alteró esa protección. Esa restricción del panel no cambia el HTML de correo guardado ni la disponibilidad pública de los PNG.

@@ -59,7 +59,7 @@ const message = renderCorporateEmail({
 
 La cabecera clara usa `BRAND.email.logos.light` (`imperio_es_principal.png`) y la oscura `BRAND.email.logos.dark` (`imperio_es_fondos_oscuros.png`), en HTTPS absoluto bajo `https://imperioes.com/brand/logos/`. El diseño usa tablas de presentación, dimensiones explícitas, estilos inline, `bgcolor`, alternativa de texto y ajustes móviles. El código del flujo sigue siendo responsable de sus variables, botones, importes, tokens y textos legales/baja. La plantilla base no añade enlaces de baja a comunicaciones transaccionales.
 
-Se conserva el marcador interno `pergamino-v1` para reconocer reintentos y mensajes archivados; los mensajes nuevos incorporan `data-imperio-brand="official-20261114"`. Las imágenes de pergamino anteriores siguen accesibles exclusivamente para mensajes históricos, cuyos snapshots no se reescriben. El interruptor de rollback existente conserva su comportamiento. Las plantillas de fallback de Supabase en `production-environment/supabase/templates/` usan el PNG oficial sin cambiar sus variables Go; requieren el proceso de publicación de Auth correspondiente para aplicarse al servicio externo.
+Se conserva el marcador interno `pergamino-v1` para reconocer reintentos y mensajes archivados; los mensajes nuevos incorporan `data-imperio-brand="official-20261114"`. Las imágenes de pergamino anteriores siguen accesibles exclusivamente para mensajes históricos, cuyos snapshots no se reescriben. El interruptor de rollback existente conserva su comportamiento. Los respaldos de confirmación y recuperación de Supabase usan el PNG oficial sin cambiar sus variables Go; se aplicaron y verificaron en el panel del proyecto `pjrqozlyrjgugdraoght` el 15 de noviembre de 2026. Su hook Send Email permanece activo: los mensajes habituales usan el renderer de la aplicación publicada.
 
 Previsualización sin envío:
 
@@ -96,6 +96,6 @@ Usar Node compatible con la versión instalada de Astro (esta entrega se verific
 
 ## Publicación
 
-Repositorio `earlrititi/ImperioEsPublico`; proyecto Vercel `imperio-espa-ol-deploy`; rama de trabajo `feat/rebranding-oficial-imperio`. El flujo existente solo despliega automáticamente `preview` y `main`. La preview se prepara mediante actualización normal de `preview`, sin forzar historial. Integrar en `main` publicará automáticamente en `imperioes.com` y `www.imperioes.com`; esta entrega no integra en `main` ni cambia variables del servicio.
+Repositorio `earlrititi/ImperioEsPublico`; proyecto Vercel `imperio-espa-ol-deploy`; rama de implementación `feat/rebranding-oficial-imperio`. El flujo existente despliega `preview` y `main`. El PR #2 se integró normalmente en `main` el 15 de noviembre de 2026, publicando el rebranding en `imperioes.com` y `www.imperioes.com` con commit `69bbb4996d11c5c66bfaddfd49d4dbf02863a2cf`. No se forzó historial ni se cambiaron variables del servicio. Los PNG canónicos están publicados y el envío único de prueba fue recibido en Gmail.
 
 El informe de ejecución, limitaciones, pruebas reales y capturas está en [REBRANDING_REPORT.md](REBRANDING_REPORT.md).

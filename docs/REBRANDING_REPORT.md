@@ -1,6 +1,8 @@
 # Rebranding oficial de Imperio Español
 
-Informe de ejecución del 14 de noviembre de 2026. Repositorio: `earlrititi/ImperioEsPublico`. Base anterior: `844152ba23e378ae4cc47971c6ac482b6f1f505f`. El texto pegado se ha tratado como encargo del usuario; los archivos del proyecto y el ZIP se han inspeccionado como datos del trabajo.
+Informe de implementación del 14 de noviembre y aplicación en producción y Supabase del 15 de noviembre de 2026. Repositorio: `earlrititi/ImperioEsPublico`. Base anterior: `844152ba23e378ae4cc47971c6ac482b6f1f505f`. El texto pegado se ha tratado como encargo del usuario; los archivos del proyecto y el ZIP se han inspeccionado como datos del trabajo.
+
+**Estado final:** rebranding publicado en `https://imperioes.com`, respaldos de confirmación y recuperación guardados en Supabase, hook de correo conservado y prueba recibida en Gmail. Se conserva como limitación independiente la configuración antigua de Supabase en la rama de preview.
 
 ## A. Archivos modificados
 
@@ -13,7 +15,7 @@ Informe de ejecución del 14 de noviembre de 2026. Repositorio: `earlrititi/Impe
 - Regresión: `tests/brand.test.ts`, `article-brand.test.ts` y las pruebas existentes de artículos administrativos, correo administrativo, catálogo Auth, layout corporativo, lector y archivo histórico de correo.
 - Documentación: [BRAND_IDENTITY.md](BRAND_IDENTITY.md), [EMAIL_REBRANDING.md](EMAIL_REBRANDING.md), este informe y capturas en `docs/rebranding/`.
 
-No se modifican los servicios Stripe, los endpoints de pago, los precios, impuestos, inventario, destinatarios administrativos, credenciales, configuración Auth ni textos jurídicos. No hay migraciones de base de datos ni dependencias nuevas.
+No se modifican los servicios Stripe, los endpoints de pago, los precios, impuestos, inventario, destinatarios administrativos, credenciales, políticas o mecanismos de autenticación ni textos jurídicos. En Supabase se cambió únicamente el HTML visual de los dos respaldos de correo indicados, conservando asuntos, cuerpos originales, variables y acciones. No hay migraciones de base de datos ni dependencias nuevas.
 
 ## B. Identidad visual implementada
 
@@ -51,7 +53,9 @@ La cabecera clara usa principal PNG y la oscura dark PNG, en URL canónica HTTPS
 | Menú por teclado | Tab alcanza los enlaces; Escape cierra y devuelve foco al botón |
 | Correos | 50 HTML; 120 renders; 34 comparaciones de datos/enlaces conservadas |
 | ZIP | 12 originales idénticos byte por byte, transparencia y tamaños comprobados |
-| Prueba de envío | Simulación ejecutada; no se envía por PNG canónico aún no publicado |
+| Producción tras publicación | 39 comprobaciones HTTP correctas y 12 hashes oficiales; nueve capturas reales de escritorio/móvil, sin errores JavaScript ni desbordamientos |
+| Supabase | Confirmación y recuperación guardadas desde el panel del proyecto correcto; persistencia comprobada al recargar; hook activo conservado |
+| Prueba de envío | Envío único autorizado aceptado por Resend y recibido en Gmail el 15 de noviembre; PNG canónicos HTTP 200 y hashes exactos |
 
 El Node predeterminado del equipo era 22.13.0, insuficiente para el Astro instalado. Las comprobaciones se ejecutaron con el Node 24.22.2 ya disponible, sin cambiar dependencias. Astro y Preact corresponden a las versiones del lockfile del proyecto (Astro 7.4.2, Preact 10.29.8).
 
@@ -63,16 +67,32 @@ Los logs y datos de QA completos están en las carpetas locales ignoradas `tmp/r
 
 Proyecto verificado: `imperio-espa-ol-deploy`, ID `prj_sGnSgdWDmz3kzD8yHidTtA1US8DH`, equipo `earlrititi-2806s-projects`, Node 24.x, repositorio `earlrititi/ImperioEsPublico`, producción `main`.
 
-Rama de trabajo: `feat/rebranding-oficial-imperio`. La rama `preview` se actualizó de forma normal, sin force push. Se conserva la configuración de despliegue por ramas; abrir el PR generó además una preview de la propia rama desde la integración de Vercel. **Integrar en `main` publica automáticamente en `imperioes.com` y `www.imperioes.com`.** No se ha integrado en producción.
+Rama de implementación: `feat/rebranding-oficial-imperio`. La rama `preview` se actualizó de forma normal, sin force push. Tras la instrucción del propietario de aplicar el cambio y terminarlo en Supabase, se publicó mediante el flujo existente: quitar el estado de borrador e integrar el PR revisado en `main`, sin forzar historial ni cambiar variables del servicio.
 
 - Commit de implementación verificado: `b4c148afc1d519aae73e9c7ecce12c3e539c2c1c` (incluye `c2ee569` con los respaldos de Auth y `40bc6c9` con el sistema común). El ajuste final del favicon pasó 4/4 tests específicos, además de las comprobaciones anteriores.
-- [PR #2, borrador](https://github.com/earlrititi/ImperioEsPublico/pull/2), hacia `main`, sin conflictos.
+- [PR #2 integrado](https://github.com/earlrititi/ImperioEsPublico/pull/2), con cabeza exacta revisada `432f67c92eb7dfe4b77fc7e0fc91dfbbf0d054c5`.
+- Commit de publicación: `69bbb4996d11c5c66bfaddfd49d4dbf02863a2cf`.
+- Despliegue de producción `dpl_7c6qFiXA9LbFaGjves6dUCuKGD7J`, **READY**: [URL inmutable](https://imperio-espa-ol-deploy-gly2s4l0z-earlrititi-2806s-projects.vercel.app), [dominio público](https://imperioes.com).
 - [Preview del commit](https://imperio-espa-ol-deploy-jngcl7bbf-earlrititi-2806s-projects.vercel.app), despliegue `dpl_GR9QUTEcpguT4MQWygT9iWRvo4CW`, estado **READY** confirmado en Vercel; 22 recursos estáticos correctos, incluidos el favicon SVG actualizado y los 12 hashes oficiales.
 - [Alias estable de la rama preview](https://imperio-espa-ol-deploy-git-preview-earlrititi-2806s-projects.vercel.app).
 
 La preview mantiene Vercel Authentication. La CLI autenticada verifica 22 rutas estáticas y los hashes originales, sin abrir su acceso ni cambiar variables. **READY acredita el build; la página inicial remota devuelve HTTP 500.** El log de la función indica `ARTICLE_CATALOG_UNAVAILABLE`: el dominio de Supabase de pruebas configurado en preview, `joicpkgvggfxzrdazisx.supabase.co`, devuelve `ENOTFOUND`. Una consulta de metadatos en el entorno local válido sí funciona. La lectura remota se comprobó sin el override de `.env.local` de la CLI para distinguir ambos entornos; no se han cambiado claves, datos ni configuración externa.
 
-La revisión visual remota de inicio queda pendiente de un Supabase de pruebas vigente. La revisión funcional local está disponible en `http://127.0.0.1:4321/`, con 39 comprobaciones HTTP correctas y las capturas de 56 estados. No se ha sustituido la base de datos de preview por la de producción. Producción permanece en `844152ba23e378ae4cc47971c6ac482b6f1f505f`. La actualización posterior de este informe solo afecta a documentación; el código de la rama `preview` queda en el commit de implementación indicado.
+La configuración de datos de la rama de preview sigue pendiente de un Supabase de pruebas vigente; no se ha repuntado a producción. **Esto no afecta al despliegue de producción**, que utiliza su conexión existente y pasó las 39 comprobaciones públicas, incluidos portada, tienda, carrito, contacto, legales, iconos y metadatos. Se revisaron nueve capturas reales de escritorio y móvil, con cierre del menú mediante Escape, sin imágenes fallidas, errores JavaScript, deformaciones o desbordamientos. Las actualizaciones posteriores de este informe solo afectan a documentación.
+
+### Aplicación en Supabase
+
+Proyecto confirmado en Chrome: `pjrqozlyrjgugdraoght`, nombre `ImperioE`, estado `Healthy`. Se verificó en el panel que **Send Email hook** está activo y apunta a `https://imperioes.com/api/auth/send-email-hook`; el propio panel confirma que los envíos activos pasan por ese hook en lugar de las plantillas SMTP. La publicación del renderer de la aplicación aplica por tanto la identidad a los correos activos sin modificar el hook.
+
+Se actualizaron además los respaldos de **Confirm sign up** y **Reset password**. Antes de editar se seleccionó y comprobó el HTML original del editor. Se conservó literalmente su cuerpo interno, sus asuntos, `{{ .SiteURL }}`, `{{ .TokenHash }}` y los enlaces con propósitos `email` y `recovery`. Solo se añadió el layout de tablas con el PNG principal oficial a 184 × 184 px. Se guardaron ambos y se recargó cada página para comprobar la persistencia. No se tocaron SMTP, claves, URL de destino del hook, estado del hook, usuarios, proveedores, redirecciones, límites ni opciones de seguridad.
+
+La vista previa del panel bloquea las imágenes externas de `imperioes.com` por su propia CSP `img-src`. Se confirmó leyendo el diagnóstico del navegador; **no se debilitó la política ni se cambió el logo por otro recurso**. Los PNG públicos respondieron HTTP 200 con hash oficial y el correo de prueba recibido en Gmail conserva el URL PNG correcto.
+
+### Envío de prueba y recepción
+
+El preflight confirmó `ready=true`, proveedor existente configurado y ambos PNG canónicos coincidentes con los originales. Se ejecutó `scripts/test-brand-email.ts --send`, exclusivamente desde `Imperio Español <contacto@imperioes.com>` a `earlrititi@gmail.com`, con la clave de idempotencia específica prevista. Resend aceptó el mensaje con ID `01a1deee-8167-7635-ac8e-ce3abb3e27f4`.
+
+La recepción se comprobó mediante la conexión Gmail, buscando solo ese asunto, remitente y destinatario. Mensaje `1a1deee8446551b7`, en `INBOX`, asunto `[PRUEBA DE IDENTIDAD] Imperio Español — sin cobro`. Su MIME incluye HTML y texto plano, y referencia al PNG oficial absoluto. [Abrir la prueba en Gmail](https://mail.google.com/mail/u/?authuser=earlrititi%40gmail.com#all/1a1deee8446551b7). Esta comprobación acredita recepción y contenido, sin atribuir una certificación visual a Outlook o Apple Mail. No se enviaron mensajes a clientes ni se activaron automatizaciones, cobros o cambios de cuenta.
 
 ## F. Problemas detectados y resolución
 
@@ -90,10 +110,8 @@ La revisión visual remota de inicio queda pendiente de un Supabase de pruebas v
 ## G. Pendientes y límites
 
 - Completar el renderizado remoto de la preview con un proyecto Supabase de pruebas válido. Se solicitó al propietario únicamente el nombre o URL del proyecto, sin claves. Mientras tanto, la revisión local permanece funcional; no se repunta a producción ni se sustituyen credenciales.
-- Publicación en producción mediante revisión e integración del PR. Los PNG absolutos del correo seguirán devolviendo 404 en el dominio canónico hasta publicar esos archivos. La prueba preparada impide enviar con imágenes rotas.
-- Ejecutar el envío autorizado únicamente a `earlrititi@gmail.com`, desde `contacto@imperioes.com`, cuando estén publicados los recursos y el proceso disponga del proveedor configurado. El script no consulta destinatarios reales ni cambia configuración.
-- Comprobar el resultado en Gmail, Outlook y Apple Mail reales. Las capturas actuales son de navegador.
-- Los respaldos SMTP de Supabase se entregan actualizados en el repositorio; no se cambió la configuración externa de autenticación. Los logos de correos que Stripe genere exclusivamente desde su panel y campañas externas ajenas al repositorio no pueden acreditarse desde este código y no se modificaron.
+- Validación visual nativa en Outlook y Apple Mail. La recepción en Gmail y su HTML/MIME sí están comprobados; las capturas de las plantillas siguen siendo de Chromium.
+- Los correos que Stripe genere exclusivamente desde su propio panel y las campañas externas ajenas al repositorio no pueden acreditarse desde el código de la aplicación y no se modificaron. Se respetó la prohibición de cambiar la integración de pagos.
 
 ## H. Comparación visual real
 
@@ -109,3 +127,13 @@ Capturas anteriores de la web: producción vigente antes del cambio. Posteriores
 | Menú móvil | [Antes](rebranding/before/mobile-menu-open.png) | [Después](rebranding/after/mobile-menu-open.png) |
 | Email de confirmación/pedido, fixture | [Antes](rebranding/before/desktop-order.png) | [Después](rebranding/after/desktop-order.png) |
 | Email de carrito abandonado, paso real con datos ficticios | [Antes](rebranding/before/desktop-automation-cart-hour4.png) | [Después](rebranding/after/desktop-automation-cart-hour4.png) |
+
+Capturas adicionales **reales del dominio de producción después de publicar**, el 15 de noviembre:
+
+| Vista de producción | Escritorio | Móvil |
+| --- | --- | --- |
+| Inicio y navbar oscuro | [Ver](rebranding/production/desktop-home-top.png) | [Ver](rebranding/production/mobile-home-top.png) |
+| Navbar tras scroll | [Ver](rebranding/production/desktop-home-scrolled.png) | [Ver](rebranding/production/mobile-home-scrolled.png) |
+| Footer | [Ver](rebranding/production/desktop-footer.png) | [Ver](rebranding/production/mobile-footer.png) |
+| Camiseta Imperial | [Ver](rebranding/production/desktop-product.png) | [Ver](rebranding/production/mobile-product.png) |
+| Menú abierto | — | [Ver](rebranding/production/mobile-menu-open.png) |

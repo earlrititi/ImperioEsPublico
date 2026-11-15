@@ -86,6 +86,7 @@ globalThis.fetch = async (input, options) => {
     case "/auth/v1/user": return json({ id: userId, email: "fixture@example.invalid", email_confirmed_at:"2026-01-01", aud: "authenticated", role: "authenticated" });
     case "/rest/v1/subscription_checkouts": return json(request.method==="GET"?null:[]);
     case "/rest/v1/admin_notification_history": return json([]);
+    case "/rest/v1/stripe_customer_mail_runtime": return json({ enabled: false, starts_at: null, livemode: false });
     case "/rest/v1/cms_articles": return json([]);
     case "/rest/v1/rpc/claim_subscription_checkout": return json({attempt_id:crypto.randomUUID(),parameters:body.p_parameters,expires_at:new Date(Date.now()+23*3600000).toISOString()});
     case "/emails":

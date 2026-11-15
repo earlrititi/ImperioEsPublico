@@ -1,0 +1,90 @@
+{
+  "source": "imperio_es_logos_png_svg.zip",
+  "sourceSha256": "f990ca3f86cad764ea4bb1725d1b3b043a0323b2fb44906119bb82caa9e15932",
+  "files": {
+    "imperio_es_fondos_oscuros.png": {
+      "sha256": "7e998ee8f455d58e2c3d16e8105d8737b0cf6956b90d4c2e4581edb33491c317",
+      "bytes": 294429,
+      "width": 1254,
+      "height": 1254,
+      "hasAlpha": true
+    },
+    "imperio_es_fondos_oscuros.svg": {
+      "sha256": "79c42eef35a8d5715e1a6e374037703d1b24301b46322923a60c187d83e8aac1",
+      "bytes": 47937,
+      "width": 1254,
+      "height": 1254,
+      "hasAlpha": true
+    },
+    "imperio_es_isotipo.png": {
+      "sha256": "2e5472a61f4ee336d38d6b059d8528a722cacd3b98a5ee51dda3ae2abfe3e19e",
+      "bytes": 234026,
+      "width": 981,
+      "height": 904,
+      "hasAlpha": true
+    },
+    "imperio_es_isotipo.svg": {
+      "sha256": "7208547683115eb2960b64abf3f1b1899d6c919a85bdd52d6cc711e9db8f27fc",
+      "bytes": 26302,
+      "width": 981,
+      "height": 904,
+      "hasAlpha": true
+    },
+    "imperio_es_monocromatico_blanco.png": {
+      "sha256": "31517e56625b8672f12450144efb431f8cf801606ba8049d83111905d04c55d9",
+      "bytes": 153390,
+      "width": 1254,
+      "height": 1254,
+      "hasAlpha": true
+    },
+    "imperio_es_monocromatico_blanco.svg": {
+      "sha256": "4d4b2055e2648cf3891bf44b7606962796df66a33c6d31bba01badd90a843bc3",
+      "bytes": 47937,
+      "width": 1254,
+      "height": 1254,
+      "hasAlpha": true
+    },
+    "imperio_es_monocromatico_negro.png": {
+      "sha256": "02e8ab52d1c621d2335b3ca1342828601f406b8fd09428701d8fe6fd7537dfb4",
+      "bytes": 145806,
+      "width": 1254,
+      "height": 1254,
+      "hasAlpha": true
+    },
+    "imperio_es_monocromatico_negro.svg": {
+      "sha256": "da7d4b480dee5cdae947877ceedc697029126aa2aa78386a127da990e8c30744",
+      "bytes": 47937,
+      "width": 1254,
+      "height": 1254,
+      "hasAlpha": true
+    },
+    "imperio_es_principal.png": {
+      "sha256": "0ef305391b16e7e15f027d3ac79ab9c0a24b674db83a4af3d36f65b3c4c9ab67",
+      "bytes": 351069,
+      "width": 1254,
+      "height": 1254,
+      "hasAlpha": true
+    },
+    "imperio_es_principal.svg": {
+      "sha256": "22651ee10205f9bbf1376296072fb98134dcc3e49da95bd1be54ab0665b6d93f",
+      "bytes": 47937,
+      "width": 1254,
+      "height": 1254,
+      "hasAlpha": true
+    },
+    "imperio_es_tipografico.png": {
+      "sha256": "254b7486b8f0323f62c4836d2b49a5e75ffc16b1425cd4b6f63b7ca746229d74",
+      "bytes": 108133,
+      "width": 1081,
+      "height": 355,
+      "hasAlpha": true
+    },
+    "imperio_es_tipografico.svg": {
+      "sha256": "85de17bfd4a7272bb8e89f888b6acbad16d4e39749831b798e991fece2494be7",
+      "bytes": 20126,
+      "width": 1081,
+      "height": 355,
+      "hasAlpha": true
+    }
+  }
+}

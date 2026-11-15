@@ -43,12 +43,6 @@ export const HERO_IMAGE_MOBILE_AVIF_SRC = mobilePreloaderSourceSet(
 );
 
 export const HERO_LAYER_VARS = {
-  "--imperio-x": "0px",
-  "--imperio-y": "0px",
-  "--imperio-opacity": 1,
-  "--espanol-x": "0px",
-  "--espanol-y": "0px",
-  "--espanol-opacity": 1,
   "--latin-x": "0px",
   "--latin-y": "0px",
   "--latin-opacity": 0.9,

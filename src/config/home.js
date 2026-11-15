@@ -1,4 +1,5 @@
 import { withBase } from "../utils/basePath";
+import { BRAND } from "./brand";
 
 export const PLAN_COMPARISON_INTRO =
   "Compara precios y ventajas de Piquero, Arcabucero y Maestre de Campo.";
@@ -128,11 +129,11 @@ export const ARTICLES_ITEMS = [
     publishedAt: "2026-09-03",
     sourceFile: "Bienvenidos a la web del Imperio Español.txt",
     href: withBase("/papeles-y-tratados/bienvenidos-a-la-web-del-imperio-espanol"),
-    imageSrc: withBase("/images/logo-redv2-320.webp"),
+    imageSrc: withBase(BRAND.logos.principal.svg),
     imageAlt: "Emblema de Imperio Español",
-    imageWidth: 320,
-    imageHeight: 247,
-    wordmarkSrc: withBase("/images/imperio-espanol-wordmark.svg"),
+    imageWidth: BRAND.logos.principal.width,
+    imageHeight: BRAND.logos.principal.height,
+    brandVariant: "principal",
     imageCaption: "Emblema y marca editorial de Imperio Español.",
     imageCredit: "Imperio Español",
     imageSource: "Archivo del proyecto",

@@ -1,9 +1,12 @@
 import sanitizeHtml from "sanitize-html";
 import { SITE } from "../config/site";
+import { BRAND } from "../config/brand";
 
+// Stable renderer identity: preserve detection of frozen retries and archived mail.
 export const CORPORATE_EMAIL_LAYOUT = "pergamino-v1";
-export const CORPORATE_EMAIL_ASSETS = `${SITE.url}/images/email/${CORPORATE_EMAIL_LAYOUT}`;
+export const CORPORATE_EMAIL_ASSETS = `${BRAND.url}/brand/logos`;
 const marker = `data-imperio-email-layout="${CORPORATE_EMAIL_LAYOUT}"`;
+export const CORPORATE_EMAIL_BRAND = "official-20261114";
 export const escapeEmailHtml = (value: string) => value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;");
 const textOf = (html: string) => sanitizeHtml(html.replace(/<br\s*\/?\s*>/gi, "\n").replace(/<\/(p|div|li|tr|h[1-6])>/gi, "\n"), { allowedTags: [], allowedAttributes: {} }).trim();
 const safeStyle = /^[a-zA-Z0-9#(),.%\s'"+\-/]+$/;
@@ -33,11 +36,13 @@ export type CorporateEmailContent = {
   bodyText?: string;
   legalHtml?: string;
   legalText?: string;
+  /** Choose an authorized PNG; never recolor an image for a different background. */
+  headerTheme?: "light" | "dark";
   /** Only this explicit state may have an empty subject and body; never sent. */
   empty?: boolean;
 };
 
-/** A single responsive, extensible layout; the approved seal/signature are never stretched. */
+/** Shared EmailBrandLayout. Content, links and delivery remain owned by each flow. */
 export function renderCorporateEmail(content: CorporateEmailContent) {
   const empty = content.empty === true;
   const bodyText = empty ? "" : content.bodyText ?? textOf(content.bodyHtml ?? "");
@@ -47,23 +52,26 @@ export function renderCorporateEmail(content: CorporateEmailContent) {
   const legal = empty ? "" : sanitizeEmailBody(content.legalHtml ?? "");
   if (!empty) validateCorporateMessage({ subject: content.subject, html: body, text: bodyText });
   const links = SITE.sameAs.map((url, index) => `<a href="${escapeEmailHtml(url)}" style="color:#713126;text-decoration:underline;margin:0 7px">${["Instagram", "Facebook", "X"][index] ?? "Red social"}</a>`).join(" ");
-  const asset = (name: string) => `${CORPORATE_EMAIL_ASSETS}/${name}`;
+  const headerTheme = content.headerTheme ?? "light";
+  const headerColor = headerTheme === "dark" ? "#141414" : "#ffffff";
+  const logo = BRAND.email.logos[headerTheme];
+  const logoWidth = 184;
+  const logoHeight = Math.round(logoWidth * BRAND.email.height / BRAND.email.width);
   // Deployment rollback switch also covers callers using this renderer directly.
   if (!empty && (import.meta.env?.EMAIL_PARCHMENT_ENABLED ?? process.env.EMAIL_PARCHMENT_ENABLED) === "false") {
     return { html: `<!doctype html><html lang="es"><body ${marker} style="font:16px/1.6 Georgia,serif;color:#39281f;background:#f4ddbb"><main style="max-width:600px;margin:auto;padding:24px">${title ? `<h1>${title}</h1>` : ""}${body}${legal}</main></body></html>`, text: [bodyText, content.legalText ?? ""].filter(Boolean).join("\n\n") };
   }
   const html = `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="supported-color-schemes" content="light dark"><title>${empty ? "" : escapeEmailHtml(content.subject ?? "")}</title><style>
   body,table,td{margin:0;padding:0}table{border-collapse:collapse}img{border:0;display:block}a{color:#8c171d}p{margin:0 0 18px}h1,h2,h3{line-height:1.25;overflow-wrap:anywhere}h1{font-size:26px}h2{font-size:23px}pre,code{white-space:pre-wrap;word-break:break-word}td,th{overflow-wrap:anywhere;word-break:break-word}
-  @media only screen and (max-width:600px){.imperio-container{width:100%!important}.imperio-message{padding:22px 9%!important;font-size:16px!important;line-height:1.65!important}.imperio-title{font-size:25px!important}.imperio-legal{padding:16px 9%!important}.imperio-image{width:100%!important;height:auto!important}}
-  @media(prefers-color-scheme:dark){.imperio-message,.imperio-title,.imperio-legal{background-color:#f4ddbb!important;color:#39281f!important}.imperio-message a,.imperio-legal a{color:#8c171d!important}}
+  @media only screen and (max-width:600px){.imperio-container{width:100%!important}.imperio-message{padding:22px 8%!important;font-size:16px!important;line-height:1.65!important}.imperio-title{padding:24px 8% 0!important;font-size:25px!important}.imperio-legal{padding:20px 8%!important}.imperio-logo{width:168px!important;height:auto!important}}
+  @media(prefers-color-scheme:dark){.imperio-header--light{background-color:#ffffff!important}.imperio-header--dark{background-color:#141414!important}.imperio-message,.imperio-title,.imperio-legal{background-color:#fffaf2!important;color:#39281f!important}.imperio-message a,.imperio-legal a{color:#8c171d!important}}
   </style><!--[if mso]><style>table{border-collapse:collapse}td{font-family:Georgia,'Times New Roman',serif}a{color:#8c171d}</style><![endif]--></head>
-  <body ${marker} style="margin:0;padding:0;background:#e8ddd0;color:#39281f;font-family:Georgia,'Times New Roman',serif"><div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all">${preheader}</div>
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#e8ddd0"><tr><td align="center" style="padding:10px 0"><!--[if mso]><table role="presentation" width="600"><tr><td><![endif]--><table class="imperio-container" role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background:#f4ddbb">
-  <tr><td><img class="imperio-image" src="${asset("cabecera-v2.png")}" width="600" height="279" alt="Imperio Español" style="display:block;width:100%;height:auto"></td></tr>
-  ${title || empty ? `<tr><td class="imperio-title" align="center" valign="middle" background="${asset("titulo.jpg")}" bgcolor="#f4ddbb" style="background-image:url('${asset("titulo.jpg")}');background-position:center;background-size:100% 100%;background-repeat:no-repeat;padding:6px 9%;height:78px;font-size:30px;line-height:1.2;color:#39281f">${title}</td></tr>` : ""}
-  <tr><td class="imperio-message" valign="top" background="${asset("extension-v2.png")}" bgcolor="#f4ddbb" style="background-image:url('${asset("extension-v2.png")}');background-position:center top;background-repeat:repeat-y;background-size:100% auto;padding:${empty ? "28px 10% 84px" : "28px 10% 20px"};font-size:17px;line-height:1.65;color:#39281f;overflow-wrap:anywhere;word-break:break-word">${body}</td></tr>
-  <tr><td><a href="${SITE.url}/" style="display:block"><img class="imperio-image" src="${asset("firma-nao-v2.jpg")}" width="600" height="375" alt="Imperio Español · imperioes.com" style="display:block;width:100%;height:auto"></a></td></tr>
-  <tr><td class="imperio-legal" align="center" bgcolor="#f4ddbb" style="padding:14px 9% 20px;font:12px/1.6 Arial,sans-serif;color:#624f40">${legal}${empty ? "" : `<p style="margin:10px 0"><a href="${SITE.url}/" style="color:#8c171d">imperioes.com</a> · <a href="mailto:${SITE.contactEmail}" style="color:#8c171d">${SITE.contactEmail}</a></p><p style="margin:6px 0">${links}</p>`}</td></tr>
+  <body ${marker} data-imperio-brand="${CORPORATE_EMAIL_BRAND}" style="margin:0;padding:0;background:#e8ddd0;color:#39281f;font-family:Georgia,'Times New Roman',serif"><div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all">${preheader}</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#e8ddd0"><tr><td align="center" style="padding:10px 0"><!--[if mso]><table role="presentation" width="600"><tr><td><![endif]--><table class="imperio-container" role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background:#fffaf2">
+  <tr><td class="imperio-header--${headerTheme}" align="center" bgcolor="${headerColor}" style="padding:24px;background-color:${headerColor}"><a href="${BRAND.url}/" style="display:inline-block"><img class="imperio-logo" src="${logo}" width="${logoWidth}" height="${logoHeight}" alt="${BRAND.name}" style="display:block;width:${logoWidth}px;max-width:100%;height:auto;border:0;color:${headerTheme === "dark" ? "#ffffff" : "#141414"};font:16px Arial,sans-serif"></a></td></tr>
+  ${title ? `<tr><td class="imperio-title" align="left" bgcolor="#fffaf2" style="padding:28px 8% 0;font-size:28px;line-height:1.25;color:#39281f">${title}</td></tr>` : ""}
+  <tr><td class="imperio-message" valign="top" bgcolor="#fffaf2" style="padding:${empty ? "28px 8% 84px" : "24px 8% 16px"};font-size:17px;line-height:1.65;color:#39281f;overflow-wrap:anywhere;word-break:break-word">${body}</td></tr>
+  <tr><td class="imperio-legal" align="center" bgcolor="#fffaf2" style="padding:20px 8% 24px;border-top:1px solid #ded3c4;font:12px/1.6 Arial,sans-serif;color:#624f40">${legal}${empty ? "" : `<p style="margin:10px 0"><a href="${SITE.url}/" style="color:#8c171d">imperioes.com</a> · <a href="mailto:${SITE.contactEmail}" style="color:#8c171d">${SITE.contactEmail}</a></p><p style="margin:6px 0">${links}</p>`}</td></tr>
   </table><!--[if mso]></td></tr></table><![endif]--></td></tr></table></body></html>`;
   return { html, text: empty ? "" : [bodyText, content.legalText ?? "", `Imperio Español\n${SITE.url}/\n${SITE.contactEmail}`].filter(Boolean).join("\n\n") };
 }
@@ -109,5 +117,5 @@ export function prepareCorporateEmail<T extends EmailMessage>(message: T, preser
 export function corporateEmailPreview<T extends { html: string }>(rendered: T, origin: string): T {
   const url = new URL(origin);
   const local = ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname);
-  return local ? { ...rendered, html: rendered.html.replaceAll(CORPORATE_EMAIL_ASSETS, `${url.origin}/images/email/${CORPORATE_EMAIL_LAYOUT}`) } : rendered;
+  return local ? { ...rendered, html: rendered.html.replaceAll(CORPORATE_EMAIL_ASSETS, `${url.origin}/brand/logos`) } : rendered;
 }

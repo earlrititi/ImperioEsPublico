@@ -2,6 +2,7 @@ import { ARTICLES_ITEMS } from "../config/home";
 import { database } from "./reservations";
 import { getArticleTier } from "../config/article-access";
 import type { ArticleDraft } from "./admin-article-content";
+import { normalizeArticleBrand } from "./article-brand";
 
 export type PublishedArticle = (typeof ARTICLES_ITEMS)[number] & { cmsId?: string; author?: string; editorialReview?: { reviewer: string; reviewedAt: string; method: string } };
 
@@ -21,10 +22,10 @@ export async function publishedArticles(): Promise<PublishedArticle[]> {
     if(row.status!=="published" || !row.published_meta)continue;
     const meta=row.published_meta;
     const legacy=ARTICLES_ITEMS.find(a=>a.slug===row.slug);
-    articles.push({...legacy,...meta,slug:row.slug,cmsId:row.id,sourceFile:"",href:`/papeles-y-tratados/${row.slug}`,
-      ...(meta.imageSrc!==legacy?.imageSrc?{imageAvifSrcSet:undefined,imageWebpSrcSet:undefined,wordmarkSrc:undefined}:{}),
+    articles.push(normalizeArticleBrand({...legacy,...meta,slug:row.slug,cmsId:row.id,sourceFile:"",href:`/papeles-y-tratados/${row.slug}`,
+      ...(meta.imageSrc!==legacy?.imageSrc?{imageAvifSrcSet:undefined,imageWebpSrcSet:undefined,brandVariant:undefined}:{}),
       imageWidth:legacy?.imageWidth??1200,imageHeight:legacy?.imageHeight??800,
-    } as PublishedArticle);
+    }) as PublishedArticle);
   }
   return articles;
 }

@@ -1,6 +1,7 @@
 ---
 import { PRELOADER_SESSION_KEY } from "../config/hero";
 import { withBase } from "../utils/basePath";
+import BrandLogo from "./BrandLogo";
 
 const preloaderSessionKey = PRELOADER_SESSION_KEY;
 ---
@@ -12,16 +13,9 @@ const preloaderSessionKey = PRELOADER_SESSION_KEY;
   title="Volver al hero"
   data-return-to-hero
 >
-  <img
-    class="global-home-mark__image"
-    src={withBase("/images/logo-redv2-96.webp")}
-    alt=""
-    aria-hidden="true"
-    width="96"
-    height="74"
-    loading="eager"
-    decoding="async"
-  />
+  <BrandLogo variant="principal" class="global-home-mark__image global-home-mark__image--light" width={56} decorative />
+  <BrandLogo variant="dark" class="global-home-mark__image global-home-mark__image--dark" width={56} decorative />
+  <BrandLogo variant="monochromeBlack" class="global-home-mark__image global-home-mark__image--red" width={56} decorative />
 </a>
 
 <script is:inline define:vars={{ preloaderSessionKey }}>
@@ -112,13 +106,12 @@ const preloaderSessionKey = PRELOADER_SESSION_KEY;
     z-index: 175;
     display: inline-flex;
     align-items: center;
-    width: auto;
-    height: 2.95rem;
-    aspect-ratio: 602 / 477;
+    width: 56px;
+    height: 56px;
+    aspect-ratio: 1;
     color: inherit;
     background: transparent;
     border: 0;
-    filter: drop-shadow(0 2px 5px rgba(255, 255, 255, 0.24));
     transition: opacity 160ms ease, transform 160ms ease;
   }
 
@@ -135,44 +128,23 @@ const preloaderSessionKey = PRELOADER_SESSION_KEY;
   }
 
   .global-home-mark__image {
+    position: absolute;
+    inset: 0;
     width: 100%;
-    height: 100%;
-    object-fit: contain;
-    filter: none;
-    transition: filter 160ms ease;
+    opacity: 0;
+    transition: opacity 160ms ease;
   }
+
+  .global-home-mark__image--light { opacity: 1; }
 
   :global(body:has(#main-nav) .global-home-mark) {
     display: none;
   }
 
-  :global(body:has(.in-work-page) .global-home-mark),
-  :global(body:has(.storefront) .global-home-mark),
-  :global(body:has(.papers-page) .global-home-mark),
-  :global(body:has(.article-page) .global-home-mark),
-  .global-home-mark--on-black {
-    filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.88));
-  }
-
-  :global(body:has(.in-work-page) .global-home-mark__image),
-  :global(body:has(.storefront) .global-home-mark__image),
-  :global(body:has(.papers-page) .global-home-mark__image),
-  :global(body:has(.article-page) .global-home-mark__image),
-  .global-home-mark--on-black .global-home-mark__image {
-    filter: brightness(0) invert(1);
-  }
-
-  .global-home-mark:hover .global-home-mark__image,
-  .global-home-mark:focus-visible .global-home-mark__image,
-  .global-home-mark:active .global-home-mark__image {
-    filter: none;
-  }
-
-  .global-home-mark--on-red:hover .global-home-mark__image,
-  .global-home-mark--on-red:focus-visible .global-home-mark__image,
-  .global-home-mark--on-red:active .global-home-mark__image {
-    filter: brightness(0);
-  }
+  .global-home-mark--on-black .global-home-mark__image--light,
+  .global-home-mark--on-red .global-home-mark__image--light { opacity: 0; }
+  .global-home-mark--on-black .global-home-mark__image--dark,
+  .global-home-mark--on-red .global-home-mark__image--red { opacity: 1; }
 
   @media (max-width: 767px) {
     .global-home-mark {
@@ -180,8 +152,8 @@ const preloaderSessionKey = PRELOADER_SESSION_KEY;
         clamp(0.475rem, calc(1.75rem - 5vw), 0.7rem),
         env(safe-area-inset-top)
       );
-      width: auto;
-      height: clamp(2.1rem, 10vw, 2.55rem);
+      width: 52px;
+      height: 52px;
     }
   }
 

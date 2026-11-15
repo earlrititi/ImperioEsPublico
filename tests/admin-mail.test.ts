@@ -16,7 +16,7 @@ test("admin email rejects header injection and offsite CTA", () => {
 
 test("automation signature keeps its wording and shares the approved brand layout with manual emails", () => {
   const rendered = renderAdminMail(mail, "https://imperioes.com/comunicaciones/baja", true);
-  assert.match(rendered.html, /https:\/\/imperioes.com\/images\/email\/pergamino-v1\/firma-nao-v2.jpg/);
+  assert.match(rendered.html, /https:\/\/imperioes.com\/brand\/logos\/imperio_es_principal.png/);
   assert.match(rendered.text, /Un abrazo,\nEquipo de Imperio Espa\u00f1ol/);
   assert.match(renderAdminMail(mail).html, /data-imperio-email-layout="pergamino-v1"/);
   assert.doesNotMatch(renderAdminMail(mail).text, /Un abrazo/);

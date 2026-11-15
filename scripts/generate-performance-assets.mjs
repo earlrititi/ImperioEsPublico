@@ -72,13 +72,8 @@ for (const name of articleSources) {
   });
 }
 
-await writeVariant({
-  source: path.join(root, "logo-redv2.png"),
-  destination: path.join(root, "logo-redv2-320.webp"),
-  width: 320,
-  format: "webp",
-  quality: 80,
-});
+// Corporate logos are supplied intact in public/brand/logos; do not regenerate
+// legacy logos or produce lossy alternatives to the authorized files.
 await writeVariant({
   source: path.join(root, "camiseta-imperio-frontal.webp"),
   destination: path.join(root, "camiseta-imperio-frontal-640.avif"),

@@ -1,5 +1,6 @@
 ---
 import Layout from "../layouts/Layout.astro";
+import BrandLogo from "../components/BrandLogo";
 import { publishedArticles } from "../lib/published-articles";
 import { articleSearchText } from "../lib/article-seo";
 
@@ -81,11 +82,13 @@ const imageSizes = "(max-width: 720px) calc(100vw - 32px), (max-width: 1100px) 4
               <div
                 class:list={[
                   "paper-card__media",
-                  { "paper-card__media--brand": "wordmarkSrc" in article },
+                  { "paper-card__media--brand": "brandVariant" in article && article.brandVariant },
                 ]}
               >
                 {
-                  "imageAvifSrcSet" in article ? (
+                  "brandVariant" in article && article.brandVariant ? (
+                    <BrandLogo variant="dark" class="paper-card__brand-symbol" width={260} loading="lazy" />
+                  ) : "imageAvifSrcSet" in article ? (
                     <picture>
                       <source type="image/avif" srcset={article.imageAvifSrcSet} sizes={imageSizes} />
                       <source type="image/webp" srcset={article.imageWebpSrcSet} sizes={imageSizes} />
@@ -106,15 +109,6 @@ const imageSizes = "(max-width: 720px) calc(100vw - 32px), (max-width: 1100px) 4
                         alt={article.imageAlt}
                         width={article.imageWidth}
                         height={article.imageHeight}
-                        loading="lazy"
-                        decoding="async"
-                      />
-                      <img
-                        class="paper-card__brand-wordmark"
-                        src={article.wordmarkSrc}
-                        alt="Imperio Español"
-                        width="633"
-                        height="162"
                         loading="lazy"
                         decoding="async"
                       />
@@ -450,7 +444,6 @@ const imageSizes = "(max-width: 720px) calc(100vw - 32px), (max-width: 1100px) 4
 
   .paper-card__media--brand {
     display: grid;
-    grid-template-rows: minmax(0, 1fr) auto;
     place-items: center;
     gap: 0.7rem;
     padding: clamp(1rem, 2vw, 1.75rem);
@@ -459,20 +452,14 @@ const imageSizes = "(max-width: 720px) calc(100vw - 32px), (max-width: 1100px) 4
 
   .paper-card__brand-symbol {
     width: auto;
-    height: min(70%, 8rem);
+    height: auto;
+    max-height: 100%;
     min-height: 0;
     object-fit: contain;
     transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
   }
 
-  .paper-card__brand-wordmark {
-    width: min(85%, 15rem);
-    height: auto;
-    filter: brightness(0) invert(1);
-  }
-
-  .paper-card:hover .paper-card__media picture img,
-  .paper-card:hover .paper-card__brand-symbol {
+  .paper-card:hover .paper-card__media picture img {
     filter: grayscale(0.18) contrast(1.04);
     transform: scale(1.025);
   }

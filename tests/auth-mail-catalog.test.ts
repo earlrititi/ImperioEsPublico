@@ -33,7 +33,7 @@ test("The four link actions use the corporate renderer and retain their exact OT
     assert.equal(plan.action, action);
     assert.ok(plan.subject.trim());
     assert.match(plan.html, /data-imperio-email-layout="pergamino-v1"/);
-    assert.match(plan.html, /cabecera-v2\.png/);
+    assert.match(plan.html, /imperio_es_principal\.png/);
     const url = actionLink(plan.html);
     assert.equal(url.origin, options.siteUrl);
     assert.equal(url.searchParams.get("type"), action);

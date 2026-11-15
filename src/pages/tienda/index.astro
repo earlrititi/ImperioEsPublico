@@ -5,6 +5,7 @@ import CartControls from "../../components/CartControls.astro";
 import { PRODUCTS } from "../../config/products";
 import { SHIRT_PRICE_COPY } from "../../config/commerce";
 import { ZoomIn as ZoomInNodes } from "lucide";
+import BrandLogo from "../../components/BrandLogo";
 
 const shirt = PRODUCTS["camiseta-imperial"];
 const shirtPrice = new Intl.NumberFormat("es-ES", {
@@ -43,14 +44,7 @@ const shirtPrice = new Intl.NumberFormat("es-ES", {
           >
             <button class="product-zoom-open" type="button" aria-haspopup="dialog" aria-controls="camiseta-imperial-detalle" aria-label="Ampliar Camiseta Imperial" title="Ampliar Camiseta Imperial" data-shirt-detail-open disabled><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{ZoomInNodes.map(([name, attrs]) => { const Element = name; return <Element {...attrs} />; })}</svg></button>
             <div class="product-shirt-placeholder" aria-hidden="true">
-              <img
-                src="/images/logo-redv2-480.webp"
-                alt=""
-                width="480"
-                height="371"
-                loading="eager"
-                decoding="async"
-              />
+              <BrandLogo variant="principal" width={180} decorative />
             </div>
             <div class="product-shirt-scene">
               <div class="product-shirt-scene__frame">

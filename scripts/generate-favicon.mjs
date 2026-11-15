@@ -1,9 +1,11 @@
-import { writeFile } from "node:fs/promises";
+import { copyFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import sharp from "sharp";
 
 const root = process.cwd();
-const source = resolve(root, "public", "images", "logo-redv2.png");
+const source = resolve(root, "public", "brand", "logos", "imperio_es_isotipo.svg");
+// Preserve the conventional public URL as a byte-identical compatibility copy.
+await copyFile(source, resolve(root, "public", "favicon.svg"));
 const sizes = [16, 32, 48];
 
 const pngs = await Promise.all(
@@ -49,3 +51,10 @@ await writeFile(
 );
 
 console.log("Generated favicon.ico and 16x16/32x32 PNG variants.");
+
+for (const [name, size] of [["apple-touch-icon.png", 180], ["icon-192.png", 192], ["icon-512.png", 512]]) {
+  await sharp(source).resize(size, size, {
+    fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 },
+  }).png({ compressionLevel: 9 }).toFile(resolve(root, "public", name));
+}
+console.log("Generated touch and manifest icons from the complete official isotipo.");

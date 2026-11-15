@@ -7,6 +7,7 @@ import {
   safeMessageLink,
 } from "./communications-model";
 import { AUTH_REAUTHENTICATION_SUBJECT } from "./auth-mail-catalog";
+import { BRAND } from "../config/brand";
 
 const assetBase = "/images/email/pergamino-v1/";
 const assetNames = [
@@ -15,7 +16,12 @@ const assetNames = [
   "extension-v2.png",
   "firma-nao-v2.jpg",
 ] as const;
-const assetPaths = assetNames.map((name) => `${assetBase}${name}`);
+// Legacy composite assets are allowed only to read immutable historical mail.
+// New messages use the official PNGs from the centralized brand configuration.
+const assetPaths = [
+  ...assetNames.map((name) => `${assetBase}${name}`),
+  ...Object.values(BRAND.email.logos).map((url) => new URL(url).pathname),
+];
 const canonicalAssets = new Map(
   assetPaths.flatMap((path) => [
     [`https://imperioes.com${path}`, path],
@@ -28,6 +34,9 @@ const classes = [
   "imperio-title",
   "imperio-legal",
   "imperio-image",
+  "imperio-logo",
+  "imperio-header--light",
+  "imperio-header--dark",
 ];
 const marker =
   /<body\b[^>]*\bdata-imperio-email-layout\s*=\s*["']pergamino-v1["'][^>]*>/i;
@@ -38,7 +47,9 @@ const trustedCss =
 const cspAssets = ["https://imperioes.com", "https://www.imperioes.com"]
   .flatMap((origin) => assetPaths.map((path) => `${origin}${path}`))
   .join(" ");
-const csp = `default-src 'none'; img-src ${cspAssets}; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-src 'none'; connect-src 'none'`;
+// Sanitization below admits only exact public brand paths. 'self' lets those
+// relative paths load in the sandboxed reader on local and Vercel previews too.
+const csp = `default-src 'none'; img-src 'self' ${cspAssets}; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-src 'none'; connect-src 'none'`;
 const color = /^(?:#[a-f0-9]{3,8}|transparent|inherit|black|white)$/i;
 const dimensions = /^(?:\d{1,3}(?:\.\d+)?(?:px|%)?|auto)$/;
 const spacing =

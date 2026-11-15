@@ -47,8 +47,15 @@ test("all touch/manifest/favicon sizes and social metadata have deployed assets"
   for (const icon of manifest.icons) assert.ok(readFileSync(`public/${icon.src.split("?")[0]}`).length);
 });
 
-test("current web surfaces cannot reintroduce legacy corporate logo URLs", () => {
-  for (const file of ["src/components/Navigation.jsx", "src/components/HeroImperio.jsx", "src/components/Footer.jsx", "src/components/GlobalHomeMark.astro", "src/config/home.js", "src/layouts/Layout.astro", "src/pages/links.astro", "src/pages/tienda/index.astro"]) {
+test("web surfaces retain official assets outside the user-approved original hero and footer", () => {
+  // On 2026-11-15 the owner explicitly restored the prior hero/footer artwork.
+  // Those two components are the only exceptions to the corporate URL guard.
+  for (const file of ["src/components/Navigation.jsx", "src/components/GlobalHomeMark.astro", "src/config/home.js", "src/layouts/Layout.astro", "src/pages/links.astro", "src/pages/tienda/index.astro"]) {
     assert.doesNotMatch(readFileSync(file, "utf8"), /logo-redv2|imperio-espanol-footer-interactive|footer-dark-base/, file);
   }
+  const nav = readFileSync("src/components/Navigation.jsx", "utf8");
+  assert.match(nav, /<BrandLogo variant="isotipo"/);
+  assert.doesNotMatch(nav, /<BrandLogo variant="(?:principal|dark|monochromeWhite)"/);
+  assert.match(readFileSync("src/components/HeroImperio.jsx", "utf8"), /<LogoImperio/);
+  assert.match(readFileSync("src/components/Footer.jsx", "utf8"), /\/images\/imperio-espanol-footer-interactive\.webp/);
 });

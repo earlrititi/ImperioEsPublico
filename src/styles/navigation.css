@@ -21,10 +21,6 @@ body:has(.papers-page, .storefront, .contact-page, .article-page, .member-surfac
   background: color-mix(in srgb, var(--color-black-papers) 50%, transparent);
 }
 
-/* Match the first rendered surface before the scroll controller initializes. */
-body:has(.papers-page, .storefront, .contact-page, .article-page, .member-surface, .empire-pillar, .instagram, .in-work-page) #main-nav[data-persistent]:not([data-nav-theme]) .main-nav__logo-image--light { opacity: 0; }
-body:has(.papers-page, .storefront, .contact-page, .article-page, .member-surface, .empire-pillar, .instagram, .in-work-page) #main-nav[data-persistent]:not([data-nav-theme]) .main-nav__logo-image--dark { opacity: 1; }
-
 #main-nav[data-persistent][data-nav-theme="light"] {
   background: rgb(255 255 255 / 50%);
   --nav-ink: #111;

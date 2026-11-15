@@ -38,9 +38,7 @@ export default function Navigation({ persistent = false, userEmail = null }) {
             data-return-to-hero
           >
             <span class="main-nav__logo" aria-hidden="true">
-              <BrandLogo variant="principal" width={64} decorative class="main-nav__logo-image main-nav__logo-image--light" />
-              <BrandLogo variant="dark" width={64} decorative class="main-nav__logo-image main-nav__logo-image--dark" />
-              <BrandLogo variant="monochromeWhite" width={64} decorative class="main-nav__logo-image main-nav__logo-image--menu" />
+              <BrandLogo variant="isotipo" width={48} decorative class="main-nav__logo-image" />
             </span>
           </a>
 
@@ -219,29 +217,22 @@ export default function Navigation({ persistent = false, userEmail = null }) {
         }
 
         .main-nav__logo {
-          display: block;
-          position: relative;
+          display: grid;
+          place-items: center;
           width: 56px;
           height: 56px;
+          box-sizing: border-box;
+          padding: 4px;
+          background: #fff;
+          border-radius: 6px;
           opacity: var(--home-nav-logo-opacity, 1);
           transition: opacity 0.3s ease, transform 0.3s ease;
         }
 
         .main-nav__logo-image {
-          position: absolute;
-          inset: 0;
+          display: block;
           width: 100%;
-          opacity: 0;
-          transition: opacity 180ms ease;
         }
-        #main-nav .main-nav__logo-image--light { opacity: 1; }
-        #main-nav:not([data-persistent]):not(.main-nav--hamburger-dark) .main-nav__logo-image--light,
-        #main-nav[data-nav-theme=dark] .main-nav__logo-image--light { opacity: 0; }
-        #main-nav:not([data-persistent]):not(.main-nav--hamburger-dark) .main-nav__logo-image--dark,
-        #main-nav[data-nav-theme=dark] .main-nav__logo-image--dark { opacity: 1; }
-        #main-nav.main-nav--menu-open .main-nav__logo-image--light,
-        #main-nav.main-nav--menu-open .main-nav__logo-image--dark { opacity: 0; }
-        #main-nav.main-nav--menu-open .main-nav__logo-image--menu { opacity: 1; }
 
         .main-nav__floating-links-layer {
           position: fixed;

@@ -24,7 +24,15 @@ for (const path of ["/", "/tienda", "/tienda#camiseta", "/carrito", "/contacto",
   const response = await fetch(origin + path);
   assert.equal(response.status, path === "/404" ? 404 : path === "/500" ? 500 : 200, path);
   const html = await response.text();
-  assert.doesNotMatch(html, /logo-redv2|imperio-espanol-footer-interactive|footer-dark-base/, path);
+  assert.doesNotMatch(html, /logo-redv2|footer-dark-base/, path);
+  // The prior footer artwork is an explicit owner-approved exception (2026-11-15).
+  const footer = html.match(/<footer\b[^>]*class="[^"]*\bimage-footer\b[^"]*"[\s\S]*?<\/footer>/i)?.[0] ?? "";
+  assert.doesNotMatch(html.replace(footer, ""), /imperio-espanol-footer-interactive|dark-footer-interactive/, path);
+  const navbar = html.match(/<nav\b[^>]*\bid="main-nav"[\s\S]*?<\/nav>/i)?.[0];
+  if (navbar) {
+    assert.match(navbar, /\/brand\/logos\/imperio_es_isotipo\.svg/, path);
+    assert.doesNotMatch(navbar, /\/brand\/logos\/imperio_es_(?:principal|fondos_oscuros|monocromatico_blanco)\.svg/, path);
+  }
   assert.match(html, /\/brand\/logos\/imperio_es_/, path);
   assert.match(html, /rel="icon"[^>]*image\/svg\+xml/, path);
   assert.doesNotMatch(html, /(?:sk|rk)_live_[A-Za-z0-9]{20,}|-----BEGIN (?:RSA )?PRIVATE KEY-----/, path);

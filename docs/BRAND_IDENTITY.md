@@ -1,5 +1,7 @@
 # Identidad oficial de Imperio Español
 
+**Corrección solicitada el 15 de noviembre de 2026:** el hero y el footer recuperan su presentación anterior al rebranding (referencia `844152ba`), incluidas sus ilustraciones y animaciones. Esta excepción expresa prevalece sobre las indicaciones generales de sustitución de esos dos elementos. El navbar utiliza exclusivamente el SVG oficial `imperio_es_isotipo`, sin letras, completo y sin filtros; una base blanca discreta mantiene el contraste en fondos oscuros y en el menú. Se conservan los recursos oficiales y la identidad ya aplicada a los demás elementos y correos.
+
 Fuente autorizada: `imperio_es_logos_png_svg.zip`, proporcionado el 14 de noviembre de 2026. Sus doce archivos están en `public/brand/logos/`, conservados byte por byte. `public/brand/manifest.json` registra el SHA-256 del ZIP y de cada original, dimensiones y transparencia. `.gitattributes` impide normalizar los saltos de línea de los maestros al clonar en Windows o Linux. No se recibió un archivo separado llamado `IMPERIO_ES_LOGO_OFICIAL`; el ZIP es la referencia de esta entrega.
 
 ## Variantes autorizadas

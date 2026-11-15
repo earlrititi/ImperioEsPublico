@@ -54,7 +54,8 @@ test("web surfaces retain official assets outside the user-approved original her
     assert.doesNotMatch(readFileSync(file, "utf8"), /logo-redv2|imperio-espanol-footer-interactive|footer-dark-base/, file);
   }
   const nav = readFileSync("src/components/Navigation.jsx", "utf8");
-  assert.match(nav, /<BrandLogo variant="isotipo"/);
+  assert.match(nav, /src=\{withBase\(BRAND\.navbarLogo\.svg\)\}/);
+  assert.ok(readFileSync(`public${BRAND.navbarLogo.svg}`).length);
   assert.doesNotMatch(nav, /<BrandLogo variant="(?:principal|dark|monochromeWhite)"/);
   assert.match(readFileSync("src/components/HeroImperio.jsx", "utf8"), /<LogoImperio/);
   assert.match(readFileSync("src/components/Footer.jsx", "utf8"), /\/images\/imperio-espanol-footer-interactive\.webp/);

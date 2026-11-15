@@ -30,7 +30,7 @@ for (const path of ["/", "/tienda", "/tienda#camiseta", "/carrito", "/contacto",
   assert.doesNotMatch(html.replace(footer, ""), /imperio-espanol-footer-interactive|dark-footer-interactive/, path);
   const navbar = html.match(/<nav\b[^>]*\bid="main-nav"[\s\S]*?<\/nav>/i)?.[0];
   if (navbar) {
-    assert.match(navbar, /\/brand\/logos\/imperio_es_isotipo\.svg/, path);
+    assert.match(navbar, /\/brand\/navigation\/imperio_es_isotipo_rojo\.svg/, path);
     assert.doesNotMatch(navbar, /\/brand\/logos\/imperio_es_(?:principal|fondos_oscuros|monocromatico_blanco)\.svg/, path);
   }
   assert.match(html, /\/brand\/logos\/imperio_es_/, path);

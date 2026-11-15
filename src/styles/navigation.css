@@ -136,8 +136,8 @@ body:has(.papers-page, .storefront, .contact-page, .article-page, .member-surfac
 }
 
 #main-nav:where([data-persistent]) .main-nav__logo {
-  height: 52px;
-  width: 52px;
+  height: 56px;
+  width: 64px;
 }
 
 #main-nav:where([data-persistent]) .menu-button {
@@ -203,7 +203,7 @@ body:has(.papers-page, .storefront, .contact-page, .article-page, .member-surfac
   #main-nav .main-nav__actions { grid-column:2; }
   #main-nav .main-nav__links-wrap { display:none; }
   #main-nav .main-nav__brand { display:inline-flex; justify-self:start; visibility:visible !important; opacity:1 !important; pointer-events:auto !important; }
-  #main-nav .main-nav__logo { height:52px; width:52px; opacity:1; }
+  #main-nav .main-nav__logo { height:52px; width:56px; opacity:1; }
   #main-nav .main-nav__actions { display:flex; visibility:visible; opacity:1; }
   #main-nav .menu-button { flex:0 0 48px; visibility:visible; opacity:1; }
   #main-nav .account-button--email{flex:0 1 auto;width:auto;max-width:min(32vw,170px);padding-inline:4px}

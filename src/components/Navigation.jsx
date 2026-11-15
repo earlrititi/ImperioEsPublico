@@ -1,7 +1,7 @@
 import { NAV_ITEMS } from "../config/navigation";
 import { withBase } from "../utils/basePath";
 import { UserRound, ShoppingBag } from "lucide";
-import BrandLogo from "./BrandLogo";
+import { BRAND } from "../config/brand";
 
 /** @param {{ persistent?: boolean, userEmail?: string | null }} props */
 export default function Navigation({ persistent = false, userEmail = null }) {
@@ -38,7 +38,15 @@ export default function Navigation({ persistent = false, userEmail = null }) {
             data-return-to-hero
           >
             <span class="main-nav__logo" aria-hidden="true">
-              <BrandLogo variant="isotipo" width={48} decorative class="main-nav__logo-image" />
+              <img
+                src={withBase(BRAND.navbarLogo.svg)}
+                width={64}
+                height={Math.round(64 * BRAND.navbarLogo.height / BRAND.navbarLogo.width)}
+                alt=""
+                aria-hidden="true"
+                decoding="async"
+                class="main-nav__logo-image"
+              />
             </span>
           </a>
 
@@ -219,12 +227,11 @@ export default function Navigation({ persistent = false, userEmail = null }) {
         .main-nav__logo {
           display: grid;
           place-items: center;
-          width: 56px;
+          width: 64px;
           height: 56px;
           box-sizing: border-box;
-          padding: 4px;
-          background: #fff;
-          border-radius: 6px;
+          padding: 0;
+          background: transparent;
           opacity: var(--home-nav-logo-opacity, 1);
           transition: opacity 0.3s ease, transform 0.3s ease;
         }
@@ -232,6 +239,8 @@ export default function Navigation({ persistent = false, userEmail = null }) {
         .main-nav__logo-image {
           display: block;
           width: 100%;
+          height: auto;
+          object-fit: contain;
         }
 
         .main-nav__floating-links-layer {
@@ -638,7 +647,7 @@ export default function Navigation({ persistent = false, userEmail = null }) {
 
           .main-nav__logo {
             height: 52px;
-            width: 52px;
+            width: 56px;
           }
 
           .side-bar__panel {

@@ -1,5 +1,5 @@
 // Sole source of truth for the authorized files in imperio_es_logos_png_svg.zip.
-// Keep source files intact; choose a supplied variant instead of recoloring it.
+// Keep source files intact. Navbar-specific artwork is separate from the masters.
 const logo = (base: string, width = 1254, height = 1254) => ({
   svg: `/brand/logos/${base}.svg`,
   png: `/brand/logos/${base}.png`,
@@ -26,6 +26,12 @@ export const BRAND = {
   url,
   defaultVariant: "principal" as const,
   logos,
+  // Entirely red and transparent, explicitly requested for the navbar on 2026-11-15.
+  navbarLogo: {
+    svg: "/brand/navigation/imperio_es_isotipo_rojo.svg",
+    width: 981,
+    height: 904,
+  },
   email: {
     logos: {
       light: assetUrl(logos.principal.png),

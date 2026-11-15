@@ -137,3 +137,9 @@ Capturas adicionales **reales del dominio de producción después de publicar**,
 | Footer | [Ver](rebranding/production/desktop-footer.png) | [Ver](rebranding/production/mobile-footer.png) |
 | Camiseta Imperial | [Ver](rebranding/production/desktop-product.png) | [Ver](rebranding/production/mobile-product.png) |
 | Menú abierto | — | [Ver](rebranding/production/mobile-menu-open.png) |
+
+## Corrección visual solicitada el 15 de noviembre de 2026
+
+El propietario solicitó recuperar el logo del hero y el footer anteriores al rebranding y mostrar únicamente el isotipo, sin letras, en el navbar. Se restauran desde `844152ba` el hero, su componente de logo y animaciones, la configuración correspondiente y el footer ilustrado con sus enlaces existentes; solo se limpian espacios finales sin efecto visual. El navbar conserva el scroll y el menú y muestra el SVG oficial completo del isotipo sobre una base blanca discreta, sin filtros ni recreaciones.
+
+Esta excepción expresa para hero y footer prevalece sobre la descripción inicial; los registros y capturas anteriores documentan la entrega histórica. No se modifican los correos, el catálogo oficial, los servicios ni los pagos. La corrección pasa siete pruebas centradas, typecheck sin errores ni warnings (ocho hints anteriores), build y 39 comprobaciones HTTP locales. La revisión de escritorio y móvil cubre diez estados: sin errores JavaScript, recursos fallidos ni desbordamientos; Escape cierra el menú.

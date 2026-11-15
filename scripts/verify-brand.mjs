@@ -31,6 +31,7 @@ for (const path of ["/", "/tienda", "/tienda#camiseta", "/carrito", "/contacto",
   const navbar = html.match(/<nav\b[^>]*\bid="main-nav"[\s\S]*?<\/nav>/i)?.[0];
   if (navbar) {
     assert.match(navbar, /\/brand\/navigation\/imperio_es_isotipo_rojo\.svg/, path);
+    assert.match(navbar, /\/brand\/navigation\/imperio_es_isotipo_negro\.svg/, path);
     assert.doesNotMatch(navbar, /\/brand\/logos\/imperio_es_(?:principal|fondos_oscuros|monocromatico_blanco)\.svg/, path);
   }
   assert.match(html, /\/brand\/logos\/imperio_es_/, path);

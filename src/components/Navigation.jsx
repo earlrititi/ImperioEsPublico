@@ -45,7 +45,16 @@ export default function Navigation({ persistent = false, userEmail = null }) {
                 alt=""
                 aria-hidden="true"
                 decoding="async"
-                class="main-nav__logo-image"
+                class="main-nav__logo-image main-nav__logo-image--red"
+              />
+              <img
+                src={withBase(BRAND.navbarLogo.blackSvg)}
+                width={64}
+                height={Math.round(64 * BRAND.navbarLogo.height / BRAND.navbarLogo.width)}
+                alt=""
+                aria-hidden="true"
+                decoding="async"
+                class="main-nav__logo-image main-nav__logo-image--black"
               />
             </span>
           </a>
@@ -237,10 +246,20 @@ export default function Navigation({ persistent = false, userEmail = null }) {
         }
 
         .main-nav__logo-image {
+          grid-area: 1 / 1;
           display: block;
           width: 100%;
           height: auto;
           object-fit: contain;
+          transition: opacity 180ms ease;
+        }
+
+        .main-nav__logo-image--red {
+          opacity: var(--nav-logo-red-opacity, 1);
+        }
+
+        .main-nav__logo-image--black {
+          opacity: var(--nav-logo-black-opacity, 0);
         }
 
         .main-nav__floating-links-layer {

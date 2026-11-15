@@ -56,6 +56,8 @@ test("web surfaces retain official assets outside the user-approved original her
   const nav = readFileSync("src/components/Navigation.jsx", "utf8");
   assert.match(nav, /src=\{withBase\(BRAND\.navbarLogo\.svg\)\}/);
   assert.ok(readFileSync(`public${BRAND.navbarLogo.svg}`).length);
+  assert.match(nav, /src=\{withBase\(BRAND\.navbarLogo\.blackSvg\)\}/);
+  assert.ok(readFileSync(`public${BRAND.navbarLogo.blackSvg}`).length);
   assert.doesNotMatch(nav, /<BrandLogo variant="(?:principal|dark|monochromeWhite)"/);
   assert.match(readFileSync("src/components/HeroImperio.jsx", "utf8"), /<LogoImperio/);
   assert.match(readFileSync("src/components/Footer.jsx", "utf8"), /\/images\/imperio-espanol-footer-interactive\.webp/);

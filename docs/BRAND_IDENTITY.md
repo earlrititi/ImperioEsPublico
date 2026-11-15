@@ -4,6 +4,8 @@
 
 Fuente autorizada: `imperio_es_logos_png_svg.zip`, proporcionado el 14 de noviembre de 2026. Sus doce archivos están en `public/brand/logos/`, conservados byte por byte. `public/brand/manifest.json` registra el SHA-256 del ZIP y de cada original, dimensiones y transparencia. `.gitattributes` impide normalizar los saltos de línea de los maestros al clonar en Windows o Linux. No se recibió un archivo separado llamado `IMPERIO_ES_LOGO_OFICIAL`; el ZIP es la referencia de esta entrega.
 
+**Adaptación posterior del navbar:** cuando el fondo pasa a blanco, el isotipo cambia a negro; sobre fondo oscuro y con el menú abierto permanece rojo. Las dos variantes transparentes de `public/brand/navigation/` comparten trazados, dimensiones y tamaño de presentación. La transición reutiliza los estados existentes del navbar, incluidos los de la portada y las páginas interiores.
+
 ## Variantes autorizadas
 
 | Propiedad `variant` | Archivo base | Aplicación |

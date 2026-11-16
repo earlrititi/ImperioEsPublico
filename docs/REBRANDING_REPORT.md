@@ -147,3 +147,5 @@ Esta excepción expresa para hero y footer prevalece sobre la descripción inici
 ### Ajuste posterior del isotipo del navbar
 
 Por nueva petición del propietario, el isotipo del navbar pasa a ser completamente rojo (`#F30219`), transparente y sin base blanca. Se conserva su geometría original en una variante SVG independiente, sin modificar los doce maestros. Su ancho aumenta a 64 px en escritorio y 56 px en móvil, manteniendo las proporciones. Hero y footer conservan la restauración anterior.
+
+Una petición posterior añade el cambio a negro cuando el navbar pasa a blanco. Se incorpora una segunda variante transparente con los mismos trazados y se alternan ambas por opacidad con los estados existentes de scroll y superficie. El isotipo conserva el rojo sobre oscuro y en el menú abierto, sin cambiar su tamaño.

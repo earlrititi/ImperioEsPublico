@@ -26,9 +26,10 @@ export const BRAND = {
   url,
   defaultVariant: "principal" as const,
   logos,
-  // Entirely red and transparent, explicitly requested for the navbar on 2026-11-15.
+  // Transparent navbar isotipo: red on dark surfaces, black on white surfaces.
   navbarLogo: {
     svg: "/brand/navigation/imperio_es_isotipo_rojo.svg",
+    blackSvg: "/brand/navigation/imperio_es_isotipo_negro.svg",
     width: 981,
     height: 904,
   },

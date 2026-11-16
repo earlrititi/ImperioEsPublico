@@ -1,4 +1,22 @@
 /* Shared navigation; the home retains its preloader. */
+#main-nav {
+  --nav-logo-red-opacity: 1;
+  --nav-logo-black-opacity: 0;
+}
+
+/* Follow the same white-surface states as the navbar controls. */
+#main-nav[data-persistent]:not([data-nav-theme="dark"]):not(.main-nav--menu-open),
+#main-nav:not([data-persistent]).main-nav--hamburger-dark:not(.main-nav--menu-open) {
+  --nav-logo-red-opacity: 0;
+  --nav-logo-black-opacity: 1;
+}
+
+/* Match the initial dark surface before the scroll controller initializes. */
+body:has(.papers-page, .storefront, .contact-page, .article-page, .member-surface, .empire-pillar, .instagram, .in-work-page) #main-nav[data-persistent]:not([data-nav-theme]):not(.main-nav--menu-open) {
+  --nav-logo-red-opacity: 1;
+  --nav-logo-black-opacity: 0;
+}
+
 body:has(#main-nav:where([data-persistent])) #main-content {
   padding-top: 64px;
 }

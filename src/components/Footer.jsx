@@ -250,9 +250,21 @@ export default function Footer({ variant = "light" }) {
         .image-footer__bottom {
           position: relative;
           z-index: 4;
-          /* Cover the old credit baked into the bottom edge of the illustration. */
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          justify-content: center;
+          gap: 0.25rem 1rem;
+          min-height: 59px;
+          box-sizing: border-box;
+          padding: 4px 16px;
           margin-top: min(-14px, -2.5vw);
-          background: #0b0c0c;
+          background: rgb(11 12 12 / 50%);
+          color: #111;
+        }
+
+        .image-footer--dark .image-footer__bottom {
+          color: #fff;
         }
 
         .image-footer__credits {
@@ -260,11 +272,11 @@ export default function Footer({ variant = "light" }) {
           flex-wrap: wrap;
           align-items: center;
           justify-content: center;
-          gap: 0.25rem 1.25rem;
-          padding: 0 1rem 0.75rem;
-          color: #fff;
+          gap: 0.2rem 0.75rem;
+          padding: 0;
+          color: inherit;
           font-family: "Inter", "Segoe UI", sans-serif;
-          font-size: 0.8rem;
+          font-size: 0.7rem;
           line-height: 1.5;
           text-align: center;
         }
@@ -272,14 +284,14 @@ export default function Footer({ variant = "light" }) {
         .image-footer__creator {
           display: inline-flex;
           align-items: center;
-          min-height: 44px;
+          min-height: 24px;
           color: inherit;
           text-decoration: underline;
           text-underline-offset: 0.2em;
         }
 
         .image-footer__creator:hover {
-          color: #ffb5ac;
+          text-decoration-thickness: 2px;
         }
 
         .image-footer__creator:focus-visible {
@@ -293,11 +305,11 @@ export default function Footer({ variant = "light" }) {
           flex-wrap: wrap;
           align-items: center;
           justify-content: center;
-          gap: 0.5rem 1.5rem;
-          width: 100%;
+          gap: 0.25rem 0.75rem;
+          width: auto;
           box-sizing: border-box;
-          padding: 0.75rem 1rem;
-          color: #fff;
+          padding: 0;
+          color: inherit;
           background: transparent;
           font-family: "Inter", "Segoe UI", sans-serif;
           font-size: 0.66rem;
@@ -316,7 +328,7 @@ export default function Footer({ variant = "light" }) {
         }
 
         .image-footer--dark .image-footer__legal {
-          color: #ead7c1;
+          color: inherit;
         }
 
         .image-footer__legal a,
@@ -324,12 +336,12 @@ export default function Footer({ variant = "light" }) {
           display: inline-flex;
           align-items: center;
           width: fit-content;
-          min-height: 28px;
+          min-height: 24px;
           border: 0;
           border-radius: 3px;
-          padding: 0.3rem 0.48rem;
+          padding: 0.125rem 0.3rem;
           color: inherit;
-          background: rgb(11 12 12 / 68%);
+          background: transparent;
           cursor: pointer;
           font: inherit;
           pointer-events: auto;
@@ -343,8 +355,8 @@ export default function Footer({ variant = "light" }) {
           width: fit-content;
           min-height: 28px;
           border-radius: 3px;
-          padding: 0.18rem 0.24rem 0.18rem 0.48rem;
-          background: rgb(11 12 12 / 68%);
+          padding: 0;
+          background: transparent;
           pointer-events: auto;
         }
 
@@ -542,21 +554,27 @@ export default function Footer({ variant = "light" }) {
         }
 
         @media (max-width: 980px) {
+          .image-footer__bottom {
+            min-height: 80px;
+            gap: 0.2rem;
+          }
+
           .image-footer__legal {
-            gap: 0.5rem;
-            font-size: 0.72rem;
+            width: 100%;
+            gap: 0.2rem 0.75rem;
+            font-size: 0.66rem;
           }
 
           .image-footer__legal-primary,
           .image-footer__legal-utilities {
-            flex: 1 1 100%;
+            flex: 0 1 auto;
           }
 
           .image-footer__legal a,
           .image-footer__legal button {
             justify-content: center;
             max-width: 100%;
-            min-height: 32px;
+            min-height: 24px;
             text-align: center;
           }
 
@@ -565,6 +583,22 @@ export default function Footer({ variant = "light" }) {
             justify-content: center;
             max-width: 100%;
             text-align: center;
+          }
+        }
+
+        @media (max-width: 600px) {
+          .image-footer__bottom {
+            min-height: 111px;
+            padding-inline: 12px;
+          }
+
+          .image-footer__legal-primary,
+          .image-footer__legal-utilities {
+            flex-basis: 100%;
+          }
+
+          .image-footer__legal-primary {
+            gap: 0.2rem;
           }
         }
 
@@ -608,6 +642,8 @@ export default function Footer({ variant = "light" }) {
           height: 100%;
           object-fit: cover;
           object-position: center;
+          /* Hide the obsolete raster credit independently of the translucent bar. */
+          clip-path: inset(0 0 max(14px, 2.5vw) 0);
         }
 
         .image-footer--dark .image-footer__art {

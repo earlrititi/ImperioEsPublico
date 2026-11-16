@@ -8,6 +8,8 @@ Fuente autorizada: `imperio_es_logos_png_svg.zip`, proporcionado el 14 de noviem
 
 **Ajuste posterior del footer:** se elimina la franja blanca translúcida sobre el mapa. El copyright y el enlace «Web creada por Levante Digital» pasan a la zona negra inferior, con destino `https://bylevantedigital.com`. Los enlaces legales y los controles de cookies permanecen en esa misma zona negra.
 
+**Compactación del 16 de noviembre de 2026:** la franja inferior se reduce aproximadamente a la mitad de altura y su fondo negro usa un 50 % de opacidad. El texto conserva su opacidad y adapta el contraste al fondo; los enlaces legales, cookies y el crédito de Levante Digital siguen disponibles. Se mantiene el tamaño del mapa.
+
 ## Variantes autorizadas
 
 | Propiedad `variant` | Archivo base | Aplicación |

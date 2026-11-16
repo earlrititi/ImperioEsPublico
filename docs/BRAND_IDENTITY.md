@@ -6,6 +6,8 @@ Fuente autorizada: `imperio_es_logos_png_svg.zip`, proporcionado el 14 de noviem
 
 **Adaptación posterior del navbar:** cuando el fondo pasa a blanco, el isotipo cambia a negro; sobre fondo oscuro y con el menú abierto permanece rojo. Las dos variantes transparentes de `public/brand/navigation/` comparten trazados, dimensiones y tamaño de presentación. La transición reutiliza los estados existentes del navbar, incluidos los de la portada y las páginas interiores.
 
+**Ajuste posterior del footer:** se elimina la franja blanca translúcida sobre el mapa. El copyright y el enlace «Web creada por Levante Digital» pasan a la zona negra inferior, con destino `https://bylevantedigital.com`. Los enlaces legales y los controles de cookies permanecen en esa misma zona negra.
+
 ## Variantes autorizadas
 
 | Propiedad `variant` | Archivo base | Aplicación |

@@ -56,9 +56,7 @@ const FOOTER_LEGAL_LINKS = LEGAL_LINKS.filter((link) =>
     : link
 );
 
-const FOOTER_META = {
-  privacy: "Pol\u00edtica de privacidad",
-  cookiePreferences: "Preferencias de cookies",
+const FOOTER_CREDITS = {
   copyright: `\u00a9 ${new Date().getFullYear()} Imperio Espa\u00f1ol.`,
   creator: "Web creada por Levante Digital",
 };
@@ -171,55 +169,9 @@ export default function Footer({ variant = "light" }) {
           ))}
         </nav>
 
-        <div class="image-footer__meta" role="group" aria-label={"Privacidad, cookies y cr\u00e9ditos"}>
-          <a href={withBase("/legal/privacidad")}>{FOOTER_META.privacy}</a>
-          <span class="image-footer__cookie-preferences">
-            <label class="image-footer__cookie-switch image-footer__cookie-switch--meta">
-              <span class="image-footer__sr-only">Permitir anal\u00edtica</span>
-              <input
-                type="checkbox"
-                role="switch"
-                data-cookie-consent-switch
-                aria-label="Permitir anal\u00edtica"
-              />
-              <span class="image-footer__cookie-switch-track" aria-hidden="true">
-                <span class="image-footer__cookie-switch-target">
-                  <span class="image-footer__cookie-switch-state-layer">
-                    <span class="image-footer__cookie-switch-handle-shape">
-                      <span class="image-footer__cookie-switch-handle-container" />
-                      <svg
-                        class="image-footer__cookie-switch-icon"
-                        viewBox="0 0 16 16"
-                        aria-hidden="true"
-                      >
-                        <path class="image-footer__cookie-switch-icon--off" d="M4.25 4.25 11.75 11.75M11.75 4.25 4.25 11.75" />
-                        <path class="image-footer__cookie-switch-icon--on" d="m3.2 8.2 3.4 3 6.2-6.4" />
-                      </svg>
-                    </span>
-                  </span>
-                </span>
-              </span>
-            </label>
-            <a
-              class="image-footer__cookie-preferences-link"
-              href={withBase("/legal/cookies")}
-              data-cookie-settings-trigger
-            >
-              {FOOTER_META.cookiePreferences}
-            </a>
-          </span>
-          <span>{FOOTER_META.copyright}</span>
-          <a
-            class="image-footer__creator"
-            href="https://bylevantedigital.com"
-            target="_self"
-            rel="noopener noreferrer"
-          >
-            {FOOTER_META.creator}
-          </a>
-        </div>
       </div>
 
+      <div class="image-footer__bottom">
       <nav class="image-footer__legal" aria-label="Informacion legal">
         <span class="image-footer__legal-primary">
           {FOOTER_LEGAL_LINKS.map((link) => (
@@ -265,6 +217,13 @@ export default function Footer({ variant = "light" }) {
           </span>
         </span>
       </nav>
+      <div class="image-footer__credits">
+        <span>{FOOTER_CREDITS.copyright}</span>
+        <a class="image-footer__creator" href="https://bylevantedigital.com">
+          {FOOTER_CREDITS.creator}
+        </a>
+      </div>
+      </div>
 
       <style>{`
         .footer-newsletter{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:32px max(24px,calc((100% - 1200px)/2));background:#111010;color:#fff;font-family:"Inter","Segoe UI",sans-serif}
@@ -288,6 +247,46 @@ export default function Footer({ variant = "light" }) {
           background: var(--color-black-papers);
         }
 
+        .image-footer__bottom {
+          position: relative;
+          z-index: 4;
+          /* Cover the old credit baked into the bottom edge of the illustration. */
+          margin-top: min(-14px, -2.5vw);
+          background: #0b0c0c;
+        }
+
+        .image-footer__credits {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          justify-content: center;
+          gap: 0.25rem 1.25rem;
+          padding: 0 1rem 0.75rem;
+          color: #fff;
+          font-family: "Inter", "Segoe UI", sans-serif;
+          font-size: 0.8rem;
+          line-height: 1.5;
+          text-align: center;
+        }
+
+        .image-footer__creator {
+          display: inline-flex;
+          align-items: center;
+          min-height: 44px;
+          color: inherit;
+          text-decoration: underline;
+          text-underline-offset: 0.2em;
+        }
+
+        .image-footer__creator:hover {
+          color: #ffb5ac;
+        }
+
+        .image-footer__creator:focus-visible {
+          outline: 2px solid currentColor;
+          outline-offset: 4px;
+        }
+
         .image-footer__legal {
           position: relative;
           display: flex;
@@ -299,7 +298,7 @@ export default function Footer({ variant = "light" }) {
           box-sizing: border-box;
           padding: 0.75rem 1rem;
           color: #fff;
-          background: rgb(11 12 12 / 94%);
+          background: transparent;
           font-family: "Inter", "Segoe UI", sans-serif;
           font-size: 0.66rem;
           font-weight: 700;
@@ -737,99 +736,6 @@ export default function Footer({ variant = "light" }) {
           left: 84.1%;
           width: 3.2%;
           height: 9%;
-        }
-
-        .image-footer__meta {
-          --footer-meta-red: #a92317;
-          position: absolute;
-          right: 0;
-          bottom: 0;
-          left: 0;
-          z-index: 5;
-          display: flex;
-          flex-wrap: wrap;
-          align-items: center;
-          justify-content: center;
-          gap: 0.7rem 1.25rem;
-          min-height: 58px;
-          padding: 0.65rem max(1rem, calc((100% - 1200px) / 2));
-          border-top: 1px solid rgb(255 255 255 / 70%);
-          background: rgb(255 255 255 / 60%);
-          box-shadow: 0 -8px 28px rgb(38 14 8 / 12%);
-          -webkit-backdrop-filter: blur(10px) saturate(125%);
-          backdrop-filter: blur(10px) saturate(125%);
-          color: #514a45;
-          font-family: "Inter", "Segoe UI", sans-serif;
-          font-size: clamp(0.82rem, 1.05vw, 0.96rem);
-          line-height: 1.35;
-        }
-
-        .image-footer__meta a,
-        .image-footer__meta button {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.58rem;
-          min-height: 36px;
-          margin: 0;
-          border: 0;
-          padding: 0.25rem 0;
-          background: transparent;
-          color: #171412;
-          cursor: pointer;
-          font: inherit;
-          text-decoration: none;
-        }
-
-        .image-footer__meta .image-footer__cookie-preferences {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.58rem;
-          color: var(--footer-meta-red);
-          font-weight: 600;
-        }
-
-        .image-footer__cookie-switch--meta input:focus-visible + .image-footer__cookie-switch-track {
-          outline-color: var(--footer-meta-red);
-        }
-
-        .image-footer__meta .image-footer__cookie-preferences-link {
-          color: var(--footer-meta-red);
-          font-weight: 600;
-        }
-
-        .image-footer__meta .image-footer__creator {
-          color: var(--footer-meta-red);
-          font-weight: 650;
-        }
-
-        .image-footer__meta a:hover,
-        .image-footer__meta button:hover,
-        .image-footer__meta a:focus-visible,
-        .image-footer__meta button:focus-visible {
-          color: #8f160e;
-          text-decoration: underline;
-          text-underline-offset: 0.2em;
-        }
-
-        .image-footer__meta a:focus-visible,
-        .image-footer__meta button:focus-visible {
-          border-radius: 3px;
-          outline: 2px solid var(--footer-meta-red);
-          outline-offset: 3px;
-        }
-
-        @media (max-width: 640px) {
-          .image-footer__meta {
-            justify-content: flex-start;
-            gap: 0.35rem 1rem;
-            padding: 0.8rem 1rem;
-          }
-
-          .image-footer__meta > span,
-          .image-footer__meta > a,
-          .image-footer__meta > button {
-            flex: 1 1 calc(50% - 0.5rem);
-          }
         }
 
         .image-footer__sr-only {

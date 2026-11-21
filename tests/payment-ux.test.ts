@@ -12,6 +12,7 @@ test("Shirt contact is collected once and a separate recipient is optional", () 
   assert.equal((html.match(/autocomplete="name"/g) ?? []).length, 1);
   assert.doesNotMatch(html, /autocomplete="shipping name"/);
   assert.match(html, /Enviar a otra persona/);
+  assert.equal((html.match(/type="checkbox"/g) ?? []).length, 2);
   assert.match(html, /value="Cliente Prueba"/);
   assert.match(html, /value="fixture@example.invalid"/);
   assert.match(html, /inputmode="numeric"/);

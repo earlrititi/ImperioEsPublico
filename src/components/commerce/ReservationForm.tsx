@@ -339,9 +339,13 @@ export default function ReservationForm({
 
             {!waitlist && (
               <>
-                <label class="shirt-checkout__consent">
-                  <input type="checkbox" checked={differentRecipient} disabled={detailsDisabled} onChange={(event) => setDifferentRecipient(event.currentTarget.checked)} />
-                  <span>Enviar a otra persona</span>
+                <label>
+                  Destinatario del envío
+                  <select name="deliveryRecipient" value={differentRecipient ? "other" : "buyer"} disabled={detailsDisabled}
+                    onChange={(event) => setDifferentRecipient(event.currentTarget.value === "other")}>
+                    <option value="buyer">Enviármelo a mí</option>
+                    <option value="other">Enviar a otra persona</option>
+                  </select>
                 </label>
                 <AddressFields value={address} onChange={setAddress} disabled={detailsDisabled} includeRecipient={differentRecipient} />
                 {sales && <fieldset class="shirt-checkout__group shirt-checkout__delivery" disabled={detailsDisabled}>
@@ -420,7 +424,7 @@ export default function ReservationForm({
             </label>
             <label class="shirt-checkout__consent">
               <input type="checkbox" checked={marketing} disabled={detailsDisabled} onChange={(event) => setMarketing(event.currentTarget.checked)} />
-              <span>{EMAIL_MARKETING_CONSENT} Opcional.</span>
+              <span>{EMAIL_MARKETING_CONSENT} Opcional; baja en cualquier momento.</span>
             </label>
             <button class="shirt-checkout__submit" type="submit"
               disabled={busy || (paymentActions.current !== null && !paymentReady) || (!recoveryUrl && !canStart)}>

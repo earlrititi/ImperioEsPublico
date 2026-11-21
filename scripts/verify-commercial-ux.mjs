@@ -70,6 +70,19 @@ for (const path of ["/newsletter","/newsletter/","/tienda","/carrito","/suscribi
   assert.equal(containsPopup(document),false,`${path} must not contain an offer popup`);
   assert.match(html,/TU PRIVACIDAD IMPORTA/);
   assert.ok(containsConsentSwitch(document),`${path} must contain the labelled footer consent switch`);
+  const checkFormChoices = node => {
+    if (node.tagName === "form") {
+      let count = 0;
+      const countChoices = child => {
+        if (child.tagName === "input" && child.attrs?.some(a => a.name === "type" && a.value === "checkbox")) count++;
+        for (const descendant of child.childNodes ?? []) countChoices(descendant);
+      };
+      countChoices(node);
+      assert.ok(count <= 2, `${path} has a form with ${count} checkboxes`);
+    }
+    for (const child of node.childNodes ?? []) checkFormChoices(child);
+  };
+  checkFormChoices(document);
 }
 const booklet = await page("/recursos/7-historias-del-siglo-de-oro");
 assert.match(booklet,/Descargar PDF/);

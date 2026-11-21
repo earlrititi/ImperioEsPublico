@@ -3,6 +3,11 @@ import { canTrackGooglePage } from "./google-analytics";
 
 export const AUTOMATION_KEYS = ["welcome", "checkout", "viewed_product", "site", "placed_order", "cart"] as const;
 export type AutomationKey = typeof AUTOMATION_KEYS[number];
+export function automationKeysForScope(scope: string | undefined): readonly AutomationKey[] | null {
+  if (scope === undefined || scope === "" || scope === "all") return AUTOMATION_KEYS.filter(key => key !== "placed_order");
+  if (scope === "recovery") return ["checkout", "cart"];
+  return null;
+}
 export type AutomationStep = { id: string; afterHours: number; mail: MailContent };
 export type AutomationDraft = { key: AutomationKey; name: string; revision: number; steps: AutomationStep[] };
 const mail = (subject: string, content: string, cta_label = "Volver a Imperio E", path = "/") => ({
@@ -76,7 +81,8 @@ export type AutomationFacts = {
   productAt: number | null; cartAt: number | null; checkoutAt: number | null;
 };
 export type AutomationSent = { key: AutomationKey; step: string; anchor: number; sentAt: number };
-export function planAutomation(facts: AutomationFacts, sent: AutomationSent[], now: number) {
+export function planAutomation(facts: AutomationFacts, sent: AutomationSent[], now: number,
+  allowedKeys: readonly AutomationKey[] = AUTOMATION_KEYS) {
   if (!Number.isFinite(now) || !facts.identified || !facts.verifiedEmail || facts.withdrawn || facts.suppressed ||
     facts.marketingAcceptedAt === null || !Number.isFinite(facts.marketingAcceptedAt) || facts.marketingAcceptedAt > now || facts.paidAt !== null) return [];
   const validTime = (time: number | null): time is number => time !== null && Number.isFinite(time) && time >= facts.marketingAcceptedAt! && time <= now;
@@ -85,6 +91,7 @@ export function planAutomation(facts: AutomationFacts, sent: AutomationSent[], n
     viewed_product: facts.productAt, site: facts.visitedAt, placed_order: null };
   if (sent.some(item => Number.isFinite(item.sentAt) && item.sentAt > now - 6 * 3600000 && item.sentAt <= now)) return [];
   const due = AUTOMATION_DEFAULTS.flatMap(definition => {
+    if (!allowedKeys.includes(definition.key)) return [];
     if (definition.key !== "welcome" && (definition.key !== recovery || !facts.analyticsConsent)) return [];
     const anchor = anchors[definition.key];
     if (!validTime(anchor) || now - anchor > 14 * 86400000) return [];

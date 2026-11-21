@@ -30,3 +30,14 @@ test("commercial worker and activity capture are disabled without explicit runti
   assert.deepEqual(await runMarketingAutomations(), { disabled: true, queued: 0, sent: 0, suppressed: 0, failed: 0 });
   assert.deepEqual(await captureAutomationActivity("server-user", "cart"), false);
 });
+
+test("a recovery approval cuts off old intent without excluding existing consented identities", () => {
+  const startsAt = Date.parse(iso(4));
+  const oldIntent = automationFacts({ ...subject, cart_at: iso(6), checkout_at: iso(5) }, now, startsAt)!;
+  assert.ok(oldIntent);
+  assert.equal(oldIntent.cartAt, null);
+  assert.equal(oldIntent.checkoutAt, null);
+  const newIntent = automationFacts({ ...subject, cart_at: iso(2), checkout_at: iso(1) }, now, startsAt)!;
+  assert.equal(newIntent.cartAt, Date.parse(iso(2)));
+  assert.equal(newIntent.checkoutAt, Date.parse(iso(1)));
+});

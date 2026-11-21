@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { AUTOMATION_DEFAULTS, personalizeAutomation, planAutomation, validateAutomationDraft,
+import { AUTOMATION_DEFAULTS, automationKeysForScope, personalizeAutomation, planAutomation, validateAutomationDraft,
   type AutomationFacts, type AutomationSent } from "../src/lib/email-automations";
 
 const hour = 3600000;
@@ -8,6 +8,22 @@ const start = Date.UTC(2026, 9, 1);
 const facts: AutomationFacts = { identified: true, verifiedEmail: true, marketingAcceptedAt: start,
   withdrawn: false, suppressed: false, analyticsConsent: true, paidAt: null, welcomeAt: null,
   visitedAt: null, productAt: null, cartAt: null, checkoutAt: null };
+
+test("recovery scope excludes welcome and editorial mail while keeping checkout precedence", () => {
+  const scope = automationKeysForScope("recovery")!;
+  assert.deepEqual(planAutomation({ ...facts, welcomeAt: start, visitedAt: start, productAt: start }, [], start + 25 * hour, scope), []);
+  const planned = planAutomation({ ...facts, welcomeAt: start, cartAt: start, checkoutAt: start }, [], start + 25 * hour, scope);
+  assert.equal(planned.length, 1);
+  assert.equal(planned[0].key, "checkout");
+  assert.deepEqual(planAutomation({ ...facts, paidAt: start + hour, cartAt: start }, [], start + 25 * hour, scope), []);
+  assert.deepEqual(planAutomation({ ...facts, analyticsConsent: false, cartAt: start }, [], start + 25 * hour, scope), []);
+  assert.deepEqual(planAutomation({ ...facts, cartAt: start }, [], start + 15 * 24 * hour, scope), []);
+});
+
+test("unknown scope fails closed and the existing default keeps all commercial families", () => {
+  assert.equal(automationKeysForScope("recoveries"), null);
+  assert.deepEqual(automationKeysForScope(undefined), ["welcome", "checkout", "viewed_product", "site", "cart"]);
+});
 
 test("six sequences keep requested cadence and existing transactional order channel", () => {
   assert.equal(AUTOMATION_DEFAULTS.length, 6);

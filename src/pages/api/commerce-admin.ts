@@ -13,6 +13,7 @@ import { closeOpenReservationPayment, shirtPaymentConfiguration } from "../../li
 import { drainCommerceMail } from "../../lib/commerce-mail";
 import { UUID } from "../../lib/reservation-validation";
 import { readCampaign } from "../../lib/reservation-campaign";
+import { OWNER_ORDINARY_SHIPMENT_ACTION, ordinaryShipmentDeclarations } from "../../lib/owner-shipment-declaration";
 export const prerender = false;
 export const GET: APIRoute = async (context) => {
   try {
@@ -46,9 +47,21 @@ export const GET: APIRoute = async (context) => {
     const expired = await db.from("reservations").select("id", { count: "exact", head: true }).eq("status", "EXPIRED");
     const stats = await rpc("commerce_summary");
     if (inventory.error || list.error || waiting.error || expired.error) throw new Error("DATABASE_UNAVAILABLE");
+    // Supabase's select parser cannot infer the two conditional projections.
+    // Both tables have UUID primary keys; validate that boundary before scoping audit reads.
+    let rows = (list.data ?? []) as unknown as Array<Record<string, unknown> & { id: string }>;
+    if (rows.some(row => !row || !UUID.test(row.id ?? ""))) throw new Error("DATABASE_UNAVAILABLE");
+    if (view === "orders" && rows.length) {
+      const orderIds = rows.map(row => row.id);
+      const audit = await db.from("commerce_audit").select("entity_id,action,created_at")
+        .in("entity_id", orderIds).eq("action", OWNER_ORDINARY_SHIPMENT_ACTION);
+      if (audit.error) throw new Error("DATABASE_UNAVAILABLE");
+      const declarations = ordinaryShipmentDeclarations(audit.data ?? [], orderIds);
+      rows = rows.map(row => ({ ...row, ownerShipmentDeclaration: declarations.get(row.id) ?? null }));
+    }
     return privateJson({
       inventory: inventory.data,
-      rows: list.data,
+      rows,
       count: list.count,
       page,
       view,

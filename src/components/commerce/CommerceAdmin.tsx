@@ -2,6 +2,20 @@ import { useEffect, useState } from "preact/hooks";
 import { formatMoney, RESERVATION_STATUS, SHIRT_SHIPPING_PRICE_CENTS, shirtDeliveryOption } from "../../config/commerce";
 import { AddressSummary, api, ItemsSummary } from "./shared";
 import DeliveryActions from "./DeliveryActions";
+import type { OwnerShipmentDeclaration as OwnerShipmentDeclarationData } from "../../lib/owner-shipment-declaration";
+
+export function OwnerShipmentDeclaration({ order }: { order: {
+  ownerShipmentDeclaration?: OwnerShipmentDeclarationData | null;
+  shipped_at?: string | null; carrier_delivered_at?: string | null; customer_received_at?: string | null;
+} }) {
+  if (!order.ownerShipmentDeclaration) return null;
+  return <div class="commerce-owner-shipment" style={{ display: "grid", gap: "0.25rem" }}>
+    <small><strong>Enviado según titular · Correos ordinario · sin seguimiento</strong></small>
+    <small>{order.shipped_at ? `Despacho registrado: ${new Date(order.shipped_at).toLocaleString("es-ES", { timeZone: "Europe/Madrid" })}` : "Fecha efectiva de despacho desconocida"}</small>
+    <small>{order.customer_received_at ? "Recepción confirmada por el cliente" : order.carrier_delivered_at ? "Entrega acreditada; recepción del cliente sin confirmar" : "Recepción sin acreditar"}</small>
+    <small>Declaración del 21/11/2026; no acredita la recepción.</small>
+  </div>;
+}
 
 export default function CommerceAdmin() {
   const [view, setView] = useState("reservations"),
@@ -258,7 +272,7 @@ export default function CommerceAdmin() {
                   {formatMoney(r.total ?? r.total_price_snapshot)}
                   <small>IVA y envio incluidos</small>
                 </td>
-                <td>{RESERVATION_STATUS[r.status]}</td>
+                <td>{RESERVATION_STATUS[r.status]}{view === "orders" && <OwnerShipmentDeclaration order={r} />}</td>
                 <td>
                   <details>
                     <summary>Ver detalle</summary>

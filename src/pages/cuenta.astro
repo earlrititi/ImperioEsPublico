@@ -67,7 +67,9 @@ const preferenceResult = Astro.url.searchParams.get("comunicaciones");
       <a class="btn btn-primary" href="/premium">Entrar a premium</a>
       <a class="btn btn-ghost" href="/suscribirse">Ver planes</a>
       <a class="btn btn-ghost" href="/cuenta/contrasena">Definir o cambiar contraseña</a>
-      {subscription?.stripe_customer_id && (
+      {isImperioAdmin(user) ? (
+        <a class="btn btn-ghost" href="/admin">Panel admin</a>
+      ) : subscription?.stripe_customer_id && (
         <button class="btn btn-ghost" id="billing-portal-button" type="button">
           Gestionar facturacion
         </button>
@@ -103,7 +105,6 @@ const preferenceResult = Astro.url.searchParams.get("comunicaciones");
     <p class="muted">Los avisos necesarios de cuenta, pagos y pedidos se mantienen aparte. <a href="/legal/privacidad">Privacidad</a></p>
   </section>
   <MyReservations client:load />
-  {isImperioAdmin(user) && <p><a href="/admin">Administrar Imperio E</a></p>}
 </PageShell>
 
 <style>

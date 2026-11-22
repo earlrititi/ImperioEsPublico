@@ -10,7 +10,7 @@ test("Meta feed uses actual variants, price and stock with preorder availability
   ] });
   assert.equal((xml.match(/<item>/g) || []).length, 2);
   assert.match(xml, /26.99 EUR/);
-  assert.match(xml, /3 EUR por camiseta/);
+  assert.match(xml, /Envío estándar gratuito/);
   assert.match(xml, /<g:availability>preorder/);
   assert.match(xml, /<g:availability>out of stock/);
   assert.match(xml, /Blanco &amp; negro/);
@@ -35,12 +35,12 @@ test("Live purchases are in stock, not advertised as sold out or free reservatio
   assert.doesNotMatch(xml, /Reserva gratuita|<g:inventory>/);
 });
 
-test("Current Meta product price stays separate from the disclosed delivered total", () => {
+test("Current Meta product price discloses free standard shipping", () => {
   const xml = metaCatalogXml({ unitPrice: 2699, reservationMode: false, salesEnabled: true, variants: [
     { sku: "IE-CAMISETA-IMPERIAL-M", name: "M", color: "Blanco", available: true },
   ] });
   assert.match(xml, /<g:price>26\.99 EUR<\/g:price>/);
-  assert.match(xml, /Total con envio: 29\.99 EUR por unidad/);
+  assert.match(xml, /Envío estándar gratuito a la Península/);
   assert.match(xml, /sin crear una cuenta/);
 });
 

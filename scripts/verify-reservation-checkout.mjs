@@ -57,6 +57,8 @@ const attempt = {
   expires_at: new Date(Date.now() + 3600000).toISOString(),
 };
 let priceAmount = 2699,
+  expectedPaid = 8997,
+  expectedShipping = 0,
   creates = 0,
   completionCalls = 0,
   checkoutParams,
@@ -128,8 +130,13 @@ globalThis.fetch = async (input, init) => {
   if (url.pathname === "/rest/v1/marketing_leads") return json(null);
   if (url.pathname === "/rest/v1/stripe_customer_mail_runtime") return json({ enabled: false, starts_at: null, livemode: false });
   if (url.pathname === "/rest/v1/subscriptions") return json(null);
-  if (url.pathname === "/rest/v1/rpc/begin_shirt_payment")
+  if (url.pathname === "/rest/v1/rpc/begin_shirt_payment") {
+    if (body.p_shipping_method) {
+      attempt.shipping_method = body.p_shipping_method;
+      attempt.shipping_amount = body.p_shipping_method === "priority" ? 699 : 0;
+    }
     return json(attemptId);
+  }
   if (url.pathname === "/rest/v1/reservation_payment_attempts") {
     if (request.method === "PATCH") {
       Object.assign(attempt, body);
@@ -138,8 +145,8 @@ globalThis.fetch = async (input, init) => {
     return json(attempt);
   }
   if (url.pathname === "/rest/v1/rpc/complete_shirt_payment") {
-    assert.equal(body.p_total, 8997);
-    assert.equal(body.p_shipping, 0);
+    assert.equal(body.p_total, expectedPaid);
+    assert.equal(body.p_shipping, expectedShipping);
     assert.equal(body.p_attempt, attemptId);
     completionCalls++;
     return json("33333333-3333-4333-8333-333333333333");
@@ -337,6 +344,44 @@ const invalidSignature = await app.fetch(new Request("https://imperioes.com/api/
 }));
 assert.equal(invalidSignature.status, 400);
 checks++;
+assert.equal((await checkout({ delivery: "invalid" })).status, 409);
+process.env.PUBLIC_STRIPE_PUBLISHABLE_KEY = "pk_test_fixture";
+for (const delivery of ["standard", "priority"]) {
+  expectedShipping = delivery === "priority" ? 699 : 0;
+  expectedPaid = 2699 * reservation.total_quantity + expectedShipping;
+  attempt.stripe_session_id = null;
+  session = {
+    ...session,
+    status: "open",
+    payment_status: "unpaid",
+    amount_total: expectedPaid,
+    url: null,
+    client_secret: "cs_test_reservation_fixture_secret_fixture",
+    metadata: { reservationAttemptId: attemptId, shirt_delivery: delivery },
+  };
+  const response = await checkout({ delivery, paymentUi: "elements" });
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { clientSecret: session.client_secret, total: expectedPaid, discount: 0 });
+  assert.equal(checkoutParams.ui_mode, "elements");
+  assert.equal(checkoutParams.return_url, "https://imperioes.com/compra/completada");
+  assert.equal(checkoutParams.success_url, undefined);
+  assert.equal(checkoutParams.custom_text, undefined);
+  assert.equal(checkoutParams.metadata.shirt_delivery, delivery);
+  assert.equal(checkoutParams.line_items.length, expectedShipping ? 3 : 2);
+  if (expectedShipping) {
+    assert.equal(checkoutParams.line_items.at(-1).price_data.unit_amount, 699);
+    assert.equal(checkoutParams.line_items.at(-1).quantity, 1);
+  }
+  const before = closedCalls;
+  assert.equal((await webhook("payment_intent.payment_failed", `evt_declined_${delivery}`, {
+    id: session.payment_intent,
+    metadata: { reservationAttemptId: attemptId },
+  })).status, 200);
+  assert.equal(closedCalls, before);
+  session = { ...session, status: "complete", payment_status: "paid" };
+  assert.equal((await webhook("checkout.session.completed", `evt_paid_${delivery}`, session)).status, 200);
+  checks += 3;
+}
 console.log(
   `${checks} compiled reservation Checkout/webhook scenarios passed. Stripe and database transports simulated; no payments or outbound network.`,
 );

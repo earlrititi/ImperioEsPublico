@@ -147,7 +147,14 @@ export function publicReservation(r: any) {
     const { delivery_evidence_ref, delivery_source, delivery_paused_at, post_delivery_stage, next_email_at, last_email_at, ...order } = commerce_orders;
     publicOrder = order;
   }
-  return { ...rest, commerce_orders: publicOrder, paymentAddress: pending?.shipping_address ?? null };
+  return {
+    ...rest,
+    commerce_orders: publicOrder,
+    paymentAddress: pending?.shipping_address ?? null,
+    paymentDelivery: pending?.shipping_method ?? null,
+    paymentTotal: pending?.expected_total ?? null,
+    paymentDiscount: pending?.discount_amount ?? 0,
+  };
 }
 export const privateJson = (data: unknown, status = 200) =>
   Response.json(data, {
@@ -186,6 +193,8 @@ export function failure(error: unknown) {
     RATE_LIMITED: "Demasiadas solicitudes. Intentalo mas tarde.",
     PAYMENT_ADDRESS_LOCKED:
       "Ya existe un pago en curso. Cierra esa sesion antes de cambiar la direccion.",
+    PAYMENT_SHIPPING_LOCKED:
+      "Ya existe un pago en curso. Cierra esa sesión antes de cambiar el envío.",
     INVALID_STATE: "Esta accion no esta disponible en el estado actual.",
     RESERVATION_MODE:
       "Las ventas todavia no estan abiertas. No se ha realizado ningun cobro.",

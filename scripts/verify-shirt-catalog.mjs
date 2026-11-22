@@ -15,20 +15,20 @@ async function page(path) {
 
 const storefront = await page("/tienda");
 assert.match(storefront, /<form[^>]*action="\/reservas"[^>]*method="get"/);
-assert.match(storefront, /<select[^>]*name="size"/);
+assert.match(storefront, /<input[^>]*type="radio"[^>]*name="size"/);
 for (const size of ["S", "M", "L", "XL", "XXL"]) {
-  assert.match(storefront, new RegExp(`<option[^>]*value="${size}"`));
+  assert.match(storefront, new RegExp(`<input[^>]*name="size"[^>]*value="${size}"`));
 }
-assert.match(storefront, /<option[^>]*value="M"[^>]*selected/);
+assert.match(storefront, /<input[^>]*name="size"[^>]*value="M"[^>]*checked/);
 assert.match(storefront, /IVA incluido/);
-assert.match(storefront, /COMPRAR AHORA/);
+assert.match(storefront, /data-reservation-cta[^>]*>Comprar<\/button>/);
 
 for (const size of ["S", "M", "L", "XL", "XXL"]) {
   const html = await page(`/checkout/camiseta-imperial?size=${size}`);
   assert.match(html, new RegExp(`Talla elegida<\/dt>\\s*<dd[^>]*>${size}<\/dd>`));
   assert.match(html, /26,99/);
-  assert.match(html, /3 [\s\S]{0,12} de env/);
-  assert.match(html, /29,99/);
+  assert.match(html, /estándar gratuito/);
+  assert.match(html, /6,99/);
   assert.match(html, /100 % poliester/);
   assert.doesNotMatch(html, /Valento BRICKPLUS/);
   assert.match(html, /CAVABRI/);
@@ -50,8 +50,8 @@ for (const query of ["", "?size=NOT-A-SIZE"]) {
 }
 const shipping = await page("/legal/devoluciones");
 assert.match(shipping, /Correos/);
-assert.match(shipping, /Peninsula espanola/);
+assert.match(shipping, /Península/);
 assert.match(shipping, /Baleares, Canarias, Ceuta, Melilla/);
-assert.match(shipping, /maxima de 48 horas/);
-assert.match(shipping, /maxima de 7 dias laborables/);
+assert.match(shipping, /hasta 5 días/);
+assert.match(shipping, /24 horas/);
 console.log(`${cases} compiled shirt catalogue scenarios passed. No network or payments.`);

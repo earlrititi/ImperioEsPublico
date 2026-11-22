@@ -2,6 +2,7 @@
 import LegalDocument from "../../components/LegalDocument.astro";
 import { LEGAL_BUSINESS, LEGAL_DOCUMENT_VERSIONS } from "../../config/legal";
 import { TSHIRT_OFFER_COPY } from "../../config/tshirt-offer";
+import { SHIRT_PRICE_COPY } from "../../config/commerce";
 ---
 
 <LegalDocument
@@ -65,8 +66,8 @@ import { TSHIRT_OFFER_COPY } from "../../config/tshirt-offer";
   <section>
     <h2>Oferta para suscriptores: Camiseta Imperial</h2>
     <p>{TSHIRT_OFFER_COPY}</p>
-    <p>Disponible en Arcabucero (15 %) y Maestre de Campo (20 %), mensual y anual, tras confirmar el pago. El descuento se aplica automaticamente al importe de las camisetas de una compra con el mismo correo de la suscripcion. El precio es 26,99 EUR por camiseta mas 3 EUR de envio por unidad, IVA incluido. El envio queda fuera del descuento. No se acumula con otros descuentos ni se convierte en dinero.</p>
-    <p>La compra se confirma mediante pago en Stripe, sujeta a disponibilidad de talla y entrega en Espana peninsular. Una solicitud o reserva sin pago no es un pedido pagado. Crear una cuenta Piquero o dejar el correo para recibir el manifiesto no activa esta oferta.</p>
+    <p>Aplica a planes mensuales y anuales al comprar con el correo de la suscripción. Precio habitual de {SHIRT_PRICE_COPY}. Consulta las <a href="/legal/envios">opciones de envío a la Península</a>.</p>
+    <p>La compra está sujeta a disponibilidad de talla y se confirma con el pago en Stripe.</p>
   </section>
 
   <section>

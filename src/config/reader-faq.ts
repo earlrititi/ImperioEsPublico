@@ -1,5 +1,7 @@
 import { SITE } from "./site";
 import { TSHIRT_OFFER_COPY } from "./tshirt-offer";
+import { SHIRT_PRICE_COPY } from "./commerce";
+import { PRODUCTS } from "./products";
 
 export const READER_FAQ = [
   { question: "¿Qué es Imperio E?", answer: "Un proyecto de divulgación sobre la Monarquía Hispánica, su historia, cultura y patrimonio, con especial atención al Siglo de Oro." },
@@ -22,7 +24,8 @@ export const READER_FAQ = [
   { question: "¿Y si tengo poco tiempo o no sé si lo usaré suficiente?", answer: "Empieza por una publicación abierta y sus temas relacionados. Puedes leer por secciones y volver después. Revisa el catálogo disponible y lo que incluye cada nivel antes de elegir una modalidad de pago." },
   { question: "¿Puedo cancelar mi suscripción?", answer: "Sí. Desde Mi cuenta puedes abrir el portal de Stripe y cancelar la renovación. La cancelación se aplica al final del periodo pagado, durante el cual mantienes el acceso." },
   { question: "¿La suscripción se renueva automáticamente?", answer: "Sí. Los planes se renuevan cada mes o cada año, según la opción contratada, hasta que canceles la renovación. Antes de confirmar, Stripe muestra el importe y la periodicidad. Los precios publicados incluyen el IVA indicado en la página de suscripciones." },
-  { question: "¿Cómo se realizan los pagos?", answer: "El pago se completa en Stripe Checkout. La Camiseta Imperial cuesta 29,99 € por unidad con envío peninsular e IVA incluidos: 26,99 € de camiseta y 3 € de envío. Puedes comprarla sin crear una cuenta ni contratar una suscripción. Para suscripciones, comprueba también el plan y la periodicidad antes de autorizar el pago." },
+  { question: "¿Cómo se realizan los pagos?", answer: "Stripe procesa los pagos de pedidos y suscripciones. Puedes comprar la camiseta sin crear una cuenta." },
+  { question: "¿Cuánto cuestan la camiseta y el envío?", answer: `${SHIRT_PRICE_COPY}. Envío a España peninsular. ${PRODUCTS["camiseta-imperial"].shippingInformation}` },
   { question: "¿Guardáis mis datos bancarios?", answer: "Los datos de tarjeta se introducen en Stripe, no en los formularios de Imperio E. El sitio conserva los identificadores y el estado necesarios para gestionar la suscripción. Las cuentas se gestionan mediante Supabase; puedes consultar los detalles en la política de privacidad." },
   { question: "¿Qué pasa con mi cuenta si cancelo?", answer: "Tu cuenta no se elimina. Al terminar el periodo contratado y dejar de estar activa la suscripción, pierdes el acceso a los artículos de pago y conservas el acceso gratuito PIQUERO." },
   { question: "¿Puedo cambiar de ARCABUCERO a MAESTRE DE CAMPO?", answer: "El cambio automático entre planes no está habilitado actualmente en el portal. Contacta con nosotros antes de contratar otro plan para evitar suscripciones duplicadas." },

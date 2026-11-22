@@ -22,7 +22,7 @@ test("Shirt preserves owner-confirmed manufacturer details and own stock", () =>
     { size: "XXL", stock: 3, lengthCm: 78, widthCm: 62 },
   ]);
   assert.equal(product.stock, 45);
-  assert.equal(product.expectedUnitAmount + product.shipping.amount, 2999);
+  assert.equal(product.expectedUnitAmount + product.shipping.amount, 2699);
   assert.equal(product.packagingType, "Sobre de envio");
   assert.equal(product.packagingProvider, "Correos");
   assert.equal(product.packagingCompliance, "CARRIER_PROVIDED_ARTICLE_17_5_CONFIRMED");

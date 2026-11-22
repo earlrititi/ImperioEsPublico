@@ -11,6 +11,7 @@ import { PRELOADER_SESSION_KEY } from "../config/hero";
 import Layout from "../layouts/Layout.astro";
 import { SITE } from "../config/site";
 import { publishedArticles } from "../lib/published-articles";
+import "../styles/article-deck.css";
 
 const preloaderSessionKey = PRELOADER_SESSION_KEY;
 const articles = await publishedArticles();
@@ -19,7 +20,7 @@ const articles = await publishedArticles();
 <Layout
   navigation="home"
   structuredData={readerFaqSchema}
-  title="Imperio Español | Historia, cultura, memoria y patrimonio"
+  title={SITE.defaultTitle}
   description={SITE.defaultDescription}
 >
   <main class="home-page">

@@ -114,13 +114,15 @@ export function ItemsSummary({
   total,
   discount = 0,
   vat,
+  delivery,
 }: {
   items: any[];
   total: number;
   discount?: number;
   vat?: number;
+  delivery?: { label: string; amount: number };
 }) {
-  const shipping = items.reduce((sum, item) => sum + item.quantity * SHIRT_SHIPPING_PRICE_CENTS, 0);
+  const shipping = delivery?.amount ?? items.reduce((sum, item) => sum + item.quantity * SHIRT_SHIPPING_PRICE_CENTS, 0);
   return (
     <div class="reservation-summary">
       <div class="commerce-table-wrap" role="region" aria-label="Resumen de camisetas" tabIndex={0}>
@@ -152,7 +154,7 @@ export function ItemsSummary({
         </table>
       </div>
       <p>Camisetas: {formatMoney(total + discount - shipping)}</p>
-      <p>Envío a Península: {formatMoney(shipping)}</p>
+      <p>{delivery?.label ?? "Envío a Península"}: {shipping === 0 ? "Gratis" : formatMoney(shipping)}</p>
       {discount > 0 && <p>Descuento: −{formatMoney(discount)}</p>}
       <p class="reservation-total">Total: {formatMoney(total)}</p>
       <p>IVA incluido{typeof vat === "number" ? `: ${formatMoney(vat)}` : ""}. El importe final con el descuento aplicable se muestra en Stripe antes de pagar.</p>

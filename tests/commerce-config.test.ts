@@ -37,12 +37,12 @@ test("shirt uses the owner-confirmed VAT-inclusive amount and mainland shipping"
   const shirt = PRODUCTS["camiseta-imperial"];
   assert.equal(shirt.expectedUnitAmount, 2699);
   assert.deepEqual(shirt.tax, { percentage: 21, behavior: "inclusive", confirmedByOwner: true });
-  assert.equal(shirt.shipping.amount, 300);
-  assert.equal(shirt.expectedUnitAmount + shirt.shipping.amount, 2999);
+  assert.equal(shirt.shipping.amount, 0);
+  assert.equal(shirt.expectedUnitAmount + shirt.shipping.amount, 2699);
   assert.equal(shirt.shipping.country, "ES");
   assert.equal(shirt.shipping.region, "ES_MAINLAND");
   assert.equal(shirt.shipping.carrier, "Correos");
-  assert.equal(shirt.shipping.preparationMaxHours, 48);
+  assert.equal(shirt.shipping.preparationMaxHours, 120);
   assert.equal(shirt.shipping.deliveryMaxBusinessDays, 7);
 });
 

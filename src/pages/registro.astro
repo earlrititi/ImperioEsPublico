@@ -23,14 +23,16 @@ if (Astro.request.method === "POST") {
   catch (e) { return Astro.redirect(`/registro?error=${authError(e)}&next=${encodeURIComponent(next)}`, 303); }
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const acceptedTerms = formData.get("terms") === "on";
-  const marketingConsent = formData.get("newsletter") === "on";
+  // Only the user's chosen submit action can opt in to marketing.
+  const registrationMode = String(formData.get("registration_mode") ?? "");
+  const marketingConsent = registrationMode === "newsletter";
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const password = formData.get("password") ?? "";
   if (!validNewPassword(password) || password !== formData.get("password_confirmation")) {
     return Astro.redirect(`/registro?error=password&next=${encodeURIComponent(next)}`, 303);
   }
 
-  if (!emailPattern.test(email) || email.length > 254 || !acceptedTerms) {
+  if (!emailPattern.test(email) || email.length > 254 || !acceptedTerms || !["newsletter", "basic"].includes(registrationMode)) {
     return Astro.redirect(`/registro?error=validation&next=${encodeURIComponent(next)}`);
   }
   let captchaToken: string | undefined;
@@ -56,7 +58,7 @@ if (Astro.request.method === "POST") {
       },
       ...(marketingConsent ? [{ anonymousId, consentType: "marketing_email" as const,
         documentVersion: LEGAL_DOCUMENT_VERSIONS.privacy, accepted: true, source: "registration",
-        metadata: { copy_version: EMAIL_MARKETING_COPY_VERSION, consent_text: EMAIL_MARKETING_CONSENT } }] : []),
+        metadata: { copy_version: EMAIL_MARKETING_COPY_VERSION, consent_text: EMAIL_MARKETING_CONSENT, registration_action: registrationMode } }] : []),
       {
         anonymousId,
         consentType: "privacy_acknowledgement",
@@ -162,13 +164,21 @@ if (Astro.request.method === "POST") {
             {" "}(version {LEGAL_DOCUMENT_VERSIONS.terms}).
           </span>
         </label>
-        <label class="registration-check">
-          <input type="checkbox" name="newsletter" />
-          <span>{EMAIL_MARKETING_CONSENT} <small>{EMAIL_MARKETING_NOTE}</small></span>
-        </label>
+        <p class="registration-marketing-copy" id="registration-marketing-copy">
+          <strong>¿Quieres recibir nuestras novedades?</strong>
+          <span>{EMAIL_MARKETING_CONSENT}</span>
+          <small>{EMAIL_MARKETING_NOTE}</small>
+        </p>
         <AuthCaptcha action="registration" />
-        <button class="btn btn-primary" type="submit">Crear cuenta PIQUERO</button>
-        <p class="muted">El alta y la newsletter son independientes. Tambien puedes <a href="/newsletter">recibir las 7 historias del Siglo de Oro sin crear una cuenta</a>.</p>
+        <div class="registration-actions" role="group" aria-label="Elige cómo crear tu cuenta">
+          <button class="btn btn-primary" type="submit" name="registration_mode" value="newsletter" aria-describedby="registration-marketing-copy">
+            Crear cuenta PIQUERO y recibir novedades
+          </button>
+          <button class="btn registration-secondary" type="submit" name="registration_mode" value="basic">
+            Crear cuenta PIQUERO sin newsletter
+          </button>
+        </div>
+        <p class="muted">Las dos opciones crean la misma cuenta gratuita. La newsletter es voluntaria. También puedes <a href="/newsletter">recibir las 7 historias del Siglo de Oro sin crear una cuenta</a>.</p>
       </form>
     )}
     <p class="muted">¿Ya tienes cuenta? <a href={loginHref}>Inicia sesion</a>.</p>
@@ -207,6 +217,40 @@ if (Astro.request.method === "POST") {
     height: 20px;
     margin: 0.1rem 0 0;
     accent-color: var(--color-red-accent);
+  }
+
+  .registration-marketing-copy {
+    display: grid;
+    gap: 0.4rem;
+    margin: 0;
+    line-height: 1.55;
+  }
+
+  .registration-marketing-copy small {
+    color: var(--muted, #767676);
+  }
+
+  .registration-actions {
+    display: grid;
+    gap: 0.7rem;
+  }
+
+  .registration-actions button {
+    min-height: 46px;
+    width: 100%;
+    white-space: normal;
+    text-align: center;
+  }
+
+  .registration-secondary {
+    border: 1px solid var(--line);
+    background: transparent;
+    color: inherit;
+  }
+
+  .registration-secondary:hover,
+  .registration-secondary:focus-visible {
+    border-color: var(--color-red-accent);
   }
 
   .registration-form a,

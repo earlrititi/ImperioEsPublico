@@ -45,7 +45,8 @@ const index = className => elements.findIndex(node => node.attrs?.some(a=>a.name
 assert.ok(index("hero-imperio")>=0);
 assert.ok(index("home-shirt")>index("hero-imperio"));
 assert.ok(index("services-section")>index("home-shirt"));
-assert.ok(home.includes("COMPRAR AHORA"));
+assert.match(home, /<form[^>]+action="\/reservas"/);
+assert.match(home, /data-reservation-cta[^>]*>Comprar</);
 for (const path of ["/legal/aviso-legal", "/legal/privacidad", "/legal/cookies", "/legal/terminos", "/legal/envios", "/legal/devoluciones", "/legal/desistimiento"]) {
   const html = await page(path);
   assert.match(html, /Adrian Lopez Oliva/);
@@ -54,7 +55,7 @@ for (const path of ["/legal/aviso-legal", "/legal/privacidad", "/legal/cookies",
   assert.doesNotMatch(html, /Version 2026-09-10|44061972K|San Antonio Abad/);
 }
 const store = await page("/tienda");
-assert.match(store, /COMPRAR AHORA/);
+assert.match(store, /data-reservation-cta[^>]*>Comprar</);
 assert.match(store, /26,99/);
 assert.doesNotMatch(store, /available_stock|physical_stock|reserved_stock/);
 for (const path of ["/newsletter","/newsletter/","/tienda","/carrito","/suscribirse","/reservas?cart=1","/recursos/7-historias-del-siglo-de-oro"]) {

@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import { Socket } from "node:net";
 import { createHash } from "node:crypto";
-import Stripe from "../.vercel/output/functions/_render.func/node_modules/stripe/esm/stripe.esm.node.js";
+import { existsSync } from "node:fs";
+const bundledStripe = new URL("../.vercel/output/functions/_render.func/node_modules/stripe/esm/stripe.esm.node.js", import.meta.url);
+const { default: Stripe } = await import(existsSync(bundledStripe) ? bundledStripe.href : "stripe");
 Socket.prototype.connect = () => {
   throw new Error("No real network allowed in reservation Checkout fixtures");
 };

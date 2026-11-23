@@ -13,7 +13,11 @@ test("email opt-ins state commercial purposes and never replace the free downloa
   assert.match(page,/<input type="checkbox" name="marketingConsent" \/>/);
   assert.ok(readFileSync("public"+NEWSLETTER_PDF_PATH).subarray(0,4).equals(Buffer.from("%PDF")));
   const registration=readFileSync("src/pages/registro.astro","utf8");
-  assert.match(registration,/EMAIL_MARKETING_CONSENT/);assert.doesNotMatch(registration,/<input[^>]*name="newsletter"[^>]*(?:required|checked)/);
+  assert.match(registration,/EMAIL_MARKETING_CONSENT/);
+  assert.match(registration,/name="registration_mode" value="newsletter"/);
+  assert.match(registration,/name="registration_mode" value="basic"/);
+  assert.match(registration,/registrationMode === "newsletter"/);
+  assert.doesNotMatch(registration,/<input[^>]*name="newsletter"/);
 });
 test("newsletter funnel is consent-gated, bounded and excludes personal URLs",()=>{
   const event={id:"00000000-0000-4000-8000-000000000011",flow:"newsletter",step:4,page:"/newsletter"};

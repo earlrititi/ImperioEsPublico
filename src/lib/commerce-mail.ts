@@ -57,6 +57,18 @@ function unseal(value: string, id: string) {
   );
 }
 
+// An outbox event keeps its own meaning on retry. It must not turn an old
+// purchase invitation into a second confirmation after the reservation changes.
+export function reservationMailEventEligible(r: any, kind: string, now = Date.now()) {
+  if (kind === "ORDER_PAID") return Boolean(r.commerce_orders?.paid_at) &&
+    !["CANCELLED", "REFUNDED"].includes(r.commerce_orders.status);
+  if (kind === "RESHIP_EMAIL") return true; // Explicit operator request for the current state.
+  if (kind === "PURCHASE_AVAILABLE") return r.status === kind && !r.commerce_orders &&
+    !r.reservation_payment_attempts?.some((attempt: any) => attempt.status === "OPEN") &&
+    Boolean(r.expires_at) && Number.isFinite(Date.parse(r.expires_at)) && Date.parse(r.expires_at) > now;
+  return ["RESERVED", "WAITLIST", "CANCELLED", "EXPIRED"].includes(kind) && r.status === kind && !r.commerce_orders;
+}
+
 export function reservationMailText(r: any, kind: string, url: string) {
   const paid = Boolean(r.commerce_orders);
   const a = paid ? r.commerce_orders.shipping_address : r.shipping_address;
@@ -139,11 +151,20 @@ export async function drainCommerceMail(limit = 10, jobId?: string) {
     if (!job) break;
     try {
       const client = createCorporateMailClient(getRequiredEnv("RESEND_API_KEY"));
+      const reservation = await readReservation(job.reservation_id);
+      const markObsolete = async () => {
+        const saved = await db.from("commerce_outbox").update({ status: "REVIEW" }).eq("id", job.id)
+          .eq("claim_id", job.claim_id).eq("status", "PROCESSING").select("id");
+        if (saved.error || saved.data?.length !== 1) throw Error("EMAIL_RECEIPT_UNAVAILABLE");
+      };
+      if (!reservationMailEventEligible(reservation, job.kind)) {
+        await markObsolete(); continue;
+      }
       let message;
       if (job.encrypted_message)
         message = unseal(job.encrypted_message, job.id);
       else {
-        const r = await readReservation(job.reservation_id);
+        const r = reservation;
         message = {
           from: `Imperio Espanol <${SITE.contactEmail}>`,
           to:
@@ -179,6 +200,15 @@ export async function drainCommerceMail(limit = 10, jobId?: string) {
       const { adminNotification, ...customerMessage } = message;
       assertMailRecipient(customerMessage, mode, optionalEnv("COMMERCE_TEST_EMAIL"));
       if (adminNotification) assertMailRecipient(adminNotification, mode, optionalEnv("COMMERCE_TEST_EMAIL"));
+      const latest = await readReservation(job.reservation_id);
+      const lease = await db.from("commerce_outbox").select("status,claim_id").eq("id", job.id).single();
+      if (lease.error) throw Error("DATABASE_UNAVAILABLE");
+      if (lease.data.status !== "PROCESSING" || lease.data.claim_id !== job.claim_id) continue;
+      if (!reservationMailEventEligible(latest, job.kind)) {
+        await markObsolete(); continue;
+      }
+      const recipient = mode === "test" ? getRequiredEnv("COMMERCE_TEST_EMAIL") : latest.customer_email;
+      if (customerMessage.to !== recipient || customerMessage.cc || customerMessage.bcc) throw Error("EMAIL_RECIPIENT_CHANGED");
       const response = await sendCorporateMail(client, customerMessage, {
         idempotencyKey: `commerce-mail-${job.id}`,
       }, { preserveSnapshot: Boolean(job.encrypted_message) });
@@ -190,7 +220,7 @@ export async function drainCommerceMail(limit = 10, jobId?: string) {
         }, { preserveSnapshot: Boolean(job.encrypted_message) });
         if (notice.error || !notice.data) throw new Error("ADMIN_EMAIL_PROVIDER_UNAVAILABLE");
       }
-      const { error } = await db
+      const receipt = await db
         .from("commerce_outbox")
         .update({
           status: "SENT",
@@ -199,8 +229,10 @@ export async function drainCommerceMail(limit = 10, jobId?: string) {
           encrypted_message: null,
         })
         .eq("id", job.id)
-        .eq("claim_id", job.claim_id);
-      if (error) throw new Error("EMAIL_RECEIPT_UNAVAILABLE");
+        .eq("claim_id", job.claim_id)
+        .eq("status", "PROCESSING")
+        .select("id");
+      if (receipt.error || receipt.data?.length !== 1) throw new Error("EMAIL_RECEIPT_UNAVAILABLE");
       sent++;
     } catch {
       // Leave the durable lease for a later retry with the same provider idempotency key.

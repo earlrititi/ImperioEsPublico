@@ -63,7 +63,7 @@ export const POST: APIRoute = async ({ request }) => {
       for (const r of pending ?? []) if (await rpc("open_shirt_purchase", { p_id: r.id })) opened++;
     }
     const adminDelivery=await reconcileAdminDelivery(10);
-    const commerceMail = await drainCommerceMail(20), adminMail = await drainAdminMail(10);
+    const commerceMail = await drainCommerceMail(20);
     const { stripe } = await import("../../lib/stripe");
     const stripeMail = await drainStripeCustomerMail(5, stripe);
     const mailArchive = await reconcileCustomerMailArchive(5);
@@ -71,6 +71,9 @@ export const POST: APIRoute = async ({ request }) => {
     let marketing;
     try { marketing = { ...(await runMarketingAutomations(3)), delivery: await automationDeliveryReceipts(3),subscriptionNotices:await runSubscriptionNotices(3) }; }
     catch { marketing = { failed: true }; console.error("MARKETING_MAINTENANCE_FAILED"); }
+    // Materialize current purchase intent before a newsletter can reserve a slot.
+    // Transactional work above is independent of the commercial coordinator.
+    const adminMail = await drainAdminMail(10);
     let postDelivery: unknown;
     try { postDelivery = await runPostDelivery(3); }
     catch { postDelivery = { failed: true }; console.error("POST_DELIVERY_MAINTENANCE_FAILED"); }

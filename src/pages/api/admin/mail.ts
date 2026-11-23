@@ -24,15 +24,17 @@ export const POST: APIRoute = async context => {
     if(body.action==="reconcile")return privateJson(await reconcileAdminDelivery(10));
     const content = validateMail(body);
     const type = body.type === "test" ? "test" : "individual";
+    const purpose = type === "test" ? "commercial" : body.purpose ?? "commercial";
+    if (!["commercial", "service"].includes(purpose)) throw Error("INVALID_INPUT");
     const recipient = normalizeEmail(type === "test" ? user.email : body.recipient);
     if (!validEmail(recipient) || !UUID.test(body.requestId ?? "")) throw new Error("INVALID_INPUT");
-    const payload = {content,type,recipient,requestId:body.requestId};
+    const payload = {content,type,purpose,recipient,requestId:body.requestId};
     if (body.action === "preview") {
       const expires = Date.now()+15*60*1000;
       return privateJson({...corporateEmailPreview(renderAdminMail(content),context.url.origin),recipient,expires,token:mailApproval(user.id,payload,expires)});
     }
     if (body.action !== "send" || body.confirm !== "ENVIAR" || !verifyMailApproval(user.id,payload,body.expires,body.token)) throw new Error("INVALID_INPUT");
-    const id = await rpc("queue_individual_mail",{p_id:body.requestId,p_actor:user.id,p_recipient:recipient,p_type:type,p_content:content});
+    const id = await rpc("queue_individual_mail",{p_id:body.requestId,p_actor:user.id,p_recipient:recipient,p_type:type,p_content:{...content,purpose}});
     return privateJson({id,status:"pending"},202);
   } catch(error) { return failure(error); }
 };

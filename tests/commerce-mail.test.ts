@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { reservationMailText } from "../src/lib/commerce-mail";
+import { reservationMailText, reservationMailEventEligible } from "../src/lib/commerce-mail";
 
 const reservation = {
   number: "RES-TEST", status: "RESERVED", total_price_snapshot: 2999,
@@ -18,6 +18,24 @@ test("Paid orders confirm payment and actual fulfilment windows without outdated
   assert.match(text, /maximo de 7 dias laborables/);
   assert.doesNotMatch(text, /13 de octubre de 2026/);
   assert.doesNotMatch(text, /Reserva valida hasta|No tienes obligacion|La reserva no autoriza|NO SE HA REALIZADO/);
+});
+
+test("stale reservation events never become new purchase confirmations", () => {
+  const now = Date.parse("2026-11-23T12:00:00Z"), future = new Date(now + 3600000).toISOString();
+  const invitation = { ...reservation, status: "PURCHASE_AVAILABLE", expires_at: future };
+  assert.equal(reservationMailEventEligible(invitation, "PURCHASE_AVAILABLE", now), true);
+  for (const state of ["CANCELLED", "EXPIRED", "PAYMENT_PENDING", "PAYMENT_FAILED", "CONVERTED_TO_ORDER"])
+    assert.equal(reservationMailEventEligible({ ...invitation, status: state }, "PURCHASE_AVAILABLE", now), false);
+  assert.equal(reservationMailEventEligible({ ...invitation, expires_at: "bad" }, "PURCHASE_AVAILABLE", now), false);
+  assert.equal(reservationMailEventEligible({ ...invitation, expires_at: new Date(now - 1).toISOString() }, "PURCHASE_AVAILABLE", now), false);
+  assert.equal(reservationMailEventEligible({ ...invitation, reservation_payment_attempts: [{ status: "OPEN" }] }, "PURCHASE_AVAILABLE", now), false);
+  const paid = { ...invitation, commerce_orders: { paid_at: new Date(now - 1).toISOString(), status: "READY_FOR_FULFILLMENT" } };
+  assert.equal(reservationMailEventEligible(paid, "PURCHASE_AVAILABLE", now), false);
+  assert.equal(reservationMailEventEligible(paid, "RESERVED", now), false);
+  assert.equal(reservationMailEventEligible(paid, "ORDER_PAID", now), true);
+  assert.equal(reservationMailEventEligible({ ...paid, commerce_orders: { ...paid.commerce_orders, status: "REFUNDED" } }, "ORDER_PAID", now), false);
+  assert.equal(reservationMailEventEligible(reservation, "ORDER_PAID", now), false);
+  assert.equal(reservationMailEventEligible(reservation, "RESHIP_EMAIL", now), true);
 });
 
 test("Reservation mail distinguishes management link from a later purchase invitation", () => {

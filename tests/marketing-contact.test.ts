@@ -18,9 +18,17 @@ test("a confirmed contact uses one welcome series without a burst or restart",()
   const steps=AUTOMATION_DEFAULTS.find(d=>d.key==="welcome")!.steps,anchor=new Date(now-360*3600000).toISOString();
   assert.equal(nextContactWelcome(steps,anchor,[],now)?.step.id,steps[0].id);
   const old={step:steps[0].id,sent_at:new Date(now-7*3600000).toISOString()};
-  assert.equal(nextContactWelcome(steps,anchor,[old],now)?.step.id,steps[1].id);
+  assert.equal(nextContactWelcome(steps,anchor,[old],now)?.step.id,steps.at(-1)!.id);
   assert.equal(nextContactWelcome(steps,anchor,[{...old,sent_at:new Date(now-3600000).toISOString()}],now),null);
   assert.equal(nextContactWelcome(steps,anchor,steps.map(s=>({step:s.id,sent_at:old.sent_at})),now),null);
   assert.equal(nextContactWelcome(steps,"invalid",[],now),null);
   assert.equal(nextContactWelcome(steps,new Date(now+1).toISOString(),[],now),null);
+});
+
+test("a converted contact keeps editorial content but does not receive converted offers", () => {
+  const steps=AUTOMATION_DEFAULTS[0].steps,anchor=new Date(now-290*3600000).toISOString();
+  const sent=[{step:"day1",sent_at:new Date(now-48*3600000).toISOString()}];
+  const paid={paidAt:now-24*3600000,activeSubscription:true};
+  assert.equal(nextContactWelcome(steps,anchor,sent,now,paid)?.step.id,"day5");
+  assert.equal(nextContactWelcome(steps,anchor,[...sent,{...sent[0],step:"day5"}],now,paid),null);
 });

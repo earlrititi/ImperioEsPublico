@@ -2,6 +2,7 @@ import { useEffect, useState } from "preact/hooks";
 import { AUTOMATION_DEFAULTS, type AutomationDraft } from "../../lib/email-automations";
 import type { MailContent } from "../../lib/admin-mail-template";
 import type { AutomationRevenue } from "../../lib/ga4-reports";
+import CrmPerformance from "./CrmPerformance";
 type AutomationStats = { key: string; pending: number; accepted: number; delivered: number; suppressed: number; review: number };
 
 export default function Automations() {
@@ -63,6 +64,7 @@ export default function Automations() {
   }
   return <section>
     <div class="admin-toolbar"><h1>Automatizaciones</h1><a href="/admin/newsletter">Newsletter</a></div>
+    <CrmPerformance />
     <p class="admin-status" role="status">{sending === null ? (loading ? "Comprobando estado de los envios..." : "Estado de envios no disponible") : sending ? "Envios comerciales autorizados" : "Envios comerciales desactivados"}</p>
     {enrollmentStartsAt&&<p>Audiencia: cuentas nuevas desde {new Date(enrollmentStartsAt).toLocaleString("es-ES",{timeZone:"Europe/Madrid"})}, con correo verificado y consentimiento.</p>}
     <label>Secuencia <select disabled={busy || loading} value={selected} onChange={event => select(event.currentTarget.value)}>

@@ -101,3 +101,12 @@ retiran del panel. Las peticiones antiguas de esas acciones devuelven
 
 No se enviaron correos de prueba ni se genero o publico un articulo para verificar
 este cambio. Los informes y recibos anteriores se conservan como historial.
+
+## Comprobacion de la interfaz de Google
+
+El 23 de noviembre se accedio por navegador a la propiedad visible
+`Imperio E - imperioes.com` (GA4 558692820). La pantalla de vinculaciones indicaba
+que aun no habia ninguna. El selector de propiedades de Search Console quedo
+cargando sin permitir seleccionar el dominio; no se guardo una vinculacion.
+La publicacion de la coleccion y el ajuste de conservacion no se dan por realizados.
+Esos pasos siguen disponibles desde la propia interfaz, sin claves API.

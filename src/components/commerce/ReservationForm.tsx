@@ -412,6 +412,7 @@ export default function ReservationForm({
       </aside>
 
       <div class="shirt-checkout__actions">
+        {sales && !waitlist && <p>Pago seguro con Stripe</p>}
         {canEnterDetails && (
           <>
             <label class="shirt-checkout__consent">

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { AUTOMATION_DEFAULTS, automationKeysForScope, personalizeAutomation, planAutomation, validateAutomationDraft,
+import { AUTOMATION_DEFAULTS, automationKeysForScope, personalizeAutomation, planAutomation, validateAutomationDraft, nextWelcomeStep,
   type AutomationFacts, type AutomationSent } from "../src/lib/email-automations";
 
 const hour = 3600000;
@@ -60,8 +60,10 @@ test("unidentified, unverified, unconsented, withdrawn and suppressed recipients
   }
 });
 
-test("verified purchase cancels every commercial recovery even when another action is more recent", () => {
-  assert.deepEqual(planAutomation({ ...facts, paidAt: start + hour, welcomeAt: start, cartAt: start + 3 * hour }, [], start + 80 * hour), []);
+test("verified purchase cancels recovery while consented editorial welcome remains available", () => {
+  const paid = { ...facts, paidAt: start + hour, welcomeAt: start, cartAt: start + 3 * hour };
+  assert.equal(planAutomation(paid, [], start + 80 * hour)[0]?.key, "welcome");
+  assert.deepEqual(planAutomation({ ...paid, welcomeAt: null }, [], start + 80 * hour), []);
 });
 
 test("behavioral followups require analytics as well as email consent; welcome does not require analytics", () => {
@@ -84,11 +86,31 @@ test("cart takes precedence over product and site; product takes precedence over
   assert.equal(planAutomation({ ...facts, productAt: start, visitedAt: start }, [], start + 49 * hour)[0]?.key, "viewed_product");
 });
 
-test("a delayed worker skips older steps instead of sending a welcome backlog", () => {
+test("a delayed worker delivers the resource first and then skips the welcome backlog", () => {
   const first = planAutomation({ ...facts, welcomeAt: start }, [], start + 290 * hour);
-  assert.equal(first[0]?.step, "day12");
+  assert.equal(first[0]?.step, "day1");
   const sent: AutomationSent[] = [{ ...first[0], sentAt: start + 290 * hour }];
-  assert.deepEqual(planAutomation({ ...facts, welcomeAt: start }, sent, start + 310 * hour), []);
+  const latest = planAutomation({ ...facts, welcomeAt: start }, sent, start + 315 * hour);
+  assert.equal(latest[0]?.step, "day12");
+  assert.deepEqual(planAutomation({ ...facts, welcomeAt: start }, [...sent, { ...latest[0], sentAt: start + 315 * hour }], start + 330 * hour), []);
+});
+
+test("welcome history survives a new account anchor and excludes converted offers", () => {
+  const steps = AUTOMATION_DEFAULTS[0].steps;
+  const sent: AutomationSent[] = [{ key: "welcome", step: "day5", anchor: start - 300 * hour, sentAt: start - 150 * hour }];
+  const current = start + 290 * hour;
+  assert.equal(nextWelcomeStep(steps, start, sent, current)?.step, "day12");
+  assert.equal(nextWelcomeStep(steps, start, sent, current, { paidAt: start + hour, activeSubscription: true }), null);
+  const resourceSent: AutomationSent[] = [{ ...sent[0], step: "day1" }];
+  assert.equal(nextWelcomeStep(steps, start, resourceSent, start + 200 * hour, { paidAt: start + hour })?.step, "day5");
+  assert.equal(nextWelcomeStep(steps, start, resourceSent, current, { billingRecord: true })?.step, "day5");
+});
+
+test("welcome rollout keeps low-intent families outside the approved scope", () => {
+  const scope = automationKeysForScope("recovery_welcome")!;
+  assert.deepEqual(scope, ["welcome", "checkout", "cart"]);
+  assert.equal(planAutomation({ ...facts, welcomeAt: start, productAt: start }, [], start + 25 * hour, scope)[0]?.key, "welcome");
+  assert.equal(planAutomation({ ...facts, welcomeAt: start, checkoutAt: start }, [], start + 25 * hour, scope)[0]?.key, "checkout");
 });
 
 test("completed step is never duplicated and short-interval sends are capped", () => {

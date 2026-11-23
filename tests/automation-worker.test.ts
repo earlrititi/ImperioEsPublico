@@ -9,11 +9,19 @@ const subject: AutomationSubject = { user_id: "server-user", email: "verified@ex
   marketing_accepted_at: iso(48), welcome_at: iso(48), visited_at: iso(30), product_at: iso(30), cart_at: null, checkout_at: null,
   analytics_accepted: true, analytics_version: LEGAL_DOCUMENT_VERSIONS.cookies, analytics_at: iso(48), analytics_withdrawn_at: null,
   paid_at: null, billing_record: false, payment_in_progress: false };
-test("worker requires server identity and email consent and excludes paid, pending and unresolved billing", () => {
+test("worker requires server identity and email consent", () => {
   assert.ok(automationFacts(subject, now));
   for (const invalid of [{ user_id: "" }, { email: "invalid" }, { consent_id: "" }, { marketing_accepted_at: "bad" },
-    { marketing_accepted_at: iso(-1) }, { paid_at: iso(1) }, { billing_record: true }, { payment_in_progress: true }]) {
+    { marketing_accepted_at: iso(-1) }]) {
     assert.equal(automationFacts({ ...subject, ...invalid }, now), null);
+  }
+});
+
+test("financial states suppress recovery while preserving consented editorial welcome", () => {
+  for (const financial of [{ paid_at: iso(1) }, { billing_record: true }, { payment_in_progress: true }]) {
+    const facts = automationFacts({ ...subject, ...financial, checkout_at: iso(2) }, now)!;
+    assert.equal(planAutomation(facts, [], now)[0]?.key, "welcome");
+    assert.deepEqual(planAutomation({ ...facts, welcomeAt: null }, [], now), []);
   }
 });
 test("current, unwithdrawn analytics proof is required for behavioral recovery but not welcome", () => {

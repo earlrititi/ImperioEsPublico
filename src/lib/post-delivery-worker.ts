@@ -7,6 +7,7 @@ import { assertMailRecipient } from "./mail-delivery";
 import { database, hash, optionalEnv, rpc } from "./reservations";
 import { getRequiredEnv } from "./env";
 import { deliveryMessageEligible, postDeliveryDelay, receiptCapability, type PostDeliveryKind } from "./post-delivery";
+import { beginCommercialSend, completeCommercialSend, failCommercialSend, type CommercialReservation } from "./commercial-mail-coordinator";
 
 type DeliveryJob = { id: string; order_id: string; kind: PostDeliveryKind; recipient: string; order_number: string;
   token_expires_at: string; claim_id: string; template_digest: string | null; };
@@ -50,6 +51,8 @@ export async function runPostDelivery(limit = 3) {
     if (!runtime()) break;
     const job: DeliveryJob | undefined = (await rpc("claim_post_delivery_job", { p_loyalty: active.loyalty }))?.[0];
     if (!job) break;
+    let reservation: CommercialReservation | undefined;
+    let accepted = false;
     const finish = async (values: Record<string, unknown>) => {
       const saved = await db.from("post_delivery_jobs").update(values).eq("id", job.id).eq("claim_id", job.claim_id)
         .eq("status", "processing").select("id");
@@ -81,8 +84,23 @@ export async function runPostDelivery(limit = 3) {
         cancelled++; continue;
       }
       assertMailRecipient(message, active.mode, recipient);
-      const response = await sendCorporateMail(client, message, { idempotencyKey: `post-delivery-v1-${job.id}` });
+      if (job.kind === "post_delivery_loyalty") {
+        reservation = await beginCommercialSend({ source:"post_delivery",jobId:job.id,claimId:job.claim_id,payload:message });
+        if (reservation.action === "accepted") {
+          await finish({ status:"sent",sent_at:new Date().toISOString(),provider_id:reservation.providerId,
+            provider_status:"accepted_by_provider",last_error:null });
+          sent++; continue;
+        }
+        if (reservation.action !== "send") {
+          if (reservation.action === "suppressed") cancelled++;
+          if (reservation.action === "review") failed++;
+          continue;
+        }
+      }
+      const response = await sendCorporateMail(client, message, { idempotencyKey: `post-delivery-v1-${job.id}` }, { audit:!reservation });
       if (response.error || !response.data) throw Error("EMAIL_PROVIDER_UNAVAILABLE");
+      if (reservation) await completeCommercialSend(reservation,response.data.id);
+      accepted = true;
       await finish({ status: "sent", sent_at: new Date().toISOString(), provider_id: response.data.id,
         provider_status: "accepted_by_provider", last_error: null });
       const updated = await db.from("commerce_orders").update({ last_email_at: new Date().toISOString(), next_email_at: null,
@@ -90,6 +108,9 @@ export async function runPostDelivery(limit = 3) {
       if (updated.error) throw Error("DATABASE_UNAVAILABLE");
       sent++;
     } catch {
+      if (reservation?.action === "send" && !accepted) {
+        try { await failCommercialSend(reservation); } catch { /* Preserve the uncertain reservation. */ }
+      }
       // Preserve the lease, recipient and digest for a bounded, idempotent retry.
       await db.from("post_delivery_jobs").update({ last_error: "DELIVERY_ATTEMPT_FAILED" }).eq("id", job.id).eq("claim_id", job.claim_id).eq("status", "processing");
       failed++;

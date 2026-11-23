@@ -4,6 +4,7 @@ import { database, hash, optionalEnv, rpc, safeEqual, sign } from "./reservation
 import { renderAdminMail, type MailContent } from "./admin-mail-template";
 import { assertMailRecipient } from "./mail-delivery";
 import { createCorporateMailClient, sendCorporateMail } from "./customer-mail-service";
+import { beginCommercialSend, completeCommercialSend, failCommercialSend, type CommercialReservation } from "./commercial-mail-coordinator";
 
 export function mailApproval(actor: string, payload: unknown, expires: number) {
   return sign(`admin-mail:${actor}:${expires}:${hash(JSON.stringify(payload))}`);
@@ -40,6 +41,8 @@ export async function drainAdminMail(limit = 10) {
   for (let n=0;n<Math.min(limit,20);n++) {
     const job = (await rpc("claim_admin_mail"))?.[0];
     if (!job) break;
+    let reservation: CommercialReservation | undefined;
+    let accepted = false;
     try {
       if (job.type !== "test" && await isMailSuppressed(db,job.recipient)) {
         await rpc("finish_admin_mail",{p_id:job.id,p_claim:job.claim_id,p_status:"suppressed"}); continue;
@@ -54,11 +57,24 @@ export async function drainAdminMail(limit = 10) {
         if (saved.error || saved.data?.length !== 1) throw new Error("EMAIL_SNAPSHOT_UNAVAILABLE");
       }
       assertMailRecipient(payload, mode, optionalEnv("COMMERCE_TEST_EMAIL"));
-      const result = await sendCorporateMail(client,payload,{idempotencyKey:`admin-mail-${job.id}`},{preserveSnapshot:Boolean(job.provider_payload)});
+      if (job.type !== "test") {
+        reservation = await beginCommercialSend({ source:"admin",jobId:job.id,claimId:job.claim_id,payload });
+        if (reservation.action === "accepted") {
+          await rpc("finish_admin_mail",{p_id:job.id,p_claim:job.claim_id,p_status:"sent",p_provider_id:reservation.providerId});
+          sent++; continue;
+        }
+        if (reservation.action !== "send") continue;
+      }
+      const result = await sendCorporateMail(client,payload,{idempotencyKey:`admin-mail-${job.id}`},{preserveSnapshot:Boolean(job.provider_payload),audit:job.type === "test"});
       if (result.error || !result.data) throw new Error("EMAIL_PROVIDER_UNAVAILABLE");
+      if (reservation) await completeCommercialSend(reservation,result.data.id);
+      accepted = true;
       await rpc("finish_admin_mail",{p_id:job.id,p_claim:job.claim_id,p_status:"sent",p_provider_id:result.data.id});
       sent++;
     } catch {
+      if (reservation?.action === "send" && !accepted) {
+        try { await failCommercialSend(reservation); } catch { /* A durable uncertain claim still blocks other jobs. */ }
+      }
       await rpc("finish_admin_mail",{p_id:job.id,p_claim:job.claim_id,p_status:"failed",p_error:"Delivery attempt failed; retry uses the same provider key"});
     }
     await new Promise(resolve=>{ setTimeout(resolve,600); });

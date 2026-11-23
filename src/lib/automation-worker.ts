@@ -8,15 +8,15 @@ import { unsubscribeToken } from "./admin-mail";
 import { assertMailRecipient } from "./mail-delivery";
 import { createCorporateMailClient, sendCorporateMail } from "./customer-mail-service";
 import { runContactWelcome } from "./contact-welcome-worker";
+import { beginCommercialSend, completeCommercialSend, failCommercialSend, type CommercialReservation } from "./commercial-mail-coordinator";
 
 export type AutomationSubject = { user_id: string; email: string; name: string; consent_id: string; marketing_accepted_at: string;
   welcome_at: string; visited_at: string | null; product_at: string | null; cart_at: string | null; checkout_at: string | null;
   analytics_accepted: boolean | null; analytics_version: string | null; analytics_at: string | null; analytics_withdrawn_at: string | null;
-  paid_at: string | null; billing_record: boolean; payment_in_progress: boolean };
+  paid_at: string | null; billing_record: boolean; payment_in_progress: boolean; active_subscription?: boolean };
 const time = (value: string | null) => value ? Date.parse(value) : null;
 export function automationFacts(subject: AutomationSubject, now = Date.now(), activityStartsAt = -Infinity): AutomationFacts | null {
-  if (!subject.user_id || !subject.consent_id || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(subject.email) ||
-    subject.billing_record || subject.payment_in_progress || subject.paid_at) return null;
+  if (!subject.user_id || !subject.consent_id || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(subject.email)) return null;
   const consentAt = time(subject.marketing_accepted_at), analyticsAt = time(subject.analytics_at);
   if (consentAt === null || !Number.isFinite(consentAt) || consentAt > now) return null;
   const activity = (value: string | null) => {
@@ -27,7 +27,8 @@ export function automationFacts(subject: AutomationSubject, now = Date.now(), ac
     analyticsConsent: subject.analytics_accepted === true && subject.analytics_withdrawn_at === null &&
       subject.analytics_version === LEGAL_DOCUMENT_VERSIONS.cookies && analyticsAt !== null && Number.isFinite(analyticsAt) &&
       analyticsAt <= now && now - analyticsAt < 365 * 86400000,
-    paidAt: null, welcomeAt: time(subject.welcome_at), visitedAt: time(subject.visited_at), productAt: time(subject.product_at),
+    paidAt: time(subject.paid_at), billingRecord: subject.billing_record, paymentInProgress: subject.payment_in_progress,
+    activeSubscription: subject.active_subscription, welcomeAt: time(subject.welcome_at), visitedAt: time(subject.visited_at), productAt: time(subject.product_at),
     cartAt: activity(subject.cart_at), checkoutAt: activity(subject.checkout_at) };
 }
 
@@ -56,7 +57,10 @@ async function approvedRuntime() {
   const proof = await db.from("commerce_orders").select("stripe_checkout_session_id,total,status").eq("id", runtime.purchase_proof_id).single();
   if (proof.error || proof.data.total <= 0 || ["CANCELLED", "REFUNDED"].includes(proof.data.status) ||
     !proof.data.stripe_checkout_session_id.startsWith(`cs_${mode}_`)) return null;
-  const activityStartsAt = keys.includes("welcome") ? -Infinity : Date.parse(runtime.approved_at);
+  // A separate cutover survives approval of welcome copy; adding that family
+  // must not enroll historical carts or checkouts from before recovery approval.
+  const activityStartsAt = Date.parse(runtime.recovery_activity_starts_at ?? runtime.approved_at);
+  if (!Number.isFinite(activityStartsAt) || activityStartsAt > Date.now()) return null;
   return { runtime, drafts, digest, mode, keys, activityStartsAt };
 }
 async function readSubject(user: string): Promise<AutomationSubject | null> {
@@ -64,11 +68,10 @@ async function readSubject(user: string): Promise<AutomationSubject | null> {
   if (result.error) throw Error("DATABASE_UNAVAILABLE");
   return result.data;
 }
-async function sentHistory(user: string): Promise<AutomationSent[]> {
-  const result = await (await database()).from("marketing_automation_jobs").select("key,step,anchor,sent_at").eq("user_id", user)
-    .eq("status", "sent").gte("sent_at", new Date(Date.now() - 15 * 86400000).toISOString()).limit(1001);
-  if (result.error || result.data.length > 1000) throw Error("DATABASE_UNAVAILABLE");
-  return result.data.map(row => ({ key: row.key, step: row.step, anchor: Date.parse(row.anchor), sentAt: Date.parse(row.sent_at) }));
+async function sentHistory(email: string): Promise<AutomationSent[]> {
+  const rows = await rpc("commercial_automation_history", { p_email: email.trim().toLowerCase() });
+  if (!Array.isArray(rows) || rows.length > 1000) throw Error("DATABASE_UNAVAILABLE");
+  return rows.map(row => ({ key: row.key, step: row.step, anchor: Date.parse(row.anchor), sentAt: Date.parse(row.sent_at) }));
 }
 
 export async function automationRuntimeActive() { return Boolean(await approvedRuntime()); }
@@ -94,7 +97,7 @@ export async function runMarketingAutomations(limit = 10) {
   for (const subject of subjects.data as AutomationSubject[]) {
     const facts = automationFacts(subject, Date.now(), activityStartsAt);
     if (!facts) continue;
-    const planned = planAutomation(facts, await sentHistory(subject.user_id), Date.now(), keys)[0];
+    const planned = planAutomation(facts, await sentHistory(subject.email), Date.now(), keys)[0];
     if (!planned) continue;
     if(planned.key==="welcome"&&optionalEnv("MARKETING_CENTRAL_WELCOME_ENABLED")==="true")continue;
     const draft = drafts.find(item => item.key === planned.key)!;
@@ -112,9 +115,10 @@ export async function runMarketingAutomations(limit = 10) {
       const result = await db.from("marketing_automation_jobs").update(values).eq("id", job.id).eq("claim_id", job.claim_id).eq("status", "processing").select("id");
       if (result.error || result.data?.length !== 1) throw Error("EMAIL_RECEIPT_UNAVAILABLE");
     };
+    let reservation: CommercialReservation | undefined;
     try {
       const subject = await readSubject(job.user_id), facts = subject ? automationFacts(subject, Date.now(), activityStartsAt) : null;
-      const next = facts ? planAutomation(facts, await sentHistory(job.user_id), Date.now(), keys)[0] : null;
+      const next = facts ? planAutomation(facts, await sentHistory(subject!.email), Date.now(), keys)[0] : null;
       const draft = drafts.find(item => item.key === job.key), step = draft?.steps.find(item => item.id === job.step);
       if (!subject || subject.consent_id !== job.consent_id || !next || !step || draft!.revision !== job.revision || job.template_digest !== digest ||
         next.key !== job.key || next.step !== job.step || next.anchor !== Date.parse(job.anchor)) {
@@ -135,7 +139,7 @@ export async function runMarketingAutomations(limit = 10) {
       if (payload.to !== recipient || payload.cc || payload.bcc) throw Error("EMAIL_RECIPIENT_CHANGED");
       // Re-read immediately before transmission: a purchase or withdrawal may have cancelled this lease.
       const latest = await readSubject(job.user_id), latestFacts = latest ? automationFacts(latest, Date.now(), activityStartsAt) : null;
-      const latestPlan = latestFacts ? planAutomation(latestFacts, await sentHistory(job.user_id), Date.now(), keys)[0] : null;
+      const latestPlan = latestFacts ? planAutomation(latestFacts, await sentHistory(latest!.email), Date.now(), keys)[0] : null;
       const lease = await db.from("marketing_automation_jobs").select("status,claim_id").eq("id", job.id).single();
       if (lease.error) throw Error("DATABASE_UNAVAILABLE");
       if (!latest || !latestPlan || latest.email !== subject.email || latest.consent_id !== job.consent_id || latestPlan.key !== job.key ||
@@ -144,10 +148,25 @@ export async function runMarketingAutomations(limit = 10) {
         if (lease.data.status === "processing") await finish({ status: "suppressed", reason: "ELIGIBILITY_CHANGED", provider_payload: null });
         suppressed++; continue;
       }
-      const response = await sendCorporateMail(client, payload, { idempotencyKey: `automation-${job.id}` }, { preserveSnapshot: Boolean(job.provider_payload) });
+      reservation = await beginCommercialSend({ source: "automation", jobId: job.id, claimId: job.claim_id, payload });
+      if (["deferred", "suppressed", "review"].includes(reservation.action)) {
+        if (reservation.action === "suppressed") suppressed++;
+        continue;
+      }
+      if (reservation.action === "accepted") {
+        await finish({ status: "sent", provider_id: reservation.providerId, sent_at: new Date().toISOString(), provider_payload: null, delivery_status: "accepted_by_provider" });
+        sent++; continue;
+      }
+      const response = await sendCorporateMail(client, payload, { idempotencyKey: `automation-${job.id}` },
+        { preserveSnapshot: Boolean(job.provider_payload), audit: false });
       if (response.error || !response.data) throw Error("EMAIL_PROVIDER_UNAVAILABLE");
+      await completeCommercialSend(reservation, response.data.id);
+      reservation = undefined;
       await finish({ status: "sent", provider_id: response.data.id, sent_at: new Date().toISOString(), provider_payload: null, delivery_status: "accepted_by_provider" }); sent++;
-    } catch { failed++; }
+    } catch {
+      if (reservation?.action === "send") await failCommercialSend(reservation).catch(() => undefined);
+      failed++;
+    }
     await new Promise(resolve => { setTimeout(resolve, 600); });
   }
   const central=keys.includes("welcome")

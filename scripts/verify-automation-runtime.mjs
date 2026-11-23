@@ -10,12 +10,15 @@ Object.assign(process.env, { MARKETING_AUTOMATIONS_ENABLED: 'true', MARKETING_AU
   COMMERCE_EMAIL_MODE: 'test', COMMERCE_TEST_EMAIL: 'sink@example.invalid', STRIPE_SECRET_KEY: 'sk_test_fixture',
   RESEND_API_KEY: 're_fixture', RESERVATION_TOKEN_SECRET: 'fixture', PUBLIC_SUPABASE_URL: 'https://fixture.supabase.co', SUPABASE_SERVICE_ROLE_KEY: 'fixture' });
 const runtime = { enabled: true, approved_by: id, approved_at: ago(1), enrollment_starts_at: ago(72), purchase_proof_id: id, last_user_id: null,
+  recovery_activity_starts_at: ago(72),
   template_digest: createHash('sha256').update(JSON.stringify(AUTOMATION_DEFAULTS.filter(item=>item.key!=='placed_order'))).digest('hex') };
 const baseline = { user_id: id, email: 'verified@example.invalid', name: 'Lector de prueba', consent_id: id,
   marketing_accepted_at: ago(48), welcome_at: null, visited_at: ago(20), product_at: ago(20), cart_at: ago(6), checkout_at: null,
   analytics_accepted: true, analytics_version: LEGAL_DOCUMENT_VERSIONS.cookies, analytics_at: ago(48), analytics_withdrawn_at: null,
   paid_at: null, billing_record: false, payment_in_progress: false };
-let subject = structuredClone(baseline), job = null, providerFailure = false, receiptFailure = false, withdrawBeforeSend = false, reapproveBeforeSend = false, subjectReads = 0, emails = 0;
+let subject = structuredClone(baseline), job = null, acceptedReceipt = false, coordinatorAction = 'send', providerFailure = false, receiptFailure = false, withdrawBeforeSend = false, reapproveBeforeSend = false, subjectReads = 0, emails = 0;
+let contact = null, contactReads = 0, withdrawContactBeforeSend = false, historyRows = [];
+let financial = { paid_at:null, billing_record:false, payment_in_progress:false, active_subscription:false };
 const sends = [], saved = [];
 const json = (value, status=200) => Response.json(value,{status});
 globalThis.fetch = async (input, init) => {
@@ -32,11 +35,47 @@ globalThis.fetch = async (input, init) => {
     }
     return json(subject?[subject]:[]);
   }
+  if (path === '/rest/v1/marketing_email_contacts') {
+    if (url.searchParams.has('email')) {
+      contactReads++;
+      return json(withdrawContactBeforeSend&&contactReads>=2?null:contact);
+    }
+    return json(contact?[contact]:[]);
+  }
+  if (path === '/rest/v1/rpc/commercial_contact_state') return json(financial);
   if (path === '/rest/v1/rpc/queue_marketing_automation') {
     if (job) return json(null);
+    acceptedReceipt = false;
     job = {id,user_id:id,consent_id:id,key:body.p_key,step:body.p_step,anchor:body.p_anchor,due_at:body.p_due,
       revision:body.p_revision,template_digest:body.p_digest,status:'pending',claim_id:id,provider_payload:null}; return json(id);
   }
+  if (path === '/rest/v1/rpc/queue_contact_welcome') {
+    if (job) return json(null);
+    acceptedReceipt=false;
+    job={id,user_id:id,contact_email:contact.email,consent_id:id,key:'welcome',step:body.p_step,
+      anchor:contact.welcome_at,due_at:body.p_due,revision:body.p_revision,template_digest:body.p_digest,
+      status:'pending',claim_id:id,provider_payload:null};
+    return json(id);
+  }
+  if (path === '/rest/v1/rpc/claim_contact_welcome') {
+    if (!job?.contact_email||job.status!=='pending') return json([]);
+    job.status='processing'; return json([{...job}]);
+  }
+  if (path === '/rest/v1/rpc/commercial_automation_history')
+    return json([...historyRows,...(job?.status==='sent'?[{key:job.key,step:job.step,anchor:job.anchor,sent_at:job.sent_at}]:[])]);
+  if (path === '/rest/v1/rpc/reserve_commercial_mail') {
+    assert.equal(body.p_source,'automation'); assert.equal(body.p_job,id); assert.equal(body.p_claim,id);
+    assert.match(body.p_digest,/^[a-f0-9]{64}$/);
+    if (acceptedReceipt) return json({action:'accepted',provider_id:'provider_fixture'});
+    if (coordinatorAction!=='send') {
+      job.status=coordinatorAction==='deferred'?'pending':coordinatorAction;
+      return json({action:coordinatorAction,reason:'FIXTURE_POLICY'});
+    }
+    return json({action:'send',receipt_id:id,receipt_claim_id:id});
+  }
+  if (path === '/rest/v1/rpc/complete_customer_mail') { acceptedReceipt=true; return json(true); }
+  if (path === '/rest/v1/rpc/fail_customer_mail') return json(true);
+  if (path === '/rest/v1/customer_mail_deliveries') return json([]);
   if (path === '/rest/v1/rpc/claim_marketing_automation') {
     if (job?.status!=='pending') return json([]);
     job.status='processing'; return json([{...job}]);
@@ -73,6 +112,13 @@ job.status='pending'; // Simulate lease expiry; real lease behavior is covered b
 result=await run(1); assert.equal(result.failed,1); assert.deepEqual(sends.at(-1),first);
 receiptFailure=false; job.status='pending'; result=await run(1); assert.equal(result.sent,1); assert.deepEqual(sends.at(-1),first);
 const before=sends.length;
+// A durable provider receipt repairs the source without another HTTP send.
+assert.equal(sends.filter(send=>send.key===`automation-${id}`).length,3);
+job=null; subject=structuredClone(baseline); subjectReads=0; coordinatorAction='deferred';
+result=await run(1); assert.equal(result.sent,0); assert.equal(job.status,'pending'); assert.equal(sends.length,before);
+job=null; subjectReads=0; coordinatorAction='suppressed';
+result=await run(1); assert.equal(result.suppressed,1); assert.equal(sends.length,before);
+coordinatorAction='send';
 runtime.enrollment_starts_at=null;assert.equal((await run(1)).disabled,true);assert.equal(sends.length,before);
 runtime.enrollment_starts_at=new Date(now+3600000).toISOString();assert.equal((await run(1)).disabled,true);
 runtime.enrollment_starts_at=ago(72);
@@ -81,6 +127,7 @@ process.env.MARKETING_AUTOMATION_SCOPE='recovery';
 assert.equal((await run(1)).disabled,true); assert.equal(sends.length,before);
 runtime.template_digest=createHash('sha256').update(JSON.stringify(AUTOMATION_DEFAULTS.filter(item=>['checkout','cart'].includes(item.key)))).digest('hex');
 runtime.approved_at=ago(12);
+runtime.recovery_activity_starts_at=runtime.approved_at;
 process.env.MARKETING_CENTRAL_WELCOME_ENABLED='true';
 subject={...structuredClone(baseline),welcome_at:ago(48),cart_at:null};job=null;subjectReads=0;
 result=await run(1);assert.equal(result.disabled,false);assert.equal(result.queued,0);assert.equal(result.sent,0);assert.equal(job,null);
@@ -99,9 +146,31 @@ assert.equal((await run(1)).disabled,true);assert.equal(sends.length,scopedSends
 delete process.env.MARKETING_AUTOMATION_SCOPE;
 delete process.env.MARKETING_CENTRAL_WELCOME_ENABLED;
 runtime.approved_at=ago(1);
+runtime.recovery_activity_starts_at=ago(72);
+// Welcome can be reviewed separately without opening low-intent families or
+// resetting a contact's previous account welcome. There is no analytics opt-in.
+process.env.MARKETING_AUTOMATION_SCOPE='recovery_welcome';
+process.env.MARKETING_CENTRAL_WELCOME_ENABLED='true';
+runtime.template_digest=createHash('sha256').update(JSON.stringify(AUTOMATION_DEFAULTS.filter(item=>['welcome','checkout','cart'].includes(item.key)))).digest('hex');
+subject=null;job=null;contact={email:'verified@example.invalid',name:'Lector',user_id:id,consent_id:id,marketing_accepted_at:ago(48),welcome_at:ago(48)};
+contactReads=0;
+result=await run(1);assert.equal(result.sent,1);assert.equal(job.step,'day1');
+const centralSends=sends.length;
+historyRows=[{key:'welcome',step:'day12',anchor:ago(400),sent_at:ago(300)}];
+job=null;contactReads=0;result=await run(1);assert.equal(result.sent,0);assert.equal(job,null);assert.equal(sends.length,centralSends);
+historyRows=[];job=null;contactReads=0;withdrawContactBeforeSend=true;
+result=await run(1);assert.equal(result.suppressed,1);assert.equal(sends.length,centralSends);
+withdrawContactBeforeSend=false;contactReads=0;job=null;contact.welcome_at=ago(290);
+historyRows=[{key:'welcome',step:'day1',anchor:ago(400),sent_at:ago(48)}];
+financial={paid_at:ago(24),billing_record:true,payment_in_progress:false,active_subscription:true};
+result=await run(1);assert.equal(result.sent,1);assert.equal(job.step,'day5');
+contact=null;job=null;historyRows=[];financial={paid_at:null,billing_record:false,payment_in_progress:false,active_subscription:false};
+delete process.env.MARKETING_AUTOMATION_SCOPE;
+delete process.env.MARKETING_CENTRAL_WELCOME_ENABLED;
 runtime.template_digest=allDigest;
 runtime.template_digest='changed';
-assert.equal((await run(1)).disabled,true); assert.equal(sends.length,scopedSends);
+const finalSends=sends.length;
+assert.equal((await run(1)).disabled,true); assert.equal(sends.length,finalSends);
 process.env.MARKETING_AUTOMATIONS_ENABLED='false'; assert.equal((await run(1)).disabled,true);
 assert.ok(readFileSync('supabase/migrations/032_marketing_automation_worker.sql','utf8').includes("values(true)"));
 console.log('Automation compiled worker: approval gate, verified candidates, send-time withdrawal, immutable provider retries, deduplication, unsubscribe and template reapproval passed. No real emails or external network.');

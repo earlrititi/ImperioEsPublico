@@ -5,6 +5,14 @@ export type NewsletterSegment = typeof NEWSLETTER_SEGMENTS[number];
 export const normalizeEmail = (value: unknown) => typeof value === "string" ? value.trim().toLowerCase() : "";
 export const validEmail = (value: string) => value.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
+// Account membership and commercial eligibility are independent. The canonical
+// view already checks the latest choice, ownership proof and suppressions.
+export function accountAudience(profiles: { id: string; email: unknown }[], eligible: { user_id?: string | null; email: unknown }[]) {
+  const accounts = new Map(profiles.map(profile => [profile.id, normalizeEmail(profile.email)]));
+  return eligible.filter(contact => contact.user_id && accounts.get(contact.user_id) === normalizeEmail(contact.email))
+    .map(contact => normalizeEmail(contact.email));
+}
+
 export function filterAudience(emails: string[], suppressed: Set<string>) {
   const valid = emails.map(normalizeEmail).filter(validEmail);
   const unique = [...new Set(valid)];
@@ -22,7 +30,10 @@ export async function newsletterAudience(segment: NewsletterSegment) {
   const manifesto=await readAll("manifesto_requests","id,email,status,marketing_consent,resource");
   const leads=await readAll("marketing_leads","id,email,marketing_accepted_at");
   const suppressed = new Set((await readAll("marketing_suppressed_contacts","email","email")).map(r=>normalizeEmail(r.email)));
-  const community=(await readAll("marketing_automation_subjects","user_id,email","user_id")).map(r=>normalizeEmail(r.email));
+  const contacts = await readAll("marketing_email_contacts", "email,user_id", "email");
+  // Do not restrict registered accounts to the automation enrollment date or
+  // exclude buyers from an expressly requested newsletter.
+  const community = accountAudience(profiles as { id: string; email: unknown }[], contacts as { user_id?: string; email: unknown }[]);
   const shirts = reservations.filter(r => r.marketing_consent===true && ["RESERVED", "PURCHASE_AVAILABLE", "PAYMENT_PENDING", "PAYMENT_FAILED","CONVERTED_TO_ORDER"].includes(r.status)).map(r => normalizeEmail(r.customer_email));
   // Reconciled paid subscriptions only, never checkout interests or Piquero registrations.
   const paid = (reconciliation?.verified ?? []).filter(s => s.status === "active" &&
@@ -37,9 +48,9 @@ export async function newsletterAudience(segment: NewsletterSegment) {
   const leadEmails=leads.filter(l=>l.marketing_accepted_at).map(l=>normalizeEmail(l.email));
   const emails = segment === "shirts" ? shirts : segment === "subscriptions" ? subscribers :
     segment === "manifesto"?manifestoEmails:segment==="leads"?leadEmails:segment==="community"?community:segment==="newsletter"?newsletterEmails:
-    segment === "both" ? shirts.filter(email => subscribers.includes(email)) : segment === "all" ? [...shirts, ...subscribers,...manifestoEmails,...newsletterEmails,...leadEmails,...community] :
+    segment === "both" ? shirts.filter(email => subscribers.includes(email)) : segment === "all" ? [...shirts, ...subscribers,...manifestoEmails,...newsletterEmails,...leadEmails,...community,...contacts.map(c=>normalizeEmail(c.email))] :
     paid.filter(s => s.plan === segment&&optedIn.has(normalizeEmail(s.email))).map(s => normalizeEmail(s.email));
   // A resource request, profile or Stripe payment is not email ownership proof.
-  const verified=new Set((await readAll("marketing_email_contacts","email","email")).map(c=>normalizeEmail(c.email)));
+  const verified=new Set(contacts.map(c=>normalizeEmail(c.email)));
   return filterAudience(emails.filter(email=>verified.has(normalizeEmail(email))), suppressed);
 }

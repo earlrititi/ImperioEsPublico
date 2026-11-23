@@ -9,7 +9,7 @@ with jobs as (
  from public.marketing_automation_jobs j
  union all
  select 'admin',e.id,'editorial',e.status,e.sent_at,e.provider_message_id,e.provider_delivery_confirmed_at,e.delivery_status
- from public.email_logs e where e.type<>'test'
+ from public.email_logs e where e.type<>'test' and e.purpose='commercial'
  union all
  select 'post_delivery',j.id,j.kind,j.status,j.sent_at,j.provider_id,null::timestamptz,j.provider_status
  from public.post_delivery_jobs j where j.kind='post_delivery_loyalty'

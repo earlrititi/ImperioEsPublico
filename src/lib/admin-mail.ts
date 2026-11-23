@@ -44,7 +44,15 @@ export async function drainAdminMail(limit = 10) {
     let reservation: CommercialReservation | undefined;
     let accepted = false;
     try {
-      if (job.type !== "test" && await isMailSuppressed(db,job.recipient)) {
+      const service = job.type === "individual" && job.purpose === "service";
+      if (service) {
+        const blocked = await db.from("email_suppressions").select("reason").eq("email",job.recipient.trim().toLowerCase()).limit(1);
+        if (blocked.error) throw Error("SUPPRESSION_LOOKUP_FAILED");
+        if (blocked.data?.some(row => row.reason !== "unsubscribe")) {
+          await rpc("finish_admin_mail",{p_id:job.id,p_claim:job.claim_id,p_status:"review",p_error:"DELIVERY_ADDRESS_BLOCKED"}); continue;
+        }
+      }
+      if (job.type !== "test" && !service && await isMailSuppressed(db,job.recipient)) {
         await rpc("finish_admin_mail",{p_id:job.id,p_claim:job.claim_id,p_status:"suppressed"}); continue;
       }
       let payload = job.provider_payload;
@@ -52,12 +60,12 @@ export async function drainAdminMail(limit = 10) {
         const recipient = mode === "test" ? getRequiredEnv("COMMERCE_TEST_EMAIL") : job.recipient;
         const unsubscribe = `${getRequiredEnv("PUBLIC_SITE_URL").replace(/\/$/,"")}/comunicaciones/baja?token=${unsubscribeToken(job.recipient)}`;
         payload = {from:`Imperio E <${SITE.contactEmail}>`,replyTo:SITE.contactEmail,to:recipient,subject:job.subject,
-          ...renderAdminMail(job as MailContent,job.type === "test" ? undefined : unsubscribe)};
+          ...renderAdminMail(job as MailContent,job.type === "test" || service ? undefined : unsubscribe)};
         const saved = await db.from("email_logs").update({provider_payload:payload}).eq("id",job.id).eq("claim_id",job.claim_id).is("provider_payload",null).select("id");
         if (saved.error || saved.data?.length !== 1) throw new Error("EMAIL_SNAPSHOT_UNAVAILABLE");
       }
       assertMailRecipient(payload, mode, optionalEnv("COMMERCE_TEST_EMAIL"));
-      if (job.type !== "test") {
+      if (job.type !== "test" && !service) {
         reservation = await beginCommercialSend({ source:"admin",jobId:job.id,claimId:job.claim_id,payload });
         if (reservation.action === "accepted") {
           await rpc("finish_admin_mail",{p_id:job.id,p_claim:job.claim_id,p_status:"sent",p_provider_id:reservation.providerId});
@@ -65,7 +73,7 @@ export async function drainAdminMail(limit = 10) {
         }
         if (reservation.action !== "send") continue;
       }
-      const result = await sendCorporateMail(client,payload,{idempotencyKey:`admin-mail-${job.id}`},{preserveSnapshot:Boolean(job.provider_payload),audit:job.type === "test"});
+      const result = await sendCorporateMail(client,payload,{idempotencyKey:`admin-mail-${job.id}`},{preserveSnapshot:Boolean(job.provider_payload),audit:job.type === "test" || service});
       if (result.error || !result.data) throw new Error("EMAIL_PROVIDER_UNAVAILABLE");
       if (reservation) await completeCommercialSend(reservation,result.data.id);
       accepted = true;

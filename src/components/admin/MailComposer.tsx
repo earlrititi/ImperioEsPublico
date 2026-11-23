@@ -8,6 +8,7 @@ export default function MailComposer({newsletter=false}:{newsletter?:boolean}) {
   const [recipient,setRecipient]=useState("");
   const [segment,setSegment]=useState("shirts");
   const [type,setType]=useState("individual");
+  const [purpose,setPurpose]=useState("service");
   const [requestId,setRequestId]=useState("");
   const [revision,setRevision]=useState(0);
   const [preview,setPreview]=useState<Preview|null>(null);
@@ -39,7 +40,7 @@ export default function MailComposer({newsletter=false}:{newsletter?:boolean}) {
     if(action==="send"&&!window.confirm(`Confirmar envio a ${newsletter?preview?.audience?.recipients.length:preview?.recipient} destinatario(s)?`)) return;
     setBusy(true);setMessage("");
     try {
-      const response=await fetch(endpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...content,recipient,segment,type,requestId,revision,action,...(action==="send"?{expires:preview?.expires,token:preview?.token,confirm:"ENVIAR"}:{})})});
+      const response=await fetch(endpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...content,recipient,segment,type,purpose,requestId,revision,action,...(action==="send"?{expires:preview?.expires,token:preview?.token,confirm:"ENVIAR"}:{})})});
       const result=await response.json();if(!response.ok) throw new Error(result.error||"No se pudo completar la solicitud.");
       if(action==="preview"){setPreview(result);if(newsletter){setRevision(result.revision);setRefresh(n=>n+1);}}
       else if(action==="save"){setRevision(result.revision);setPreview(null);setMessage("Borrador guardado. No se ha enviado ningun correo.");setRefresh(n=>n+1);}
@@ -51,6 +52,7 @@ export default function MailComposer({newsletter=false}:{newsletter?:boolean}) {
     {newsletter?<label>Audiencia<select value={segment} onChange={e=>{setSegment(e.currentTarget.value);setPreview(null);}}>{segments.map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>:<>
       <label>Tipo<select value={type} onChange={e=>{setType(e.currentTarget.value);setPreview(null);}}><option value="individual">Correo individual</option><option value="test">Prueba a mi correo</option></select></label>
       {type==="individual"&&<label>Destinatario<input type="email" required value={recipient} onInput={e=>{setRecipient(e.currentTarget.value);setPreview(null);}}/></label>}
+      {type==="individual"&&<label>Finalidad<select value={purpose} onChange={e=>{setPurpose(e.currentTarget.value);setPreview(null);setRequestId(crypto.randomUUID());}}><option value="service">Atención al cliente o gestión de una operación</option><option value="commercial">Comunicación comercial</option></select><small>Las ofertas y novedades usan la opción comercial. La atención al cliente se vincula a su solicitud u operación.</small></label>}
     </>}
     <label>Asunto<input required maxLength={180} value={content.subject} onInput={e=>edit("subject",e.currentTarget.value)}/></label>
     <label>Preheader<input maxLength={250} value={content.preheader} onInput={e=>edit("preheader",e.currentTarget.value)}/></label>

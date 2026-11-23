@@ -19,6 +19,8 @@ alter table public.marketing_automation_jobs
   add column identity_email text check(identity_email=lower(trim(identity_email))),
   add column next_attempt_at timestamptz not null default now();
 alter table public.email_logs add column next_attempt_at timestamptz not null default now();
+alter table public.email_logs add column purpose text not null default 'commercial'
+ constraint email_logs_purpose_check check(purpose in('commercial','service') and (purpose='commercial' or type='individual'));
 alter table public.post_delivery_jobs add column next_attempt_at timestamptz not null default now();
 alter table public.customer_mail_deliveries
   add column commercial_source text check(commercial_source in('automation','admin','post_delivery')),
@@ -94,7 +96,7 @@ create view public.commercial_mail_history with(security_barrier=true) as
 select source,job_id,email,max(occurred_at) as occurred_at from (
  select 'automation'::text as source,j.id as job_id,lower(trim(coalesce(j.identity_email,j.contact_email,u.email,p.email))) as email,j.sent_at as occurred_at
  from public.marketing_automation_jobs j left join auth.users u on u.id=j.user_id left join public.profiles p on p.id=j.user_id where j.status='sent' and j.sent_at is not null
- union all select 'admin',e.id,lower(trim(e.recipient)),e.sent_at from public.email_logs e where e.type<>'test' and e.status='sent' and e.sent_at is not null
+ union all select 'admin',e.id,lower(trim(e.recipient)),e.sent_at from public.email_logs e where e.type<>'test' and e.purpose='commercial' and e.status='sent' and e.sent_at is not null
  union all select 'post_delivery',j.id,lower(trim(j.recipient)),j.sent_at from public.post_delivery_jobs j where j.kind='post_delivery_loyalty' and j.status='sent' and j.sent_at is not null
  union all select m.commercial_source,m.commercial_job_id,m.recipient,coalesce(m.sent_at,m.created_at)
  from public.customer_mail_deliveries m where m.commercial_source is not null and m.status in('processing','sent','failed','review')
@@ -131,7 +133,7 @@ begin
     where j.id=p_job and j.status='processing' and j.claim_id=p_claim and j.claimed_at>stamp-interval '5 minutes';
  elsif p_source='admin' then
   select lower(trim(e.recipient)),'editorial',e.subject into recipient_email,kind,subject from public.email_logs e
-    where e.id=p_job and e.type<>'test' and e.status='processing' and e.claim_id=p_claim and e.claimed_at>stamp-interval '5 minutes';
+    where e.id=p_job and e.type<>'test' and e.purpose='commercial' and e.status='processing' and e.claim_id=p_claim and e.claimed_at>stamp-interval '5 minutes';
  elsif p_source='post_delivery' then
   select lower(trim(j.recipient)),j.kind,'Gracias por compartir nuestra historia' into recipient_email,kind,subject from public.post_delivery_jobs j
     where j.id=p_job and j.kind='post_delivery_loyalty' and j.status='processing' and j.claim_id=p_claim and j.claimed_at>stamp-interval '5 minutes';
@@ -190,7 +192,7 @@ begin
     retry_at:=stamp+interval '5 minutes';
   end if;
   if priority>60 and not 'editorial'=any(policy.commercial_paused_kinds) and exists(select 1 from public.email_logs e
-    where lower(trim(e.recipient))=recipient_email and e.type<>'test' and e.status in('pending','processing','failed')
+    where lower(trim(e.recipient))=recipient_email and e.type<>'test' and e.purpose='commercial' and e.status in('pending','processing','failed')
       and e.next_attempt_at<=stamp and (e.first_attempt_at is null or e.first_attempt_at>stamp-interval '23 hours')
       and (e.campaign_id is null or exists(select 1 from public.newsletter_campaigns c where c.id=e.campaign_id and c.status='sending')))
   then retry_at:=stamp+interval '5 minutes';end if;
@@ -268,8 +270,27 @@ begin
   order by created_at,id for update skip locked limit 1;
  if target is null then return;end if;
  return query update public.email_logs set status='processing',claim_id=gen_random_uuid(),claimed_at=now(),
-  first_attempt_at=case when type='test' then coalesce(first_attempt_at,now()) else first_attempt_at end,
-  attempts=attempts+case when type='test' then 1 else 0 end where id=target returning *;
+  first_attempt_at=case when type='test' or purpose='service' then coalesce(first_attempt_at,now()) else first_attempt_at end,
+  attempts=attempts+case when type='test' or purpose='service' then 1 else 0 end where id=target returning *;
+end $$;
+
+-- The administrator must explicitly classify a one-to-one service response.
+-- Campaigns remain commercial; changing purpose cannot reuse an approved job.
+create or replace function public.queue_individual_mail(p_id uuid,p_actor uuid,p_recipient text,p_type text,p_content jsonb)
+returns uuid language plpgsql security definer set search_path='' as $$
+declare existing public.email_logs; mail_purpose text:=coalesce(p_content->>'purpose','commercial');
+begin
+ if p_type not in('individual','test') or mail_purpose not in('commercial','service') or (mail_purpose='service' and p_type<>'individual') then raise exception 'INVALID_INPUT';end if;
+ insert into public.email_logs(id,recipient,type,purpose,subject,preheader,content,cta_label,cta_url,admin_id)
+ values(p_id,p_recipient,p_type,mail_purpose,p_content->>'subject',p_content->>'preheader',p_content->>'content',p_content->>'cta_label',p_content->>'cta_url',p_actor)
+ on conflict(id) do nothing;
+ select * into existing from public.email_logs where id=p_id;
+ if existing.admin_id<>p_actor or existing.recipient<>p_recipient or existing.type<>p_type or existing.purpose<>mail_purpose
+  or existing.subject<>p_content->>'subject' or existing.preheader<>p_content->>'preheader' or existing.content<>p_content->>'content'
+  or existing.cta_url<>p_content->>'cta_url' or existing.cta_label<>p_content->>'cta_label' then raise exception 'REQUEST_CONFLICT';end if;
+ if not exists(select 1 from public.commerce_audit where entity='email' and entity_id=p_id and action='EMAIL_QUEUED') then
+  insert into public.commerce_audit(actor_id,entity_id,entity,action) values(p_actor,p_id,'email','EMAIL_QUEUED');end if;
+ return p_id;
 end $$;
 
 -- Use the same verified email lock for both welcome writers, including account/contact transitions.

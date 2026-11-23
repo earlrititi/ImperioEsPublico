@@ -161,5 +161,14 @@ try {
     assert.equal(await scalar("select has_table_privilege($1,'public.commercial_mail_history','SELECT')", [role]), false);
   }
   console.log("PASS lifetime normalized welcome history, stale lease refusal and service-only grants.");
+  const service = await adminJob(`support-${suffix}@example.invalid`);
+  await db.query("update public.email_logs set purpose='service',status='sent',sent_at=now(),provider_message_id='service_fixture' where id=$1",[service.id]);
+  assert.equal(await scalar("select count(*)::int from public.commercial_mail_history where job_id=$1",[service.id]),0);
+  await assert.rejects(db.query("update public.email_logs set type='campaign' where id=$1",[service.id]),/email_logs_purpose_check/);
+  const content={subject:'Service',preheader:'',content:'Requested support response',cta_label:'',cta_url:'',purpose:'service'};
+  const queuedService=randomUUID();
+  await scalar("select public.queue_individual_mail($1,$2,$3,'individual',$4)",[queuedService,user,`support-${suffix}@example.invalid`,content]);
+  await assert.rejects(scalar("select public.queue_individual_mail($1,$2,$3,'individual',$4)",[queuedService,user,`support-${suffix}@example.invalid`,{...content,purpose:'commercial'}]),/REQUEST_CONFLICT/);
+  console.log("PASS explicit individual service purpose stays outside promotional history and cannot be changed by replay.");
 
 } finally { await db.end(); }

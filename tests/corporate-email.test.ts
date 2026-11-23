@@ -5,6 +5,20 @@ import { renderCorporateEmail, prepareCorporateEmail, validateCorporateMessage, 
 import { renderAdminMail } from "../src/lib/admin-mail-template";
 import { BRAND } from "../src/config/brand";
 
+test("retired sender snapshots are refused without rewriting their content or signed links", () => {
+  const frozen = { subject: "Pedido confirmado", to: "customer@example.invalid",
+    text: "Pedido #42. NIF 44067163Z. Consultar: https://imperioes.com/pedido?token=fixture",
+    html: '<p>Pedido #42. NIF 44067163Z.</p><a href="https://imperioes.com/pedido?token=fixture">Consultar</a>' };
+  const before = structuredClone(frozen);
+  assert.throws(() => prepareCorporateEmail(frozen, true), /EMAIL_RETIRED_IDENTITY/);
+  assert.deepEqual(frozen, before);
+});
+
+test("the sender identity guard does not rewrite customer names or order content", () => {
+  const message = { subject: "Tu pedido", text: "Hola Adrián López Oliva. Pedido #42. Importe 35 EUR." };
+  assert.match(prepareCorporateEmail(message).text, /Hola Adrián López Oliva\. Pedido #42\. Importe 35 EUR\./);
+});
+
 test("the blank corporate template has no message, sample content, CTA or unresolved variables and cannot be sent", () => {
   const empty = renderCorporateEmail({ empty: true, subject: "Ignored", bodyText: "Ignored" });
   assert.equal(empty.text, "");

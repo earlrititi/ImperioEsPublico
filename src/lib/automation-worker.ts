@@ -9,6 +9,7 @@ import { assertMailRecipient } from "./mail-delivery";
 import { createCorporateMailClient, sendCorporateMail } from "./customer-mail-service";
 import { runContactWelcome } from "./contact-welcome-worker";
 import { beginCommercialSend, completeCommercialSend, failCommercialSend, type CommercialReservation } from "./commercial-mail-coordinator";
+import { recordProviderSuppressed } from "./provider-mail-suppression";
 
 export type AutomationSubject = { user_id: string; email: string; name: string; consent_id: string; marketing_accepted_at: string;
   welcome_at: string; visited_at: string | null; product_at: string | null; cart_at: string | null; checkout_at: string | null;
@@ -189,6 +190,11 @@ export async function automationDeliveryReceipts(limit = 10) {
     const response = await client.emails.get(job.provider_id);
     if (response.error || !response.data) continue;
     const status = String(response.data.last_event);
+    if (status === "suppressed" && approved.mode === "live") {
+      const recipient = response.data.to?.[0];
+      if (!recipient) throw Error("PROVIDER_SUPPRESSION_RECIPIENT_UNAVAILABLE");
+      await recordProviderSuppressed(recipient, db);
+    }
     const saved = await db.from("marketing_automation_jobs").update({ delivery_status: status, provider_checked_at: new Date().toISOString(),...(status==="delivered"?{provider_delivery_confirmed_at:new Date().toISOString()}:{}) }).eq("id", job.id).eq("provider_id", job.provider_id);
     if (saved.error) throw Error("DATABASE_UNAVAILABLE");
     if (["bounced", "complained"].includes(status)) {

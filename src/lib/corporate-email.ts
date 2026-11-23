@@ -81,6 +81,10 @@ type EmailMessage = { subject?: string; html?: string | null; text?: string | nu
 /** Fail before reaching the provider, including on immutable retry snapshots. */
 export function validateCorporateMessage(message: EmailMessage) {
   if (!message.subject?.trim() || /[\r\n]/.test(message.subject)) throw Error("EMAIL_SUBJECT_INVALID");
+  // Do not rewrite a frozen provider payload or reuse its key with new content.
+  // Old copies with the retired sender identity require review before sending.
+  if ([message.html ?? "", message.text ?? ""].some(value => /44067163Z/i.test(value)))
+    throw Error("EMAIL_RETIRED_IDENTITY");
   const semanticBody = message.html ? textOf(message.html.replace(/<head[\s\S]*?<\/head>/gi, "")) : message.text?.trim();
   if (!semanticBody || !message.text?.trim()) throw Error("EMAIL_BODY_REQUIRED");
   for (const value of [message.subject, message.html ?? "", message.text ?? ""]) {

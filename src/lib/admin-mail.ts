@@ -5,6 +5,7 @@ import { renderAdminMail, type MailContent } from "./admin-mail-template";
 import { assertMailRecipient } from "./mail-delivery";
 import { createCorporateMailClient, sendCorporateMail } from "./customer-mail-service";
 import { beginCommercialSend, completeCommercialSend, failCommercialSend, type CommercialReservation } from "./commercial-mail-coordinator";
+import { recordProviderSuppressed } from "./provider-mail-suppression";
 
 export function mailApproval(actor: string, payload: unknown, expires: number) {
   return sign(`admin-mail:${actor}:${expires}:${hash(JSON.stringify(payload))}`);
@@ -105,6 +106,11 @@ export async function reconcileAdminDelivery(limit=10){
     if(response.error || !response.data)throw Error("EMAIL_PROVIDER_UNAVAILABLE");
     const event=String(response.data.last_event);
     const state=event;
+    if(state==="suppressed" && optionalEnv("COMMERCE_EMAIL_MODE")==="live"){
+      const recipient=response.data.to?.[0];
+      if(!recipient)throw Error("PROVIDER_SUPPRESSION_RECIPIENT_UNAVAILABLE");
+      await recordProviderSuppressed(recipient,db);
+    }
     const updated=await db.from("email_logs").update({delivery_status:state,provider_checked_at:now,...(state==="delivered"?{provider_delivery_confirmed_at:now}:{})}).eq("id",row.id).eq("provider_message_id",row.provider_message_id);
     if(updated.error)throw Error("DATABASE_UNAVAILABLE");
     if(["bounced","complained"].includes(state)){

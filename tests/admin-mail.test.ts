@@ -14,6 +14,16 @@ test("admin email rejects header injection and offsite CTA", () => {
   assert.deepEqual(validateMail(mail), mail);
 });
 
+test("new manual and commercial mail uses the brand without the retired personal sender identity", () => {
+  const rendered = renderAdminMail(mail, "https://imperioes.com/comunicaciones/baja", true);
+  for (const body of [rendered.html, rendered.text]) {
+    assert.doesNotMatch(body, /Adri[aá]n\s+L[oó]pez\s+Oliva|44067163Z|11160\s+Barbate|Sobre\s+los\s+[ÁA]ngeles/i);
+    assert.match(body, /Imperio/);
+    assert.match(body, /comunicaciones\/baja/);
+  }
+  assert.match(rendered.text, /Tu reserva sigue en marcha/);
+});
+
 test("automation signature keeps its wording and shares the approved brand layout with manual emails", () => {
   const rendered = renderAdminMail(mail, "https://imperioes.com/comunicaciones/baja", true);
   assert.match(rendered.html, /https:\/\/imperioes.com\/brand\/logos\/imperio_es_principal.png/);

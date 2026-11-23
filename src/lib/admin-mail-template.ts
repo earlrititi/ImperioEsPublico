@@ -20,7 +20,7 @@ export function validateMail(input: Record<string, unknown>): MailContent {
   return result;
 }
 export function renderAdminMail(mail: MailContent, unsubscribe?: string, signature = false) {
-  const identity = `${LEGAL_BUSINESS.ownerName} — ${LEGAL_BUSINESS.tradeName}. NIF ${LEGAL_BUSINESS.taxId}. ${LEGAL_BUSINESS.registeredAddress}`;
+  const identity = LEGAL_BUSINESS.tradeName;
   const body = mail.content.split(/\n\s*\n/).map(p => `<p>${escape(p).replaceAll("\n", "<br>")}</p>`).join("");
   const signoff = signature ? '<p style="margin-top:28px">Un abrazo,<br><strong>Equipo de Imperio Espa&#241;ol</strong></p>' : "";
   return renderCorporateEmail({ subject: mail.subject, visualTitle: mail.subject, preheader: mail.preheader,

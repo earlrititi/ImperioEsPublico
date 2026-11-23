@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { database, optionalEnv, rpc } from "../../lib/reservations";
+import { recordProviderSuppressed } from "../../lib/provider-mail-suppression";
 import {
   resendDedupeKey,
   resendDeliveryState,
@@ -121,7 +122,15 @@ export const POST: APIRoute = async ({ request }) => {
 
   await applyReceipt(messageId, eventType, occurredAt);
   const reason = suppressionReason(eventType, data);
-  if (reason) {
+  if (reason === "provider_suppressed") {
+    try {
+      await recordProviderSuppressed(email, db);
+    } catch {
+      // Ask Resend to retry instead of acknowledging a block we did not retain.
+      console.error("RESEND_PROVIDER_SUPPRESSION_UNAVAILABLE");
+      return json({ error: "SUPPRESSION_STORE_UNAVAILABLE" }, 503);
+    }
+  } else if (reason) {
     await rpc("suppress_marketing_email", { p_email: email, p_reason: reason }).catch(error => {
       console.error("Resend suppression could not be applied:", error);
     });

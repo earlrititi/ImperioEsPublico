@@ -83,6 +83,7 @@ test("permanent bounces and complaints become suppressions; soft bounces do not"
   assert.equal(suppressionReason("bounced", { bounce: { type: "Permanent" } }), "provider_bounced");
   assert.equal(suppressionReason("bounced", { bounce: { type: "Transient" } }), null);
   assert.equal(suppressionReason("complained", {}), "provider_complained");
+  assert.equal(suppressionReason("suppressed", { suppressed: { type: "OnAccountSuppressionList" } }), "provider_suppressed");
   assert.equal(suppressionReason("opened", {}), null);
 });
 

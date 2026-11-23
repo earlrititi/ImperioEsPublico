@@ -107,7 +107,8 @@ export function permanentBounce(data: any) {
   return type === "permanent" || type === "hard" || type === "hard_bounce";
 }
 
-export function suppressionReason(eventType: ResendEventType, data: any): "provider_bounced" | "provider_complained" | null {
+export function suppressionReason(eventType: ResendEventType, data: any): "provider_bounced" | "provider_complained" | "provider_suppressed" | null {
+  if (eventType === "suppressed") return "provider_suppressed";
   if (eventType === "complained") return "provider_complained";
   if (eventType === "bounced" && permanentBounce(data)) return "provider_bounced";
   return null;

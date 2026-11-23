@@ -72,6 +72,12 @@ let before=calls.length;r=await request('/login',credentials,'','https://evil.in
 allowed=false;r=await request('/login',credentials);assert.match(r.headers.get('location'),/rate/);allowed=true;checks++;
 r=await request('/registro',{...credentials,password_confirmation:'different',terms:'on',privacy:'on',registration_mode:'basic'});assert.match(r.headers.get('location'),/password/);checks++;
 r=await request('/registro',{...credentials,password_confirmation:credentials.password});assert.match(r.headers.get('location'),/validation/);checks++;
+const priorConsentCount=calls.filter(c=>c.path==='/rest/v1/legal_consents').length;
+r=await request('/registro',{...credentials,password_confirmation:credentials.password,terms:'on',privacy:'on',newsletter:'on'});
+assert.match(r.headers.get('location'),/validation/);
+assert.equal(calls.filter(c=>c.path==='/rest/v1/legal_consents').length,priorConsentCount,'Legacy newsletter flags must never imply consent');checks++;
+r=await request('/registro',{...credentials,password_confirmation:credentials.password,terms:'on',privacy:'on',registration_mode:'invalid'});
+assert.match(r.headers.get('location'),/validation/);checks++;
 r=await request('/registro',{...credentials,password_confirmation:credentials.password,terms:'on',privacy:'on',registration_mode:'basic'});assert.match(r.headers.get('location'),/sent=1/);assert.equal(calls.find(c=>c.path==='/auth/v1/signup').body.password,credentials.password);checks++;
 before=calls.length;genuinelyNew=true;
 r=await request('/registro',{...credentials,password_confirmation:credentials.password,terms:'on',privacy:'on',registration_mode:'newsletter'});

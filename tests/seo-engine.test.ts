@@ -1,10 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { sourceSchema, observationSchema, classifyObservation, requiredRel, overlap, DEFAULT_ENGINE_SETTINGS } from "../src/lib/seo-engine-model";
+import { sourceSchema, observationSchema, classifyObservation, requiredRel, overlap, DEFAULT_ENGINE_SETTINGS, engineSettingsSchema } from "../src/lib/seo-engine-model";
 import { isPublicAddress, publicUrl, htmlLinks, htmlText } from "../src/lib/seo-engine-http";
 import { analyzeArticle, duplicateCandidates, geoQueries } from "../src/lib/seo-engine-inventory";
-import { generatedArticle, verifyEditorial, quoteGeneration, editorialProviderConfig } from "../src/lib/seo-engine-generation";
-import { reviewMail } from "../src/lib/seo-engine-worker";
+import { generatedArticle, verifyEditorial, quoteGeneration, editorialProviderConfig, generateEditorial } from "../src/lib/seo-engine-generation";
+import { reviewMail, runSeoWorker, reconcileSeoMail, queueSeoNotice } from "../src/lib/seo-engine-worker";
 import { sanitizeArticleBody } from "../src/lib/admin-article-content";
 
 const ids = ["11111111-1111-4111-8111-111111111111", "22222222-2222-4222-8222-222222222222"];
@@ -61,14 +61,32 @@ test("collaboration link attributes reflect the actual relationship", () => {
   const html = sanitizeArticleBody('<p><a href="https://example.com/recurso" rel="sponsored nofollow ugc opener">Recurso</a></p>');
   assert.match(html, /rel="noopener noreferrer sponsored nofollow ugc"/); assert.doesNotMatch(html, /\sopener[\s"]/);
 });
-test("budget starts paused and an unconfigured provider cannot consume money", () => {
-  const saved = { ...process.env };
-  try { delete process.env.SEO_AI_API_KEY; delete process.env.SEO_AI_MODEL; assert.equal(editorialProviderConfig().available, false); assert.throws(() => quoteGeneration({}, DEFAULT_ENGINE_SETTINGS), /SEO_PROVIDER_NOT_CONFIGURED/);
-    Object.assign(process.env, { SEO_AI_API_KEY: "fixture", SEO_AI_MODEL: "fixture-model", SEO_AI_INPUT_CENTS_PER_MILLION: "100", SEO_AI_OUTPUT_CENTS_PER_MILLION: "400" });
-    const q = quoteGeneration({}, DEFAULT_ENGINE_SETTINGS); assert.ok(q.reservedCents > 0); assert.throws(() => quoteGeneration({ source: "x".repeat(40000) }, DEFAULT_ENGINE_SETTINGS), /SEO_CONTEXT_LIMIT/);
-  } finally { for (const k of Object.keys(process.env)) if (!(k in saved)) delete process.env[k]; Object.assign(process.env, saved); }
-  assert.equal(DEFAULT_ENGINE_SETTINGS.paused, true); assert.equal(DEFAULT_ENGINE_SETTINGS.monthlyBudgetCents, 0);
+test("manual mode ignores provider credentials and cannot issue paid or scheduled requests", async () => {
+  const saved = { ...process.env }, fetchBefore = globalThis.fetch;
+  let requests = 0;
+  globalThis.fetch = async () => { requests++; throw Error("External requests forbidden"); };
+  try {
+    Object.assign(process.env, { SEO_ENGINE_ENABLED: "true", SEO_AI_ENDPOINT: "https://api.openai.com/v1/chat/completions", SEO_AI_API_KEY: "fixture", SEO_AI_MODEL: "fixture-model", SEO_AI_INPUT_CENTS_PER_MILLION: "100", SEO_AI_OUTPUT_CENTS_PER_MILLION: "400", RESEND_API_KEY: "fixture", SEARCH_CONSOLE_SERVICE_ACCOUNT_JSON: "fixture", GA4_SERVICE_ACCOUNT_JSON: "fixture" });
+    assert.equal(editorialProviderConfig().available, false);
+    assert.equal(editorialProviderConfig().key, "");
+    assert.throws(() => quoteGeneration({}, DEFAULT_ENGINE_SETTINGS), /SEO_MANUAL_MODE/);
+    await assert.rejects(() => generateEditorial({}, { model: "fixture-model", inputRate: 100, outputRate: 400, inputTokens: 2000, maxOutputTokens: 1000, reservedCents: 1 }), /SEO_MANUAL_MODE/);
+    const settings = engineSettingsSchema.parse({ paused: false, mailPaused: false, scheduleEnabled: true, monthlyBudgetCents: 10000, dailyGenerations: 5, weeklyDrafts: 4 });
+    assert.equal(settings.paused, true); assert.equal(settings.mailPaused, true); assert.equal(settings.scheduleEnabled, false);
+    assert.equal(settings.monthlyBudgetCents, 0); assert.equal(settings.dailyGenerations, 0); assert.equal(settings.weeklyDrafts, 0);
+    const { searchConsoleReport, scheduleEngine } = await import("../src/lib/seo-engine");
+    assert.equal((await searchConsoleReport()).status, "manual_only");
+    assert.equal((await scheduleEngine()).queued, 0);
+    assert.deepEqual((await runSeoWorker(["notify", "daily", "weekly", "monthly", "generate"])).jobs, []);
+    assert.equal((await reconcileSeoMail()).checked, 0);
+    assert.equal((await queueSeoNotice(ids[0], "fixture", "Fixture", "Fixture")).queued, false);
+    assert.equal(requests, 0);
+  } finally {
+    globalThis.fetch = fetchBefore;
+    for (const k of Object.keys(process.env)) if (!(k in saved)) delete process.env[k]; Object.assign(process.env, saved);
+  }
 });
+
 test("review notices always go to the editorial address and GET links only open the private review", () => {
   const mail = reviewMail({ id: ids[0], snapshot: { title: "Revision de prueba", category: "Historia", lead: "Resumen" }, source_snapshot: sources, verification: { blockers: [], warnings: [] } }, { keyword: "Historia", relatedSlugs: [] });
   assert.equal(mail.to, "imperio_e@hotmail.com"); assert.match(mail.text, /\/admin\/seo\?review=/); assert.doesNotMatch(mail.text, /action=publish|approve_token/);

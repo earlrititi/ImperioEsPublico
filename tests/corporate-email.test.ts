@@ -81,7 +81,7 @@ test("Supabase fallback templates retain confirmation tokens and purposes while 
 });
 
 test("SDK senders and the compatibility singleton use the common transport boundary", () => {
-  for (const path of ["resend", "admin-mail", "automation-worker", "commerce-mail", "paid-order-admin-mail", "post-delivery-worker", "seo-engine-worker"]) {
+  for (const path of ["resend", "admin-mail", "automation-worker", "commerce-mail", "paid-order-admin-mail", "post-delivery-worker"]) {
     const source = readFileSync(new URL(`../src/lib/${path}.ts`, import.meta.url), "utf8");
     assert.match(source, /sendCorporateMail\(/, `${path} must send through the validated transport`);
     assert.doesNotMatch(source, /new Resend\(|import\("resend"\)|from "resend"/, `${path} must use the common client factory`);

@@ -9,6 +9,7 @@ import assert from "node:assert/strict";
 for (const file of [".env.local", ".env.admin-production.local", ".vercel/.env.production.local"]) {
   if (existsSync(file)) Object.assign(process.env, Object.fromEntries(Object.entries(parseEnv(readFileSync(file, "utf8"))).filter(([, value]) => value && value !== "[SENSITIVE]")));
 }
+if (process.argv.some(arg => ["--test-mail", "--receipts", "--enable-schedule", "--run-schedule"].includes(arg))) throw Error("SEO_MANUAL_MODE: use the private panel and native Google reports; SEO providers and scheduled work are disabled.");
 const env = process.env;
 assert.equal(new URL(env.PUBLIC_SUPABASE_URL).hostname, "pjrqozlyrjgugdraoght.supabase.co");
 const db = createClient(env.PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });

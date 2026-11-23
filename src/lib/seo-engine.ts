@@ -1,5 +1,4 @@
 import { randomUUID, createHash } from "node:crypto";
-import { GoogleAuth } from "google-auth-library";
 import { database, rpc } from "./reservations";
 import { SITE } from "../config/site";
 import { ADMIN_USER_IDS } from "./admin-identity";
@@ -38,9 +37,9 @@ export async function seoDashboard() {
   const provider = editorialProviderConfig();
   return { config, inventory, graph: knowledgeGraph(inventory), queries: geoQueries(inventory), opportunities: opportunities.data, reviews: reviews.data, jobs: jobs.data,
     records: allRecords, limited: { records: allRecords.length === 400, opportunities: opportunities.data?.length === 200, reviews: reviews.data?.length === 100, jobs: jobs.data?.length === 150 },
-    connections: { generation: provider.available ? "configured" : "not_configured", model: provider.model || null,
-      email: Boolean(process.env.RESEND_API_KEY), reviewEmail: REVIEW_EMAIL, searchConsole: Boolean(process.env.SEARCH_CONSOLE_SERVICE_ACCOUNT_JSON || process.env.GA4_SERVICE_ACCOUNT_JSON),
-      ga4: Boolean(process.env.GA4_SERVICE_ACCOUNT_JSON), schedule: process.env.SEO_ENGINE_ENABLED === "true", geo: "manual_or_authorized_import" },
+    connections: { mode: "manual", generation: "manual", model: provider.model || null,
+      email: false, reviewEmail: REVIEW_EMAIL, searchConsole: false,
+      ga4: false, schedule: false, geo: "manual_or_authorized_import" },
   };
 }
 export async function saveOpportunity(actor: string, id: string, revision: number, input: unknown) {
@@ -70,7 +69,7 @@ export async function sourceRecords(ids: string[], fresh = false): Promise<Sourc
   return sources;
 }
 export async function queueGeneration(actor: string, id: string, revision: number) {
-  if (!editorialProviderConfig().available) throw Error("SEO_PROVIDER_NOT_CONFIGURED");
+  if (!editorialProviderConfig().available) throw Error("SEO_MANUAL_MODE");
   const config = await engineConfiguration(), row = await getRow("seo_opportunities", id), opportunity = opportunitySchema.parse(row.data);
   if (opportunity.targetSlug) throw Error("SEO_UPDATE_REQUIRES_MANUAL_IMPORT");
   const inventory = await editorialInventory(); if (duplicateCandidates(opportunity.title, inventory).length) throw Error("SEO_EXISTING_ARTICLE_REVIEW");
@@ -135,16 +134,8 @@ export async function saveObservation(actor: string, id: string, input: unknown)
   return saveRecord(actor, "observation", id, 0, { ...data, presence: classification, evidenceStatus: "supplied_for_review" }, `${data.platform}:${normalizeSeo(data.query)}:${data.observedAt}:${data.evidenceUrl}`);
 }
 export async function searchConsoleReport(days = 28) {
-  const raw = process.env.SEARCH_CONSOLE_SERVICE_ACCOUNT_JSON || process.env.GA4_SERVICE_ACCOUNT_JSON;
-  if (!raw) return { status: "not_configured", rows: [], source: "search_console_api", aiBreakdown: "not_available_via_this_api" };
-  try {
-    const c = JSON.parse(raw); if (c.type !== "service_account" || !c.client_email?.endsWith(".iam.gserviceaccount.com") || typeof c.private_key !== "string") throw Error("INVALID_CREDENTIALS");
-    const client = await new GoogleAuth({ credentials: { type: "service_account", client_email: c.client_email, private_key: c.private_key }, scopes: ["https://www.googleapis.com/auth/webmasters.readonly"] }).getClient();
-    const end = new Date(Date.now() - 3 * 86400000).toISOString().slice(0, 10), start = new Date(Date.now() - (days + 2) * 86400000).toISOString().slice(0, 10);
-    const result = await client.request<{ rows?: { keys: string[]; clicks: number; impressions: number; ctr: number; position: number }[] }>({ url: `https://www.googleapis.com/webmasters/v3/sites/${encodeURIComponent("sc-domain:imperioes.com")}/searchAnalytics/query`, method: "POST", data: { startDate: start, endDate: end, dimensions: ["query", "page"], type: "web", rowLimit: 2500 }, timeout: 15000 });
-    const rows = (result.data.rows ?? []).map(row => { if (row.keys.length !== 2 || [row.clicks, row.impressions, row.ctr, row.position].some(n => !Number.isFinite(n) || n < 0)) throw Error("INVALID_REPORT"); return { query: row.keys[0].slice(0, 500), page: row.keys[1], clicks: row.clicks, impressions: row.impressions, ctr: row.ctr, position: row.position }; });
-    return { status: "available", source: "search_console_api", start, end, rows, limited: rows.length === 2500, aiBreakdown: "not_available_via_this_api" };
-  } catch { return { status: "unavailable_check_api_and_property_access", rows: [], source: "search_console_api", aiBreakdown: "not_available_via_this_api" }; }
+  void days;
+  return { status: "manual_only", rows: [], source: "google_search_console_ui", aiBreakdown: "not_measured" };
 }
 export async function runAudit(actor: string, key = new Date().toISOString().slice(0, 10)) {
   const results: { url: string; ok: boolean; issues: string[]; elapsedMs: number }[] = [];
@@ -185,9 +176,7 @@ export async function proposeEditorial(actor: string, key = new Date().toISOStri
   return { key, created, message: created ? "Propuestas guardadas para investigacion." : "No hay oportunidades nuevas suficientemente justificadas." };
 }
 export async function scheduleEngine() {
-  if (process.env.SEO_ENGINE_ENABLED !== "true") return { enabled: false, queued: 0 };
-  const cfg = await engineConfiguration(); if (!cfg.settings.scheduleEnabled || !cfg.updated_by) return { enabled: false, queued: 0 };
-  return { enabled: true, queued: await rpc("seo_schedule", { p_actor: cfg.updated_by }) };
+  return { enabled: false, queued: 0, mode: "manual" };
 }
 export async function engineActor() {
   const cfg = await engineConfiguration(); return cfg.updated_by || ADMIN_USER_IDS[0];

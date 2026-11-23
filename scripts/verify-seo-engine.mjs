@@ -47,28 +47,30 @@ const { default: app } = await import("../.vercel/output/functions/_render.func/
 const base = "https://imperioes.com/api/admin/seo";
 const call = (body, authenticated = true, origin = "https://imperioes.com", suffix = "") => app.fetch(new Request(base + suffix, { method: body ? "POST" : "GET", headers: { ...(authenticated ? { cookie } : {}), ...(body ? { Origin: origin, "Content-Type": "application/json" } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) }));
 assert.equal((await call(null, false)).status, 403); forged = true; assert.equal((await call(null)).status, 403); forged = false;
-let r = await call(null); assert.equal(r.status, 200); let d = await r.json(); assert.equal(d.inventory.length, 23); assert.ok(d.graph.length > 0); assert.equal(d.queries.length, 24); assert.equal(d.connections.generation, "not_configured");
+let r = await call(null); assert.equal(r.status, 200); let d = await r.json(); assert.equal(d.inventory.length, 23); assert.ok(d.graph.length > 0); assert.equal(d.queries.length, 24); assert.equal(d.connections.generation, "manual");
 assert.equal(r.headers.get("cache-control"), "no-store");
 r = await call(null, true, "", "?action=publish"); assert.equal(r.status, 200); assert.equal(writes, 0);
 r = await call({ action: "settings", revision: 1, data: settings }, true, "https://evil.example"); assert.equal(r.status, 403); assert.equal(writes, 0);
 r = await call({ action: "settings", revision: 1, data: { ...settings, monthlyBudgetCents: -1 } }); assert.equal(r.status, 400); assert.equal(writes, 0);
 r = await call({ action: "settings", revision: 1, data: settings }); assert.equal(r.status, 200); assert.equal(writes, 1);
-r = await call({ action: "generate", id: "11111111-1111-4111-8111-111111111111", revision: 1 }); assert.equal(r.status, 409); assert.equal((await r.json()).code, "SEO_PROVIDER_NOT_CONFIGURED");
+r = await call({ action: "generate", id: "11111111-1111-4111-8111-111111111111", revision: 1 }); assert.equal(r.status, 409); assert.equal((await r.json()).code, "SEO_MANUAL_MODE");
 r = await call({ action: "review", id: "11111111-1111-4111-8111-111111111111", revision: 1, decision: "publish", confirmed: false }); assert.notEqual(r.status, 200); assert.equal(writes, 1);
 r = await call({ action: "opportunities" }); assert.equal(r.status, 200); assert.ok(opportunities.size >= 3);
 assert.equal((await call(null, false, "", "?review=11111111-1111-4111-8111-111111111111")).status, 403);
 const cron = await app.fetch(new Request("https://imperioes.com/api/seo-maintenance", { method: "POST" })); assert.equal(cron.status, 403);
 const page = await app.fetch(new Request("https://imperioes.com/admin/seo")); assert.equal(page.status, 302);
 const adminPage = await app.fetch(new Request("https://imperioes.com/admin/seo", { headers: { cookie } })); assert.equal(adminPage.status, 200); assert.equal(adminPage.headers.get("cache-control"), "private, no-store"); assert.match(await adminPage.text(), /SEO y crecimiento/);
-process.env.RESEND_API_KEY = "fixture"; settings.mailPaused = false;
-r = await call({ action: "test_notice", id: "55555555-5555-4555-8555-555555555555", confirmed: true }); assert.equal(r.status, 200);
-let notice = [...jobs.values()][0]; assert.equal(notice.status, "failed"); assert.equal(mailAttempts.length, 1); assert.deepEqual([mailAttempts[0].body.to].flat(), ["imperio_e@hotmail.com"]);
-r = await call({ action: "retry_notice", id: notice.id, confirmed: true }); assert.equal(r.status, 200);
-failMail = false; r = await call({ action: "run" }); assert.equal(r.status, 200); assert.equal(notice.status, "succeeded");
-assert.equal(mailAttempts.length, 2); assert.equal(mailAttempts[0].key, mailAttempts[1].key); assert.deepEqual(mailAttempts[0].body, mailAttempts[1].body); assert.equal(notice.delivery_status, "delivered");
-r = await call({ action: "run" }); assert.equal(r.status, 200); assert.equal(mailAttempts.length, 2);
-settings.mailPaused = true;
-console.log("SEO compiled routes: real catalogue, graph/queries, anonymous/forged admin denial, private cache, GET immutability, CSRF, validation, absent provider, explicit publication confirmation and cron protection passed. Resend failure/retry preserved the payload and idempotency key, recipient isolation, delivery reconciliation and duplicate prevention passed with fixtures. No network or real email.");
+Object.assign(process.env, { RESEND_API_KEY: "fixture", SEO_AI_API_KEY: "fixture", SEO_AI_MODEL: "fixture", SEO_ENGINE_ENABLED: "true", SEARCH_CONSOLE_SERVICE_ACCOUNT_JSON: "fixture", GA4_SERVICE_ACCOUNT_JSON: "fixture" });
+for (const action of ["generate", "metrics", "test_notice", "retry_notice"]) {
+  r = await call({ action, id: "55555555-5555-4555-8555-555555555555", confirmed: true });
+  assert.equal(r.status, 409); assert.equal((await r.json()).code, "SEO_MANUAL_MODE");
+}
+r = await call({ action: "settings", revision: 1, data: { ...settings, paused: false, mailPaused: false, scheduleEnabled: true, monthlyBudgetCents: 10000 } });
+assert.equal(r.status, 200); const protectedSettings = await r.json();
+assert.equal(protectedSettings.data.paused, true); assert.equal(protectedSettings.data.mailPaused, true); assert.equal(protectedSettings.data.scheduleEnabled, false); assert.equal(protectedSettings.data.monthlyBudgetCents, 0);
+r = await call({ action: "run" }); assert.equal(r.status, 200); assert.deepEqual((await r.json()).jobs, []);
+assert.equal(jobs.size, 0); assert.equal(mailAttempts.length, 0);
+console.log("SEO compiled routes passed: catalogue, privacy, permissions, CSRF, protected publication and manual mode. Configured credentials and forged settings cannot activate generation, Google API calls, email or scheduled jobs. No real network or email.");
 if (process.argv.includes("--serve")) {
   const { createServer } = await import("node:http"), { readFile } = await import("node:fs/promises"), { resolve, sep, extname } = await import("node:path");
   const root = resolve(".vercel/output/static"), mime = { ".js": "text/javascript", ".css": "text/css", ".svg": "image/svg+xml", ".png": "image/png", ".webp": "image/webp", ".woff2": "font/woff2" };

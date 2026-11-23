@@ -13,7 +13,10 @@ export const engineSettingsSchema = z.object({
   dailyGenerations: z.number().int().min(0).max(5).default(2), weeklyDrafts: z.number().int().min(0).max(4).default(2),
   weeklyImprovements: z.number().int().min(0).max(10).default(3), monthlyCollaborators: z.number().int().min(0).max(20).default(5),
   retentionDays: z.number().int().min(30).max(365).default(90),
-}).strict().refine(s => s.maxOutputTokens < s.maxTokens);
+}).strict().refine(s => s.maxOutputTokens < s.maxTokens).transform(s => ({
+  ...s, paused: true, mailPaused: true, scheduleEnabled: false,
+  monthlyBudgetCents: 0, dailyGenerations: 0, weeklyDrafts: 0,
+}));
 export type EngineSettings = z.infer<typeof engineSettingsSchema>;
 export const DEFAULT_ENGINE_SETTINGS = engineSettingsSchema.parse({});
 export const opportunitySchema = z.object({

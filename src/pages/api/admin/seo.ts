@@ -26,6 +26,7 @@ export const POST: APIRoute = async context => {
     const b = await requestBody(context.request, 240000);
     const id = b.id ?? randomUUID(), revision = b.revision ?? 0;
     if (!UUID.test(id) || !Number.isInteger(revision) || revision < 0) throw Error("INVALID_INPUT");
+    if (["generate", "test_notice", "retry_notice", "metrics"].includes(b.action)) throw Error("SEO_MANUAL_MODE");
     switch (b.action) {
       case "settings": {
         const settings = engineSettingsSchema.parse(b.data);

@@ -8,7 +8,6 @@ import { publishedArticles,publishedArticleTier } from "../../lib/published-arti
 import { getCheckoutPlan, isCheckoutPriceValid } from "../../lib/stripe-prices";
 import { getEsVatRate } from "../../lib/stripe-tax";
 import { ES_VAT } from "../../config/tax";
-import { SHIRT_PRICE_COPY } from "../../config/commerce";
 import { shirtOfferCopy } from "../../config/tshirt-offer";
 import { createSupabaseServerClient } from "../../lib/supabase/server";
 import {EMAIL_MARKETING_CONSENT,EMAIL_MARKETING_NOTE} from "../../config/email-marketing";
@@ -85,7 +84,7 @@ const pageTitle = selectedPlan
   description="Informacion contractual inmediatamente anterior al pago."
   eyebrow="Pago seguro"
   heading={pageTitle}
-  summary={product ? `${SHIRT_PRICE_COPY}. Compra sin crear una cuenta.` : "Revisa el plan y continua al pago seguro en Stripe."}
+  summary={product ? undefined : "Revisa el plan y continua al pago seguro en Stripe."}
   narrow
   noindex
 >
@@ -188,7 +187,7 @@ const pageTitle = selectedPlan
           <div><dt>Cuidado de la prenda base</dt><dd>{product.careInstructions}</dd></div>
           <div><dt>Talla elegida</dt><dd>{productVariant?.size ?? "Sin seleccionar"}</dd></div>
           <div><dt>Precio camiseta</dt><dd>{formatProductAmount(product.expectedUnitAmount)}</dd></div>
-          <div><dt>Envio estandar a Peninsula</dt><dd>3 EUR por unidad, IVA incluido</dd></div>
+          <div><dt>Envío estándar a Península</dt><dd>Gratis</dd></div>
           <div><dt>Total por una camiseta con envio</dt><dd>{formatProductAmount(product.expectedUnitAmount + product.shipping.amount)}</dd></div>
           <div><dt>Envio</dt><dd>{product.shippingInformation}</dd></div>
           <div><dt>Impuestos</dt><dd>{product.taxInformation}</dd></div>
@@ -204,7 +203,6 @@ const pageTitle = selectedPlan
             ))}
           </tbody>
         </table>
-        <p>{SHIRT_PRICE_COPY}</p>
         <a class="btn btn-primary" href={`/reservas${productVariant ? `?size=${productVariant.size}` : ''}`}>Elegir talla y continuar</a>
         <p>Confirma tu compra en Stripe despues de revisar la direccion y el importe final.</p>
         <a class="btn btn-ghost" href="/tienda#camiseta">Volver a la tienda</a>

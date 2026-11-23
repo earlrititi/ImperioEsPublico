@@ -330,6 +330,8 @@ export const POST: APIRoute = async ({ request }) => {
           const {data:a,error} = await (await database()).from('reservation_payment_attempts').select('stripe_session_id').eq('id',intent.metadata.reservationAttemptId).single();
           if (error || !a?.stripe_session_id) throw new Error('PAYMENT_ATTEMPT_NOT_READY');
           const current = await stripe.checkout.sessions.retrieve(a.stripe_session_id);
+          // Checkout can retry a declined card against the same reservation.
+          if (current.metadata?.shirt_delivery && current.status === "open") break;
           if (current.payment_status !== 'paid') await rpc('close_shirt_payment',{p_attempt:intent.metadata.reservationAttemptId,p_session:current.id,p_expired:current.status==='expired'});
         }
         break;

@@ -5,34 +5,58 @@
   function bindStock(form: HTMLFormElement) {
     if (form.dataset.stockBound) return;
     form.dataset.stockBound = "true";
-    const select = form.querySelector<HTMLSelectElement>("[data-shirt-size]");
+    const sizes = [...form.querySelectorAll<HTMLInputElement>("[data-shirt-size]")];
+    const quantity = form.querySelector<HTMLInputElement>("[name=quantity]");
     const button = form.querySelector<HTMLButtonElement>("[data-reservation-cta]");
     const status = form.querySelector<HTMLElement>("[data-reservation-stock]");
     const waiting = form.querySelector<HTMLAnchorElement>("[data-waitlist-link]");
     const cartButton = form.querySelector<HTMLButtonElement>("[data-cart-add]");
-    if (!select || !button || !status || !waiting) return;
+    if (!sizes.length || !quantity || !button || !status || !waiting) return;
     let stopped = false;
+    type Inventory = {
+      variants: { name: string; available: boolean }[];
+      salesEnabled: boolean;
+      reservationMode: boolean;
+      campaign?: { max_reservation_quantity?: number | null };
+    };
+    let inventory: Inventory | undefined;
+    const update = () => {
+      if (!inventory) return;
+      const selected = sizes.find(size => size.checked);
+      if (!selected) return;
+      const variant = inventory.variants.find(variant => variant.name === selected.value);
+      const exhausted = !variant?.available;
+      for (const size of sizes) {
+        const available = inventory.variants.find(variant => variant.name === size.value)?.available;
+        size.closest("label")?.toggleAttribute("data-unavailable", !available);
+      }
+      const max = inventory.campaign?.max_reservation_quantity;
+      if (typeof max === "number" && Number.isSafeInteger(max) && max > 0) {
+        quantity.max = String(max);
+      } else {
+        quantity.removeAttribute("max");
+      }
+      button.disabled = exhausted;
+      if (cartButton) cartButton.disabled = exhausted || (!inventory.salesEnabled && !inventory.reservationMode);
+      waiting.hidden = !exhausted;
+      waiting.href = `/reservas?size=${encodeURIComponent(selected.value)}`;
+      status.textContent = exhausted ? "Talla agotada" : inventory.salesEnabled ? "Disponible" : inventory.reservationMode ? "Pre-reserva gratuita disponible" : "Compra no disponible por el momento";
+    };
     const refresh = async () => {
       try {
         const response = await fetch("/api/reservations/inventory", { cache: "no-store" });
         if (!response.ok) throw new Error();
-        const data = await response.json();
         if (stopped) return;
-        const variant = data.variants.find((v: { name: string }) => v.name === select.value);
-        if (!variant) throw new Error();
-        const exhausted = !variant.available;
-        button.textContent = exhausted ? "AGOTADO" : data.salesEnabled ? "COMPRAR AHORA" : data.reservationMode ? "RESERVAR \u2014 0 \u20ac" : "NO DISPONIBLE";
-        button.disabled = exhausted || (!data.reservationMode && !data.salesEnabled);
-        if (cartButton) cartButton.disabled = button.disabled;
-        waiting.hidden = !exhausted;
-        waiting.href = `/reservas?size=${encodeURIComponent(select.value)}`;
-        status.textContent = exhausted ? "AGOTADO" : "DISPONIBLE";
-      } catch { if (!stopped) { button.disabled = true; if (cartButton) cartButton.disabled = true; status.textContent = "No se pudo consultar la disponibilidad. Vuelve a intentarlo."; } }
+        inventory = await response.json();
+        if (!stopped) update();
+      } catch {
+        if (!stopped && !inventory) status.textContent = "Consulta la disponibilidad al continuar.";
+      }
     };
-    select.addEventListener("change", refresh);
+    sizes.forEach(size => size.addEventListener("change", update));
     void refresh();
     const timer = setInterval(() => { if (!document.hidden) void refresh(); }, 10000);
-    document.addEventListener("astro:before-swap", () => { stopped = true; clearInterval(timer); select.removeEventListener("change", refresh); }, { once: true });
+    document.addEventListener("astro:before-swap", () => { stopped = true; clearInterval(timer); }, { once: true });
   }
   setupStoreStock();
   document.addEventListener("astro:page-load", setupStoreStock);

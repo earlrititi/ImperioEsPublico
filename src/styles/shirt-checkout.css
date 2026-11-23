@@ -1,0 +1,291 @@
+.shirt-checkout-page {
+  --checkout-paper: #f6f3ed;
+  --checkout-ink: #211d19;
+  --checkout-muted: #635d55;
+  --checkout-line: #cbc2b6;
+  --checkout-red: #b61f19;
+  color: var(--checkout-ink);
+  background: var(--checkout-paper);
+  min-height: 70vh;
+  padding: clamp(26px, 5vw, 72px) clamp(18px, 5vw, 84px) clamp(42px, 6vw, 90px);
+}
+
+.shirt-checkout-page__inner {
+  max-width: 1200px;
+  margin-inline: auto;
+}
+
+.shirt-checkout-page__header {
+  border-bottom: 1px solid var(--checkout-line);
+  margin-bottom: clamp(24px, 4vw, 44px);
+  padding-bottom: clamp(15px, 3vw, 27px);
+}
+
+.shirt-checkout-page a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.shirt-checkout-page__header > a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  font-size: .875rem;
+  font-weight: 600;
+}
+
+.shirt-checkout-page__header h1 {
+  margin: 12px 0 0;
+  font: 800 clamp(2.45rem, 7.8vw, 5.5rem) / .95 var(--font-body);
+  letter-spacing: -.065em;
+  text-wrap: balance;
+  text-transform: uppercase;
+}
+
+.shirt-checkout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.28fr) minmax(0, 1fr);
+  grid-template-areas: "information summary" "actions summary";
+  align-items: start;
+  gap: 20px clamp(30px, 6vw, 92px);
+  max-width: none;
+}
+
+.shirt-checkout__information { grid-area: information; min-width: 0; }
+.shirt-checkout__actions { grid-area: actions; min-width: 0; }
+
+.shirt-checkout__section-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin-bottom: 19px;
+}
+
+.shirt-checkout h2 {
+  margin: 0;
+  font: 700 clamp(1.35rem, 2vw, 1.7rem) / 1.2 var(--font-body);
+  letter-spacing: -.035em;
+}
+
+.shirt-checkout p {
+  margin: 9px 0 0;
+  font-size: .875rem;
+  line-height: 1.55;
+}
+
+.shirt-checkout .reservation-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px 18px;
+}
+
+.shirt-checkout fieldset {
+  border: 0;
+  margin: 0 0 22px;
+  min-width: 0;
+  padding: 0;
+}
+
+.shirt-checkout legend {
+  font-size: .92rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  padding: 0;
+}
+
+.shirt-checkout label:not(.shirt-checkout__consent, .shirt-checkout__delivery-option, .shirt-checkout__trap) {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+  margin: 0 0 8px;
+  font-size: .8rem;
+  color: var(--checkout-muted);
+}
+
+.shirt-checkout input:not([type="checkbox"], [type="radio"]),
+.shirt-checkout select {
+  border: 0;
+  border-bottom: 1px solid var(--checkout-line);
+  border-radius: 0;
+  padding: 8px 3px;
+  min-height: 42px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  font: inherit;
+  font-size: 1rem;
+  color: var(--checkout-ink);
+  background-color: transparent;
+  color-scheme: light;
+}
+
+.shirt-checkout :is(input, select):disabled {
+  opacity: .72;
+  cursor: default;
+}
+
+.shirt-checkout :is(input, select, button, a):focus-visible,
+.shirt-checkout-page__header > a:focus-visible {
+  outline: 2px solid var(--checkout-red);
+  outline-offset: 3px;
+}
+
+.shirt-checkout input:is([type="checkbox"], [type="radio"]) {
+  flex: 0 0 auto;
+  width: 17px;
+  height: 17px;
+  margin: 2px 0 0;
+  accent-color: var(--checkout-red);
+}
+
+.shirt-checkout__consent {
+  display: flex;
+  align-items: start;
+  gap: 10px;
+  margin: 0 0 12px;
+  font-size: .875rem;
+  line-height: 1.5;
+}
+
+.shirt-checkout__delivery-option {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 9px;
+  border-bottom: 1px solid var(--checkout-line);
+  padding: 10px 0;
+  font-size: .875rem;
+  cursor: pointer;
+}
+
+.shirt-checkout__delivery-option small {
+  display: block;
+  margin-top: 2px;
+  color: var(--checkout-muted);
+  font-size: .8rem;
+  line-height: 1.45;
+}
+
+.shirt-checkout__payment {
+  border-top: 1px solid var(--checkout-line);
+  padding-top: 18px;
+}
+
+.shirt-checkout__payment-element:not(:empty) { margin-top: 14px; }
+
+.shirt-checkout__summary {
+  grid-area: summary;
+  min-width: 0;
+  border: 1px solid var(--checkout-line);
+  background-color: #fffdf9;
+  padding: clamp(16px, 3vw, 29px);
+}
+
+.shirt-checkout__items {
+  padding: 0;
+  margin: 16px 0 0;
+  list-style: none;
+}
+
+.shirt-checkout__item {
+  display: grid;
+  grid-template-columns: clamp(58px, 7vw, 80px) minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+  border-bottom: 1px solid var(--checkout-line);
+  padding: 10px 0;
+  font-size: .875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.shirt-checkout__item img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 5 / 6;
+  padding: 4px;
+  object-fit: contain;
+  background-color: var(--checkout-paper);
+}
+
+.shirt-checkout__item span {
+  display: block;
+  color: var(--checkout-muted);
+  font-size: .8rem;
+  line-height: 1.45;
+}
+
+.shirt-checkout__item div strong { display: block; margin-bottom: 5px; }
+.shirt-checkout__item > strong { white-space: nowrap; }
+
+.shirt-checkout__totals { margin: 12px 0 0; }
+
+.shirt-checkout__totals > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: .875rem;
+  line-height: 1.5;
+  margin-top: 5px;
+}
+
+.shirt-checkout__totals dd { margin: 0; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.shirt-checkout__totals .shirt-checkout__total {
+  font-size: 1.1rem;
+  font-weight: 700;
+  border-top: 1px solid var(--checkout-line);
+  margin-top: 12px;
+  padding-top: 13px;
+}
+
+.shirt-checkout__summary > p { color: var(--checkout-muted); font-size: .76rem; }
+
+.shirt-checkout__submit,
+.shirt-checkout__secondary {
+  appearance: none;
+  border: 1px solid var(--checkout-red);
+  border-radius: 3px;
+  background: var(--checkout-red);
+  color: #fff;
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 18px;
+  font: 700 .875rem / 1.3 var(--font-body);
+  cursor: pointer;
+}
+
+.shirt-checkout__secondary {
+  background: transparent;
+  color: var(--checkout-red);
+}
+
+.shirt-checkout :is(.shirt-checkout__submit, .shirt-checkout__secondary):disabled {
+  cursor: not-allowed;
+  opacity: .65;
+}
+
+.shirt-checkout__submit:hover:not(:disabled) { background: #961913; }
+
+.shirt-checkout__trap {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+@media (max-width: 760px) {
+  .shirt-checkout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "information" "summary" "actions";
+  }
+}
+
+@media (max-width: 360px) {
+  .shirt-checkout .reservation-fields { grid-template-columns: minmax(0, 1fr); }
+}

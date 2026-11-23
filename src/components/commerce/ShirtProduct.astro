@@ -1,0 +1,423 @@
+---
+import CartControls from "../CartControls.astro";
+import StoreStock from "./StoreStock.astro";
+import { formatMoney, SHIRT_DELIVERY_OPTIONS, SHIRT_PRODUCT_PRICE_CENTS } from "../../config/commerce";
+import { PRODUCTS } from "../../config/products";
+
+interface Props {
+  titleId: string;
+  heading?: "h1" | "h2";
+  id?: string;
+  storyHref: string;
+}
+
+const { titleId, heading: Heading = "h2", id, storyHref } = Astro.props;
+const shirt = PRODUCTS["camiseta-imperial"];
+const views = [
+  { file: "camiseta-imperio-frontal", label: "Frontal", width: 944, height: 1181 },
+  { file: "camiseta-imperio-atras", label: "Trasera", width: 1077, height: 1211 },
+];
+const sizes = "(max-width: 740px) calc(100vw - 32px), (max-width: 1480px) 46vw, 640px";
+---
+
+<article class="shirt-product" id={id} aria-labelledby={titleId} data-shirt-card data-shirt-product data-funnel-shirts>
+  <div class="shirt-product__gallery" data-shirt-gallery role="group" aria-label="Vistas de la Camiseta Imperial">
+    <div class="shirt-product__pictures">
+      {views.map((view, index) => (
+        <picture data-shirt-view hidden={index !== 0}>
+          <source type="image/avif" media="(max-width: 740px)" srcset={`/images/${view.file}-640.avif`} />
+          <img
+            src={`/images/${view.file}.webp`}
+            srcset={`/images/${view.file}-640.webp 640w, /images/${view.file}.webp ${view.width}w`}
+            sizes={sizes}
+            alt={`Camiseta Imperial · vista ${view.label.toLowerCase()}`}
+            width={view.width}
+            height={view.height}
+            loading={Heading === "h1" && index === 0 ? "eager" : "lazy"}
+            decoding="async"
+          />
+        </picture>
+      ))}
+    </div>
+    <slot name="gallery-tool" />
+    <div class="shirt-product__gallery-controls" data-shirt-gallery-controls hidden>
+      <button type="button" aria-label="Imagen anterior" data-shirt-gallery-step="-1"><span aria-hidden="true">‹</span></button>
+      {views.map((view, index) => (
+        <button class="shirt-product__gallery-dot" type="button" aria-label={`Vista ${view.label.toLowerCase()}`} aria-pressed={index === 0 ? "true" : "false"} data-shirt-gallery-index={index}></button>
+      ))}
+      <button type="button" aria-label="Imagen siguiente" data-shirt-gallery-step="1"><span aria-hidden="true">›</span></button>
+    </div>
+  </div>
+
+  <div class="shirt-product__info">
+    <header>
+      <p class="shirt-product__eyebrow">Casa de Mercaderías · Primera edición</p>
+      <Heading class="shirt-product__title" id={titleId}>{shirt.name}</Heading>
+      <p class="shirt-product__price">{formatMoney(SHIRT_PRODUCT_PRICE_CENTS)} <small>IVA incluido</small></p>
+    </header>
+    <p class="shirt-product__description"><strong>Non Sufficit Orbis.</strong> La cruz de Borgoña, el escudo y la nave en una camiseta técnica ligera y transpirable.</p>
+
+    <form class="product-purchase shirt-product__purchase" action="/reservas" method="get">
+      <fieldset class="shirt-product__sizes">
+        <legend>Talla</legend>
+        <div class="shirt-product__size-options">
+          {shirt.variants.map(size => (
+            <label class="shirt-product__size">
+              <input type="radio" name="size" value={size} checked={size === "M"} data-shirt-size />
+              <span>{size}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+      <div class="shirt-product__actions">
+        <label class="shirt-product__quantity">
+          <span>Cantidad</span>
+          <input type="number" name="quantity" min="1" step="1" value="1" inputmode="numeric" required />
+        </label>
+        <button class="shirt-product__buy" type="submit" data-reservation-cta>Comprar</button>
+      </div>
+      <div class="shirt-product__purchase-meta">
+        <button class="shirt-product__text-control" type="button" data-cart-add disabled>Añadir al carrito</button>
+        <p class="shirt-product__availability" data-reservation-stock role="status"></p>
+      </div>
+      <p class="shirt-product__feedback" data-cart-feedback hidden role="status">Añadida al carrito. <a href="/carrito">Ver carrito</a></p>
+      <a class="shirt-product__text-control" href="/reservas" data-waitlist-link hidden>Apuntarme a la lista de espera</a>
+    </form>
+
+    <div class="shirt-product__details">
+      <details>
+        <summary>Guía de tallas</summary>
+        <p>Medidas de la prenda en centímetros.</p>
+        <table aria-label="Medidas de la Camiseta Imperial">
+          <thead><tr><th scope="col">Talla</th><th scope="col">Ancho</th><th scope="col">Largo</th></tr></thead>
+          <tbody>{shirt.variantDetails.map(({ size, widthCm, lengthCm }) => (
+            <tr><th scope="row">{size}</th><td>{widthCm}</td><td>{lengthCm}</td></tr>
+          ))}</tbody>
+        </table>
+      </details>
+      <details>
+        <summary>Material y cuidados</summary>
+        <p>100 % poliéster. Tejido transpirable Bird-Eye de {shirt.fabricWeightGsm} g/m² con costuras planas.</p>
+        <p>Lavar a un máximo de 30 °C. Evitar lejía, plancha, secadora y limpieza en seco.</p>
+        <p><a href={storyHref}>Descubrir la historia del diseño</a></p>
+      </details>
+      <details>
+        <summary>Envíos y devoluciones</summary>
+        <p>Envío a España peninsular.</p>
+        {SHIRT_DELIVERY_OPTIONS.map(option => (
+          <p><strong>{option.label}</strong> · {option.amount ? `${formatMoney(option.amount)} por pedido` : "Gratuito"}. {option.description}.</p>
+        ))}
+        <p><a href="/legal/envios">Condiciones de envío</a> · <a href="/legal/devoluciones">Devoluciones</a></p>
+      </details>
+    </div>
+  </div>
+  <StoreStock />
+  <CartControls />
+</article>
+
+<script>
+  for (const gallery of document.querySelectorAll<HTMLElement>("[data-shirt-gallery]")) {
+    const views = [...gallery.querySelectorAll<HTMLElement>("[data-shirt-view]")];
+    const controls = gallery.querySelector<HTMLElement>("[data-shirt-gallery-controls]");
+    if (!controls || views.length < 2) continue;
+    const indicators = [...controls.querySelectorAll<HTMLButtonElement>("[data-shirt-gallery-index]")];
+    let selected = 0;
+
+    function showView(index: number) {
+      selected = (index + views.length) % views.length;
+      views.forEach((view, position) => { view.hidden = position !== selected; });
+      indicators.forEach((indicator, position) => indicator.setAttribute("aria-pressed", String(position === selected)));
+      gallery.classList.toggle("is-showing-back", selected === 1);
+    }
+
+    controls.addEventListener("click", event => {
+      const button = (event.target as Element).closest<HTMLButtonElement>("button");
+      if (!button) return;
+      if (button.dataset.shirtGalleryIndex !== undefined) showView(Number(button.dataset.shirtGalleryIndex));
+      else showView(selected + Number(button.dataset.shirtGalleryStep));
+    });
+    controls.hidden = false;
+  }
+</script>
+
+<style>
+  .shirt-product {
+    --shirt-paper: #eeebe4;
+    --shirt-ink: #1d1a17;
+    --shirt-line: #d4cec2;
+    --shirt-red: #c52a20;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    max-width: 1400px;
+    margin-inline: auto;
+    border: 1px solid var(--shirt-line);
+    color: var(--shirt-ink);
+    background: var(--shirt-paper);
+    font-family: var(--font-body);
+  }
+
+  .shirt-product__gallery {
+    position: relative;
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 0.5rem;
+    align-content: center;
+    min-width: 0;
+    padding: clamp(1rem, 3vw, 2.5rem) clamp(0.75rem, 2vw, 1.75rem) 1rem;
+    background: #fbfaf7;
+  }
+
+  .shirt-product__pictures {
+    display: grid;
+    place-items: center;
+    min-height: clamp(340px, 38vw, 555px);
+  }
+
+  .shirt-product__pictures picture:not([hidden]) {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+  }
+
+  .shirt-product__pictures img {
+    width: 100%;
+    height: 100%;
+    max-height: clamp(340px, 38vw, 555px);
+    object-fit: contain;
+  }
+
+  .shirt-product__gallery-controls:not([hidden]) {
+    display: flex;
+    justify-self: center;
+    align-items: center;
+    gap: 0.15rem;
+    padding: 0 0.35rem;
+    border: 1px solid #e3ded6;
+    border-radius: 100px;
+    background: #f1eee8;
+  }
+
+  .shirt-product__gallery-controls button {
+    display: grid;
+    place-items: center;
+    width: 35px;
+    min-height: 36px;
+    padding: 0;
+    border: 0;
+    color: var(--shirt-ink);
+    background: transparent;
+    cursor: pointer;
+    font: 600 1.45rem/1 var(--font-body);
+  }
+
+  .shirt-product__gallery-dot::before {
+    width: 18px;
+    height: 6px;
+    border-radius: 100px;
+    background: #a59c8e;
+    content: "";
+  }
+
+  .shirt-product__gallery-dot[aria-pressed="true"]::before {
+    background: var(--shirt-red);
+  }
+
+  .shirt-product__info {
+    min-width: 0;
+    padding: clamp(1.4rem, 4.1vw, 4rem);
+  }
+
+  .shirt-product__eyebrow,
+  .shirt-product__sizes legend,
+  .shirt-product__quantity span {
+    color: #5d5246;
+    font: 700 0.72rem/1.3 var(--font-body);
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+  }
+
+  .shirt-product__eyebrow { margin: 0 0 0.55rem; }
+
+  .shirt-product__title {
+    margin: 0;
+    color: inherit;
+    font: 700 clamp(2.5rem, 4.1vw, 4.5rem)/0.93 var(--font-serif);
+    letter-spacing: -0.037em;
+  }
+
+  .shirt-product__price {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin: 0.9rem 0 0;
+    color: inherit;
+    font: 700 1.2rem/1.3 var(--font-body);
+  }
+
+  .shirt-product__price small { color: #5d5246; font-size: 0.72rem; font-weight: 500; }
+
+  .shirt-product__description {
+    max-width: 48ch;
+    margin: 1.15rem 0 0;
+    color: #4c443a;
+    font: 400 0.88rem/1.55 var(--font-body);
+  }
+
+  .shirt-product__description strong { color: var(--shirt-ink); }
+
+  .shirt-product__purchase { margin: clamp(1.35rem, 2.8vw, 2.35rem) 0 0; }
+
+  .shirt-product__sizes { margin: 0; padding: 0; border: 0; min-width: 0; }
+
+  .shirt-product__sizes legend { margin-bottom: 0.5rem; padding: 0; }
+
+  .shirt-product__size-options { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
+  .shirt-product__size { position: relative; display: block; cursor: pointer; }
+
+  .shirt-product__size input {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  .shirt-product__size span {
+    display: grid;
+    place-items: center;
+    min-width: 46px;
+    min-height: 42px;
+    padding: 0.35rem;
+    border: 1px solid #e3dcd1;
+    border-radius: 2px;
+    background: #faf8f4;
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+
+  .shirt-product__size input:checked + span {
+    border-color: var(--shirt-ink);
+    color: #fff;
+    background: var(--shirt-ink);
+  }
+
+  .shirt-product__size[data-unavailable] span { text-decoration: line-through; }
+
+  .shirt-product__actions {
+    display: grid;
+    grid-template-columns: minmax(4.85rem, auto) 1fr;
+    align-items: end;
+    gap: 0.55rem;
+    margin-top: 1rem;
+  }
+
+  .shirt-product__quantity { display: grid; gap: 0.4rem; }
+
+  .shirt-product__quantity input,
+  .shirt-product__buy {
+    min-height: 50px;
+    border-radius: 2px;
+    font: 700 0.86rem/1 var(--font-body);
+  }
+
+  .shirt-product__quantity input {
+    width: 5rem;
+    padding: 0.65rem;
+    border: 1px solid var(--shirt-line);
+    color: inherit;
+    background: #fff;
+  }
+
+  .shirt-product__buy {
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--shirt-red);
+    color: #fff;
+    background: var(--shirt-red);
+    cursor: pointer;
+  }
+
+  .shirt-product__buy:hover:not(:disabled) { border-color: #a22119; background: #a22119; }
+  .shirt-product__buy:disabled { border-color: #7b7167; background: #7b7167; cursor: not-allowed; }
+
+  .shirt-product__purchase-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.25rem 0.8rem;
+    margin-top: 0.65rem;
+  }
+
+  .shirt-product__text-control {
+    min-height: 30px;
+    padding: 0;
+    border: 0;
+    color: #51473e;
+    background: transparent;
+    font: 600 0.76rem/1.4 var(--font-body);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+  }
+
+  .shirt-product__text-control:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  .shirt-product__availability,
+  .shirt-product__feedback {
+    margin: 0;
+    color: #5d5246;
+    font: 400 0.75rem/1.4 var(--font-body);
+  }
+
+  .shirt-product__feedback { margin-top: 0.65rem; }
+
+  .shirt-product__details {
+    margin-top: 1.3rem;
+    border-top: 1px solid var(--shirt-line);
+  }
+
+  .shirt-product__details details { border-bottom: 1px solid var(--shirt-line); }
+
+  .shirt-product__details summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.8rem;
+    min-height: 43px;
+    list-style: none;
+    color: #362e26;
+    font: 600 0.85rem/1.3 var(--font-body);
+    cursor: pointer;
+  }
+
+  .shirt-product__details summary::-webkit-details-marker { display: none; }
+  .shirt-product__details summary::after { content: "+"; font-size: 1.2rem; font-weight: 400; }
+  .shirt-product__details details[open] summary::after { content: "−"; }
+
+  .shirt-product__details p,
+  .shirt-product__details table {
+    margin: 0 0 0.7rem;
+    color: #4c443a;
+    font: 400 0.79rem/1.5 var(--font-body);
+  }
+
+  .shirt-product__details table { width: 100%; border-collapse: collapse; }
+  .shirt-product__details :is(th, td) { padding: 0.3rem 0.45rem; border-top: 1px solid var(--shirt-line); text-align: left; }
+
+  .shirt-product :is(a, button, input, summary):focus-visible,
+  .shirt-product__size input:focus-visible + span {
+    outline: 2px solid var(--shirt-red);
+    outline-offset: 3px;
+  }
+
+  @media (max-width: 740px) {
+    .shirt-product { grid-template-columns: minmax(0, 1fr); }
+    .shirt-product__pictures { min-height: clamp(240px, 75vw, 425px); }
+    .shirt-product__pictures img { max-height: clamp(240px, 75vw, 425px); }
+    .shirt-product__info { border-top: 1px solid var(--shirt-line); }
+  }
+</style>

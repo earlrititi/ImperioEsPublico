@@ -1,29 +1,36 @@
 ---
-import PageShell from "../../layouts/PageShell.astro";
+import Layout from "../../layouts/Layout.astro";
 import ReservationForm from "../../components/commerce/ReservationForm";
-import { PRODUCTS } from "../../config/products";
-import "../../styles/commerce.css";
-import {reservationMode} from "../../lib/reservations";
+import { SHIRT_FINAL_PRICE_CENTS } from "../../config/commerce";
+import { SHIRT_SIZES } from "../../lib/cart";
+import { shirtCheckoutPublishableKey } from "../../lib/reservation-payment";
+import { reservationMode } from "../../lib/reservations";
 import { createSupabaseServerClient } from "../../lib/supabase/server";
-import { SHIRT_TOTAL_COPY } from "../../config/commerce";
-export const prerender=false;
-const shirt=PRODUCTS['camiseta-imperial'];
-const size=Astro.url.searchParams.get('size')??'M';
+import "../../styles/shirt-checkout.css";
+
+export const prerender = false;
+
+const requestedSize = Astro.url.searchParams.get("size");
+const requestedQuantity = Number(Astro.url.searchParams.get("quantity") ?? "1");
+const initialSize = SHIRT_SIZES.find((size) => size === requestedSize) ?? "M";
+const initialQuantity = Number.isSafeInteger(requestedQuantity) && requestedQuantity > 0 &&
+  requestedQuantity <= Math.floor(2_147_483_647 / SHIRT_FINAL_PRICE_CENTS) ? requestedQuantity : 1;
+const fromCart = Astro.url.searchParams.get("cart") === "1";
+const startsAsReservation = reservationMode();
 const { data: { user } } = await createSupabaseServerClient({ cookies: Astro.cookies, request: Astro.request }).auth.getUser();
 const initialCustomer = { name: typeof user?.user_metadata?.full_name === "string" ? user.user_metadata.full_name : "", email: user?.email ?? "" };
-Astro.response.headers.set('Cache-Control','private, no-store');
-Astro.response.headers.set('Referrer-Policy','no-referrer');
+Astro.response.headers.set("Cache-Control", "private, no-store");
+Astro.response.headers.set("Referrer-Policy", "no-referrer");
 ---
-<PageShell title="Camiseta Imperial | Imperio Español" eyebrow="Lanzamiento I" heading="Camiseta Imperial" summary={reservationMode()?"Reserva tu talla sin pago y completa la compra cuando recibas la invitacion.":SHIRT_TOTAL_COPY + ". Compra sin crear una cuenta."} noindex mainClass="reservation-page">
-  <div class="commerce-layout">
-    <aside class="commerce-product" aria-label="Información de la Camiseta Imperial">
-      <div class="commerce-product__image"><picture><source type="image/avif" srcset="/images/museo-camiseta-front-640.avif 640w, /images/museo-camiseta-front-960.avif 960w" sizes="(max-width: 760px) calc(100vw - 48px), 42vw" /><img src="/images/museo-camiseta-front-960.webp" srcset="/images/museo-camiseta-front-640.webp 640w, /images/museo-camiseta-front-960.webp 960w" sizes="(max-width: 760px) calc(100vw - 48px), 42vw" alt="Camiseta Imperial, vista delantera" width="1400" height="1150" loading="eager" decoding="async" fetchpriority="high" /></picture></div>
-      <span class="commerce-kicker">Edición Imperial</span>
-      <h2>Camiseta Imperial</h2>
-      <p class="commerce-product__specs">100 % poliéster · Bird-Eye · 145 g/m²</p>
-      <p>{shirt.shippingInformation}</p>
-      <a class="commerce-product__link" href="/checkout/camiseta-imperial">Ficha técnica y medidas</a>
-    </aside>
-    <ReservationForm client:load initialSize={shirt.variants.some(v=>v===size)?size:'M'} initialCustomer={initialCustomer} fromCart={Astro.url.searchParams.get('cart')==='1'} initialSales={!reservationMode()}/>
-  </div>
-</PageShell>
+<Layout title="Camiseta Imperial | Imperio Español" description="Datos de contacto, entrega y pago de la Camiseta Imperial." noindex>
+  <main class="shirt-checkout-page">
+    <div class="shirt-checkout-page__inner">
+      <header class="shirt-checkout-page__header">
+        <a href={fromCart ? "/carrito" : "/tienda#camiseta"}><span aria-hidden="true">←</span> Volver a {fromCart ? "mi carrito" : "la tienda"}</a>
+        <h1>{startsAsReservation ? "Reserva tu camiseta" : "Finalizar compra"}</h1>
+      </header>
+      <ReservationForm client:load {initialSize} {initialQuantity} {initialCustomer} {fromCart}
+        initialSales={!startsAsReservation} stripePublishableKey={shirtCheckoutPublishableKey()} />
+    </div>
+  </main>
+</Layout>

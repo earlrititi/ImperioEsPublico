@@ -46,7 +46,7 @@ test("Paid mail uses the actual discounted charge and separates postage", () => 
   assert.match(text, /Envio: 3,00/);
   assert.match(text, /Descuento en camisetas: -5,40/);
   assert.match(text, /Total pagado: 24,59/);
-  assert.match(text, /44067163Z/);
-  assert.match(text, /11160 Barbate/);
+  assert.match(text, /Vendedor: Imperio Español/);
+  assert.doesNotMatch(text, /Adrian Lopez Oliva|44067163Z|11160 Barbate|Sobre los/);
   assert.doesNotMatch(text, /Total pagado: 29,99/);
 });

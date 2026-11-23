@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "preact/hooks";
-import { RESERVATION_STATUS, SHIRT_PRICE_COPY } from "../../config/commerce";
+import { RESERVATION_STATUS, SHIRT_DELIVERY_OPTIONS, SHIRT_PRODUCT_PRICE_CENTS, formatMoney, shirtDeliveryOption, type ShirtDelivery } from "../../config/commerce";
 import { isMainlandAddress } from "../../lib/reservation-validation";
 import {trackFunnel} from "../../lib/funnel-client";
 import { trackConfirmedGooglePurchase } from "../../lib/google-analytics";
@@ -21,6 +21,7 @@ export default function ReservationManager({ paymentReturn = false }: { paymentR
     [message, setMessage] = useState("Consultando reserva..."),
     [busy, setBusy] = useState(false);
   const [customer, setCustomer] = useState({ name: "", email: "" });
+  const [deliveryChoice, setDeliveryChoice] = useState<ShirtDelivery>("standard");
   const [editing, setEditing] = useState(false);
   const [confirmationDelayed, setConfirmationDelayed] = useState(false);
   const [analyticsPurchase, setAnalyticsPurchase] = useState<unknown>(null);
@@ -151,6 +152,7 @@ export default function ReservationManager({ paymentReturn = false }: { paymentR
         address,
         confirmPurchase: true,
         customer,
+        ...(r.paymentAddress ? {} : { delivery: deliveryChoice }),
       });
       await trackFunnel("shirts",5,"/reservas");
       window.location.assign(data.url);
@@ -181,6 +183,7 @@ export default function ReservationManager({ paymentReturn = false }: { paymentR
   const confirming = paymentReturn && r.status === "PAYMENT_PENDING";
   const paymentLocked = ["PAYMENT_PENDING", "PAYMENT_FAILED"].includes(r.status);
   const canPay = !mode && ["PURCHASE_AVAILABLE", "PAYMENT_FAILED", "PAYMENT_PENDING"].includes(r.status) && !confirming;
+  const delivery = shirtDeliveryOption(order?.shipping_method ?? r.paymentDelivery ?? (canPay && !r.paymentAddress ? deliveryChoice : null));
   function finishEditing() {
     if (!isMainlandAddress(address) || customer.name.trim().length < 2 || customer.name.length > 150 ||
       !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customer.email.trim()) || customer.email.length > 254) {
@@ -218,9 +221,10 @@ export default function ReservationManager({ paymentReturn = false }: { paymentR
       {!canPay && <p>Estado: {RESERVATION_STATUS[r.status]}</p>}
       <ItemsSummary
         items={r.reservation_items}
-        total={order?.total ?? r.total_price_snapshot}
-        discount={order?.discount_amount ?? 0}
+        total={order?.total ?? r.paymentTotal ?? (delivery ? r.total_quantity * SHIRT_PRODUCT_PRICE_CENTS + delivery.amount : r.total_price_snapshot)}
+        discount={order?.discount_amount ?? r.paymentDiscount ?? 0}
         vat={order?.vat_amount}
+        delivery={delivery}
       />
       {(canPay || order?.shipping_address || r.paymentAddress || r.shipping_address) && <h3>Contacto y entrega</h3>}
       <AddressSummary
@@ -269,6 +273,13 @@ export default function ReservationManager({ paymentReturn = false }: { paymentR
       {canPay && (
           <form onSubmit={pay} aria-describedby="purchase-feedback">
             <h3>Revisa y continua al pago</h3>
+            {!r.paymentAddress && <fieldset disabled={busy}>
+              <legend>Envío</legend>
+              {SHIRT_DELIVERY_OPTIONS.map(option => <label class="reservation-consent" key={option.id}>
+                <input type="radio" name="delivery" checked={option.id === deliveryChoice} onChange={() => setDeliveryChoice(option.id)} />
+                <span>{option.label} · {option.amount ? formatMoney(option.amount) : "Gratis"} · {option.description}</span>
+              </label>)}
+            </fieldset>}
             <button ref={editButton} type="button" class="btn btn-ghost" disabled={busy || paymentLocked} aria-expanded={editing} aria-controls="purchase-edit-fields" onClick={() => editing ? finishEditing() : setEditing(true)}>
               {editing ? "Usar estos datos" : "Editar contacto y entrega"}
             </button>
@@ -287,8 +298,8 @@ export default function ReservationManager({ paymentReturn = false }: { paymentR
               <source type="image/avif" srcSet="/images/cuadros-explicativos-camiseta-640.avif 640w, /images/cuadros-explicativos-camiseta-960.avif 960w" sizes="(max-width: 760px) calc(100vw - 48px), 640px" />
               <img src="/images/cuadros-explicativos-camiseta-960.webp" srcSet="/images/cuadros-explicativos-camiseta-640.webp 640w, /images/cuadros-explicativos-camiseta-960.webp 960w" sizes="(max-width: 760px) calc(100vw - 48px), 640px" alt="Camiseta Imperial, modelo y detalles" width="1920" height="1080" loading="lazy" decoding="async" style={{ maxWidth: "100%", height: "auto", objectFit: "contain" }} />
             </picture>
-            <p>Vendedor: {LEGAL_BUSINESS.ownerName}, {LEGAL_BUSINESS.tradeName}. NIF {LEGAL_BUSINESS.taxId}. {LEGAL_BUSINESS.registeredAddress}.</p>
-            <p>{SHIRT_PRICE_COPY}. Preparacion maxima: 48 horas; entrega maxima: 7 dias laborables tras el pago.</p>
+            <p>Vendedor: {LEGAL_BUSINESS.tradeName}.</p>
+            {delivery && <p>{delivery.description}.</p>}
             <p>Puedes comprar sin crear una cuenta ni contratar una suscripción. Solo si ya eres suscriptor, inicia sesión para comprobar tu descuento; el envío no se descuenta. <a href="/login?next=/reservas/gestionar">Acceso para suscriptores</a></p>
             <p>Desistimiento: 14 dias naturales desde la recepcion. Esta camiseta de diseno fijo no se considera personalizada para el comprador.</p>
             <nav aria-label="Condiciones de compra">{LEGAL_LINKS.map((link) => <p key={link.href}><a href={link.href} target="_blank" rel="noreferrer">{link.label}</a></p>)}</nav>

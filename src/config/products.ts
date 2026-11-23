@@ -1,5 +1,5 @@
 import { LEGAL_BUSINESS } from "./legal";
-import { SHIRT_PRODUCT_PRICE_CENTS, SHIRT_SHIPPING_PRICE_CENTS, SHIRT_PRICE_COPY } from "./commerce";
+import { SHIRT_PRODUCT_PRICE_CENTS, SHIRT_DELIVERY_OPTIONS, formatMoney } from "./commerce";
 
 const shirtVariants = [
   { size: "S", stock: 3, lengthCm: 66, widthCm: 50 },
@@ -48,11 +48,11 @@ export const PRODUCTS = {
       country: "ES",
       region: "ES_MAINLAND",
       carrier: "Correos",
-      amount: SHIRT_SHIPPING_PRICE_CENTS,
-      preparationMaxHours: 48,
+      amount: SHIRT_DELIVERY_OPTIONS[0].amount,
+      preparationMaxHours: 120,
       deliveryMaxBusinessDays: 7,
     },
-    shippingInformation: `${SHIRT_PRICE_COPY}. Envio estandar por Correos, solo a la Peninsula espanola. Tras confirmar el pago: preparacion maxima de 48 horas y entrega maxima de 7 dias laborables.`,
+    shippingInformation: `Estándar gratuito (gestión en hasta 5 días) o prioritario por ${formatMoney(SHIRT_DELIVERY_OPTIONS[1].amount)} por pedido (gestión en 24 horas).`,
     tax: { percentage: 21, behavior: "inclusive", confirmedByOwner: true },
     taxInformation: "IVA del 21 % incluido en el precio de la camiseta.",
     packagingType: "Sobre de envio",

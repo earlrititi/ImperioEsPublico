@@ -6,13 +6,13 @@ import { readFileSync } from "node:fs";
 import ReservationForm from "../src/components/commerce/ReservationForm";
 import { AddressFields, emptyAddress } from "../src/components/commerce/shared";
 import SubscriptionConfirmation from "../src/components/commerce/SubscriptionConfirmation";
-import { SHIRT_PRICE_COPY } from "../src/config/commerce";
 
 test("Shirt contact is collected once and a separate recipient is optional", () => {
   const html = render(h(ReservationForm, { initialCustomer: { name: "Cliente Prueba", email: "fixture@example.invalid" } }));
   assert.equal((html.match(/autocomplete="name"/g) ?? []).length, 1);
   assert.doesNotMatch(html, /autocomplete="shipping name"/);
   assert.match(html, /Enviar a otra persona/);
+  assert.equal((html.match(/type="checkbox"/g) ?? []).length, 2);
   assert.match(html, /value="Cliente Prueba"/);
   assert.match(html, /value="fixture@example.invalid"/);
   assert.match(html, /inputmode="numeric"/);
@@ -34,24 +34,23 @@ test("Payment return never claims success before a server-side confirmation", ()
 
 test("Purchase loading never flashes a free reservation or an empty cart", () => {
   const html = render(h(ReservationForm, { initialSales: true, fromCart: true }));
-  assert.match(html, /Compra de camiseta/);
-  assert.match(html, /Comprobando disponibilidad y precio/);
+  assert.match(html, /Tu pedido/);
+  assert.match(html, /Comprobando disponibilidad/);
   assert.match(html, /aria-busy="true"/);
   assert.doesNotMatch(html, /Pre-reserva gratuita|RESERVAR|0,00|Tu carrito est/);
-  assert.match(html, /29,99/);
-  assert.match(html, /envío peninsular e IVA incluidos/);
-  assert.match(html, /No necesitas crear una cuenta/);
+  assert.match(html, /Pago seguro con Stripe/);
 });
 
-test("All purchase entry points disclose the delivered total before customer details", () => {
-  assert.match(SHIRT_PRICE_COPY, /^29,99/);
-  assert.match(SHIRT_PRICE_COPY, /26,99.*3.*por unidad/);
-  for (const file of ["src/pages/reservas/index.astro", "src/pages/tienda/index.astro", "src/pages/instagram.astro", "src/components/TshirtLeadPopup.astro"]) {
-    assert.match(readFileSync(file, "utf8"), /SHIRT_(?:PRICE|TOTAL)_COPY/);
-  }
+test("Shirt checkout shows both shipping options and the default total", () => {
+  const html = render(h(ReservationForm, { initialSales: true, initialSize: "L", initialQuantity: 2 }));
+  assert.match(html, /Envío estándar/);
+  assert.match(html, /Gratis/);
+  assert.match(html, /hasta 5 días/);
+  assert.match(html, /6,99/);
+  assert.match(html, /24 horas/);
+  assert.match(html, /53,98/);
   const instagram = readFileSync("src/pages/instagram.astro", "utf8");
-  assert.match(instagram, /inventory\.unitPrice \+ inventory\.shippingPerUnit/);
-  assert.match(instagram, /data\.unitPrice \+ data\.shippingPerUnit/);
+  assert.match(instagram, /\/reservas\?size=/);
   assert.doesNotMatch(instagram, /<a[^>]*class="ig-cta[^>]*data-community/);
   assert.match(instagram, /<details><summary>Descuentos para suscriptores/);
 });

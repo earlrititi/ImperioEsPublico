@@ -3,7 +3,7 @@ import {
   PROVINCES,
   RESERVATION_STATUS,
   RESERVATION_PURCHASE_NOTICE,
-  SHIRT_PRICE_COPY,
+  shirtDeliveryOption,
   SHIRT_SHIPPING_PRICE_CENTS,
 } from "../config/commerce";
 import { LEGAL_BUSINESS } from "../config/legal";
@@ -62,6 +62,8 @@ export function reservationMailText(r: any, kind: string, url: string) {
   const a = paid ? r.commerce_orders.shipping_address : r.shipping_address;
   const isInitialReservation = kind === "RESERVED" && r.status === "RESERVED";
   const order = r.commerce_orders;
+  const pendingCheckout = !paid && ["PURCHASE_AVAILABLE", "PAYMENT_PENDING", "PAYMENT_FAILED"].includes(r.status);
+  const delivery = shirtDeliveryOption(order?.shipping_method);
   const units = r.reservation_items.reduce((sum: number, item: any) => sum + item.quantity, 0);
   const shipping = order?.shipping_amount ?? units * SHIRT_SHIPPING_PRICE_CENTS;
   const discount = order?.discount_amount ?? 0;
@@ -88,17 +90,19 @@ export function reservationMailText(r: any, kind: string, url: string) {
         `${i.product_name}, ${i.sku}, talla ${i.size}, ${i.color}: ${i.quantity} x ${formatMoney(i.unit_price_snapshot - SHIRT_SHIPPING_PRICE_CENTS)} = ${formatMoney(i.quantity * (i.unit_price_snapshot - SHIRT_SHIPPING_PRICE_CENTS))}`,
     ),
     `Camisetas (IVA incluido): ${formatMoney(productSubtotal)}`,
-    `Envio: ${formatMoney(shipping)}`,
+    pendingCheckout ? null : `${delivery?.label ?? "Envio"}: ${formatMoney(shipping)}`,
     discount ? `Descuento en camisetas: -${formatMoney(discount)}` : null,
-    `Total ${paid ? "pagado" : "informativo reservado"}: ${formatMoney(total)}`,
-    typeof order?.vat_amount === "number" ? `IVA incluido: ${formatMoney(order.vat_amount)}` : SHIRT_PRICE_COPY,
+    pendingCheckout ? "Consulta el total con el envío elegido antes de pagar." : `Total ${paid ? "pagado" : "informativo reservado"}: ${formatMoney(total)}`,
+    typeof order?.vat_amount === "number" ? `IVA incluido: ${formatMoney(order.vat_amount)}` : null,
     a?.name,
     a?.line1,
     a?.line2,
     a ? `${a.postalCode} ${a.city}, ${PROVINCES.find(([code]) => code === a.province)?.[1] ?? a.province}, Espana` : null,
     r.customer_phone ? `Telefono: ${r.customer_phone}` : null,
     paid
-      ? "Tu compra se ha realizado correctamente. Preparacion en un maximo de 48 horas y entrega en un maximo de 7 dias laborables. Solo Espana peninsular."
+      ? delivery
+        ? `Tu compra se ha realizado correctamente. ${delivery.description}. Solo España peninsular.`
+        : "Tu compra se ha realizado correctamente. Preparacion en un maximo de 48 horas y entrega en un maximo de 7 dias laborables. Solo Espana peninsular."
       : ["PAYMENT_PENDING", "PAYMENT_FAILED"].includes(r.status)
         ? "El pago no se ha confirmado todavia."
         : "NO SE HA REALIZADO NINGUN COBRO.",
@@ -114,8 +118,7 @@ export function reservationMailText(r: any, kind: string, url: string) {
       ? `Consultar o gestionar tu reserva (este no es el enlace de compra): ${url}`
       : `Consultar o gestionar: ${url}`,
     `Soporte: ${SITE.contactEmail}`,
-    `Vendedor: ${LEGAL_BUSINESS.ownerName} — ${LEGAL_BUSINESS.tradeName}. NIF ${LEGAL_BUSINESS.taxId}. ${LEGAL_BUSINESS.registeredAddress}`,
-    `Devoluciones: ${LEGAL_BUSINESS.returnsAddress}`,
+    `Vendedor: ${LEGAL_BUSINESS.tradeName}`,
   ]
     .filter(Boolean)
     .join("\n");

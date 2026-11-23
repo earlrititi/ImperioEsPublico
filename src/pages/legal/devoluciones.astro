@@ -1,9 +1,6 @@
 ---
 import LegalDocument from "../../components/LegalDocument.astro";
 import { LEGAL_BUSINESS, LEGAL_DOCUMENT_VERSIONS } from "../../config/legal";
-import { PRODUCTS } from "../../config/products";
-
-const shirt = PRODUCTS["camiseta-imperial"];
 ---
 
 <LegalDocument
@@ -13,13 +10,8 @@ const shirt = PRODUCTS["camiseta-imperial"];
   version={LEGAL_DOCUMENT_VERSIONS.returns}
 >
   <section>
-    <h2>Envios de la Camiseta Imperial</h2>
-    <p>Estas condiciones se aplican a la compra confirmada con pago en Stripe. El envío estándar a Península está incluido en el total de 29,99 € por camiseta y se desglosa antes de confirmar el pago: 26,99 € de camiseta y 3 € de envío por unidad, IVA incluido.</p>
-    <p>{shirt.shippingInformation}</p>
-    <p>
-      No realizamos envios a Baleares, Canarias, Ceuta, Melilla ni a otros paises.
-      {" "}{shirt.taxInformation}
-    </p>
+    <h2>Envíos</h2>
+    <p>Consulta las <a href="/legal/envios">opciones de envío a España peninsular</a>.</p>
   </section>
   <section>
     <h2>1. Plazo</h2>

@@ -1,64 +1,233 @@
 import { useEffect, useRef, useState } from "preact/hooks";
-import { formatMoney, SHIRT_PRICE_COPY, SHIRT_FINAL_PRICE_CENTS } from "../../config/commerce";
-import { AddressFields, emptyAddress, api } from "./shared";
-import { attributedPath, socialEvent } from "../../lib/social-attribution";
-import {trackFunnel} from "../../lib/funnel-client";
-import { readCart, type CartItem } from "../../lib/cart";
-import { trackGoogleCommerce } from "../../lib/google-analytics";
+import type { Stripe, StripeCheckoutLoadActionsSuccess, StripePaymentElement } from "@stripe/stripe-js";
+import {
+  formatMoney,
+  SHIRT_DELIVERY_OPTIONS,
+  SHIRT_FINAL_PRICE_CENTS,
+  SHIRT_PRODUCT_PRICE_CENTS,
+  SHIRT_SHIPPING_PRICE_CENTS,
+  shirtDeliveryOption,
+  type ShirtDelivery,
+} from "../../config/commerce";
 import { EMAIL_MARKETING_CONSENT } from "../../config/email-marketing";
+import { readCart, SHIRT_SIZES, type CartItem, type ShirtSize } from "../../lib/cart";
+import { trackFunnel } from "../../lib/funnel-client";
+import { trackGoogleCommerce } from "../../lib/google-analytics";
+import type { readPublicInventory } from "../../lib/public-inventory";
+import { isMainlandAddress, type ShippingAddress } from "../../lib/reservation-validation";
+import { attributedPath, socialEvent } from "../../lib/social-attribution";
+import { AddressFields, api, emptyAddress } from "./shared";
 
-export default function ReservationForm({ initialSize = "M", initialCustomer = { name: "", email: "" }, fromCart = false, initialSales = false }: { initialSize?: string; initialCustomer?: { name: string; email: string }; fromCart?: boolean; initialSales?: boolean }) {
-  const [inventory, setInventory] = useState<any[]>([]);
-  const [size, setSize] = useState(initialSize), [quantity, setQuantity] = useState(1);
-  const [customer, setCustomer] = useState(initialCustomer);
-  const [differentRecipient, setDifferentRecipient] = useState(false);
-  const submitting = useRef(false);
-  const [address, setAddress] = useState({ ...emptyAddress });
-  const [challenge, setChallenge] = useState(""), [message, setMessage] = useState("");
-  const [busy, setBusy] = useState(false), [available, setAvailable] = useState(false);
-  const [accepted, setAccepted] = useState(false), [marketing, setMarketing] = useState(false);
-  const [website, setWebsite] = useState(""), [campaign, setCampaign] = useState<any>(null);
-  const [expirationHours, setExpirationHours] = useState(0), [waitlist, setWaitlist] = useState(false);
-  const [sales,setSales]=useState(initialSales);
-  const [reserving, setReserving] = useState(!initialSales);
-  const [inventoryState, setInventoryState] = useState<"loading" | "ready" | "error">("loading");
+type Inventory = Awaited<ReturnType<typeof readPublicInventory>>;
+type Customer = { name: string; email: string };
+type ReservedOrder = {
+  id: string;
+  token: string;
+  customer: Customer;
+  address: ShippingAddress;
+  delivery: ShirtDelivery;
+  stripe?: Stripe | null;
+};
+type ConfirmedTotal = { amount: string; discount: number };
+const maxCheckoutUnits = Math.floor(2_147_483_647 / SHIRT_FINAL_PRICE_CENTS);
+
+interface Props {
+  initialSize?: ShirtSize;
+  initialQuantity?: number;
+  initialCustomer?: Customer;
+  fromCart?: boolean;
+  initialSales?: boolean;
+  stripePublishableKey?: string;
+}
+
+export default function ReservationForm({
+  initialSize = "M",
+  initialQuantity = 1,
+  initialCustomer = { name: "", email: "" },
+  fromCart = false,
+  initialSales = false,
+  stripePublishableKey,
+}: Props) {
+  const [inventory, setInventory] = useState<Inventory | null>(null);
+  const [inventoryError, setInventoryError] = useState(false);
+  const [size, setSize] = useState<ShirtSize>(initialSize);
+  const [quantity, setQuantity] = useState(initialQuantity);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [customer, setCustomer] = useState(initialCustomer);
+  const [address, setAddress] = useState({ ...emptyAddress });
+  const [differentRecipient, setDifferentRecipient] = useState(false);
+  const [delivery, setDelivery] = useState<ShirtDelivery>("standard");
+  const [challenge, setChallenge] = useState("");
+  const [website, setWebsite] = useState("");
+  const [accepted, setAccepted] = useState(false);
+  const [marketing, setMarketing] = useState(false);
+  const [waitlist, setWaitlist] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const [recoveryUrl, setRecoveryUrl] = useState("");
+  const [paymentReady, setPaymentReady] = useState(false);
+  const [confirmedTotal, setConfirmedTotal] = useState<ConfirmedTotal | null>(null);
+  const submitting = useRef(false);
+  const reservedOrder = useRef<ReservedOrder | null>(null);
+  const paymentMount = useRef<HTMLDivElement>(null);
+  const paymentElement = useRef<StripePaymentElement | null>(null);
+  const paymentActions = useRef<StripeCheckoutLoadActionsSuccess | null>(null);
+
   useEffect(() => {
     if (fromCart) setCartItems(readCart());
     let active = true;
+    let refreshing = false;
     const refresh = async () => {
+      if (refreshing || reservedOrder.current) return;
+      refreshing = true;
       try {
         const data = await api("/api/reservations/inventory");
         if (active) {
-          setInventory(data.variants); setAvailable(data.reservationMode||data.salesEnabled);setSales(Boolean(data.salesEnabled));
-          setReserving(Boolean(data.reservationMode));
-          setExpirationHours(data.expirationHours); setCampaign(data.campaign);
-          setInventoryState("ready");
+          setInventory(data);
+          setInventoryError(false);
         }
-      } catch { if (active) { setAvailable(false); setInventoryState("error"); } }
+      } catch {
+        if (active) setInventoryError(true);
+      } finally {
+        refreshing = false;
+      }
     };
     void refresh();
     const timer = setInterval(() => { if (!document.hidden) void refresh(); }, 5000);
-    void api("/api/reservations/challenge").then((data) => { if (active) setChallenge(data.challenge); })
-      .catch((e) => { if (active) setMessage(e.message); });
-    return () => { active = false; clearInterval(timer); };
+    void api("/api/reservations/challenge")
+      .then((data) => { if (active) setChallenge(data.challenge); })
+      .catch((error) => { if (active) setMessage(error.message); });
+    return () => {
+      active = false;
+      clearInterval(timer);
+      paymentElement.current?.destroy();
+    };
   }, []);
-  const variant = inventory.find((v) => v.name === size);
-  const soldOut = fromCart ? cartItems.some(item => inventory.find(v => v.name === item.size)?.available === false) : variant?.available === false;
-  const maximum = variant?.available ? campaign?.max_reservation_quantity ?? Infinity : 0;
-  const units = fromCart ? cartItems.reduce((sum, item) => sum + item.quantity, 0) : quantity;
-  const canWait = Boolean(campaign && (!campaign.reservations_open_at || Date.parse(campaign.reservations_open_at) <= Date.now()));
+
+  const sales = inventory ? inventory.salesEnabled : initialSales;
+  const reserving = inventory ? inventory.reservationMode : !initialSales;
+  const initialLoading = !inventory && !inventoryError;
+  const chosenDelivery = shirtDeliveryOption(delivery);
+  const variants = inventory?.variants ?? [];
+  const items = fromCart ? cartItems : [{ size, quantity: waitlist ? 1 : quantity }];
+  const units = items.reduce((sum, item) => sum + (item.quantity || 0), 0);
+  const unavailable = Boolean(inventory && items.some((item) =>
+    !variants.some((variant) => variant.name === item.size && variant.available),
+  ));
+  const maximum = inventory?.campaign.max_reservation_quantity ?? maxCheckoutUnits;
+  const validQuantity = items.length > 0 && items.every((item) =>
+    Number.isSafeInteger(item.quantity) && item.quantity > 0,
+  ) && units <= maximum;
+  const canWait = Boolean(inventory && (!inventory.campaign.reservations_open_at ||
+    Date.parse(inventory.campaign.reservations_open_at) <= Date.now()));
+  const detailsDisabled = busy || Boolean(recoveryUrl);
+  const canEnterDetails = !unavailable || waitlist || Boolean(recoveryUrl);
+  const canStart = !initialLoading && !inventoryError && Boolean(challenge) && validQuantity &&
+    (waitlist ? canWait && unavailable : (sales || reserving) && !unavailable);
+  const itemTotal = SHIRT_PRODUCT_PRICE_CENTS * units;
+  const shippingTotal = sales ? chosenDelivery?.amount ?? 0 : SHIRT_SHIPPING_PRICE_CENTS * units;
+  const total = itemTotal + shippingTotal;
+  const checkoutQuery = new URLSearchParams(fromCart ? { cart: "1" } : { size, quantity: String(quantity || 1) });
+  const loginHref = `/login?next=${encodeURIComponent(`/reservas?${checkoutQuery}`)}`;
+
+  async function startPayment(order: ReservedOrder) {
+    setMessage("Preparando el pago seguro…");
+    if (order.stripe === undefined) {
+      order.stripe = stripePublishableKey
+        ? await import("@stripe/stripe-js/pure").then(({ loadStripe }) => loadStripe(stripePublishableKey, { locale: "es" })).catch(() => null)
+        : null;
+    }
+    const data = await api(`/api/reservations/${order.id}/checkout`, {
+      token: order.token,
+      address: order.address,
+      customer: order.customer,
+      delivery: order.delivery,
+      confirmPurchase: true,
+      paymentUi: order.stripe ? "elements" : undefined,
+    });
+    void trackFunnel("shirts", 5, "/reservas");
+    if (typeof data.url === "string" && data.url) {
+      window.location.assign(data.url);
+      return;
+    }
+    if (!order.stripe || typeof data.clientSecret !== "string" || !paymentMount.current) {
+      throw new Error("No se pudo cargar el pago seguro.");
+    }
+    if (Number.isSafeInteger(data.total) && Number.isSafeInteger(data.discount)) {
+      setConfirmedTotal({ amount: formatMoney(data.total), discount: data.discount });
+    }
+    const checkout = order.stripe.initCheckoutElementsSdk({
+      clientSecret: data.clientSecret,
+      elementsOptions: {
+        appearance: {
+          theme: "flat",
+          variables: {
+            colorBackground: "#fffdf9",
+            colorText: "#211d19",
+            colorPrimary: "#b61f19",
+            colorDanger: "#a12822",
+            fontSizeBase: "16px",
+            borderRadius: "4px",
+          },
+        },
+      },
+    });
+    const loaded = await checkout.loadActions();
+    if (loaded.type === "error") throw new Error(loaded.error.message);
+    const syncTotal = () => {
+      const { total } = loaded.actions.getSession();
+      setConfirmedTotal({ amount: total.total.amount, discount: total.discount.minorUnitsAmount });
+    };
+    syncTotal();
+    checkout.on("change", syncTotal);
+    paymentElement.current?.destroy();
+    const element = checkout.createPaymentElement({ layout: "tabs" });
+    paymentElement.current = element;
+    paymentActions.current = loaded.actions;
+    element.on("ready", () => {
+      setMessage("");
+      setPaymentReady(true);
+      element.focus();
+    });
+    element.on("loaderror", () => {
+      paymentActions.current = null;
+      setPaymentReady(false);
+      setMessage("Stripe no pudo cargar el formulario. Puedes volver a intentarlo.");
+    });
+    element.mount(paymentMount.current);
+  }
+
   async function submit(event: SubmitEvent) {
     event.preventDefault();
-    if (submitting.current || busy || !variant || inventoryState !== "ready") return;
-    if (fromCart && (!cartItems.length || soldOut)) { setMessage("Revisa las tallas y cantidades en tu carrito."); return; }
-    if (!fromCart && ((!waitlist && (!Number.isInteger(quantity) || quantity < 1 || quantity > maximum)) || (waitlist && !soldOut))) {
-      setMessage("La disponibilidad ha cambiado. Revisa talla y cantidad."); return;
-    }
+    if (submitting.current || busy) return;
+    if (!reservedOrder.current && !canStart) return;
+    if (paymentActions.current && !paymentReady) return;
     submitting.current = true;
-    setBusy(true); setMessage(sales ? "Guardando tus datos para revisar el pago..." : "Verificando solicitud...");
-    if (!waitlist) socialEvent("reservation_started", { sku: variant.sku, quantity });
+    setBusy(true);
+    setMessage("");
     try {
+      if (paymentActions.current && reservedOrder.current) {
+        setMessage("Confirmando el pago…");
+        const result = await paymentActions.current.confirm({ redirect: "if_required" });
+        if (result.type === "error") throw new Error(result.error.message);
+        window.location.assign(`/compra/completada#${reservedOrder.current.id}.${reservedOrder.current.token}`);
+        return;
+      }
+      if (reservedOrder.current) {
+        await startPayment(reservedOrder.current);
+        return;
+      }
+
+      const selection = items.map((item) => ({
+        sku: `IE-CAMISETA-IMPERIAL-${item.size}`,
+        quantity: item.quantity,
+      }));
+      const shippingAddress = { ...address, name: differentRecipient ? address.name : customer.name };
+      if (!waitlist && !isMainlandAddress(shippingAddress)) {
+        throw new Error("Revisa la dirección y comprueba que el código postal coincide con la provincia.");
+      }
+      setMessage(sales ? "Guardando tus datos de entrega…" : "Verificando la solicitud…");
+      if (!waitlist) socialEvent("reservation_started", { sku: selection[0].sku, quantity: units });
       let nonce = 0;
       const encoder = new TextEncoder();
       while (true) {
@@ -67,93 +236,209 @@ export default function ReservationForm({ initialSize = "M", initialCustomer = {
         nonce++;
       }
       const result = await api("/api/reservations", {
-        requestId: challenge.split(".")[0], challenge, nonce: String(nonce), customer,
-        items: fromCart ? cartItems.map(item => ({ sku: `IE-CAMISETA-IMPERIAL-${item.size}`, quantity: item.quantity })) : [{ sku: variant.sku, quantity: waitlist ? 1 : quantity }],
-        accepted, marketing, website, expirationHours, waitlist,
-        address: waitlist ? undefined : { ...address, name: differentRecipient ? address.name : customer.name },
+        requestId: challenge.split(".")[0],
+        challenge,
+        nonce: String(nonce),
+        customer,
+        items: selection,
+        accepted,
+        marketing,
+        website,
+        expirationHours: inventory?.expirationHours ?? 0,
+        waitlist,
+        address: waitlist ? undefined : shippingAddress,
       });
-      if (!waitlist) socialEvent("reservation_completed", { sku: variant.sku, quantity });
-      if (!waitlist) trackGoogleCommerce("add_shipping_info", fromCart ? cartItems : [{ size: variant.name, quantity }]);
-      if(!waitlist)await trackFunnel("shirts",4);
-      if (fromCart) try { sessionStorage.setItem("imperio-cart-reservation", result.id); } catch { /* Optional cart cleanup must not block checkout. */ }
-      window.location.assign(attributedPath(result.url));
+      if (!waitlist) {
+        socialEvent("reservation_completed", { sku: selection[0].sku, quantity: units });
+        trackGoogleCommerce("add_shipping_info", items);
+        void trackFunnel("shirts", 4);
+      }
+      if (fromCart) {
+        try { sessionStorage.setItem("imperio-cart-reservation", result.id); } catch { /* The order is still available. */ }
+      }
+      const manage = attributedPath(result.url);
+      if (!sales || waitlist) {
+        window.location.assign(manage);
+        return;
+      }
+
+      const credential = new URL(manage, window.location.origin).hash.slice(1);
+      const [id, token] = credential.split(".");
+      if (id !== result.id || !/^[\da-f]{64}$/i.test(token ?? "")) {
+        window.location.assign(manage);
+        return;
+      }
+      const order = { id, token, customer, address: shippingAddress, delivery };
+      reservedOrder.current = order;
+      setRecoveryUrl(manage);
+      try { sessionStorage.setItem("imperio-reservation-access", credential); } catch { /* The private order link still works. */ }
+      await startPayment(order);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "No se pudo confirmar la solicitud."); setBusy(false); submitting.current = false;
+      setMessage(error instanceof Error ? error.message : "No se pudo completar la solicitud.");
+    } finally {
+      setBusy(false);
+      submitting.current = false;
     }
   }
+
+  const action = paymentReady ? "Confirmar pago" : recoveryUrl ? "Reintentar cargar el pago" :
+    waitlist ? "Confirmar lista de espera" : sales ? stripePublishableKey ? "Continuar al pago" : "Confirmar y pagar en Stripe" :
+    reserving ? "Reservar · 0 €" : "Compra no disponible";
+
   return (
-    <form class="reservation-form" data-funnel-flow="shirts" onSubmit={submit} aria-busy={busy || inventoryState === "loading"} aria-describedby="reservation-feedback">
-      <header class="reservation-form__header">
-        <span class="commerce-kicker">{sales || !reserving ? "Compra de camiseta" : "Solicitud de reserva"}</span>
-        <h2>{waitlist ? "Lista de espera" : sales || !reserving ? "Camiseta Imperial" : "Pre-reserva gratuita"}</h2>
-        {inventoryState === "loading" ? <p role="status">Comprobando disponibilidad y precio...</p> : <p class="reservation-total">{waitlist ? "Sin pago" : sales ? `${formatMoney(SHIRT_FINAL_PRICE_CENTS*units)} · envío e IVA incluidos` : reserving ? `${formatMoney(0)} ahora` : "Compra no disponible temporalmente"}</p>}
-        <p>{SHIRT_PRICE_COPY}.</p>
-        {sales && !waitlist && <p>Compra como invitado. No necesitas crear una cuenta.</p>}
-      </header>
-      <fieldset disabled={busy}>
-        <legend>Talla y cantidad</legend>
-        {fromCart ? <><ul>{cartItems.map(item => <li key={item.size}>Talla {item.size} · {item.quantity} {item.quantity === 1 ? "camiseta" : "camisetas"}</li>)}</ul><a href="/carrito">Modificar carrito</a>{inventoryState !== "loading" && !cartItems.length && <p>Tu carrito está vacío.</p>}</> : <><div class="reservation-fields">
-          <label>Talla
-            <select value={size} onChange={(e) => { setSize(e.currentTarget.value); setWaitlist(false); setQuantity(1); }}>
-              {["S", "M", "L", "XL", "XXL"].map((s) => <option key={s} value={s}>{s}</option>)}
-            </select>
-          </label>
-          {!waitlist && !soldOut && <label>Cantidad
-            <input type="number" min="1" max={Number.isFinite(maximum) ? maximum : undefined} step="1" required value={quantity}
-              onInput={(e) => setQuantity(Number(e.currentTarget.value))} />
-          </label>}
+    <form class="shirt-checkout" method="post" data-funnel-flow="shirts" onSubmit={submit} aria-busy={busy || initialLoading} aria-describedby="reservation-feedback">
+      <section class="shirt-checkout__information" aria-labelledby="checkout-information">
+        <div class="shirt-checkout__section-heading">
+          <h2 id="checkout-information">Tus datos</h2>
+          {!initialCustomer.email && <a href={loginHref}>Iniciar sesión</a>}
         </div>
-        <p class="reservation-stock" role="status" aria-live="polite">{variant ? soldOut ? "AGOTADO" : "DISPONIBLE" : "Consultando disponibilidad..."}</p>
-        </>}
-        {!waitlist && typeof campaign?.max_reservation_quantity === "number" && <p class="reservation-note">Máximo {campaign.max_reservation_quantity} unidades por {sales ? "compra" : "pre-reserva"}.</p>}
-      </fieldset>
-      {soldOut && !waitlist && <>
-        <p>Esta talla está agotada.</p>
-        {fromCart ? <a href="/carrito">Revisar mi carrito</a> : <button type="button" class="btn btn-ghost" disabled={busy || !canWait} onClick={() => setWaitlist(true)}>APUNTARME A LA LISTA DE ESPERA</button>}
-      </>}
-      {(!soldOut || waitlist) && <>
-        <fieldset disabled={busy}>
-          <legend>Contacto</legend>
-          <label>Nombre
-            <input name="customerName" autoComplete="name" required minLength={2} maxLength={150} value={customer.name}
-              onInput={(e) => setCustomer({ ...customer, name: e.currentTarget.value })} />
-          </label>
-          <label>Email
-            <input name="email" type="email" autoComplete="email" required maxLength={254} value={customer.email}
-              onInput={(e) => setCustomer({ ...customer, email: e.currentTarget.value })} />
-          </label>
+
+        <fieldset class="shirt-checkout__group" disabled={detailsDisabled}>
+          <legend>Camiseta</legend>
+          {fromCart ? (
+            <p><a href="/carrito">Editar carrito</a></p>
+          ) : (
+            <div class="reservation-fields">
+              <label>Talla
+                <select name="size" value={size} onChange={(event) => {
+                  setSize(event.currentTarget.value as ShirtSize);
+                  setWaitlist(false);
+                  setQuantity(1);
+                }}>
+                  {SHIRT_SIZES.map((option) => <option key={option} value={option}>{option}</option>)}
+                </select>
+              </label>
+              {!waitlist && !unavailable && <label>Cantidad
+                <input name="quantity" type="number" min="1" max={maximum} step="1" required value={quantity || ""}
+                  onInput={(event) => setQuantity(Number(event.currentTarget.value))} />
+              </label>}
+            </div>
+          )}
+          {unavailable && !recoveryUrl && <p role="status">{fromCart ? "Alguna talla de tu carrito está agotada." : "La talla seleccionada está agotada."}</p>}
+          {fromCart && !cartItems.length && !initialLoading && <p role="status">Tu carrito está vacío.</p>}
         </fieldset>
-        {!waitlist && <>
-          <label class="reservation-consent">
-            <input type="checkbox" checked={differentRecipient} disabled={busy} onChange={e => setDifferentRecipient(e.currentTarget.checked)} />
-            <span>Enviar a otra persona</span>
-          </label>
-          <AddressFields value={address} onChange={setAddress} disabled={busy} includeRecipient={differentRecipient} />
-        </>}
-        <label class="commerce-honeypot" aria-hidden="true">Sitio web
-          <input tabIndex={-1} autoComplete="off" value={website} onInput={(e) => setWebsite(e.currentTarget.value)} />
-        </label>
-        <div class="reservation-conditions">
-          <p>{waitlist ? "La lista de espera no obliga a comprar. Te avisaremos si vuelve a estar disponible tu talla." : sales ? "Revisa tu dirección y continúa al pago seguro." : reserving ? "Pre-reserva gratuita. No se realiza ningún cobro y la pre-reserva no implica obligación de compra. La unidad quedará temporalmente asignada hasta que finalice el periodo indicado para completar la compra." : "No se pueden iniciar compras temporalmente. Vuelve a intentarlo más tarde."}</p>
-          {sales&&!waitlist&&<p>Revisa el resumen y confirma el pago en Stripe. El descuento de tu suscripcion activa se comprueba al pagar.</p>}
-          {reserving && campaign?.purchase_open_at && <p><strong>Compra prioritaria prevista:</strong> {new Date(campaign.purchase_open_at).toLocaleString("es-ES", { timeZone: "Europe/Madrid" })} (hora peninsular).</p>}
-          {!waitlist && reserving && <p>Dispones de {campaign?.purchase_window_hours ?? 24} horas para completarla.</p>}
-          {expirationHours > 0 && !waitlist && !sales && <p>Esta reserva caduca {expirationHours} horas después de confirmarla.</p>}
-        </div>
-        <label class="reservation-consent">
-          <input type="checkbox" checked={accepted} required disabled={busy} onChange={(e) => setAccepted(e.currentTarget.checked)} />
-          <span>He leído la <a href="/legal/privacidad" target="_blank" rel="noreferrer">Política de privacidad</a> y las <a href={!reserving && !waitlist ? "/legal/terminos" : "/legal/reservas"} target="_blank" rel="noreferrer">{!reserving && !waitlist ? "condiciones de compra" : "condiciones de la pre-reserva"}</a>.</span>
-        </label>
-        <label class="reservation-consent">
-          <input type="checkbox" checked={marketing} disabled={busy} onChange={(e) => setMarketing(e.currentTarget.checked)} />
-          <span>{EMAIL_MARKETING_CONSENT} Opcional; baja en cualquier momento.</span>
-        </label>
-        <button class="btn btn-primary" type="submit" disabled={busy || !challenge || (waitlist ? !canWait : !available || (fromCart ? !cartItems.length : maximum < 1))}>
-          {busy ? "Guardando..." : inventoryState === "loading" ? "Comprobando disponibilidad..." : waitlist ? "Confirmar lista de espera" : sales ? "Revisar y continuar al pago" : reserving ? "RESERVAR \u2014 0 \u20ac" : "Compra no disponible"}
-        </button>
-      </>}
-      {inventoryState !== "loading" && !available && !soldOut && <p role="status">Las compras no estan disponibles temporalmente.</p>}
-      <p id="reservation-feedback" role="status" aria-live="polite" aria-atomic="true">{message}</p>
+
+        {unavailable && !waitlist && !fromCart && !recoveryUrl &&
+          <button class="shirt-checkout__secondary" type="button" disabled={busy || !canWait} onClick={() => setWaitlist(true)}>Apuntarme a la lista de espera</button>}
+
+        {canEnterDetails && (
+          <>
+            <fieldset class="shirt-checkout__group" disabled={detailsDisabled}>
+              <legend>Contacto</legend>
+              <div class="reservation-fields">
+                <label>Nombre y apellidos
+                  <input name="customerName" autoComplete="name" required minLength={2} maxLength={150} value={customer.name}
+                    onInput={(event) => setCustomer({ ...customer, name: event.currentTarget.value })} />
+                </label>
+                <label>Correo electrónico
+                  <input name="email" type="email" autoComplete="email" required maxLength={254} value={customer.email}
+                    onInput={(event) => setCustomer({ ...customer, email: event.currentTarget.value })} />
+                </label>
+              </div>
+            </fieldset>
+
+            {!waitlist && (
+              <>
+                <label>
+                  Destinatario del envío
+                  <select name="deliveryRecipient" value={differentRecipient ? "other" : "buyer"} disabled={detailsDisabled}
+                    onChange={(event) => setDifferentRecipient(event.currentTarget.value === "other")}>
+                    <option value="buyer">Enviármelo a mí</option>
+                    <option value="other">Enviar a otra persona</option>
+                  </select>
+                </label>
+                <AddressFields value={address} onChange={setAddress} disabled={detailsDisabled} includeRecipient={differentRecipient} />
+                {sales && <fieldset class="shirt-checkout__group shirt-checkout__delivery" disabled={detailsDisabled}>
+                  <legend>Envío</legend>
+                  {SHIRT_DELIVERY_OPTIONS.map((option) => (
+                    <label class="shirt-checkout__delivery-option" key={option.id}>
+                      <input type="radio" name="delivery" value={option.id} checked={option.id === delivery}
+                        onChange={() => setDelivery(option.id)} />
+                      <span><strong>{option.label}</strong><small>{option.description}</small></span>
+                      <span>{option.amount ? formatMoney(option.amount) : "Gratis"}</span>
+                    </label>
+                  ))}
+                </fieldset>}
+              </>
+            )}
+
+            <label class="shirt-checkout__trap" aria-hidden="true">Sitio web
+              <input tabIndex={-1} autoComplete="off" value={website} onInput={(event) => setWebsite(event.currentTarget.value)} />
+            </label>
+
+            {sales && !waitlist && stripePublishableKey && (
+              <section class="shirt-checkout__payment" aria-labelledby="checkout-payment-title">
+                <h2 id="checkout-payment-title">Pago</h2>
+                <div class="shirt-checkout__payment-element" ref={paymentMount} />
+              </section>
+            )}
+            {waitlist && <p>Te avisaremos si vuelve a estar disponible tu talla.</p>}
+            {reserving && !waitlist && <div class="shirt-checkout__reservation-note">
+              <p>La reserva es gratuita. Podrás completar la compra cuando se abra el pago.</p>
+              {inventory?.campaign.purchase_open_at && <p>
+                Apertura prevista: {new Date(inventory.campaign.purchase_open_at).toLocaleString("es-ES", { timeZone: "Europe/Madrid" })} (hora peninsular).
+              </p>}
+              {inventory?.expirationHours ? <p>La reserva caduca a las {inventory.expirationHours} horas de confirmarla.</p> : null}
+            </div>}
+          </>
+        )}
+      </section>
+
+      <aside class="shirt-checkout__summary" aria-labelledby="checkout-summary">
+        <h2 id="checkout-summary">{waitlist ? "Tu solicitud" : sales ? "Tu pedido" : "Tu reserva"}</h2>
+        {!!items.length && (
+          <ul class="shirt-checkout__items">
+            {items.map((item) => (
+              <li class="shirt-checkout__item" key={item.size}>
+                <img src="/images/camiseta-imperio-frontal-640.webp" width="80" height="96" alt="" decoding="async" />
+                <div>
+                  <strong>Camiseta Imperial</strong>
+                  <span>Talla {item.size}</span>
+                  <span>Cantidad {item.quantity || "—"}</span>
+                </div>
+                <strong>{formatMoney(SHIRT_PRODUCT_PRICE_CENTS * (item.quantity || 0))}</strong>
+              </li>
+            ))}
+          </ul>
+        )}
+        {!waitlist && !!items.length && (
+          <dl class="shirt-checkout__totals">
+            <div><dt>Subtotal</dt><dd>{formatMoney(itemTotal)}</dd></div>
+            <div><dt>Envío</dt><dd>{formatMoney(shippingTotal)}</dd></div>
+            {confirmedTotal && confirmedTotal.discount > 0 && <div><dt>Descuento</dt><dd>−{formatMoney(confirmedTotal.discount)}</dd></div>}
+            <div class="shirt-checkout__total"><dt>Total <small>(IVA incluido)</small></dt><dd>{confirmedTotal?.amount ?? formatMoney(total)}</dd></div>
+          </dl>
+        )}
+      </aside>
+
+      <div class="shirt-checkout__actions">
+        {sales && !waitlist && <p>Pago seguro con Stripe</p>}
+        {canEnterDetails && (
+          <>
+            <label class="shirt-checkout__consent">
+              <input type="checkbox" checked={accepted} required disabled={detailsDisabled} onChange={(event) => setAccepted(event.currentTarget.checked)} />
+              <span>Acepto las{" "}
+                <a href={sales && !waitlist ? "/legal/terminos" : "/legal/reservas"} target="_blank" rel="noreferrer">
+                  {sales && !waitlist ? "condiciones de compra" : "condiciones de reserva"}
+                </a> y he leído la <a href="/legal/privacidad" target="_blank" rel="noreferrer">política de privacidad</a>.
+              </span>
+            </label>
+            <label class="shirt-checkout__consent">
+              <input type="checkbox" checked={marketing} disabled={detailsDisabled} onChange={(event) => setMarketing(event.currentTarget.checked)} />
+              <span>{EMAIL_MARKETING_CONSENT} Opcional; baja en cualquier momento.</span>
+            </label>
+            <button class="shirt-checkout__submit" type="submit"
+              disabled={busy || (paymentActions.current !== null && !paymentReady) || (!recoveryUrl && !canStart)}>
+              {busy ? "Un momento…" : initialLoading ? "Comprobando disponibilidad…" : action}
+            </button>
+          </>
+        )}
+        {recoveryUrl && <p><a href={recoveryUrl}>Revisar los datos de mi pedido</a></p>}
+        {inventoryError && !recoveryUrl && <p role="status">No se ha podido consultar la disponibilidad. Vuelve a intentarlo en unos segundos.</p>}
+        {inventory && !sales && !reserving && !waitlist && !unavailable &&
+          <p role="status">La compra no está disponible en este momento.</p>}
+        <p id="reservation-feedback" role="status" aria-live="polite" aria-atomic="true">{message}</p>
+      </div>
     </form>
   );
 }

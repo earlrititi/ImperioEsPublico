@@ -2,7 +2,13 @@ import type Stripe from "stripe";
 import { getRequiredEnv } from "./env";
 import { database, optionalEnv, reservationMode, rpc } from "./reservations";
 import { getEsVatRate } from "./stripe-tax";
-import { SHIRT_PRODUCT_PRICE_CENTS } from "../config/commerce";
+import { SHIRT_PRODUCT_PRICE_CENTS, shirtDeliveryOption } from "../config/commerce";
+
+export function shirtCheckoutPublishableKey() {
+  const secretMode = /^(?:sk|rk)_(test|live)_/.exec(optionalEnv("STRIPE_SECRET_KEY") ?? "")?.[1];
+  const key = optionalEnv("PUBLIC_STRIPE_PUBLISHABLE_KEY");
+  return secretMode && key?.startsWith(`pk_${secretMode}_`) ? key : undefined;
+}
 
 export function assertShirtSalesEnabled() {
   if (reservationMode()) throw new Error("RESERVATION_MODE");
@@ -55,6 +61,9 @@ export async function handleReservationCheckout(
     (session.total_details?.amount_tax ?? 0) <= 0
   )
     throw new Error("PAYMENT_VALIDATION_FAILED");
+  const delivery = shirtDeliveryOption(session.metadata?.shirt_delivery);
+  if (session.metadata?.shirt_delivery && !delivery) throw new Error("PAYMENT_VALIDATION_FAILED");
+  if (delivery && (session.total_details?.amount_shipping ?? 0) !== 0) throw new Error("PAYMENT_VALIDATION_FAILED");
   await rpc("complete_shirt_payment", {
     p_attempt: attempt,
     p_session: session.id,
@@ -62,7 +71,7 @@ export async function handleReservationCheckout(
     p_total: session.amount_total,
     p_currency: session.currency,
     p_tax: session.total_details?.amount_tax,
-    p_shipping: session.total_details?.amount_shipping ?? 0,
+    p_shipping: delivery?.amount ?? session.total_details?.amount_shipping ?? 0,
     p_discount: session.total_details?.amount_discount ?? 0,
   });
   return true;

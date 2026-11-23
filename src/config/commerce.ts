@@ -1,9 +1,13 @@
 export const SHIRT_PRODUCT_PRICE_CENTS = 2699;
 export const SHIRT_SHIPPING_PRICE_CENTS = 300;
 export const SHIRT_FINAL_PRICE_CENTS = SHIRT_PRODUCT_PRICE_CENTS + SHIRT_SHIPPING_PRICE_CENTS;
+export const SHIRT_DELIVERY_OPTIONS = [
+  { id: "standard", label: "Envío estándar", description: "Gestión del envío en hasta 5 días", amount: 0 },
+  { id: "priority", label: "Envío prioritario", description: "Gestión del envío en 24 horas", amount: 699 },
+] as const;
+export type ShirtDelivery = typeof SHIRT_DELIVERY_OPTIONS[number]["id"];
+export const shirtDeliveryOption = (id: unknown) => SHIRT_DELIVERY_OPTIONS.find(option => option.id === id);
 export const TSHIRT_DISCOUNT_PERCENT = 15;
-export const SHIRT_TOTAL_COPY = "29,99 € por camiseta con envío peninsular e IVA incluidos";
-export const SHIRT_PRICE_COPY = `${SHIRT_TOTAL_COPY}: 26,99 € de camiseta + 3 € de envío por unidad`;
 export const RESERVATION_TERMS_VERSION = "2026-09-22";
 export const RESERVATION_PURCHASE_NOTICE =
   "Recibiras por correo el enlace privado para revisar tu reserva y confirmar la compra cuando el pago este disponible.";
@@ -11,6 +15,7 @@ export const formatMoney = (cents: number) =>
   new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(
     cents / 100,
   );
+export const SHIRT_PRICE_COPY = `${formatMoney(SHIRT_PRODUCT_PRICE_CENTS)} por camiseta, IVA incluido`;
 export const PROVINCES = [
   ["01", "Alava"],
   ["02", "Albacete"],

@@ -15,7 +15,7 @@ const baseline = { user_id: id, email: 'verified@example.invalid', name: 'Lector
   marketing_accepted_at: ago(48), welcome_at: null, visited_at: ago(20), product_at: ago(20), cart_at: ago(6), checkout_at: null,
   analytics_accepted: true, analytics_version: LEGAL_DOCUMENT_VERSIONS.cookies, analytics_at: ago(48), analytics_withdrawn_at: null,
   paid_at: null, billing_record: false, payment_in_progress: false };
-let subject = structuredClone(baseline), job = null, providerFailure = false, receiptFailure = false, withdrawBeforeSend = false, subjectReads = 0, emails = 0;
+let subject = structuredClone(baseline), job = null, providerFailure = false, receiptFailure = false, withdrawBeforeSend = false, reapproveBeforeSend = false, subjectReads = 0, emails = 0;
 const sends = [], saved = [];
 const json = (value, status=200) => Response.json(value,{status});
 globalThis.fetch = async (input, init) => {
@@ -25,7 +25,11 @@ globalThis.fetch = async (input, init) => {
   if (path === '/rest/v1/marketing_automation_drafts') return json([]);
   if (path === '/rest/v1/commerce_orders') return json({stripe_checkout_session_id:'cs_test_proof',total:2999,status:'READY_FOR_FULFILLMENT'});
   if (path === '/rest/v1/marketing_automation_enrolled_subjects') {
-    if (url.searchParams.has('user_id')) { subjectReads++; return json(withdrawBeforeSend&&subjectReads>=2?null:subject); }
+    if (url.searchParams.has('user_id')) {
+      subjectReads++;
+      if(reapproveBeforeSend&&subjectReads>=2)runtime.approved_at=ago(0);
+      return json(withdrawBeforeSend&&subjectReads>=2?null:subject);
+    }
     return json(subject?[subject]:[]);
   }
   if (path === '/rest/v1/rpc/queue_marketing_automation') {
@@ -72,8 +76,32 @@ const before=sends.length;
 runtime.enrollment_starts_at=null;assert.equal((await run(1)).disabled,true);assert.equal(sends.length,before);
 runtime.enrollment_starts_at=new Date(now+3600000).toISOString();assert.equal((await run(1)).disabled,true);
 runtime.enrollment_starts_at=ago(72);
-runtime.template_digest='changed';
+const allDigest=runtime.template_digest;
+process.env.MARKETING_AUTOMATION_SCOPE='recovery';
 assert.equal((await run(1)).disabled,true); assert.equal(sends.length,before);
+runtime.template_digest=createHash('sha256').update(JSON.stringify(AUTOMATION_DEFAULTS.filter(item=>['checkout','cart'].includes(item.key)))).digest('hex');
+runtime.approved_at=ago(12);
+process.env.MARKETING_CENTRAL_WELCOME_ENABLED='true';
+subject={...structuredClone(baseline),welcome_at:ago(48),cart_at:null};job=null;subjectReads=0;
+result=await run(1);assert.equal(result.disabled,false);assert.equal(result.queued,0);assert.equal(result.sent,0);assert.equal(job,null);
+subject={...structuredClone(baseline),cart_at:ago(20)};job=null;subjectReads=0;
+result=await run(1);assert.equal(result.queued,0);assert.equal(result.sent,0);assert.equal(job,null);
+subject={...structuredClone(baseline),welcome_at:ago(48)};job=null;subjectReads=0;
+result=await run(1);assert.equal(result.sent,1);assert.equal(job.key,'cart');
+job={...job,key:'welcome',step:'day1',status:'pending',sent_at:null};subjectReads=0;
+const scopedSends=sends.length;
+result=await run(1);assert.equal(result.suppressed,1);assert.equal(sends.length,scopedSends);
+subject=structuredClone(baseline);job=null;subjectReads=0;reapproveBeforeSend=true;
+result=await run(1);assert.equal(result.suppressed,1);assert.equal(sends.length,scopedSends);
+reapproveBeforeSend=false;
+process.env.MARKETING_AUTOMATION_SCOPE='invalid';
+assert.equal((await run(1)).disabled,true);assert.equal(sends.length,scopedSends);
+delete process.env.MARKETING_AUTOMATION_SCOPE;
+delete process.env.MARKETING_CENTRAL_WELCOME_ENABLED;
+runtime.approved_at=ago(1);
+runtime.template_digest=allDigest;
+runtime.template_digest='changed';
+assert.equal((await run(1)).disabled,true); assert.equal(sends.length,scopedSends);
 process.env.MARKETING_AUTOMATIONS_ENABLED='false'; assert.equal((await run(1)).disabled,true);
 assert.ok(readFileSync('supabase/migrations/032_marketing_automation_worker.sql','utf8').includes("values(true)"));
 console.log('Automation compiled worker: approval gate, verified candidates, send-time withdrawal, immutable provider retries, deduplication, unsubscribe and template reapproval passed. No real emails or external network.');

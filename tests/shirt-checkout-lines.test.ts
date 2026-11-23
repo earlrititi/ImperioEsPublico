@@ -16,7 +16,7 @@ test("checkout separates shirt and shipping without changing the undiscounted to
 test("hosted checkout identifies sizes and quantities without changing prices or coupon products", () => {
   const message = shirtCheckoutMessage([{sku:"IE-CAMISETA-IMPERIAL-M",quantity:1},{sku:"IE-CAMISETA-IMPERIAL-L",quantity:2}]);
   assert.match(message,/Tallas: M \(1\), L \(2\)/);
-  assert.match(message,/3 EUR por unidad, desglosado por separado/);
+  assert.match(message,/3 EUR por unidad/);
   assert.throws(()=>shirtCheckoutMessage([{sku:"IE-CAMISETA-IMPERIAL-M",quantity:0}]));
   assert.throws(()=>shirtCheckoutMessage([{sku:"IE-CAMISETA-IMPERIAL-M<script>",quantity:1}]));
   assert.throws(()=>shirtCheckoutMessage([{sku:"IE-CAMISETA-IMPERIAL-S",quantity:1},{sku:"IE-CAMISETA-IMPERIAL-S",quantity:1}]));

@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { SHIRT_FINAL_PRICE_CENTS, SHIRT_SHIPPING_PRICE_CENTS } from "../config/commerce";
+import { SHIRT_FINAL_PRICE_CENTS, SHIRT_PRODUCT_PRICE_CENTS, SHIRT_SHIPPING_PRICE_CENTS, shirtDeliveryOption } from "../config/commerce";
 import { SHIRT_SIZES } from "./cart";
 import type { GooglePurchase } from "./ecommerce";
 
@@ -23,17 +23,22 @@ export function confirmedShirtPurchase(reservation: any, now = Date.now()): Goog
     !Array.isArray(items) || items.length < 1 || items.length > SHIRT_SIZES.length) return null;
 
   const sizes = new Set<string>();
+  const delivery = shirtDeliveryOption(order.shipping_method);
+  if (order.shipping_method && !delivery) return null;
+  const unitPrice = delivery ? SHIRT_PRODUCT_PRICE_CENTS : SHIRT_FINAL_PRICE_CENTS;
   let quantity = 0;
   for (const item of items) {
     if (!SHIRT_SIZES.includes(item.size) || sizes.has(item.size) ||
       item.sku !== `IE-CAMISETA-IMPERIAL-${item.size}` || item.currency !== "eur" ||
       !Number.isSafeInteger(item.quantity) || item.quantity < 1 ||
-      item.unit_price !== SHIRT_FINAL_PRICE_CENTS || item.line_total !== item.quantity * item.unit_price) return null;
+      item.unit_price !== unitPrice || item.line_total !== item.quantity * item.unit_price) return null;
     sizes.add(item.size);
     quantity += item.quantity;
   }
-  const gross = quantity * SHIRT_FINAL_PRICE_CENTS;
-  const shippingGross = quantity * SHIRT_SHIPPING_PRICE_CENTS;
+  const shippingGross = delivery?.amount ?? quantity * SHIRT_SHIPPING_PRICE_CENTS;
+  const productGross = quantity * SHIRT_PRODUCT_PRICE_CENTS;
+  const gross = productGross + shippingGross;
+  if (delivery && (order.shipping_amount !== shippingGross || order.product_subtotal !== productGross)) return null;
   if (order.total_quantity !== quantity || order.subtotal !== gross ||
     !cents(order.total) || !cents(order.discount_amount) || !cents(order.vat_amount) ||
     order.total + order.discount_amount !== gross || order.total <= shippingGross || order.vat_amount >= order.total) return null;

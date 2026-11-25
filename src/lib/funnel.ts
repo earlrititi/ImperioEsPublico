@@ -5,7 +5,7 @@ export const FUNNEL_STEPS = {
   shirts: ["Entrada", "Talla / formulario", "Formulario iniciado", "Solicitud intentada", "Stock asignado", "Stripe abierto"],
 } as const;
 export type FunnelFlow = keyof typeof FUNNEL_STEPS;
-export const FUNNEL_PAGES = /^\/(?:$|newsletter|manifiesto|suscribirse|precios|instagram|tienda|reservas|checkout\/(?:arcabucero-(?:monthly|annual)|maestre-campo-(?:monthly|annual)))\/?$/;
+export const FUNNEL_PAGES = /^\/(?:$|newsletter|manifiesto|suscribirse|precios|instagram|tienda(?:\/black-friday)?|reservas|checkout\/(?:arcabucero-(?:monthly|annual)|maestre-campo-(?:monthly|annual)))\/?$/;
 export function validFunnel(value: unknown): value is {id:string;flow:FunnelFlow;step:number;page:string} {
   if(!value || typeof value!=="object")return false;
   const v=value as Record<string,unknown>;

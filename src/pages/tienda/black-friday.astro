@@ -1,0 +1,61 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import ShirtProduct from "../../components/commerce/ShirtProduct.astro";
+import { blackFridayActive } from "../../config/black-friday";
+import { formatMoney, SHIRT_PRODUCT_PRICE_CENTS, SHIRT_DELIVERY_OPTIONS } from "../../config/commerce";
+import { campaignParameters } from "../../lib/social-attribution";
+import { readPublicInventory } from "../../lib/public-inventory";
+export const prerender = false;
+Astro.response.headers.set("Cache-Control", "private, no-store");
+const params = campaignParameters(Astro.url.search);
+if (!blackFridayActive()) return Astro.redirect("/tienda" + (params.size ? "?" + params.toString() : "") + "#camiseta", 302);
+const inventory = await readPublicInventory().catch(() => null);
+const canBuy = Boolean(inventory?.salesEnabled && inventory.variants.some(v => v.available));
+const standard = SHIRT_DELIVERY_OPTIONS.find(option => option.id === "standard");
+---
+<Layout title="Black Friday · Camiseta Imperial" description="Regala historia: descubre la primera edición de la Camiseta Imperial de Imperio Español." ogImage="/images/camiseta-imperio-frontal.webp" footerVariant="dark" noindex>
+  <main class="bf-page" data-home-mark-surface="black">
+    <header class="bf-heading">
+      <p class="bf-kicker">BLACK FRIDAY · 25–30 DE NOVIEMBRE</p>
+      <h1>Regala historia.<br />Viste el legado.</h1>
+      <p>La Cruz de Borgoña, la navegación y el lema Non Sufficit Orbis: una pieza de nuestra historia para regalar o llevar contigo.</p>
+      <p class="bf-price">{formatMoney(SHIRT_PRODUCT_PRICE_CENTS)} · IVA incluido</p>
+      {standard && <p class="bf-delivery">Envío estándar a España peninsular: {standard.amount === 0 ? "gratuito" : formatMoney(standard.amount)}. Opción prioritaria en el checkout.</p>}
+      {canBuy ? <a class="bf-cta" href="#camiseta">ELIGE TU TALLA Y COMPRA</a> : <p role="status">Consulta la disponibilidad actual en la ficha del producto.</p>}
+    </header>
+    <section class="bf-product" aria-label="Camiseta Imperial">
+      <ShirtProduct titleId="bf-shirt-title" id="camiseta" storyHref="/tienda#shirt-story-title" campaignParams={params} />
+    </section>
+    <section class="bf-benefits" aria-label="Información de compra">
+      <div><h2>Una primera edición</h2><p>Diseño inspirado en la Monarquía Hispánica. Tejido técnico ligero y transpirable.</p></div>
+      <div><h2>Compra sin suscripción</h2><p>Elige tu talla y completa el pago seguro con Stripe. No necesitas crear una cuenta.</p></div>
+      <div><h2>Compra informada</h2><p><a href="/legal/envios">Consulta los plazos de envío</a> y las <a href="/legal/devoluciones">condiciones de devolución</a> antes de pagar.</p></div>
+    </section>
+    <p class="bf-note">Campaña editorial hasta el 30 de noviembre, a las 23:59 (hora peninsular). Disponibilidad según inventario real. No implica una rebaja sobre el precio habitual.</p>
+  </main>
+</Layout>
+<script>
+  import { trackGoogleEvent } from "../../lib/google-analytics";
+  import { BLACK_FRIDAY_CAMPAIGN } from "../../config/black-friday";
+  const cta = document.querySelector(".bf-cta");
+  cta?.addEventListener("click", () => trackGoogleEvent("black_friday_cta", { campaign: BLACK_FRIDAY_CAMPAIGN }));
+  let tracked = false;
+  const trackView = () => {
+    if (!tracked) tracked = trackGoogleEvent("black_friday_view", { campaign: BLACK_FRIDAY_CAMPAIGN }) === true;
+  };
+  trackView();
+  window.addEventListener("imperio:cookie-consent", trackView);
+</script>
+<style>
+  .bf-page{background:#141313;color:#fff;padding:0 0 2.5rem}
+  .bf-heading{text-align:center;padding:clamp(2.5rem,7vw,5.5rem) 1rem 2rem;max-width:780px;margin:auto}
+  .bf-heading p,.bf-note,.bf-benefits p{color:inherit}.bf-kicker{font-weight:700;letter-spacing:.15em;font-size:.8rem}
+  .bf-heading h1{font-family:var(--font-serif);font-size:clamp(2.5rem,6.5vw,5rem);line-height:1;letter-spacing:-.025em;margin:.6rem 0 1rem;color:#fff}
+  .bf-heading p{line-height:1.6}.bf-price{font-size:1.4rem;font-weight:700;margin-bottom:.2rem}.bf-delivery{font-size:.9rem;margin-top:.25rem}
+  .bf-cta{display:inline-flex;align-items:center;justify-content:center;min-height:52px;background:#b5221b;color:#fff;padding:0.75rem 1.5rem;text-decoration:none;font-weight:700;margin-top:.5rem}
+  .bf-cta:focus-visible,.bf-benefits a:focus-visible{outline:2px solid #fff;outline-offset:3px}
+  .bf-product{padding:0 clamp(1rem,4vw,3rem);scroll-margin-top:90px}
+  .bf-benefits{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1.5rem;max-width:1200px;margin:2.5rem auto;padding:0 1.25rem}
+  .bf-benefits h2{font-family:var(--font-serif);font-size:1.4rem;color:#fff}.bf-benefits a{color:inherit;text-decoration:underline}.bf-note{font-size:.8rem;text-align:center;padding:0 1rem;max-width:900px;margin:auto}
+  @media(max-width:700px){.bf-benefits{grid-template-columns:1fr;gap:.8rem}.bf-heading{padding-top:2.5rem}.bf-cta{width:100%;max-width:350px}}
+</style>

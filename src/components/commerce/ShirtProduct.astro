@@ -9,9 +9,10 @@ interface Props {
   heading?: "h1" | "h2";
   id?: string;
   storyHref: string;
+  campaignParams?: URLSearchParams;
 }
 
-const { titleId, heading: Heading = "h2", id, storyHref } = Astro.props;
+const { titleId, heading: Heading = "h2", id, storyHref, campaignParams } = Astro.props;
 const shirt = PRODUCTS["camiseta-imperial"];
 const views = [
   { file: "camiseta-imperio-frontal", label: "Frontal", width: 944, height: 1181 },
@@ -58,6 +59,7 @@ const sizes = "(max-width: 740px) calc(100vw - 32px), (max-width: 1480px) 46vw, 
     <p class="shirt-product__description"><strong>Non Sufficit Orbis.</strong> La cruz de Borgoña, el escudo y la nave en una camiseta técnica ligera y transpirable.</p>
 
     <form class="product-purchase shirt-product__purchase" action="/reservas" method="get">
+      {campaignParams && Array.from(campaignParams.entries()).map(([key,value]) => <input type="hidden" name={key} value={value} />)}
       <fieldset class="shirt-product__sizes">
         <legend>Talla</legend>
         <div class="shirt-product__size-options">

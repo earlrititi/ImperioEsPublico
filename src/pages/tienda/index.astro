@@ -1,6 +1,7 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import ShirtProduct from "../../components/commerce/ShirtProduct.astro";
+import BlackFridayBanner from "../../components/commerce/BlackFridayBanner.astro";
 import { ZoomIn as ZoomInNodes } from "lucide";
 
 ---
@@ -11,6 +12,7 @@ import { ZoomIn as ZoomInNodes } from "lucide";
   description="Lanzamiento 1: Camiseta Imperial de Imperio Español."
 >
   <main class="storefront">
+    <BlackFridayBanner />
     <section class="store-catalog" id="catalogo" aria-labelledby="tienda-camiseta-title">
       <div id="mercancias">
         <ShirtProduct titleId="tienda-camiseta-title" heading="h1" id="camiseta" storyHref="#shirt-story-title">

@@ -1,0 +1,21 @@
+---
+import { blackFridayActive, BLACK_FRIDAY_PATH } from "../../config/black-friday";
+import { campaignParameters } from "../../lib/social-attribution";
+const params = campaignParameters(Astro.url.search);
+const href = BLACK_FRIDAY_PATH + (params.size ? "?" + params.toString() : "");
+---
+{blackFridayActive() && (
+  <aside class="bf-banner" aria-label="Campaña Black Friday" data-home-mark-surface="black">
+    <div><p class="bf-banner__label">BLACK FRIDAY · 25–30 NOV.</p>
+      <p class="bf-banner__title">Regala historia. Viste el legado.</p></div>
+    <a href={href}>Descubre la Camiseta Imperial <span aria-hidden="true">→</span></a>
+  </aside>
+)}
+<style>
+  .bf-banner{display:flex;align-items:center;justify-content:space-between;gap:1.25rem;padding:1.4rem clamp(1rem,5vw,5rem);color:#fff;background:#141313;border-block:1px solid #b72a24}
+  .bf-banner p{color:inherit;margin:0}.bf-banner__label{font-size:.75rem;font-weight:700;letter-spacing:.14em}
+  .bf-banner__title{font-family:var(--font-serif);font-size:clamp(1.35rem,3vw,2.3rem);line-height:1.12}
+  .bf-banner a{display:flex;align-items:center;gap:.6rem;justify-content:center;min-height:48px;padding:.7rem 1.1rem;background:#b5221b;color:white;text-decoration:none;font-weight:700;text-align:center}
+  .bf-banner a:focus-visible{outline:2px solid white;outline-offset:3px}
+  @media(max-width:650px){.bf-banner{align-items:stretch;flex-direction:column;gap:.9rem;text-align:center}}
+</style>

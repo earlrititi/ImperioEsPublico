@@ -27,7 +27,8 @@ const open = Boolean((inventory?.reservationMode || buying) && stock);
       <div class="ig-buy">
         <p class="ig-stock" data-stock aria-live="polite">{stock === null ? "No se pudo consultar la disponibilidad" : stock ? "Disponible" : "Edición agotada"}</p>
         <p class="ig-price" data-price>{totalPrice !== null ? formatMoney(totalPrice) : "Precio no disponible"}</p>
-        <p class="ig-small">{buying ? "IVA incluido. Elige el envío al pagar." : reserving ? "Reserva gratuita, sin compromiso." : "Compra no disponible temporalmente."}</p>
+        <p class="ig-small" data-bf-label hidden={!inventory?.blackFriday}>Black Friday · antes 26,99 € · hasta el 30/11 a las 23:59.</p>
+        <p class="ig-small">{buying ? "IVA incluido. Envío estándar gratuito a Península." : reserving ? "Reserva gratuita, sin compromiso." : "Compra no disponible temporalmente."}</p>
         <label class="ig-size">Talla <select id="ig-size" disabled={!inventory}>{inventory?.variants.map(v => <option value={v.name} selected={v.name === selected?.name} disabled={!v.available}>{v.name}{!v.available ? " · agotada" : ""}</option>)}</select></label>
         <div class="ig-actions">
           <a class="ig-cta ig-cta--primary" data-reserve aria-disabled={!open} href={open ? reserveUrl : undefined}>{open ? buying ? "COMPRAR AHORA" : "RESERVAR YA" : "NO DISPONIBLE"}</a>
@@ -86,6 +87,7 @@ const open = Boolean((inventory?.reservationMode || buying) && stock);
       for (const option of size.options) option.disabled = !data.variants.some((v: { name: string; available: boolean }) => v.name === option.value && v.available);
       available = (data.reservationMode || data.salesEnabled) && data.variants.some((v: { name: string; available: boolean }) => v.name === size.value && v.available);
       document.querySelectorAll("[data-price]").forEach(el => el.textContent = formatMoney(data.unitPrice));
+      document.querySelectorAll<HTMLElement>("[data-bf-label]").forEach(el => el.hidden = !data.blackFriday);
     } catch { available = false; stock.textContent = "No se pudo consultar el stock. Vuelve a intentarlo."; }
     updateLinks(); syncSticky();
   }

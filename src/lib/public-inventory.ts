@@ -4,6 +4,7 @@ import {
   reservationMode,
 } from "./reservations";
 import { SHIRT_FINAL_PRICE_CENTS, SHIRT_PRODUCT_PRICE_CENTS, SHIRT_SHIPPING_PRICE_CENTS } from "../config/commerce";
+import { BLACK_FRIDAY_PRICE_CENTS, blackFridayOfferActive } from "../config/black-friday";
 import { readCampaign, campaignAcceptsReservations, campaignAcceptsPurchases } from "./reservation-campaign";
 export async function readPublicInventory() {
     const db = await database();
@@ -42,12 +43,15 @@ export async function readPublicInventory() {
       expirationHours > 8760
     )
       throw new Error("INVALID_CONFIGURATION");
+    const salesEnabled = !reservationMode() && optionalEnv("SHIRT_SALES_APPROVED")==="true" && campaignAcceptsPurchases(campaign);
+    const blackFriday = salesEnabled && blackFridayOfferActive();
     return {
       variants: data.map(({ available_stock, ...variant }) => ({ ...variant, available: available_stock > 0 })),
-      unitPrice: SHIRT_PRODUCT_PRICE_CENTS,
+      unitPrice: blackFriday ? BLACK_FRIDAY_PRICE_CENTS : SHIRT_PRODUCT_PRICE_CENTS,
+      blackFriday,
       shippingPerUnit: SHIRT_SHIPPING_PRICE_CENTS,
       reservationMode: reservationMode() && campaignAcceptsReservations(campaign),
-      salesEnabled: !reservationMode() && optionalEnv("SHIRT_SALES_APPROVED")==="true" && campaignAcceptsPurchases(campaign),
+      salesEnabled,
       campaign: {
         reservations_open_at: campaign.reservations_open_at,
         purchase_open_at: campaign.purchase_open_at,

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "preact/hooks";
+import { BLACK_FRIDAY_UNIT_DISCOUNT, blackFridayOfferActive } from "../../config/black-friday";
 import { RESERVATION_STATUS, SHIRT_DELIVERY_OPTIONS, SHIRT_PRODUCT_PRICE_CENTS, formatMoney, shirtDeliveryOption, type ShirtDelivery } from "../../config/commerce";
 import { isMainlandAddress } from "../../lib/reservation-validation";
 import {trackFunnel} from "../../lib/funnel-client";
@@ -184,6 +185,7 @@ export default function ReservationManager({ paymentReturn = false }: { paymentR
   const paymentLocked = ["PAYMENT_PENDING", "PAYMENT_FAILED"].includes(r.status);
   const canPay = !mode && ["PURCHASE_AVAILABLE", "PAYMENT_FAILED", "PAYMENT_PENDING"].includes(r.status) && !confirming;
   const delivery = shirtDeliveryOption(order?.shipping_method ?? r.paymentDelivery ?? (canPay && !r.paymentAddress ? deliveryChoice : null));
+  const pendingCampaignDiscount = canPay && delivery && !r.paymentAddress && blackFridayOfferActive() ? BLACK_FRIDAY_UNIT_DISCOUNT * r.total_quantity : 0;
   function finishEditing() {
     if (!isMainlandAddress(address) || customer.name.trim().length < 2 || customer.name.length > 150 ||
       !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customer.email.trim()) || customer.email.length > 254) {
@@ -221,8 +223,8 @@ export default function ReservationManager({ paymentReturn = false }: { paymentR
       {!canPay && <p>Estado: {RESERVATION_STATUS[r.status]}</p>}
       <ItemsSummary
         items={r.reservation_items}
-        total={order?.total ?? r.paymentTotal ?? (delivery ? r.total_quantity * SHIRT_PRODUCT_PRICE_CENTS + delivery.amount : r.total_price_snapshot)}
-        discount={order?.discount_amount ?? r.paymentDiscount ?? 0}
+        total={order?.total ?? r.paymentTotal ?? (delivery ? r.total_quantity * SHIRT_PRODUCT_PRICE_CENTS + delivery.amount - pendingCampaignDiscount : r.total_price_snapshot)}
+        discount={order?.discount_amount ?? r.paymentDiscount ?? pendingCampaignDiscount}
         vat={order?.vat_amount}
         delivery={delivery}
       />

@@ -1,4 +1,5 @@
 import { validCart, type CartItem } from "./cart";
+import { BLACK_FRIDAY_PRICE_CENTS, blackFridayOfferActive } from "../config/black-friday";
 import { SHIRT_PRODUCT_PRICE_CENTS } from "../config/commerce";
 
 export type CommerceEvent = "view_item" | "add_to_cart" | "remove_from_cart" | "view_cart" | "begin_checkout" | "add_shipping_info";
@@ -46,11 +47,12 @@ export function googlePurchasePayload(input: unknown): GooglePurchase | null {
       item_brand: "Imperio E", item_category: "Camisetas", price: i.price, quantity: i.quantity })) };
 }
 
-export function ecommercePayload(event: CommerceEvent, items: CartItem[]) {
+export function ecommercePayload(event: CommerceEvent, items: CartItem[], now = Date.now()) {
+  const unitPrice = blackFridayOfferActive(now) ? BLACK_FRIDAY_PRICE_CENTS : SHIRT_PRODUCT_PRICE_CENTS;
   if (!["view_item", "add_to_cart", "remove_from_cart", "view_cart", "begin_checkout", "add_shipping_info"].includes(event) || !validCart(items) || !items.length) return null;
-  return { currency: "EUR", value: items.reduce((sum, item) => sum + item.quantity * SHIRT_PRODUCT_PRICE_CENTS, 0) / 100,
+  return { currency: "EUR", value: items.reduce((sum, item) => sum + item.quantity * unitPrice, 0) / 100,
     items: items.map(item => ({ item_id: `IE-CAMISETA-IMPERIAL-${item.size}`, item_name: "Camiseta Imperial", item_variant: item.size,
-      item_brand: "Imperio E", item_category: "Camisetas", price: SHIRT_PRODUCT_PRICE_CENTS / 100, quantity: item.quantity })),
+      item_brand: "Imperio E", item_category: "Camisetas", price: unitPrice / 100, quantity: item.quantity })),
     ...(event === "add_shipping_info" ? { shipping_tier: "Correos - Peninsula" } : {}),
   };
 }

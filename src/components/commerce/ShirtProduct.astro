@@ -2,6 +2,7 @@
 import CartControls from "../CartControls.astro";
 import StoreStock from "./StoreStock.astro";
 import { formatMoney, SHIRT_DELIVERY_OPTIONS, SHIRT_PRODUCT_PRICE_CENTS } from "../../config/commerce";
+import { BLACK_FRIDAY_PRICE_CENTS, BLACK_FRIDAY_PREVIOUS_PRICE_CENTS, blackFridayOfferActive } from "../../config/black-friday";
 import { PRODUCTS } from "../../config/products";
 
 interface Props {
@@ -13,6 +14,7 @@ interface Props {
 }
 
 const { titleId, heading: Heading = "h2", id, storyHref, campaignParams } = Astro.props;
+const bf = blackFridayOfferActive();
 const shirt = PRODUCTS["camiseta-imperial"];
 const views = [
   { file: "camiseta-imperio-frontal", label: "Frontal", width: 944, height: 1181 },
@@ -54,7 +56,8 @@ const sizes = "(max-width: 740px) calc(100vw - 32px), (max-width: 1480px) 46vw, 
     <header>
       <p class="shirt-product__eyebrow">Casa de Mercaderías · Primera edición</p>
       <Heading class="shirt-product__title" id={titleId}>{shirt.name}</Heading>
-      <p class="shirt-product__price">{formatMoney(SHIRT_PRODUCT_PRICE_CENTS)} <small>IVA incluido</small></p>
+      <p class="shirt-product__price" data-shirt-price>{formatMoney(bf ? BLACK_FRIDAY_PRICE_CENTS : SHIRT_PRODUCT_PRICE_CENTS)} <small>IVA incluido</small></p>
+      <p class="shirt-product__campaign" data-shirt-bf hidden={!bf}>Black Friday · <s>{formatMoney(BLACK_FRIDAY_PREVIOUS_PRICE_CENTS)}</s> · Envío estándar gratuito a Península. Hasta el 30/11, 23:59.</p>
     </header>
     <p class="shirt-product__description"><strong>Non Sufficit Orbis.</strong> La cruz de Borgoña, el escudo y la nave en una camiseta técnica ligera y transpirable.</p>
 
@@ -239,6 +242,8 @@ const sizes = "(max-width: 740px) calc(100vw - 32px), (max-width: 1480px) 46vw, 
     text-transform: uppercase;
   }
 
+  .shirt-product__campaign { font-weight: 700; color: #a11e19; font-size: .9rem; margin: .5rem 0; }
+  .shirt-product__campaign[hidden] { display:none; }
   .shirt-product__eyebrow { margin: 0 0 0.55rem; }
 
   .shirt-product__title {

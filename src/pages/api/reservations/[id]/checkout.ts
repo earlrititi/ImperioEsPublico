@@ -21,6 +21,8 @@ import {
 } from "../../../../lib/reservation-payment";
 import { findActiveTshirtPromotion } from "../../../../lib/tshirt-promotion";
 import { ownsShirtDiscount, shirtCheckoutLines, shirtCheckoutMessage } from "../../../../lib/shirt-checkout-lines";
+import { BLACK_FRIDAY_CAMPAIGN, blackFridayDiscount, blackFridayEligible } from "../../../../config/black-friday";
+import { blackFridayCoupon } from "../../../../lib/black-friday-coupon";
 import { captureAutomationActivity } from "../../../../lib/automation-worker";
 export const prerender = false;
 export const POST: APIRoute = async (context) => {
@@ -90,6 +92,11 @@ export const POST: APIRoute = async (context) => {
     const user = await getUser(context);
     const promotion = a.stripe_session_id || !ownsShirtDiscount(user,r.customer_email,customer.email)
       ? null : await findActiveTshirtPromotion(user!.email!.trim().toLowerCase());
+    const bfEligible = blackFridayEligible(a.created_at, delivery?.id);
+    // Existing subscriber benefits (15% or 20%) are greater than EUR 4 per shirt. Never stack.
+    const bfCoupon = !a.stripe_session_id && !promotion && bfEligible
+      ? await blackFridayCoupon(stripe, typeof price.product === "string" ? price.product : price.product.id, r.total_quantity, price.livemode)
+      : null;
     const session = a.stripe_session_id
       ? await stripe.checkout.sessions.retrieve(a.stripe_session_id)
       : await stripe.checkout.sessions.create(
@@ -102,10 +109,10 @@ export const POST: APIRoute = async (context) => {
             line_items: shirtCheckoutLines(price.id,tax.id,r.reservation_items,delivery?.id),
             automatic_tax: { enabled: false },
             adaptive_pricing: { enabled: false },
-            discounts: promotion ? [{ promotion_code: promotion.promotionCodeId }] : undefined,
-            metadata: { ...metadata, promotionLeadId: promotion?.leadId ?? "" },
+            discounts: promotion ? [{ promotion_code: promotion.promotionCodeId }] : bfCoupon ? [{ coupon: bfCoupon }] : undefined,
+            metadata: { ...metadata, promotionLeadId: promotion?.leadId ?? "", ...(bfCoupon ? { campaign: BLACK_FRIDAY_CAMPAIGN, discount_kind: "black_friday" } : {}) },
             payment_intent_data: {
-              metadata,
+              metadata: { ...metadata, ...(bfCoupon ? { campaign: BLACK_FRIDAY_CAMPAIGN, discount_kind: "black_friday" } : {}) },
             },
             expires_at: Math.floor(new Date(a.expires_at).getTime() / 1000),
             ...(elements ? {
@@ -120,10 +127,14 @@ export const POST: APIRoute = async (context) => {
           { idempotencyKey: `reservation-payment-${attemptId}` },
         );
     const discountAmount = session.total_details?.amount_discount ?? 0;
-    const promotionLeadId = a.promotion_lead_id ?? promotion?.leadId ?? null;
+    const promotionLeadId = a.promotion_lead_id ?? promotion?.leadId ?? (session.metadata?.promotionLeadId || null);
+    const bfApplied = session.metadata?.campaign === BLACK_FRIDAY_CAMPAIGN && session.metadata?.discount_kind === "black_friday";
+    if (bfApplied && (!bfEligible || promotionLeadId || discountAmount !== blackFridayDiscount(r.total_quantity)))
+      throw new Error("PAYMENT_TOTAL_MISMATCH");
+    if (bfCoupon && !bfApplied) throw new Error("PAYMENT_TOTAL_MISMATCH");
     if (promotion && (discountAmount <= 0 || session.amount_total === null || session.amount_total + discountAmount !== subtotal))
       throw new Error("PAYMENT_TOTAL_MISMATCH");
-    if (!promotionLeadId && discountAmount !== 0) throw new Error("PAYMENT_TOTAL_MISMATCH");
+    if (!promotionLeadId && !bfApplied && discountAmount !== 0) throw new Error("PAYMENT_TOTAL_MISMATCH");
     if (session.amount_total === null || session.amount_total + discountAmount !== subtotal ||
       (delivery && session.metadata?.shirt_delivery !== delivery.id)) throw new Error("PAYMENT_TOTAL_MISMATCH");
     await recordPaymentSession(attemptId, session.id, session.amount_total, discountAmount, promotionLeadId);

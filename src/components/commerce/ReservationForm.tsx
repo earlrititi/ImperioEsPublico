@@ -9,6 +9,7 @@ import {
   shirtDeliveryOption,
   type ShirtDelivery,
 } from "../../config/commerce";
+import { BLACK_FRIDAY_UNIT_DISCOUNT } from "../../config/black-friday";
 import { EMAIL_MARKETING_CONSENT } from "../../config/email-marketing";
 import { readCart, SHIRT_SIZES, type CartItem, type ShirtSize } from "../../lib/cart";
 import { trackFunnel } from "../../lib/funnel-client";
@@ -126,7 +127,9 @@ export default function ReservationForm({
     (waitlist ? canWait && unavailable : (sales || reserving) && !unavailable);
   const itemTotal = SHIRT_PRODUCT_PRICE_CENTS * units;
   const shippingTotal = sales ? chosenDelivery?.amount ?? 0 : SHIRT_SHIPPING_PRICE_CENTS * units;
-  const total = itemTotal + shippingTotal;
+  const campaignDiscount = sales && inventory?.blackFriday ? BLACK_FRIDAY_UNIT_DISCOUNT * units : 0;
+  const displayedDiscount = confirmedTotal?.discount ?? campaignDiscount;
+  const total = itemTotal + shippingTotal - campaignDiscount;
   const checkoutQuery = new URLSearchParams(fromCart ? { cart: "1" } : { size, quantity: String(quantity || 1) });
   const loginHref = `/login?next=${encodeURIComponent(`/reservas?${checkoutQuery}`)}`;
 
@@ -405,7 +408,7 @@ export default function ReservationForm({
           <dl class="shirt-checkout__totals">
             <div><dt>Subtotal</dt><dd>{formatMoney(itemTotal)}</dd></div>
             <div><dt>Envío</dt><dd>{formatMoney(shippingTotal)}</dd></div>
-            {confirmedTotal && confirmedTotal.discount > 0 && <div><dt>Descuento</dt><dd>−{formatMoney(confirmedTotal.discount)}</dd></div>}
+            {displayedDiscount > 0 && <div><dt>{confirmedTotal ? "Descuento aplicado" : "Black Friday"}</dt><dd>−{formatMoney(displayedDiscount)}</dd></div>}
             <div class="shirt-checkout__total"><dt>Total <small>(IVA incluido)</small></dt><dd>{confirmedTotal?.amount ?? formatMoney(total)}</dd></div>
           </dl>
         )}
@@ -413,6 +416,7 @@ export default function ReservationForm({
 
       <div class="shirt-checkout__actions">
         {sales && !waitlist && <p>Pago seguro con Stripe</p>}
+        {campaignDiscount > 0 && !waitlist && <p>Oferta automática. No acumulable; se conserva el descuento de suscriptor si es superior. El total definitivo se confirma antes de pagar.</p>}
         {canEnterDetails && (
           <>
             <label class="shirt-checkout__consent">

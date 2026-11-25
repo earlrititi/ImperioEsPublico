@@ -2,6 +2,7 @@ import type Stripe from "stripe";
 import { getRequiredEnv } from "./env";
 import { database, optionalEnv, reservationMode, rpc } from "./reservations";
 import { getEsVatRate } from "./stripe-tax";
+import { BLACK_FRIDAY_CAMPAIGN, blackFridayDiscount } from "../config/black-friday";
 import { SHIRT_PRODUCT_PRICE_CENTS, shirtDeliveryOption } from "../config/commerce";
 
 export function shirtCheckoutPublishableKey() {
@@ -64,6 +65,10 @@ export async function handleReservationCheckout(
   const delivery = shirtDeliveryOption(session.metadata?.shirt_delivery);
   if (session.metadata?.shirt_delivery && !delivery) throw new Error("PAYMENT_VALIDATION_FAILED");
   if (delivery && (session.total_details?.amount_shipping ?? 0) !== 0) throw new Error("PAYMENT_VALIDATION_FAILED");
+  if (session.metadata?.discount_kind === "black_friday" &&
+      (session.metadata.campaign !== BLACK_FRIDAY_CAMPAIGN || !delivery ||
+        session.total_details.amount_discount !== blackFridayDiscount(Number(session.metadata.quantity))))
+    throw new Error("PAYMENT_VALIDATION_FAILED");
   await rpc("complete_shirt_payment", {
     p_attempt: attempt,
     p_session: session.id,

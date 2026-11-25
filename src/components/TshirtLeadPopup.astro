@@ -4,7 +4,7 @@ import { SHIRT_PRICE_COPY } from "../config/commerce";
 import { blackFridayActive } from "../config/black-friday";
 const reserving = reservationMode();
 const excluded = /^\/(?:imperio-espanol(?:\/|$)|login|registro|recuperar-contrasena|confirmar-correo|cuenta(?:\/|$)|checkout|newsletter(?:\/|$)|suscribirse(?:\/|$)|tienda(?:\/|$)|carrito(?:\/|$)|recursos(?:\/|$)|links(?:\/|$)|legal(?:\/|$)|reservas(?:\/|$)|reserva(?:\/|$)|compra(?:\/|$)|gracias(?:\/|$)|admin(?:\/|$))/;
-const enabled = !(Astro.url.pathname === "/" && blackFridayActive()) && !excluded.test(Astro.url.pathname) && !/^\/(?:pedidos|comunicaciones)(?:\/|$)/.test(Astro.url.pathname) && Astro.url.pathname.replace(/\/$/, "") !== "/instagram";
+const enabled = !blackFridayActive() && !excluded.test(Astro.url.pathname) && !/^\/(?:pedidos|comunicaciones)(?:\/|$)/.test(Astro.url.pathname) && Astro.url.pathname.replace(/\/$/, "") !== "/instagram";
 ---
 
 {enabled && (

@@ -211,7 +211,7 @@ export function applyGoogleConsent(granted: boolean, id: string, gtmId = "") {
   document.head.appendChild(script);
 }
 
-const publicEvents = new Set(["instagram_reserve_click", "instagram_subscription_click", "instagram_landing_view", "instagram_product_view", "meta_product_click", "reservation_started", "reservation_completed"]);
+const publicEvents = new Set(["instagram_reserve_click", "instagram_subscription_click", "instagram_landing_view", "instagram_product_view", "meta_product_click", "reservation_started", "reservation_completed", "black_friday_view", "black_friday_cta"]);
 
 export function trackConfirmedGoogleAuthEvent(event: unknown, method: unknown, consentAt: unknown, id: unknown, expiresAt: number): boolean {
   if (authEventTracked || !installed || !allowed() || typeof event !== "string" || !["login", "sign_up"].includes(event) ||
@@ -231,12 +231,14 @@ export function trackConfirmedGoogleAuthEvent(event: unknown, method: unknown, c
 }
 
 export function trackGoogleEvent(event: string, details: Record<string, string | number> = {}) {
-  if (!installed || !allowed() || !publicEvents.has(event)) return;
+  if (!installed || !allowed() || !publicEvents.has(event)) return false;
   const payload: Record<string, string> = {
     ...pageFields(), send_to: measurementId,
   };
   if (["S", "M", "L", "XL", "XXL"].includes(String(details.size))) payload.size = String(details.size);
+  if (event === "black_friday_view" || event === "black_friday_cta") payload.campaign_name = "black_friday_2026";
   (window as AnalyticsWindow).gtag?.("event", event, payload);
+  return true;
 }
 
 export function trackGoogleCommerce(event: CommerceEvent, items: CartItem[]): boolean {

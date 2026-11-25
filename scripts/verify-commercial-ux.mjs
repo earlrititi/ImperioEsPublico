@@ -30,7 +30,7 @@ const page = async path => {
 };
 const inventory = await (await app.fetch(new Request("https://imperioes.com/api/reservations/inventory"))).json();
 assert.equal(inventory.salesEnabled,true);
-assert.equal(inventory.unitPrice,2699);
+assert.equal(inventory.unitPrice, inventory.blackFriday ? 2299 : 2699);
 assert.equal(inventory.shippingPerUnit,300);
 assert.equal(inventory.campaign.edition_total,undefined);
 assert.equal(inventory.variants.find(v=>v.name==="XL").available,false);

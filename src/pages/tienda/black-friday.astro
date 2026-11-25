@@ -38,7 +38,7 @@ const standard = SHIRT_DELIVERY_OPTIONS.find(option => option.id === "standard")
 </Layout>
 <script>
   import { trackGoogleEvent } from "../../lib/google-analytics";
-  import { BLACK_FRIDAY_CAMPAIGN } from "../../config/black-friday";
+  import { BLACK_FRIDAY_CAMPAIGN, BLACK_FRIDAY_END, BLACK_FRIDAY_OFFER_START } from "../../config/black-friday";
   const cta = document.querySelector(".bf-cta");
   cta?.addEventListener("click", () => trackGoogleEvent("black_friday_cta", { campaign: BLACK_FRIDAY_CAMPAIGN }));
   let tracked = false;
@@ -47,6 +47,11 @@ const standard = SHIRT_DELIVERY_OPTIONS.find(option => option.id === "standard")
   };
   trackView();
   window.addEventListener("imperio:cookie-consent", trackView);
+  const nextBoundary = Date.now() < BLACK_FRIDAY_OFFER_START ? BLACK_FRIDAY_OFFER_START : BLACK_FRIDAY_END;
+  const refreshAtBoundary = () => { if (Date.now() >= nextBoundary) window.location.reload(); };
+  const boundaryTimer = window.setTimeout(refreshAtBoundary, Math.max(1000, nextBoundary - Date.now() + 100));
+  window.addEventListener("focus", refreshAtBoundary);
+  window.addEventListener("pagehide", () => window.clearTimeout(boundaryTimer), { once:true });
 </script>
 <style>
   .bf-page{background:#141313;color:#fff;padding:0 0 2.5rem}

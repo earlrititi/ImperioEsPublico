@@ -242,7 +242,7 @@ export function trackGoogleEvent(event: string, details: Record<string, string |
 }
 
 export function trackGoogleCommerce(event: CommerceEvent, items: CartItem[]): boolean {
-  const payload = ecommercePayload(event, items);
+  const payload = ecommercePayload(event, items, Date.now());
   if (!payload || !installed || !allowed()) return false;
   (window as AnalyticsWindow).gtag?.("event", event, { ...pageFields(), ...payload, send_to: measurementId });
   if (event === "view_item") trackAutomationActivity("viewed_product");

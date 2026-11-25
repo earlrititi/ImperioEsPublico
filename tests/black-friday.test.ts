@@ -35,3 +35,28 @@ test("Checkout attempt eligibility is server-timed and delivery-aware", () => {
   assert.equal(blackFridayEligible(during, "standard", BLACK_FRIDAY_OFFER_START - 1), false);
   assert.equal(blackFridayEligible("bad", "standard", BLACK_FRIDAY_END), false);
 });
+
+import type Stripe from "stripe";
+import { blackFridayCoupon } from "../src/lib/black-friday-coupon";
+import { ecommercePayload } from "../src/lib/ecommerce";
+test("Campaign analytics value reflects the advertised price in the offer window", () => {
+  const items = [{ size: "M" as const, quantity: 3 }];
+  assert.equal(ecommercePayload("begin_checkout", items, BLACK_FRIDAY_OFFER_START)?.value, 68.97);
+  assert.equal(ecommercePayload("begin_checkout", items, BLACK_FRIDAY_END)?.value, 80.97);
+});
+test("Stripe coupon is product-scoped, exact and reusable, including multiple shirts", async () => {
+  const productId = "prod_fixture";
+  const id = "imperio_bf2026_3_prod_fixture";
+  const coupon = { id, valid: true, livemode: false, duration: "once", amount_off: 1200, currency: "eur", percent_off: null, applies_to: { products: [productId] } };
+  let created = 0;
+  const fake = { coupons: {
+    retrieve: async () => { if (!created) throw { code: "resource_missing" }; return coupon; },
+    create: async (params: any, options: any) => { created++; assert.equal(params.amount_off, 1200); assert.equal(params.currency, "eur"); assert.deepEqual(params.applies_to.products, [productId]); assert.equal(options.idempotencyKey, id); return coupon; },
+  } } as unknown as Stripe;
+  assert.equal(await blackFridayCoupon(fake, productId, 3, false), id);
+  assert.equal(await blackFridayCoupon(fake, productId, 3, false), id);
+  assert.equal(created, 1);
+  await assert.rejects(() => blackFridayCoupon(fake, productId, 3, true), /INVALID_PROMOTION_CONFIGURATION/);
+  coupon.amount_off = 1199;
+  await assert.rejects(() => blackFridayCoupon(fake, productId, 3, false), /INVALID_PROMOTION_CONFIGURATION/);
+});

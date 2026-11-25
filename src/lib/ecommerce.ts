@@ -47,7 +47,7 @@ export function googlePurchasePayload(input: unknown): GooglePurchase | null {
       item_brand: "Imperio E", item_category: "Camisetas", price: i.price, quantity: i.quantity })) };
 }
 
-export function ecommercePayload(event: CommerceEvent, items: CartItem[], now = Date.now()) {
+export function ecommercePayload(event: CommerceEvent, items: CartItem[], now = 0) {
   const unitPrice = blackFridayOfferActive(now) ? BLACK_FRIDAY_PRICE_CENTS : SHIRT_PRODUCT_PRICE_CENTS;
   if (!["view_item", "add_to_cart", "remove_from_cart", "view_cart", "begin_checkout", "add_shipping_info"].includes(event) || !validCart(items) || !items.length) return null;
   return { currency: "EUR", value: items.reduce((sum, item) => sum + item.quantity * unitPrice, 0) / 100,

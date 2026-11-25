@@ -1,4 +1,5 @@
 <script>
+  import { formatMoney } from "../../config/commerce";
   function setupStoreStock() {
     for (const form of document.querySelectorAll<HTMLFormElement>(".product-purchase")) bindStock(form);
   }
@@ -10,18 +11,25 @@
     const button = form.querySelector<HTMLButtonElement>("[data-reservation-cta]");
     const status = form.querySelector<HTMLElement>("[data-reservation-stock]");
     const waiting = form.querySelector<HTMLAnchorElement>("[data-waitlist-link]");
+    const card = form.closest("[data-shirt-product]");
+    const price = card?.querySelector<HTMLElement>("[data-shirt-price-value]");
+    const campaign = card?.querySelector<HTMLElement>("[data-shirt-bf]");
     const cartButton = form.querySelector<HTMLButtonElement>("[data-cart-add]");
     if (!sizes.length || !quantity || !button || !status || !waiting) return;
     let stopped = false;
     type Inventory = {
       variants: { name: string; available: boolean }[];
       salesEnabled: boolean;
+      unitPrice: number;
+      blackFriday?: boolean;
       reservationMode: boolean;
       campaign?: { max_reservation_quantity?: number | null };
     };
     let inventory: Inventory | undefined;
     const update = () => {
       if (!inventory) return;
+      if (price && Number.isSafeInteger(inventory.unitPrice) && inventory.unitPrice > 0) price.textContent = formatMoney(inventory.unitPrice);
+      if (campaign) campaign.hidden = !inventory.blackFriday;
       const selected = sizes.find(size => size.checked);
       if (!selected) return;
       const variant = inventory.variants.find(variant => variant.name === selected.value);

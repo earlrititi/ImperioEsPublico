@@ -15,12 +15,14 @@ test("Campaign landing is included in the consented shirt funnel", () => {
 });
 
 import { BLACK_FRIDAY_OFFER_START, BLACK_FRIDAY_PRICE_CENTS, BLACK_FRIDAY_PREVIOUS_PRICE_CENTS, blackFridayOfferActive, blackFridayDiscount, blackFridayEligible } from "../src/config/black-friday";
-test("Offer has a real start and end and does not alter the base price", () => {
+import { SHIRT_PRODUCT_PRICE_CENTS } from "../src/config/commerce";
+test("Offer keeps the Stripe base discount and discloses the previously published price", () => {
   assert.equal(blackFridayOfferActive(BLACK_FRIDAY_OFFER_START - 1), false);
   assert.equal(blackFridayOfferActive(BLACK_FRIDAY_OFFER_START), true);
   assert.equal(blackFridayOfferActive(BLACK_FRIDAY_END - 1), true);
   assert.equal(blackFridayOfferActive(BLACK_FRIDAY_END), false);
-  assert.equal(BLACK_FRIDAY_PREVIOUS_PRICE_CENTS - blackFridayDiscount(1), BLACK_FRIDAY_PRICE_CENTS);
+  assert.equal(SHIRT_PRODUCT_PRICE_CENTS - blackFridayDiscount(1), BLACK_FRIDAY_PRICE_CENTS);
+  assert.equal(BLACK_FRIDAY_PREVIOUS_PRICE_CENTS - BLACK_FRIDAY_PRICE_CENTS, 700);
   assert.equal(blackFridayDiscount(3), 1200);
   assert.throws(() => blackFridayDiscount(0));
   assert.throws(() => blackFridayDiscount(1.5));

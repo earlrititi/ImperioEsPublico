@@ -9,7 +9,8 @@ export const blackFridayActive = (now = Date.now()) => now >= BLACK_FRIDAY_START
 export const BLACK_FRIDAY_OFFER_START = Date.parse("2026-11-25T00:00:00+01:00");
 export const BLACK_FRIDAY_UNIT_DISCOUNT = 400;
 export const BLACK_FRIDAY_PRICE_CENTS = 2299;
-export const BLACK_FRIDAY_PREVIOUS_PRICE_CENTS = 2699;
+// Historically published price shown struck through; Stripe's technical base stays 2699 cents.
+export const BLACK_FRIDAY_PREVIOUS_PRICE_CENTS = 2999;
 export const blackFridayOfferActive = (now = Date.now()) => now >= BLACK_FRIDAY_OFFER_START && now < BLACK_FRIDAY_END;
 export const blackFridayDiscount = (quantity: number) => {
   if (!Number.isSafeInteger(quantity) || quantity < 1 || quantity > Math.floor(2147483647 / BLACK_FRIDAY_PREVIOUS_PRICE_CENTS)) throw new Error("INVALID_QUANTITY");

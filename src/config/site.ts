@@ -3,7 +3,7 @@ import { BRAND } from "./brand";
 export const SITE = {
   name: BRAND.name,
   alternateName: BRAND.shortName,
-  defaultTitle: "Imperio Español | Historia, cultura, memoria y patrimonio",
+  defaultTitle: "Imperio Español | Dueños del Mar, Señores del Mundo",
   url: BRAND.url,
   contactEmail: "contacto@imperioes.com",
   defaultDescription:

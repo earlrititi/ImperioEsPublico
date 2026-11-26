@@ -31,7 +31,6 @@ interface Props {
 }
 
 const {
-  title = SITE.defaultTitle,
   description = SITE.defaultDescription,
   ogImage = SITE.defaultOgImage,
   noindex = false,
@@ -43,11 +42,10 @@ const {
   ogType = "website",
   publishedAt,
   modifiedAt,
-  exactTitle = false,
 } = Astro.props as Props;
 
-const pageTitle =
-  exactTitle || title === SITE.name || title.includes(SITE.name) ? title : `${title} | ${SITE.name}`;
+// Search-result title is intentionally identical across the whole site.
+const pageTitle = SITE.defaultTitle;
 const deploymentOrigin = SITE.url;
 const canonicalUrl = buildCanonicalUrl(Astro.url.pathname);
 const excluded = noindex || hasSearchParameters(Astro.url) || (Astro.response.status ?? 200) >= 400;

@@ -5,7 +5,8 @@ export const BLACK_FRIDAY_START = Date.parse("2026-11-25T00:00:00+01:00");
 export const BLACK_FRIDAY_END = Date.parse("2026-12-01T00:00:00+01:00");
 export const blackFridayActive = (now = Date.now()) => now >= BLACK_FRIDAY_START && now < BLACK_FRIDAY_END;
 
-export const BLACK_FRIDAY_OFFER_START = Date.parse("2026-11-27T00:00:00+01:00");
+// The advertised 22,99 EUR price is live from the start of the campaign.
+export const BLACK_FRIDAY_OFFER_START = Date.parse("2026-11-25T00:00:00+01:00");
 export const BLACK_FRIDAY_UNIT_DISCOUNT = 400;
 export const BLACK_FRIDAY_PRICE_CENTS = 2299;
 export const BLACK_FRIDAY_PREVIOUS_PRICE_CENTS = 2699;

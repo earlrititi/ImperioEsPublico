@@ -1,8 +1,8 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import ShirtProduct from "../../components/commerce/ShirtProduct.astro";
-import { blackFridayActive, blackFridayOfferActive, BLACK_FRIDAY_PRICE_CENTS, BLACK_FRIDAY_PREVIOUS_PRICE_CENTS } from "../../config/black-friday";
-import { formatMoney, SHIRT_PRODUCT_PRICE_CENTS, SHIRT_DELIVERY_OPTIONS } from "../../config/commerce";
+import { blackFridayActive, BLACK_FRIDAY_PREVIOUS_PRICE_CENTS } from "../../config/black-friday";
+import { formatMoney, publicShirtPriceCents, SHIRT_DELIVERY_OPTIONS } from "../../config/commerce";
 import { campaignParameters } from "../../lib/social-attribution";
 import { readPublicInventory } from "../../lib/public-inventory";
 export const prerender = false;
@@ -11,7 +11,6 @@ const params = campaignParameters(Astro.url.search);
 if (!blackFridayActive()) return Astro.redirect("/tienda" + (params.size ? "?" + params.toString() : "") + "#camiseta", 302);
 const inventory = await readPublicInventory().catch(() => null);
 const canBuy = Boolean(inventory?.salesEnabled && inventory.variants.some(v => v.available));
-const offer = Boolean(inventory?.blackFriday);
 const standard = SHIRT_DELIVERY_OPTIONS.find(option => option.id === "standard");
 ---
 <Layout title="Black Friday · Camiseta Imperial" description="Regala historia: descubre la primera edición de la Camiseta Imperial de Imperio Español." ogImage="/images/camiseta-imperio-frontal.webp" footerVariant="dark" noindex>
@@ -20,8 +19,8 @@ const standard = SHIRT_DELIVERY_OPTIONS.find(option => option.id === "standard")
       <p class="bf-kicker">BLACK FRIDAY · 25–30 DE NOVIEMBRE</p>
       <h1>Regala historia.<br />Viste el legado.</h1>
       <p>La Cruz de Borgoña, la navegación y el lema Non Sufficit Orbis: una pieza de nuestra historia para regalar o llevar contigo.</p>
-      <p class="bf-price">{formatMoney(offer ? BLACK_FRIDAY_PRICE_CENTS : SHIRT_PRODUCT_PRICE_CENTS)} · IVA incluido</p>
-      {offer ? <p>Precio anterior: <s>{formatMoney(BLACK_FRIDAY_PREVIOUS_PRICE_CENTS)}</s> · Ahorra 4 € por camiseta.</p> : !blackFridayOfferActive() && <p>Del 27 al 30 de noviembre: {formatMoney(BLACK_FRIDAY_PRICE_CENTS)} con IVA y envío estándar incluidos.</p>}
+      <p class="bf-price">{formatMoney(publicShirtPriceCents())} · IVA incluido</p>
+      <p>Precio anterior: <s>{formatMoney(BLACK_FRIDAY_PREVIOUS_PRICE_CENTS)}</s> · Ahorra 4 € por camiseta.</p>
       {standard && <p class="bf-delivery">Envío estándar a España peninsular: {standard.amount === 0 ? "gratuito" : formatMoney(standard.amount)}. Opción prioritaria en el checkout.</p>}
       {canBuy ? <a class="bf-cta" href="#camiseta">ELIGE TU TALLA Y COMPRA</a> : <p role="status">Consulta la disponibilidad actual en la ficha del producto.</p>}
     </header>
@@ -33,7 +32,7 @@ const standard = SHIRT_DELIVERY_OPTIONS.find(option => option.id === "standard")
       <div><h2>Compra sin suscripción</h2><p>Elige tu talla y completa el pago seguro con Stripe. No necesitas crear una cuenta.</p></div>
       <div><h2>Compra informada</h2><p><a href="/legal/envios">Consulta los plazos de envío</a> y las <a href="/legal/devoluciones">condiciones de devolución</a> antes de pagar.</p></div>
     </section>
-    <p class="bf-note">Oferta del 27 al 30 de noviembre de 2026, hasta las 23:59 (hora peninsular), sujeta a disponibilidad. Descuento automático de 4 € por camiseta. No acumulable; si corresponde un descuento de suscriptor superior, se aplica este. Envío prioritario opcional con coste adicional.</p>
+    <p class="bf-note">Oferta Black Friday 2026, hasta el 30 de noviembre a las 23:59 (hora peninsular), sujeta a disponibilidad. Descuento automático de 4 € por camiseta. No acumulable; si corresponde un descuento de suscriptor superior, se aplica este. Envío prioritario opcional con coste adicional.</p>
   </main>
 </Layout>
 <script>

@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { applyGoogleConsent, trackGoogleCommerce } from "../src/lib/google-analytics";
 import { LEGAL_DOCUMENT_VERSIONS } from "../src/config/legal";
+import { publicShirtPriceCents } from "../src/config/commerce";
 
 test("GTM uses basic consent, one container, no second direct GA SDK and revocable ecommerce", () => {
   let consent: string | null = null;
@@ -24,7 +25,7 @@ test("GTM uses basic consent, one container, no second direct GA SDK and revocab
     const commands = queue.filter(q => Object.prototype.toString.call(q) === "[object Arguments]").map(q => Array.from(q as IArguments));
     assert.equal(commands.filter(q => q[0] === "event" && q[1] === "page_view").length, 1);
     assert.equal(commands.filter(q => q[0] === "config").length, 0);
-    assert.equal(commands.find(q => q[0] === "event" && q[1] === "add_to_cart")?.[2].value, 53.98);
+    assert.equal(commands.find(q => q[0] === "event" && q[1] === "add_to_cart")?.[2].value, 2 * publicShirtPriceCents() / 100);
     assert.ok(commands.filter(q => q[0] === "consent").every(q => q[2].ad_storage === "denied" && q[2].ad_user_data === "denied" && q[2].ad_personalization === "denied"));
     consent = null; applyGoogleConsent(false, id, gtm);
     assert.equal(trackGoogleCommerce("add_to_cart", [{ size: "M", quantity: 1 }]), false);

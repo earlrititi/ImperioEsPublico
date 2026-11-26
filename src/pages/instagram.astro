@@ -2,6 +2,7 @@
 import Layout from "../layouts/Layout.astro";
 import { readPublicInventory } from "../lib/public-inventory";
 import { formatMoney } from "../config/commerce";
+import { BLACK_FRIDAY_PREVIOUS_PRICE_CENTS } from "../config/black-friday";
 import { campaignParameters } from "../lib/social-attribution";
 export const prerender = false;
 Astro.response.headers.set("Cache-Control", "no-store");
@@ -27,7 +28,7 @@ const open = Boolean((inventory?.reservationMode || buying) && stock);
       <div class="ig-buy">
         <p class="ig-stock" data-stock aria-live="polite">{stock === null ? "No se pudo consultar la disponibilidad" : stock ? "Disponible" : "Edición agotada"}</p>
         <p class="ig-price" data-price>{totalPrice !== null ? formatMoney(totalPrice) : "Precio no disponible"}</p>
-        <p class="ig-small" data-bf-label hidden={!inventory?.blackFriday}>Black Friday · antes 26,99 € · hasta el 30/11 a las 23:59.</p>
+        <p class="ig-small" data-bf-label hidden={!inventory?.blackFriday}>Black Friday · antes {formatMoney(BLACK_FRIDAY_PREVIOUS_PRICE_CENTS)} · hasta el 30/11 a las 23:59.</p>
         <p class="ig-small">{buying ? "IVA incluido. Envío estándar gratuito a Península." : reserving ? "Reserva gratuita, sin compromiso." : "Compra no disponible temporalmente."}</p>
         <label class="ig-size">Talla <select id="ig-size" disabled={!inventory}>{inventory?.variants.map(v => <option value={v.name} selected={v.name === selected?.name} disabled={!v.available}>{v.name}{!v.available ? " · agotada" : ""}</option>)}</select></label>
         <div class="ig-actions">

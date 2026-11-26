@@ -2,7 +2,7 @@ import { useEffect, useState } from "preact/hooks";
 import {
   formatMoney,
   RESERVATION_STATUS,
-  SHIRT_PRICE_COPY,
+  shirtPriceCopy,
 } from "../../config/commerce";
 import { api } from "./shared";
 export default function MyReservations() {
@@ -31,7 +31,7 @@ export default function MyReservations() {
   return (
     <section>
       <h2>Mis reservas</h2>
-      <p>{SHIRT_PRICE_COPY}</p>
+      <p>{shirtPriceCopy()}</p>
       {rows.map((r) => (
         <p key={r.id}>
           <a class="commerce-reference" href={`/reservas/gestionar?id=${r.id}`}>

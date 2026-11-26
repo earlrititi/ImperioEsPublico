@@ -1,3 +1,5 @@
+import { BLACK_FRIDAY_PRICE_CENTS, blackFridayOfferActive } from "./black-friday";
+
 export const SHIRT_PRODUCT_PRICE_CENTS = 2699;
 export const SHIRT_SHIPPING_PRICE_CENTS = 300;
 export const SHIRT_FINAL_PRICE_CENTS = SHIRT_PRODUCT_PRICE_CENTS + SHIRT_SHIPPING_PRICE_CENTS;
@@ -15,7 +17,11 @@ export const formatMoney = (cents: number) =>
   new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(
     cents / 100,
   );
-export const SHIRT_PRICE_COPY = `${formatMoney(SHIRT_PRODUCT_PRICE_CENTS)} por camiseta, IVA incluido`;
+export const publicShirtPriceCents = (now = Date.now()) =>
+  blackFridayOfferActive(now) ? BLACK_FRIDAY_PRICE_CENTS : SHIRT_PRODUCT_PRICE_CENTS;
+export const shirtPriceCopy = (now = Date.now()) =>
+  `${formatMoney(publicShirtPriceCents(now))} por camiseta, IVA incluido`;
+export const SHIRT_PRICE_COPY = shirtPriceCopy();
 export const PROVINCES = [
   ["01", "Alava"],
   ["02", "Albacete"],

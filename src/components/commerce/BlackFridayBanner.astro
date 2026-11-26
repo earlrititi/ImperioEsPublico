@@ -1,14 +1,15 @@
 ---
-import { blackFridayActive, blackFridayOfferActive, BLACK_FRIDAY_PATH } from "../../config/black-friday";
+import { blackFridayActive, BLACK_FRIDAY_PATH } from "../../config/black-friday";
+import { formatMoney, publicShirtPriceCents } from "../../config/commerce";
 import { campaignParameters } from "../../lib/social-attribution";
 const params = campaignParameters(Astro.url.search);
 const href = BLACK_FRIDAY_PATH + (params.size ? "?" + params.toString() : "");
 ---
 {blackFridayActive() && (
   <aside class="bf-banner" aria-label="Campaña Black Friday" data-home-mark-surface="black">
-    <div><p class="bf-banner__label">BLACK FRIDAY · 27–30 NOV.</p>
+    <div><p class="bf-banner__label">BLACK FRIDAY · HASTA EL 30 NOV.</p>
       <p class="bf-banner__title">Regala historia. Viste el legado.</p>
-      <p>{blackFridayOfferActive() ? "22,99 € · Envío estándar gratuito a Península" : "Desde el 27 de noviembre: 22,99 € · Envío estándar gratuito a Península"}</p></div>
+      <p>{formatMoney(publicShirtPriceCents())} · Envío estándar gratuito a Península</p></div>
     <a href={href}>Descubre la Camiseta Imperial <span aria-hidden="true">→</span></a>
   </aside>
 )}

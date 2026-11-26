@@ -9,7 +9,7 @@ import {
   shirtDeliveryOption,
   type ShirtDelivery,
 } from "../../config/commerce";
-import { BLACK_FRIDAY_UNIT_DISCOUNT } from "../../config/black-friday";
+import { BLACK_FRIDAY_PRICE_CENTS, BLACK_FRIDAY_UNIT_DISCOUNT } from "../../config/black-friday";
 import { EMAIL_MARKETING_CONSENT } from "../../config/email-marketing";
 import { readCart, SHIRT_SIZES, type CartItem, type ShirtSize } from "../../lib/cart";
 import { trackFunnel } from "../../lib/funnel-client";
@@ -399,7 +399,7 @@ export default function ReservationForm({
                   <span>Talla {item.size}</span>
                   <span>Cantidad {item.quantity || "—"}</span>
                 </div>
-                <strong>{formatMoney(SHIRT_PRODUCT_PRICE_CENTS * (item.quantity || 0))}</strong>
+                <strong>{formatMoney((inventory?.blackFriday ? BLACK_FRIDAY_PRICE_CENTS : SHIRT_PRODUCT_PRICE_CENTS) * (item.quantity || 0))}</strong>
               </li>
             ))}
           </ul>

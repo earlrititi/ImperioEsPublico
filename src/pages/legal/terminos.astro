@@ -2,7 +2,7 @@
 import LegalDocument from "../../components/LegalDocument.astro";
 import { LEGAL_BUSINESS, LEGAL_DOCUMENT_VERSIONS } from "../../config/legal";
 import { TSHIRT_OFFER_COPY } from "../../config/tshirt-offer";
-import { SHIRT_PRICE_COPY } from "../../config/commerce";
+import { shirtPriceCopy } from "../../config/commerce";
 ---
 
 <LegalDocument
@@ -66,7 +66,7 @@ import { SHIRT_PRICE_COPY } from "../../config/commerce";
   <section>
     <h2>Oferta para suscriptores: Camiseta Imperial</h2>
     <p>{TSHIRT_OFFER_COPY}</p>
-    <p>Aplica a planes mensuales y anuales al comprar con el correo de la suscripción. Precio habitual de {SHIRT_PRICE_COPY}. Consulta las <a href="/legal/envios">opciones de envío a la Península</a>.</p>
+    <p>Aplica a planes mensuales y anuales al comprar con el correo de la suscripción. Precio de la camiseta: {shirtPriceCopy()}. Consulta las <a href="/legal/envios">opciones de envío a la Península</a>.</p>
     <p>La compra está sujeta a disponibilidad de talla y se confirma con el pago en Stripe.</p>
   </section>
 

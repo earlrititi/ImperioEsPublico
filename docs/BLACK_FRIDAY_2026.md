@@ -1,5 +1,5 @@
 # Black Friday 2026 — Regala historia. Viste el legado.
-25–26 noviembre: anticipo. 27–30 noviembre: oferta de 22,99 € (4 € por camiseta). Envío estándar gratuito habitual a Península; prioritario +6,99 € por pedido. La oferta no se acumula con descuentos de suscriptor superiores. Stripe conserva el precio base y aplica un cupón interno por cantidad. Sin migración de base de datos.
+25–30 noviembre: oferta de 22,99 € (4 € por camiseta), activa desde el inicio de la campaña. Envío estándar gratuito a Península; prioritario +6,99 € por pedido. La oferta no se acumula con descuentos de suscriptor superiores. Stripe conserva el precio base y aplica un cupón interno por cantidad. Sin migración de base de datos.
 
 ## Canales
 - X: https://imperioes.com/tienda/black-friday?utm_source=x&utm_medium=social&utm_campaign=black_friday_2026
@@ -8,7 +8,7 @@
 - Email: https://imperioes.com/tienda/black-friday?utm_source=newsletter&utm_medium=email&utm_campaign=black_friday_2026
 
 ## Operativa
-25–26: presentación y fotos frontal/trasera; 27: lanzamiento; 28–29: detalles y prueba social verificable; 30: cierre editorial. Comunicar la rebaja solo dentro de la ventana de oferta; antes, indicar las fechas. No afirmar que la camiseta deja de estar a la venta. Enviar email únicamente a audiencia con consentimiento comercial válido y bajas respetadas. No enviar automáticamente.
+25–26: presentación, fotos frontal/trasera y lanzamiento de la oferta; 27–29: detalles y prueba social verificable; 30: cierre editorial. Comunicar la rebaja solo dentro de la ventana de oferta. No afirmar que la camiseta deja de estar a la venta. Enviar email únicamente a audiencia con consentimiento comercial válido y bajas respetadas. No enviar automáticamente.
 
 Medir sesiones de campaña, view_item, begin_checkout, black_friday_cta y pagos reales en Stripe por separado. Objetivo de trabajo: 15–20 ventas, no una previsión. Costes comunicados: 8 € de prenda + 4 € de envío. Antes de fusionar, verificar que 26,99 € es el menor precio general de los 30 días previos y confirmar la prueba de cobro en Stripe TEST. Verificar disponibilidad, precio final, móvil, envío y compra en preview antes de publicar.
 

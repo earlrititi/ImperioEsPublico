@@ -4,7 +4,7 @@ import { requireAdmin, optionalEnv, reservationMode } from "../../lib/reservatio
 import { ANALYTICS } from "../../config/analytics";
 import { SITE } from "../../config/site";
 import { LEGAL_DOCUMENT_VERSIONS } from "../../config/legal";
-import { SHIRT_PRICE_COPY } from "../../config/commerce";
+import { shirtPriceCopy } from "../../config/commerce";
 import { authCaptchaConfig } from "../../lib/auth-captcha";
 
 export const prerender = false;
@@ -31,7 +31,7 @@ const captcha = authCaptchaConfig();
       <dt>Modalidad de camisetas</dt><dd>{reservationMode() ? "Reserva sin pago" : "Compra"}</dd>
       <dt>Pagos Live</dt><dd>{enabled("STRIPE_LIVE_CHECKOUT_ENABLED")}</dd>
       <dt>Venta de camisetas aprobada</dt><dd>{enabled("SHIRT_SALES_APPROVED")}</dd>
-      <dt>Precio publicado</dt><dd>{SHIRT_PRICE_COPY}</dd>
+      <dt>Precio publicado</dt><dd>{shirtPriceCopy()}</dd>
       <dt>Conexion con Stripe</dt><dd>{configured("STRIPE_SECRET_KEY")}</dd>
     </dl>
     <a href="/admin/comercio">Pedidos e inventario</a>

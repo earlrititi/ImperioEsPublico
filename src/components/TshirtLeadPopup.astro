@@ -1,6 +1,6 @@
 ---
 import { reservationMode } from "../lib/reservations";
-import { SHIRT_PRICE_COPY } from "../config/commerce";
+import { shirtPriceCopy } from "../config/commerce";
 import { blackFridayActive } from "../config/black-friday";
 const reserving = reservationMode();
 const excluded = /^\/(?:imperio-espanol(?:\/|$)|login|registro|recuperar-contrasena|confirmar-correo|cuenta(?:\/|$)|checkout|newsletter(?:\/|$)|suscribirse(?:\/|$)|tienda(?:\/|$)|carrito(?:\/|$)|recursos(?:\/|$)|links(?:\/|$)|legal(?:\/|$)|reservas(?:\/|$)|reserva(?:\/|$)|compra(?:\/|$)|gracias(?:\/|$)|admin(?:\/|$))/;
@@ -22,7 +22,7 @@ const enabled = !blackFridayActive() && !excluded.test(Astro.url.pathname) && !/
         <span class="tshirt-lead__eyebrow">Camiseta Imperial</span>
         <h2 id="tshirt-lead-title">Compra ya tu Camiseta Imperial</h2>
         <p id="tshirt-lead-copy">¡Consigue ya tu camiseta imperial!, nuestra primera y única tirada producida en conmemoración del éxito conseguido en el mundial.</p>
-        <p class="tshirt-lead__price">{SHIRT_PRICE_COPY}.</p>
+        <p class="tshirt-lead__price">{shirtPriceCopy()}.</p>
         <div class="tshirt-lead__actions">
           <a class="btn btn-primary tshirt-lead__submit tshirt-lead__submit--reserve" href="/reservas" data-tshirt-reserve>{reserving ? "Reservar ya" : "Comprar camiseta"}</a>
         </div>

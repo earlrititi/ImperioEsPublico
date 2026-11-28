@@ -61,7 +61,7 @@ const FOOTER_CREDITS = {
   creator: "Web creada por Levante Digital",
 };
 
-export default function Footer({ variant = "light" }) {
+export default function Footer({ variant = "light", showCookieSwitch = true }) {
   const isDark = variant === "dark";
 
   return (
@@ -181,7 +181,7 @@ export default function Footer({ variant = "light" }) {
         <span class="image-footer__legal-utilities">
           <span class="image-footer__cookie-control">
             <span class="image-footer__cookie-label">PREFERENCIAS DE COOKIES</span>
-            <label class="image-footer__cookie-switch">
+            {showCookieSwitch && <label class="image-footer__cookie-switch">
               <span class="image-footer__sr-only">Permitir analítica</span>
               <input
                 type="checkbox"
@@ -206,7 +206,7 @@ export default function Footer({ variant = "light" }) {
                   </span>
                 </span>
               </span>
-            </label>
+            </label>}
             <button
               class="image-footer__cookie-settings"
               type="button"

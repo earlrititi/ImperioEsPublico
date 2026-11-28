@@ -5,11 +5,15 @@ import { consumeRateLimit } from "../../lib/rate-limit";
 import { isAllowedRequestOrigin } from "../../lib/request-security";
 import { createSupabaseServerClient } from "../../lib/supabase/server";
 import { clearAuthAnalytics } from "../../lib/auth-analytics";
+import { consentExperimentEnabled } from "../../lib/consent-experiment-env";
+import { isExperimentDecision } from "../../lib/cookie-consent";
 
 export const prerender = false;
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const SOURCES = new Set(["cookie_banner", "cookie_settings"]);
+const EXPERIMENT_COOKIE = "imperio_consent_experiment_v1";
+const experimentHeaders = { "Cache-Control": "private, no-store" };
 
 function json(body: Record<string, unknown>, status: number) {
   return new Response(JSON.stringify(body), {
@@ -18,7 +22,41 @@ function json(body: Record<string, unknown>, status: number) {
   });
 }
 
-export const POST: APIRoute = async ({ cookies, request }) => {
+export const GET: APIRoute = ({ cookies, url }) => {
+  if (url.searchParams.get("experiment") !== "1" || !consentExperimentEnabled(url.hostname)) {
+    return new Response(null, { status: 404, headers: experimentHeaders });
+  }
+  const decision = cookies.get(EXPERIMENT_COOKIE)?.value;
+  return Response.json({ decision: isExperimentDecision(decision) ? decision : null }, { headers: experimentHeaders });
+};
+
+export const POST: APIRoute = async ({ cookies, request, url }) => {
+  const experiment = consentExperimentEnabled(url.hostname);
+  if (url.searchParams.has("experiment") || experiment) {
+    if (url.searchParams.get("experiment") !== "1" || !experiment) {
+      return new Response(null, { status: 404, headers: experimentHeaders });
+    }
+    if (request.headers.get("origin") !== url.origin) {
+      return new Response(null, { status: 403, headers: experimentHeaders });
+    }
+    const raw = Number(request.headers.get("content-length")) > 128 ? "" : await request.text();
+    let payload: unknown;
+    try { payload = raw.length <= 128 ? JSON.parse(raw) : null; } catch { payload = null; }
+    const decision = payload && typeof payload === "object" && Object.keys(payload).length === 1 && "decision" in payload
+      ? payload.decision : null;
+    if (!isExperimentDecision(decision)) {
+      return new Response(null, { status: 400, headers: experimentHeaders });
+    }
+    cookies.set(EXPERIMENT_COOKIE, decision, {
+      path: "/api/legal-consent",
+      httpOnly: true,
+      sameSite: "strict",
+      secure: url.protocol === "https:",
+      maxAge: 7 * 24 * 60 * 60,
+    });
+    return Response.json({ decision }, { headers: experimentHeaders });
+  }
+
   if (!isAllowedRequestOrigin(request, import.meta.env.PUBLIC_SITE_URL)) {
     return json({ error: "Origen no permitido" }, 403);
   }

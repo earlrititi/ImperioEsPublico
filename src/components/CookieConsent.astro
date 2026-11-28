@@ -1,8 +1,10 @@
 ---
 import { ANALYTICS } from "../config/analytics";
 import { LEGAL_DOCUMENT_VERSIONS } from "../config/legal";
+import { SITE } from "../config/site";
 import { AUTH_ANALYTICS_COOKIE, consumeAuthAnalytics } from "../lib/auth-analytics";
-const hasAuthMarker = !Astro.isPrerendered && Astro.cookies.has(AUTH_ANALYTICS_COOKIE);
+const { experiment = false } = Astro.props as { experiment?: boolean };
+const hasAuthMarker = !experiment && !Astro.isPrerendered && Astro.cookies.has(AUTH_ANALYTICS_COOKIE);
 const authAction = hasAuthMarker ? consumeAuthAnalytics({ cookies: Astro.cookies, request: Astro.request }) : null;
 if (hasAuthMarker) {
   Astro.response.headers.set("Cache-Control", "private, no-store");
@@ -14,6 +16,7 @@ if (hasAuthMarker) {
 <div
   class="cookie-consent"
   data-cookie-consent
+  data-cookie-experiment={experiment ? "" : undefined}
   data-version={LEGAL_DOCUMENT_VERSIONS.cookies}
   data-gtm-id={ANALYTICS.gtmId}
   data-google-tag-id={ANALYTICS.googleTagId}
@@ -30,23 +33,40 @@ if (hasAuthMarker) {
     aria-describedby="cookie-banner-description"
     hidden
   >
-    <span class="cookie-banner__info" aria-hidden="true">i</span>
+    {!experiment && <span class="cookie-banner__info" aria-hidden="true">i</span>}
     <div class="cookie-banner__body">
-      <h2 id="cookie-banner-title" class="cookie-banner__title">TU PRIVACIDAD IMPORTA</h2>
-      <p id="cookie-banner-description">
+      <h2 id="cookie-banner-title" class="cookie-banner__title">{experiment ? "Tus preferencias" : "TU PRIVACIDAD IMPORTA"}</h2>
+      {experiment ? <>
+        <p id="cookie-banner-description">
+          En <strong>Imperio Español</strong> utilizamos tecnologías de análisis para mejorar nuestra web y ofrecemos comunicaciones por correo electrónico sobre historia, cultura, novedades, productos y promociones.
+        </p>
+        <p>Al marcar esta casilla solicitas activar conjuntamente estas preferencias experimentales.</p>
+        <p class="cookie-experiment__links">
+          <a href="/legal/privacidad">Política de Privacidad</a>
+          <a href="/legal/cookies">Política de Cookies</a>
+          <a href="/legal/privacidad#comunicaciones-comerciales">Política de Comunicaciones Electrónicas</a>
+        </p>
+        <label class="cookie-experiment__check">
+          <input type="checkbox" data-experiment-check autocomplete="off" />
+          Aceptar conjuntamente las preferencias indicadas.
+        </label>
+        <p class="cookie-experiment__feedback" data-experiment-feedback role="status"></p>
+      </> : <p id="cookie-banner-description">
         Usamos Google Analytics 4{ANALYTICS.gtmId ? " y Google Tag Manager" : ""} para conocer qué páginas se visitan y cómo se llega a nuestra web, solo si aceptas analítica.
         Si rechazas, no cargamos estas herramientas ni les enviamos datos de navegación.
         Marketing de Meta requiere una elección independiente en Configurar. Puedes cambiar tu elección desde el pie de página.
         {" "}<a href="/legal/cookies">Política de cookies</a>.
-      </p>
+      </p>}
       <div class="cookie-banner__actions">
-        <button class="cookie-banner__accept" type="button" data-cookie-accept>
-          ACEPTAR
-        </button>
-        <button class="cookie-banner__reject" type="button" data-cookie-reject>
-          RECHAZAR
-        </button>
-        <button type="button" data-cookie-configure>CONFIGURAR</button>
+        {experiment ? <>
+          <button class="cookie-banner__configure" type="button" data-cookie-configure aria-haspopup="dialog">PREFERENCIAS</button>
+          <button class="cookie-banner__reject" type="button" data-cookie-reject>RECHAZAR</button>
+          <button class="cookie-banner__accept" type="button" data-cookie-accept disabled>ACEPTAR</button>
+        </> : <>
+          <button class="cookie-banner__accept" type="button" data-cookie-accept>ACEPTAR</button>
+          <button class="cookie-banner__reject" type="button" data-cookie-reject>RECHAZAR</button>
+          <button type="button" data-cookie-configure>CONFIGURAR</button>
+        </>}
       </div>
     </div>
   </section>
@@ -56,7 +76,18 @@ if (hasAuthMarker) {
     data-cookie-settings
     aria-labelledby="cookie-settings-title"
   >
-    <form class="cookie-settings__panel" method="dialog">
+    {experiment ? <form class="cookie-settings__panel cookie-experiment__panel" method="dialog">
+      <header>
+        <h2 id="cookie-settings-title">Preferencias</h2>
+        <p>Modo de prueba. La elección se guarda en este navegador.</p>
+      </header>
+      <p class="cookie-experiment__state" data-experiment-state aria-live="polite"></p>
+      <p>Para suscribirte con tu dirección o cambiar el permiso de correo, usa la <a href={new URL("/newsletter", SITE.url).href}>newsletter</a> o <a href={new URL("/cuenta#comunicaciones", SITE.url).href}>Mi cuenta</a>.</p>
+      <div class="cookie-settings__actions">
+        <button type="button" data-experiment-change>Cambiar elección</button>
+        <button type="submit">Cerrar</button>
+      </div>
+    </form> : <form class="cookie-settings__panel" method="dialog">
       <header>
         <h2 id="cookie-settings-title">Configurar cookies</h2>
         <p>Elige por finalidad. Puedes cambiar esta decision cuando quieras.</p>
@@ -90,18 +121,24 @@ if (hasAuthMarker) {
         <button type="button" data-cookie-save>Guardar seleccion</button>
         <button type="button" data-cookie-settings-close>Cancelar</button>
       </div>
-    </form>
+    </form>}
   </dialog>
+  {experiment && <p class="cookie-experiment__sr" data-experiment-announcement role="status"></p>}
 </div>
 
 <script>
   // @ts-nocheck
   import { CONSENT_KEY, readSavedConsent, saveConsent } from "../lib/cookie-consent";
+  import { mountConsentExperiment } from "../lib/consent-experiment-client";
   import { applyMetaConsent } from "../lib/meta-pixel";
   import { applyGoogleConsent, PURCHASE_STORAGE_KEY, AUTH_EVENT_STORAGE_KEY, trackConfirmedGoogleAuthEvent } from "../lib/google-analytics";
   (() => {
     const root = document.querySelector("[data-cookie-consent]");
     if (!(root instanceof HTMLElement)) return;
+    if (root.hasAttribute("data-cookie-experiment")) {
+      mountConsentExperiment(root);
+      return;
+    }
 
     const storageKey = CONSENT_KEY;
     const anonymousKey = "imperio_anonymous_id";
@@ -590,6 +627,38 @@ if (hasAuthMarker) {
   .cookie-choice input { flex:0 0 22px; }
   .cookie-banner__actions button { flex:1 1 8rem; }
 
+  [data-cookie-experiment] .cookie-banner {
+    display: block;
+    width: min(calc(100vw - 1.5rem), 510px);
+    padding: 1rem;
+    box-sizing: border-box;
+    border: 1px solid #444;
+    background: #101010;
+  }
+
+  [data-cookie-experiment] .cookie-banner[hidden] { display: none; }
+  [data-cookie-experiment] .cookie-banner p + p { margin-top: 0.55rem; }
+  [data-cookie-experiment] a, [data-cookie-experiment] .cookie-banner__configure { color: #ff7d6b; }
+  .cookie-experiment__links { display: flex; flex-wrap: wrap; gap: 0.2rem 0.75rem; }
+  .cookie-experiment__check {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-height: 44px;
+    margin-top: 0.4rem;
+    font-size: 0.9rem;
+  }
+  .cookie-experiment__check input { width: 20px; height: 20px; flex: none; accent-color: #ff7d6b; }
+  .cookie-experiment__feedback:empty { display: none; }
+  .cookie-experiment__panel { max-height: calc(100dvh - 3rem); }
+  .cookie-experiment__state { font-weight: 700; }
+  .cookie-experiment__sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  [data-cookie-experiment] .cookie-banner__actions { justify-content: flex-end; margin-top: 0.65rem; }
+  [data-cookie-experiment] .cookie-banner__actions button, .cookie-experiment__panel button { flex: 0 1 auto; }
+  [data-cookie-experiment] .cookie-banner__actions button:not(.cookie-banner__configure),
+  .cookie-experiment__panel button { background: #292929; border-color: #838383; }
+  [data-cookie-experiment] .cookie-banner__actions button:disabled { opacity: 0.55; cursor: default; transform: none; }
+
   @keyframes cookie-banner-in {
     from {
       opacity: 0;
@@ -610,6 +679,8 @@ if (hasAuthMarker) {
       width: auto;
       padding: 1rem;
     }
+    [data-cookie-experiment] .cookie-banner { width: auto; }
+    [data-cookie-experiment] .cookie-banner__actions button { flex: 1 1 auto; }
   }
 
   @media (prefers-reduced-motion: reduce) {

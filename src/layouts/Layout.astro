@@ -5,6 +5,7 @@ import "../styles/global.css";
 import "../styles/navigation.css";
 import ClientRuntime from "../islands/ClientRuntime.astro";
 import CookieConsent from "../components/CookieConsent.astro";
+import { consentExperimentEnabled } from "../lib/consent-experiment-env";
 import TshirtLeadPopup from "../components/TshirtLeadPopup.astro";
 import Footer from "../components/Footer.jsx";
 import GlobalHomeMark from "../components/GlobalHomeMark.astro";
@@ -48,7 +49,8 @@ const {
 const pageTitle = SITE.defaultTitle;
 const deploymentOrigin = SITE.url;
 const canonicalUrl = buildCanonicalUrl(Astro.url.pathname);
-const excluded = noindex || hasSearchParameters(Astro.url) || (Astro.response.status ?? 200) >= 400;
+const consentExperiment = consentExperimentEnabled(Astro.url.hostname, Astro.isPrerendered);
+const excluded = consentExperiment || noindex || hasSearchParameters(Astro.url) || (Astro.response.status ?? 200) >= 400;
 const ogImageUrl = new URL(withBase(ogImage), deploymentOrigin).toString();
 const organizationSchema = {
   "@type": "Organization",
@@ -74,7 +76,7 @@ const jsonLd = {
 ---
 
 <!doctype html>
-<html lang="es">
+<html lang="es" data-consent-experiment={consentExperiment ? "" : undefined}>
   <head>
     <meta charset="UTF-8" />
     <meta name="facebook-domain-verification" content="ux942tlzl36w3qi07b2mi402t806l9" />
@@ -143,7 +145,7 @@ const jsonLd = {
     <div id="main-content" tabindex="-1">
       <slot />
     </div>
-    {showFooter && <Footer variant={footerVariant} />}
+    {showFooter && <Footer variant={footerVariant} showCookieSwitch={!consentExperiment} />}
     <div id="imperio-scrollbar" aria-hidden="true">
       <div id="imperio-scrollbar-track">
         <div id="imperio-scrollbar-thumb"></div>
@@ -152,8 +154,8 @@ const jsonLd = {
     <ClientRuntime />
     {!noindex && <InteractionTracker />}
     <FunnelTracker />
-    <TshirtLeadPopup />
-    {showCookieConsent && <CookieConsent />}
+    {!consentExperiment && <TshirtLeadPopup />}
+    {showCookieConsent && <CookieConsent experiment={consentExperiment} />}
     <script>
       import { readCart } from "../lib/cart";
 

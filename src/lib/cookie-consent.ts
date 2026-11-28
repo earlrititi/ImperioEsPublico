@@ -1,5 +1,11 @@
 export const CONSENT_KEY = "imperio_cookie_consent";
 export const CONSENT_MAX_AGE = 365 * 24 * 60 * 60;
+export const EXPERIMENT_ENDPOINT = "/api/legal-consent?experiment=1";
+export type ExperimentDecision = "accepted" | "rejected";
+
+export function isExperimentDecision(value: unknown): value is ExperimentDecision {
+  return value === "accepted" || value === "rejected";
+}
 
 export interface CookieConsent {
   version: string;
@@ -26,6 +32,9 @@ export function parseConsent(raw: string | null, version: string, now = Date.now
 }
 
 export function readSavedConsent(version: string): CookieConsent | null {
+  if (typeof document !== "undefined" && document.documentElement?.hasAttribute("data-consent-experiment")) {
+    return null;
+  }
   let local: CookieConsent | null = null;
   let cookies: CookieConsent[] = [];
   try { local = parseConsent(window.localStorage.getItem(CONSENT_KEY), version); } catch { /* Storage may be blocked. */ }

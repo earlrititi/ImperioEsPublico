@@ -1,7 +1,8 @@
 import { useEffect, useState } from "preact/hooks";
-import { formatMoney, RESERVATION_STATUS, SHIRT_SHIPPING_PRICE_CENTS, shirtDeliveryOption } from "../../config/commerce";
+import { formatMoney, RESERVATION_STATUS } from "../../config/commerce";
 import { AddressSummary, api, ItemsSummary } from "./shared";
 import DeliveryActions from "./DeliveryActions";
+import AdminOrderPricing, { AdminSaleUnitPrices } from "./AdminOrderPricing";
 import type { OwnerShipmentDeclaration as OwnerShipmentDeclarationData } from "../../lib/owner-shipment-declaration";
 
 export function OwnerShipmentDeclaration({ order }: { order: {
@@ -269,8 +270,10 @@ export default function CommerceAdmin() {
                 </td>
                 <td>{r.total_quantity}</td>
                 <td>
-                  {formatMoney(r.total ?? r.total_price_snapshot)}
+                  {formatMoney(r.paidOrder?.total ?? r.total ?? r.total_price_snapshot)}
                   <small>IVA y envio incluidos</small>
+                  {r.paidOrder && <small>Importe cobrado en el pedido confirmado</small>}
+                  {(view === "orders" || r.paidOrder) && <AdminSaleUnitPrices order={r.paidOrder ?? r} />}
                 </td>
                 <td>{RESERVATION_STATUS[r.status]}{view === "orders" && <OwnerShipmentDeclaration order={r} />}</td>
                 <td>
@@ -284,10 +287,14 @@ export default function CommerceAdmin() {
                     {view !== "orders" && <p>Marketing: {r.marketing_consent ? "Aceptado" : "No aceptado"}</p>}
                     {view !== "orders" ? (
                       <>
-                        <ItemsSummary
+                        {r.paidOrder ? <>
+                          <p>Pedido confirmado: {r.paidOrder.number}</p>
+                          <AdminOrderPricing order={r.paidOrder} />
+                          <p>Importe de la reserva original: {formatMoney(r.total_price_snapshot)}</p>
+                        </> : <ItemsSummary
                           items={r.reservation_items}
                           total={r.total_price_snapshot}
-                        />
+                        />}
                         <a href={`/reservas/gestionar?id=${r.id}`}>
                           Ver reserva
                         </a>
@@ -331,21 +338,7 @@ export default function CommerceAdmin() {
                     ) : (
                       <>
                         <p>Reserva: {r.reservation_number}</p>
-                        <p>Camisetas antes de descuentos: {formatMoney(r.product_subtotal ?? r.subtotal - r.total_quantity * 300)}</p>
-                        <p>Envío: {formatMoney(r.shipping_amount ?? r.total_quantity * 300)}</p>
-                        {shirtDeliveryOption(r.shipping_method) && (
-                          <p>{shirtDeliveryOption(r.shipping_method)?.label} · {shirtDeliveryOption(r.shipping_method)?.description}</p>
-                        )}
-                        <p>Descuento: {formatMoney(r.discount_amount ?? 0)} · Total cobrado: {formatMoney(r.total)}</p>
-                        <p>Reembolsado: {formatMoney(r.refunded_amount)}</p>
-                        <ul>
-                          {r.commerce_order_items.map((i: any) => (
-                            <li key={i.id}>
-                              {i.sku} · {i.quantity} x{" "}
-                              {formatMoney(i.unit_price - (r.shipping_method ? 0 : SHIRT_SHIPPING_PRICE_CENTS))} de camiseta
-                            </li>
-                          ))}
-                        </ul>
+                        <AdminOrderPricing order={r} />
                         <Fulfillment
                           order={r}
                           busy={busy}

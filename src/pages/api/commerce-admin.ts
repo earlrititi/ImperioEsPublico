@@ -59,6 +59,27 @@ export const GET: APIRoute = async (context) => {
       const declarations = ordinaryShipmentDeclarations(audit.data ?? [], orderIds);
       rows = rows.map(row => ({ ...row, ownerShipmentDeclaration: declarations.get(row.id) ?? null }));
     }
+    if (view === "reservations") {
+      const converted = rows.filter(row => row.status === "CONVERTED_TO_ORDER" && row.order_id !== null && row.order_id !== undefined);
+      if (converted.some(row => typeof row.order_id !== "string" || !UUID.test(row.order_id)))
+        throw new Error("DATABASE_UNAVAILABLE");
+      const orderIds = [...new Set(converted.map(row => row.order_id as string))];
+      const paidStatuses = ["PAID", "READY_FOR_FULFILLMENT", "PREPARING", "READY_TO_SHIP", "SHIPPED", "DELIVERED", "REFUNDED"];
+      const paidOrders = orderIds.length
+        ? await db.from("commerce_orders")
+          .select("id,reservation_id,number,status,currency,total_quantity,product_subtotal,shipping_amount,shipping_method,discount_amount,subtotal,total,refunded_amount,commerce_order_items(id,sku,size,quantity,unit_price,line_total,currency)")
+          .in("id", orderIds).in("status", paidStatuses)
+        : { data: [], error: null };
+      if (paidOrders.error) throw new Error("DATABASE_UNAVAILABLE");
+      // Retain the reservation's original quote. Only its own confirmed payment
+      // may provide the actual sale price, even if the data source over-returns.
+      rows = rows.map(row => ({
+        ...row,
+        paidOrder: row.status === "CONVERTED_TO_ORDER"
+          ? paidOrders.data?.find(order => order.id === row.order_id && order.reservation_id === row.id && paidStatuses.includes(order.status)) ?? null
+          : null,
+      }));
+    }
     return privateJson({
       inventory: inventory.data,
       rows,

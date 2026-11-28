@@ -17,7 +17,9 @@ for(const host of ["imperioes.com","www.imperioes.com"]){
   for(const signal of ["home-shirt","/carrito","No acumulable; envio excluido"])assert.ok(home.includes(signal));
   assert.doesNotMatch(home,/BEGIN PRIVATE KEY|\b(?:sk|rk)_live_[A-Za-z0-9]{20,}/);
   const registration=await(await get(origin+"/registro")).text();
-  assert.match(registration,/name="newsletter"/);assert.doesNotMatch(registration,/<input[^>]*name="newsletter"[^>]*checked/);
+  assert.match(registration,/name="registration_mode" value="newsletter"/);
+  assert.match(registration,/name="registration_mode" value="basic"/);
+  assert.doesNotMatch(registration,/<input[^>]*name="newsletter"/);
   const subscriptions=parse(await(await get(origin+"/suscribirse")).text());
   let popup=false;
   const visit=node=>{if(node.attrs?.some(attr=>attr.name==="data-tshirt-lead"))popup=true;for(const child of node.childNodes??[])visit(child);};

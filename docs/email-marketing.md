@@ -3,12 +3,12 @@
 ## Puntos de entrada
 
 - `/newsletter`: correo unico, solicitud expresa de newsletter y PDF, alternativa de descarga directa sin suscripcion. Admite formulario nativo sin JavaScript.
-- Registro Piquero: casilla opcional y no premarcada; cuenta y marketing independientes.
+- Registro Piquero: dos acciones de envío expresas, «Crear cuenta PIQUERO y recibir novedades» y «Crear cuenta PIQUERO sin newsletter», con un único control de aceptación de condiciones. Solo la acción comercial conserva el consentimiento y su versión; ambas crean la misma cuenta gratuita.
 - Manifiesto y reserva/compra: opcion comercial separada de la solicitud principal.
 - Footer y recurso de lectura: enlace a la newsletter.
 - `/cuenta#comunicaciones`: activar o retirar comunicaciones con identidad de servidor y correo confirmado.
 
-El PDF se entrega con Resend desde contacto@imperioes.com. El consentimiento se registra con la version aplicable; registro, newsletter y preferencias conservan ademas el texto. La peticion aceptada por el proveedor no equivale a una entrega o una apertura verificadas. Los reintentos de una misma solicitud no reenvian un recurso ya aceptado.
+El PDF se entrega con Resend desde contacto@imperioes.com. El consentimiento se registra con la version aplicable; registro, newsletter y preferencias conservan ademas el texto. Un POST de registro requiere `registration_mode=newsletter|basic` y rechaza valores ausentes o desconocidos; la elección nunca se infiere del registro ni de la aceptación de términos. La peticion aceptada por el proveedor no equivale a una entrega o una apertura verificadas. Los reintentos de una misma solicitud no reenvian un recurso ya aceptado.
 
 ## Audiencias y automatizaciones
 

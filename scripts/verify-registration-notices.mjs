@@ -76,7 +76,7 @@ const request = (path, body, cookie='') => app.fetch(new Request(base+path, {
   method: body ? 'POST' : 'GET', headers: { ...(body ? {origin:base,'content-type':'application/x-www-form-urlencoded'} : {}), ...(cookie ? {cookie} : {}) },
   body: body ? new URLSearchParams(body) : undefined,
 }));
-const registration = { email:user.email, password:'Fixture-Password-Only-123', password_confirmation:'Fixture-Password-Only-123', terms:'on',privacy:'on' };
+const registration = { email:user.email, password:'Fixture-Password-Only-123', password_confirmation:'Fixture-Password-Only-123', terms:'on',privacy:'on',registration_mode:'basic' };
 let checks = 0;
 
 let response = await request('/registro', registration);
